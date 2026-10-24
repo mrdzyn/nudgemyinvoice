@@ -28,3 +28,4 @@
 - No runnable MVP, live demo or verified PayPal sandbox event yet.
 - TypeScript stack CI jobs, real integration smoke tests, multi-dialect migrations, and Render deployment remain future tasks.
 - This documentation bootstrap neither authorizes production deployment nor any PayPal live transaction.
+- **Judging-period blocker to resolve:** AG Studio 45-day trial duration and Render Free Postgres 30-day expiry may end before Dec 15; plan sustainable demo access or tested local setup.

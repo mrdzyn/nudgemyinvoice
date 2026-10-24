@@ -17,7 +17,7 @@
 ## Status and demo
 
 - Phase: `NMI-P0` — greenfield repository foundation (no runnable application yet).
-- Hosted demo: _To be added after deployed sandbox MVP is verified._
+- Hosted demo: _To be added after deployed sandbox MVP is verified. Keep access operational through Dec 15, 2026 judging._
 - Demo video (under 3 minutes): _To be added._
 - Hackathon deadline: Nov 12, 2026, 12:00 PM PST (Nov 13, 4:00 AM Asia/Manila).
 - Public repository: https://github.com/mrdzyn/nudgemyinvoice

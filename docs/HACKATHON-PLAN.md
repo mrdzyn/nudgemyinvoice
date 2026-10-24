@@ -38,3 +38,6 @@ Orders API, refunds, sending AI reminders, real foreign exchange rates, teams, s
 **Innovation:** agentic reads/drafts with explicit human consent for sends and money.
 **Presentation:** show cross-currency status without misleading FX totals.
 **Sponsor evidence:** disclose exactly how AG Grid, Render and APIMatic were used; installation alone does not prove integration.
+
+## Judging-period dependency checklist
+The official judging window ends Dec 15, 2026. Verify AG Studio trial-license coverage through that date (45-day trial timing or sponsor extension) and avoid relying on 30-day Render Free Postgres beyond its expiry. Secure hosting/credits suitable for continued judge access. Do not publish secret sandbox credentials; offer a safe guest demo or independent sandbox setup.
