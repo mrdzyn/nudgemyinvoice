@@ -71,3 +71,71 @@ describe("parser safeguards", () => {
     expect(r.status).toBe("needs_clarification");
   });
 });
+
+describe("reference date validation", () => {
+  const good = {
+    customerName: "A",
+    customerEmail: "a@example.com",
+    currency: "USD",
+    lineItems: [{ description: "x", quantity: "1", unitPrice: "1" }],
+    dueDate: "2026-02-28",
+    taxPercent: null,
+    discount: null,
+  };
+
+  it.each([
+    "",
+    "2026-1-1",
+    "26-01-01",
+    "2026/01/01",
+    "2026-01-01T00:00:00Z",
+    " 2026-01-01",
+    "2026-02-30",
+    "2026-13-01",
+    "2026-00-10",
+    "2026-04-31",
+    "2027-02-29",
+    "tomorrow",
+    "20260101",
+  ])("rejects malformed/impossible today %j without calling the model", async (today) => {
+    let called = false;
+    const client: InvoiceModelClient = {
+      generate: async () => ((called = true), good),
+    };
+    const r = await parseInvoiceRequest("Invoice x", { client, today });
+    expect(r).toEqual({
+      status: "invalid",
+      errors: [{ path: "today", message: "Reference date must be a valid YYYY-MM-DD date" }],
+    });
+    expect(called).toBe(false);
+  });
+
+  it.each([undefined, null, 20260101, {}])(
+    "does not throw on non-string today %j",
+    async (today) => {
+      const r = await parseInvoiceRequest("Invoice x", {
+        client: fake(good),
+        today: today as never,
+      });
+      expect(r.status).toBe("invalid");
+    },
+  );
+
+  it("accepts valid boundaries (leap day, year end) and treats due date == today as not past", async () => {
+    for (const today of ["2028-02-29", "2026-12-31", "2026-02-28", "0001-01-01"]) {
+      const r = await parseInvoiceRequest("Invoice x", {
+        client: fake({ ...good, dueDate: today === "0001-01-01" ? "0001-01-02" : today }),
+        today,
+      });
+      expect(r.status).toBe("draft");
+    }
+  });
+
+  it("rejects an impossible due date from the model", async () => {
+    const r = await parseInvoiceRequest("Invoice x", {
+      client: fake({ ...good, dueDate: "2026-02-30" }),
+      today: TODAY,
+    });
+    expect(r.status).toBe("invalid");
+  });
+});
