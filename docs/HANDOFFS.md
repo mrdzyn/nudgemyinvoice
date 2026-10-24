@@ -185,4 +185,86 @@ If an existing repository already has a handoff/continuation mechanism:
 ### Next action
 Audit the exact PR #1 head against `tasks/NMI-P0-bootstrap.md` and `docs/REPOSITORY-SETUP.md`.
 
+## Handoff: NMI-P1-C1
+
+- **Task / phase:** `tasks/NMI-P1-foundation.md`
+- **From:** Claude Code (implementation)
+- **To:** independent exact-head auditor; project owner (design approval)
+- **Branch:** `phase-1/nmi-app-foundation` (stacked on `phase-0/nmi-bootstrap-pruning`)
+- **Implementation head:** see PR head; handoff-only commit follows the implementation commit `97a4ab5`
+- **PR:** stacked Draft against PR #1's branch
+- **State:** READY FOR REVIEW
+
+### Completed
+- Workspace, health API, placeholder web, exact-money contracts, OpenAI parser, approval gate, tool allowlist, PayPal interfaces, Postgres schema + migration, stack CI, draft screen designs.
+
+### Validation
+- `pnpm lint`, `format:check`, `typecheck`, `test` (52 pass), `build`, `check:bundle`, `pnpm audit --prod` — PASS locally.
+- Hosted Stack CI / Project baseline on final head — see PR; not claimed here.
+- Real OpenAI and PayPal sandbox calls — NOT RUN (no keys).
+
+### Continuation notes
+- Owner decisions pending: design approval (`design/nmi-p1/SCREENS.md`), local Postgres vs SQLite (`docs/ARCHITECTURE.md`), AG Studio licence/trial terms.
+- `createOpenAIInvoiceClient` is typechecked but unexercised against the live API; first real smoke test should confirm `responses.parse` + `zodTextFormat` behavior and a supported `OPENAI_MODEL`.
+
+### Next action
+Audit the exact head; then obtain owner design approval before any UI shell work.
+
+## Handoff: NMI-P1-C2
+
+- **Task / phase:** `tasks/NMI-P1-foundation.md`
+- **From:** Claude Code (implementation, audit remediation)
+- **To:** independent re-auditor (Codex)
+- **Branch:** `phase-1/nmi-app-foundation` (stacked on `phase-0/nmi-bootstrap-pruning`)
+- **Implementation head:** `bfadda59eaa5298c0b615c5817e9ccd1619a8d48` (handoff-only commit follows; previous audited head `393052a96dc11dc1e2580bff95ca3a1af79f3d1c`)
+- **PR:** #2 (Draft)
+- **State:** READY FOR RE-AUDIT (prior verdict PARTIAL; not self-certified)
+
+### Completed
+- Finding 1: trusted-actor/approver binding and `consumeIfMatches` contract (`packages/domain`).
+- Finding 2: 13 new CHECK constraints, migration `0001`, real-PostgreSQL tests (`packages/db`).
+- Finding 3: expanded negative tests (tool dispatch, approval, concurrency, mutation).
+- Finding 4: reference-date calendar validation (`packages/ai`, `packages/shared`).
+
+### Validation
+- Unit tests (in-memory store): see PR; PostgreSQL 16 local disposable run: constraint suite 22/22 pass; negative controls (weakened store, removed constraint) fail as expected.
+- Hosted Stack CI (with `postgres:16` service) and baseline: see PR checks for the exact head.
+
+### Continuation notes
+- Approval atomicity on a real database remains UNPROVEN until a PostgreSQL adapter passes the store contract. No auth exists; `TrustedActor` is test-constructed.
+- Owner decisions still pending: design approval, Postgres-only, AG Studio licence.
+
+### Next action
+Re-audit the exact PR #2 head against the four findings; do not merge.
+
+## Handoff: NMI-P1-C3
+
+- **Task / phase:** `tasks/NMI-P1-foundation.md`
+- **From:** Claude Code (post-squash reconciliation)
+- **To:** independent auditor (Codex)
+- **Branch:** `phase-1/nmi-app-foundation` (PR #2, Draft, base `main`)
+- **Implementation head:** `65699fc32b1a6e45fbc9017f9e8fedaf893d7efa` (docs-only commit follows; the PR head is authoritative)
+- **PR:** #2
+- **State:** READY FOR RE-VERIFICATION (prior PASS applies only to `d481449`)
+
+### Completed
+- `main` = `13ad78a` (PR #1 squash). Squash tree equals original Phase 0 head `a711673` tree.
+- Phase 1 rebuilt on `main` by cherry-picking `97a4ab5`, `393052a`, `bfadda5`, `d481449` (merge commit `90091fb` intentionally not replayed); no conflicts. Tree `6f58e0066ba860d090d0e3596b179e577d853db2` is identical to audited `d481449`. Recovery: branch `backup/phase-1-d481449`, tag `recovery/nmi-p1-d481449`.
+
+### Validation
+Manual, at `65699fc`, pnpm 10.28.0, `--frozen-lockfile`, PostgreSQL 16.15 disposable `nmi_test`:
+- profile validator PASS (24 files); lint PASS; format:check PASS; typecheck PASS
+- `pnpm test` 7 files / 113 tests PASS (includes 22 DB tests; 91 pass + 22 skipped without a DB URL)
+- `pnpm test:db` 22/22 PASS; build PASS; bundle secret scan clean (2 files)
+- `pnpm audit --prod --audit-level high` no known vulnerabilities
+- `pnpm db:generate` no changes; migration directory clean; `git diff --check` clean
+- Hosted CI for the new SHAs: see PR checks; if not executed it is NOT PASS (owner-reported Actions limitation until Nov 2026).
+
+### Continuation notes
+- Verify: audited functionality preserved; no Phase 0 duplication; migrations `0000`/`0001` intact; financial boundaries unchanged (no send/cancel/refund/capture/mark-paid, no auth, no webhook); PR base `main`; diff vs `main` equals `a711673..d481449`.
+- Still open: DB atomicity of approval consume unproven (needs PostgreSQL adapter); owner decisions on design, Postgres-only, AG Studio licence; Phase 2 not started.
+
+### Next action
+Independently verify the exact PR #2 head against this list; do not merge.
+
 <!-- HANDOFF_ENTRIES_END -->
