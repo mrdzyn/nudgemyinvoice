@@ -28,7 +28,7 @@ React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on
 
 ## Getting started
 
-**Foundation (NMI-P1) only:** the workspace runs, but there is no invoice UI yet. Available today: `GET /health`, a placeholder web page, and the tested parsing/validation/approval libraries.
+**Foundation (NMI-P1) only:** the workspace runs, but there is no invoice UI yet. Available today: `GET /health`, operator login/session/logout (`/api/auth/*`), a placeholder web page, and the tested parsing/validation/approval libraries with a PostgreSQL approval store. No PayPal write is wired.
 
 Prerequisites: Node 22+, pnpm 10 (`corepack enable`). Optional later: PayPal sandbox app, OpenAI key and model ID (`OPENAI_API_KEY`, `OPENAI_MODEL`), PostgreSQL.
 
@@ -39,8 +39,13 @@ pnpm install
 cp .env.example .env   # set only SANDBOX values; NEVER commit .env
 pnpm test              # deterministic tests; no OpenAI key or network needed
 pnpm validate          # lint, format, typecheck, test, build, bundle-secret scan
-# API (needs PAYPAL_ENV=sandbox and PAYPAL_API_BASE_URL in the environment):
-PAYPAL_ENV=sandbox PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com pnpm --filter @nmi/api dev
+# API: needs PostgreSQL. Set DATABASE_URL, SESSION_SECRET (>=32 chars), PAYPAL_ENV=sandbox and
+# PAYPAL_API_BASE_URL (see .env.example), apply migrations from packages/db/migrations, then provision the
+# single operator once (secrets from your shell, never from a file you commit):
+NMI_OPERATOR_USERNAME=... NMI_OPERATOR_PASSWORD=... pnpm --filter @nmi/api provision-operator
+pnpm --filter @nmi/api dev
+# Real-PostgreSQL tests (disposable database named nmi_test*):
+TEST_DATABASE_URL=postgres://user@localhost:5432/nmi_test pnpm test:db
 pnpm --filter @nmi/web dev   # http://localhost:5173
 ```
 

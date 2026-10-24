@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/pg-scratch.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
@@ -14,12 +15,12 @@
   "dependencies": {
     "drizzle-orm": "0.45.4",
     "@nmi/shared": "workspace:*",
-    "@nmi/domain": "workspace:*"
+    "@nmi/domain": "workspace:*",
+    "pg": "8.23.1"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
     "drizzle-kit": "0.31.11",
-    "pg": "8.23.1",
     "@types/pg": "8.23.1"
   }
 }

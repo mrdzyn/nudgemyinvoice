@@ -1,6 +1,6 @@
 # NMI-P2-I1 — Authenticated Operator + PostgreSQL Atomic Approval Foundation
 
-- **Status:** Authorized to start; implementation NOT STARTED at docs-bootstrap commit. Draft PR required.
+- **Status:** Implemented on this branch; pending independent Codex exact-head audit (not self-certified). Draft PR.
 - **Owner/orchestrator:** project owner / ChatGPT
 - **Implementation agent:** Claude Code
 - **Independent reviewer:** Codex (cannot self-certify)
@@ -42,18 +42,18 @@ Require the necessary DB and authentication config when protected capability is 
 
 ## Required tests / acceptance
 
-- [ ] From anonymous requests, protected routes fail with 401; `/health` remains available.
-- [ ] Valid operator login creates a non-guessable session and safe cookie; invalid login has generic failure and is throttled.
-- [ ] Expired, revoked, malformed and forged sessions fail; logout invalidates server-side session immediately.
-- [ ] Wrong or absent Origin/CSRF on mutating routes fails; correctly authenticated request succeeds.
-- [ ] Spoofed actor identifiers in body/headers/model/tool cannot produce `TrustedActor`.
-- [ ] PostgreSQL adapter implements `ApprovalStore` exactly; mismatch in actor, action, resource, digest, expiry or consumed status cannot pass.
-- [ ] **Two simultaneous clients** racing to consume the same grant yield exactly one success; a failed/rolled-back consumption cannot count as authorized.
-- [ ] Migration applies to disposable PostgreSQL 16 and existing 0000/0001 migrations stay unchanged.
-- [ ] Audit records are scoped/sanitized and omit secrets/PII; no anonymous audit data access.
-- [ ] No privileged PayPal action is implemented or callable; existing tool allowlist remains fail-closed.
-- [ ] No passwords/tokens in source, logs, environment examples, test snapshots or client bundle.
-- [ ] Existing 91 deterministic unit tests / 22 PG tests remain valid (update counts truthfully after implementation).
+- [x] From anonymous requests, protected routes fail with 401; `/health` remains available.
+- [x] Valid operator login creates a non-guessable session and safe cookie; invalid login has generic failure and is throttled.
+- [x] Expired, revoked, malformed and forged sessions fail; logout invalidates server-side session immediately.
+- [x] Wrong or absent Origin/CSRF on mutating routes fails; correctly authenticated request succeeds.
+- [x] Spoofed actor identifiers in body/headers/model/tool cannot produce `TrustedActor`.
+- [x] PostgreSQL adapter implements `ApprovalStore` exactly; mismatch in actor, action, resource, digest, expiry or consumed status cannot pass.
+- [x] **Two simultaneous clients** racing to consume the same grant yield exactly one success; a failed/rolled-back consumption cannot count as authorized.
+- [x] Migration applies to disposable PostgreSQL 16 and existing 0000/0001 migrations stay unchanged.
+- [x] Audit records are scoped/sanitized and omit secrets/PII; no anonymous audit data access.
+- [x] No privileged PayPal action is implemented or callable; existing tool allowlist remains fail-closed.
+- [x] No passwords/tokens in source, logs, environment examples, test snapshots or client bundle.
+- [x] Existing 91 deterministic unit tests / 22 PG tests remain valid (update counts truthfully after implementation).
 
 ## Allowed scope
 
@@ -68,3 +68,10 @@ Define targeted auth/session and PostgreSQL atomicity test objectives first. Run
 ## Delivery and gate
 
 Implement on this branch, use focused commits and keep the PR Draft. Reconcile `docs/STATUS.md` + the active handoff after implementation, then ask Codex for an independent exact-head security and concurrency audit (PASS / PARTIAL / FIX REQUIRED). No merge without new owner approval. No deploy/release. On completion, hand off to NMI-P2-I2 for owner-approved AI smoke and sandbox PayPal integration; do not start those capabilities implicitly.
+
+## Implementation record (Claude, NMI-P2-I1)
+Evidence for each checked criterion is in `tests` named in `docs/TESTING.md` and in handoff `NMI-P2-I1-C2`. Notes and deviations for the auditor:
+- Migrations `0000`/`0001` are unchanged. `0002` adds `operators`, `sessions` and `audit_log.request_id`/`outcome`; `0003` (custom SQL) adds the audit immutability triggers. A single-row unique index enforces the one-operator rule.
+- Expiry for sessions and approvals uses the database clock; the caller-supplied `now` in `ConsumeExpectation` is ignored by the PostgreSQL adapter.
+- The API now requires `DATABASE_URL` (PostgreSQL) and `SESSION_SECRET`; `.env.example` no longer defaults to SQLite. This does **not** decide the SQLite question.
+- Not done, by design: grant issuance, any approval HTTP route, PayPal writes, UI.

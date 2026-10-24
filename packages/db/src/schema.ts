@@ -121,14 +121,74 @@ export const paypalWebhookEvents = pgTable(
   (t) => [uniqueIndex("paypal_webhook_events_event_id_uq").on(t.paypalEventId)],
 );
 
-/** Append-only audit trail; the application role should have INSERT/SELECT only. */
-export const auditLog = pgTable("audit_log", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
-  actor: text("actor").notNull(),
-  action: text("action").notNull(),
-  resourceId: text("resource_id"),
-  detail: jsonb("detail")
-    .notNull()
-    .default(sql`'{}'::jsonb`),
-});
+/**
+ * Append-only audit trail. Immutability against UPDATE/DELETE/TRUNCATE is enforced by database
+ * triggers (migration 0003), not just by application convention. `detail` is an allow-listed,
+ * sanitized object (see audit.ts); never store credentials, tokens, cookies, emails or prompts.
+ */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    actor: text("actor").notNull(),
+    action: text("action").notNull(),
+    resourceId: text("resource_id"),
+    requestId: text("request_id"),
+    outcome: text("outcome"),
+    detail: jsonb("detail")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+  },
+  (t) => [
+    check(
+      "audit_log_outcome_allowed",
+      sql`${t.outcome} is null or ${t.outcome} in ('success','failure','denied','error')`,
+    ),
+    index("audit_log_at_idx").on(t.at),
+  ],
+);
+
+/**
+ * The single provisioned demo operator. No self-registration; created only by the explicit
+ * provisioning CLI. `password_hash` is a salted scrypt string, never a plaintext or reversible value.
+ */
+export const operators = pgTable(
+  "operators",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    username: text("username").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("operators_username_uq").on(t.username),
+    // Exactly one operator row may exist (constant-expression unique index).
+    uniqueIndex("operators_single_row_uq").on(sql`(true)`),
+    check("operators_username_format", sql`${t.username} ~ '^[a-z0-9._-]{3,64}$'`),
+    check("operators_password_hash_scheme", sql`${t.passwordHash} like 'scrypt$%'`),
+  ],
+);
+
+/** Server-side sessions. Only the SHA-256 of the opaque token is stored; the token never is. */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    operatorId: uuid("operator_id")
+      .notNull()
+      .references(() => operators.id, { onDelete: "cascade" }),
+    tokenHash: char("token_hash", { length: 64 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("sessions_token_hash_uq").on(t.tokenHash),
+    index("sessions_operator_idx").on(t.operatorId),
+    check("sessions_token_hash_hex", sql`${t.tokenHash} ~ '^[0-9a-f]{64}$'`),
+    check("sessions_expiry_after_creation", sql`${t.expiresAt} > ${t.createdAt}`),
+  ],
+);

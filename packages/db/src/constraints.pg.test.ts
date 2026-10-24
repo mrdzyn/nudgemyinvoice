@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CURRENCY_CODES } from "@nmi/shared";
 import { PRIVILEGED_ACTIONS, payloadDigest } from "@nmi/domain";
+import { applyMigrations, testDatabaseUrl } from "./testing/pg-scratch.js";
 
 /**
  * Real PostgreSQL constraint tests. They run ONLY when TEST_DATABASE_URL points at a disposable
@@ -13,31 +11,7 @@ import { PRIVILEGED_ACTIONS, payloadDigest } from "@nmi/domain";
  * never as passed). Each run applies the committed migrations, in journal order, into a fresh
  * schema that is dropped afterwards. Nothing persistent is touched or reset.
  */
-const url = process.env["TEST_DATABASE_URL"];
-if (!url && process.env["REQUIRE_DB_TESTS"] === "1") {
-  throw new Error("REQUIRE_DB_TESTS=1 but TEST_DATABASE_URL is not set; refusing to skip");
-}
-if (url) {
-  const dbName = new URL(url).pathname.replace(/^\//, "");
-  if (!/^nmi_test/.test(dbName)) {
-    throw new Error(`Refusing to run: database "${dbName}" is not a disposable nmi_test* database`);
-  }
-}
-
-const here = dirname(fileURLToPath(import.meta.url));
-const migrations = join(here, "..", "migrations");
-
-function migrationStatements(): string[] {
-  const journal = JSON.parse(readFileSync(join(migrations, "meta", "_journal.json"), "utf8")) as {
-    entries: { tag: string }[];
-  };
-  return journal.entries.flatMap((e) =>
-    readFileSync(join(migrations, `${e.tag}.sql`), "utf8")
-      .split("--> statement-breakpoint")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  );
-}
+const url = testDatabaseUrl();
 
 describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
   const schema = `t_${randomBytes(6).toString("hex")}`;
@@ -67,10 +41,7 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
     await client.connect();
     await client.query(`CREATE SCHEMA ${schema}`);
     await client.query(`SET search_path TO ${schema}`);
-    // Drizzle qualifies FK targets as "public"."table"; point them at this run's scratch schema.
-    for (const stmt of migrationStatements()) {
-      await client.query(stmt.replaceAll('"public".', `"${schema}".`));
-    }
+    await applyMigrations(client, schema);
     await client.query("BEGIN"); // every test runs inside one transaction that is rolled back
   });
 
@@ -109,6 +80,11 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         "approvals_approver_nonempty",
         "approvals_expiry_after_creation",
         "approvals_consumed_not_before_creation",
+        "operators_username_format",
+        "operators_password_hash_scheme",
+        "sessions_token_hash_hex",
+        "sessions_expiry_after_creation",
+        "audit_log_outcome_allowed",
       ].sort(),
     );
   });
@@ -237,6 +213,62 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
          VALUES ('sendInvoice','r',$1,'h', now() + interval '1 hour', now() - interval '1 day')`,
         [digest],
         "approvals_consumed_not_before_creation",
+      );
+    });
+  });
+
+  describe("operators, sessions, audit_log", () => {
+    const hash = "scrypt$16384$8$1$c2FsdA$aGFzaA";
+    const insertOp = `INSERT INTO operators (username, password_hash) VALUES ($1,$2)`;
+    it("accepts one well-formed operator and rejects a second row", async () => {
+      await client.query(insertOp, ["demo-operator", hash]);
+      await client.query("SAVEPOINT s2");
+      await expect(client.query(insertOp, ["another", hash])).rejects.toMatchObject({
+        code: "23505",
+        constraint: "operators_single_row_uq",
+      });
+      await client.query("ROLLBACK TO SAVEPOINT s2");
+    });
+    it.each([["UPPER"], ["ab"], ["has space"], ["x".repeat(65)]])(
+      "rejects malformed username %j",
+      async (u) => {
+        await client.query("SAVEPOINT s3");
+        await expect(client.query(insertOp, [u, hash])).rejects.toMatchObject({
+          code: "23514",
+          constraint: "operators_username_format",
+        });
+        await client.query("ROLLBACK TO SAVEPOINT s3");
+      },
+    );
+    it("rejects a plaintext-looking password hash", async () => {
+      await client.query("SAVEPOINT s4");
+      await expect(client.query("DELETE FROM operators")).resolves.toBeDefined();
+      await expect(client.query(insertOp, ["demo-operator", "hunter2"])).rejects.toMatchObject({
+        code: "23514",
+        constraint: "operators_password_hash_scheme",
+      });
+      await client.query("ROLLBACK TO SAVEPOINT s4");
+    });
+    it("rejects malformed session token hashes and non-future expiry", async () => {
+      const op = (await client.query("SELECT id FROM operators LIMIT 1")).rows[0].id as string;
+      const ins = `INSERT INTO sessions (operator_id, token_hash, expires_at) VALUES ($1,$2, now() + interval '1 hour')`;
+      await client.query("SAVEPOINT s5");
+      await expect(client.query(ins, [op, "not-hex"])).rejects.toMatchObject({ code: "23514" });
+      await client.query("ROLLBACK TO SAVEPOINT s5");
+      await client.query("SAVEPOINT s6");
+      await expect(
+        client.query(
+          `INSERT INTO sessions (operator_id, token_hash, expires_at) VALUES ($1,$2, now() - interval '1 hour')`,
+          [op, "a".repeat(64)],
+        ),
+      ).rejects.toMatchObject({ code: "23514", constraint: "sessions_expiry_after_creation" });
+      await client.query("ROLLBACK TO SAVEPOINT s6");
+    });
+    it("rejects an unknown audit outcome", async () => {
+      await expectCheckViolation(
+        `INSERT INTO audit_log (actor, action, outcome) VALUES ('a','auth.login',$1)`,
+        ["maybe"],
+        "audit_log_outcome_allowed",
       );
     });
   });
