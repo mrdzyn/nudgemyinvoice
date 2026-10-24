@@ -1,100 +1,74 @@
-# Architecture
+# NudgeMyInvoice — Proposed Architecture (NMI-P0)
 
-> Keep this document focused on the system as it exists or has been deliberately designed. Record durable rationale in `docs/PROJECT-MEMORY.md` when needed.
+Status: **planned; Phase 1 foundation in progress on a separate stacked branch**. Owner approves changes after independent review.
 
-## Architecture goals
-
-- Keep the system understandable and operable by humans and AI agents.
-- Prefer explicit boundaries and small components over hidden coupling.
-- Make testing and rollback practical.
-- Protect security/privacy boundaries by design.
-- Keep releases traceable to source and validation results.
-
-## System context
-
-[DESCRIBE THE PRODUCT, ITS USERS, EXTERNAL SYSTEMS, AND HIGH-LEVEL DATA FLOWS]
-
-## Technology stack
-
-| Layer | Technology | Notes |
-|---|---|---|
-| Client / UI | TBD | |
-| Application / API | TBD | |
-| Data store | TBD | |
-| Object/file storage | TBD | |
-| Authentication | TBD | |
-| Infrastructure | TBD | |
-| CI/CD | GitHub Actions + project-specific tooling | |
-| Observability | TBD | |
-
-## Component boundaries
-
-### Component 1 — [NAME]
-**Responsibility:**  
-[RESPONSIBILITY]
-
-**Owns:**  
-[DATA / LOGIC / INTERFACE]
-
-### Component 2 — [NAME]
-**Responsibility:**  
-[RESPONSIBILITY]
-
-**Owns:**  
-[DATA / LOGIC / INTERFACE]
-
-## Data model
-
-Describe:
-- authoritative data stores;
-- local caches;
-- personal/sensitive data;
-- retention/deletion behavior;
-- migrations;
-- export/import requirements.
-
-## External integrations
-
-| Integration | Purpose | Authentication | Failure behavior |
-|---|---|---|---|
-| TBD | | | |
-
-## Environments
-
-Recommended promotion model:
-
-```text
-local/dev → CI → staging/test → approved production
+## Context / components
+```mermaid
+flowchart TD
+  U[Human owner] --> W[React Vite + AG Studio dashboard]
+  W --> A[Fastify API / authenticated session]
+  A --> P[Policy + approval service]
+  A --> D[(Drizzle database)]
+  A --> AI[OpenAI SDK Responses API: parse + draft tools]
+  P --> PP[PayPal Invoicing sandbox API]
+  PP --> H[Signature-verified Fastify webhook]
+  H --> D
+  H --> P
+  C[Render scheduled job] --> A
 ```
 
-Document differences between environments and how configuration is supplied.
+UI must **not** hold PayPal or AI secrets or call money-moving PayPal endpoints directly.
 
-## Deployment model
+## Monorepo proposal
+```text
+apps/
+  web/                   # React/Vite, dashboard, review, approval and status
+  api/                   # Fastify routes, auth, webhook ingress
+packages/
+  shared/                # Zod contracts and ISO currency/decimal utilities
+  domain/                # approval policy, invoice state machine, overdue logic
+  db/                    # Drizzle schema, migrations, SQLite/Postgres adapters
+  ai/                    # OpenAI tool allowlist, model fixtures, prompt adapters
+  paypal/                # OAuth sandbox adapter, invoice reads/draft/send, webhook verification
+  test-fixtures/         # synthetic, sanitized PayPal/model events
+design/                   # retained project web design guidance, tokens and UI specs
+docs/                     # product, architecture, status, security, testing, release
+tasks/                    # bounded implementation and audit task contracts
+scripts/                  # project profile validator, later stack commands
+```
 
-[DESCRIBE BUILD, ARTIFACT, DEPLOYMENT, AND ROLLBACK FLOW]
+## State, data and trust boundaries
+- Entities (proposed): `invoices`, `invoice_items`, `contacts` (synthetic MVP), `approvals`, `paypal_webhook_events`, `payment_observations`, `agent_runs`, `audit_log`.
+- Every invoice has one currency code; persist amounts as strings/integers with currency-specific precision. No default FX conversion.
+- A PayPal invoice ID uniquely maps to one local record; event IDs unique; errors/retries recorded.
+- Human send/cancel/refund/etc. approvals bind actor, action, resource, amount/currency, canonical payload digest, expiry and idempotency key, with a state-machine that prevents double execution.
+- PENDING/partial/paid/refunded states derive from validated PayPal observations; events trigger reconciliation, not blind monetary state mutation.
+- Browser and agent messages are untrusted; validate at HTTP, service, PayPal and database boundaries.
+- Webhook receiver preserves raw request bytes; verify source/signature and replay window, dedup event IDs in a transaction; simulator mocks are NEVER allowed to pass as real payment evidence.
+- PayPal sandbox hostname is enforced server-side; no live environment fallback.
 
-Prefer promotion of a known artifact over rebuilding different code for each environment when the stack supports it.
+## Design-first flow
+Before material UI work: `docs/PRODUCT.md` -> screen map and flows -> mockups and required states -> owner visual approval -> fixture-backed UI shell -> secure business/API wiring -> automated tests -> manual QA.
 
-## Trust boundaries
+Suggested screens: Invoice dashboard (AG Grid); New invoice natural-language editor and structured preview; Approval details; Invoice detail/timeline; Overdue reminders and draft preview; Settings/sandbox status.
 
-Identify boundaries such as:
-- device ↔ backend;
-- public internet ↔ application;
-- tenant ↔ tenant;
-- application ↔ third-party service;
-- CI ↔ production;
-- human administrator ↔ customer data.
+## Planned tech
+- React, Vite, TS strict, AG Studio using the hackathon-linked 45-day trial. Implement a focused custom overdue widget when feasible. Verify exact license terms, key setup and post-trial demo availability; no unlicensed Enterprise redistribution.
+- Fastify; Zod; Drizzle; PostgreSQL on Render, SQLite local **with dialect equivalence demonstrated**.
+- Official `openai` Node SDK, Responses API structured output (`zodTextFormat`/`responses.parse`) with Zod re-validation of the result, server-side tool allowlist and deterministic model fixtures; model selected via `OPENAI_MODEL`, key via `OPENAI_API_KEY`. Single provider for the MVP.
+- PayPal Invoicing REST sandbox, OAuth client credentials, verification endpoint or documented cryptographic validation; read-only agent-tool allowlist.
+- Render web service/static assets, Postgres, cron/Workflows only if necessary for repeatable demo.
+- GitHub PR checks using canonical project baseline plus project stack jobs once scaffold exists.
 
-See `docs/SECURITY.md` for security requirements.
+## Architecture constraints / phased scope
+PayPal Invoicing is central for MVP; PayPal Orders/refunds are stretch only. The agent may propose actions, not execute privileged actions. APIMatic is coding-time API context. Scheduled overdue scanning creates drafts but never sends notifications. Evaluate local Postgres if maintaining two Drizzle dialects causes avoidable risk.
 
-## Architectural change policy
+## Failure model
+- AI fails/unavailable: manual entry fallback; no silently guessed payment/FX amounts.
+- PayPal timeout: retry only with idempotency and reconciliation; never blind resend.
+- Webhook forged/duplicate/out-of-order: reject or record non-mutating outcome; fetch authoritative state where needed.
+- Scheduled worker duplicate: unique job/run keys; draft-only side effects.
+- Render sandbox unavailable: local demo runbook and sanitized recorded fixtures, clearly labeled; no simulated payment claimed real.
 
-A material architecture change should include:
-1. updated architecture documentation;
-2. tests/validation appropriate to the risk;
-3. migration/rollback considerations;
-4. a durable project-memory entry when future agents need the rationale.
-
-## Diagrams
-
-Add Mermaid or image-based diagrams here or under `docs/` as the architecture becomes concrete.
+## Deployment
+Owner-approved sandbox-only Render service and database, with scoped environment secrets. Production PayPal hosts/credentials prohibited. Manual smoke verification and rollback documented in `docs/RELEASE.md`.

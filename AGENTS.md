@@ -243,3 +243,44 @@ Stop and ask for direction if:
 When responsibility passes to another agent, tool, conversation, or reviewer, follow `docs/HANDOFFS.md`: append one compact uniquely identified handoff section and update `docs/STATUS.md` so `Active handoff` points to it.
 
 Do not duplicate the full task contract, logs, or durable project decisions in the handoff. If no meaningful transfer of responsibility occurs, a normal concise completion summary is sufficient.
+
+## NudgeMyInvoice product-specific operating contract (NMI-P0)
+
+This section extends, and never weakens, the inherited human-gated operating model.
+
+### Product and scope
+- NudgeMyInvoice is a public MIT-licensed **PayPal sandbox-only** hackathon web app. No live PayPal endpoints, real merchant credentials, production money, escrow, autonomous refunds, or automatic outbound payment reminders.
+- One PayPal invoice has exactly one ISO 4217 currency. The app may manage USD/EUR/GBP/etc. invoices side by side but MUST NOT sum unlike currencies, invent FX quotes, or imply settlement currency equals invoice currency.
+- Build to the approved ~55-hour hackathon budget; do not add production SaaS, billing, subscriptions, a customer portal, multi-tenant onboarding, or other non-MVP scope without owner approval.
+
+### Planned architecture
+- `apps/web`: React + Vite + TypeScript + AG Studio dashboard (official hackathon 45-day trial, license terms verified before use) and approval UX.
+- `apps/api`: Node + TypeScript + Fastify HTTP API; PayPal REST sandbox client; webhook receiver.
+- `packages/shared`: schema validation and shared typed contracts; no privileged secrets.
+- `packages/db`: Drizzle data access with a Postgres deployment adapter and SQLite local adapter **only after parity tests**. If dual-dialect support threatens the deadline, escalate the alternative of local Postgres to the owner rather than silently substituting it.
+- `packages/ai`: official OpenAI Node SDK (`openai`), Responses API structured output validated with Zod, and a server-side tool allowlist. Model via `OPENAI_MODEL`, key via `OPENAI_API_KEY`. OpenAI is the only AI provider for the MVP; do not add a second.
+- `packages/paypal`: narrowly scoped HTTP adapter; SDK/context-plugin usage must be verified against official PayPal API docs.
+- `scripts/`: existing template profile validator plus future project-owned commands.
+- `docs/`: product/architecture/security/testing/release policy and current phase/task.
+No production application code is present at Phase 0.
+
+### NON-NEGOTIABLE payment approval boundary
+- AI and scheduled jobs may READ authorized records, PARSE input, PROPOSE actions, CREATE local drafts, prepare PayPal draft invoices when explicitly scoped, and DRAFT reminder text.
+- AI, background jobs, tool/MCP servers, and webhooks MUST NEVER independently trigger `sendInvoice`, `sendReminder`, `refundPayment`, `cancelInvoice`, `markPaid`, `captureOrder`, or any action capable of moving money or causing an external notification or irreversible financial state change.
+- Such calls require: authenticated human reviewer; record-specific authorization; server-side validation of exact target invoice, currency, amount and action; a one-time approval bound to an immutable payload digest and short expiry; durable audit log; idempotency key; and execution only after approval in the UI.
+- The backend, **not** the browser, the system prompt, or the LLM, must enforce the gate. An AGENT TOOL cannot be an alternate route around it.
+- No "auto-approve", default-allow, scheduled dispatch, or production-mode bypass. Ambiguity means fail closed.
+- Webhook reconciliation is an authenticated EXTERNAL observation, not human consent to refund/send/cancel. Verify PayPal signature before trusting the event, deduplicate durable event IDs, and retrieve/validate authoritative invoice state where required.
+- No raw card data; no secrets or full invoice PII in prompts, logs, screenshots, commits, demo assets, or untrusted issue comments.
+
+### Implementation conventions
+- TypeScript strict mode; explicit Zod schemas at all external boundaries; avoid `any` and unsafe casts.
+- Monetary values are precise decimal strings or minor-unit integers with currency-specific scale; never use floating-point arithmetic for amounts.
+- HTTP handlers must be thin; business rules live in pure domain functions/services; third-party APIs are replaceable adapters with fixtures.
+- Parameterized DB queries, limited CORS, secure sessions, CSRF defenses for mutating authenticated requests, strict content security policy where practical, request limits, redacted structured logs.
+- PayPal OAuth tokens and `OPENAI_API_KEY` remain server-side. Model output is untrusted input: validate with Zod before persistence or any PayPal call. Enforce sandbox hostname allowlist and fail on live values.
+- Deterministic Vitest model-fixture tests and sandbox contract tests; real sandbox smoke evidence is separate and never faked.
+- No fabricated features, demo claims, validation results, generated transaction IDs, or API responses.
+
+### Workflow
+Read `AGENTS.md`, `docs/STATUS.md`, `config/project-profile.json`, the active task, then relevant code. Read only the active handoff section if set. Do not load `docs/PROJECT-MEMORY.md` by default. For material UI work, get owner's design approval before shell implementation. Keep PRs Draft until independent exact-head audit; await explicit owner merge and deployment approval. Hosted CI unavailability never makes an unrun check PASS.

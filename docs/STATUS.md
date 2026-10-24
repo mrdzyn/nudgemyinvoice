@@ -1,42 +1,33 @@
 # Project Status
 
-> Operational state only. Historical merge details and rationale remain in reviewed PRs and handoffs.
+> Current operational state only. Durable decisions belong in docs/PROJECT-MEMORY.md.
 
 ## Project
-
-- **Name:** AI-Native Project Template
-- **Current phase:** P8.0 M3 — generated/brownfield CI integration
-- **Status:** Review — M3 implementation complete; ready for independent exact-head audit
+- **Name:** NudgeMyInvoice
+- **Mode:** Public MIT-licensed hackathon sandbox MVP
+- **Current phase:** NMI-P0 — greenfield foundation and pruning
+- **Status:** Review — Draft PR #1 ready for independent exact-head audit (AI provider migrated to OpenAI); owner merge approval pending
 - **Primary branch:** `main`
-- **Main SHA at task start:** `2d167b52bff2cce9506315b8615e53e84c62c642`
-- **Working branch:** `phase/p8-m3-generated-brownfield-ci`
-- **PR:** #24 — Draft until hosted CI is confirmed; then ready for independent review
-- **Active task:** `tasks/P8.0-m3-generated-brownfield-integration.md`
-- **Active handoff:** P8.0-C17
+- **Working branch:** `phase-0/nmi-bootstrap-pruning`
+- **Active task:** `tasks/NMI-P0-bootstrap.md`
+- **Active handoff:** NMI-P0-C1
 
 ## Completed
-
-- Phases 0–7, P8.0 M1/M2, and E1/E2a/E2b have merged.
-- E2b PR #23 was independently re-audited PASS and owner-approved for squash merge; `main` contains merge commit `2d167b52bff2cce9506315b8615e53e84c62c642`.
-- Live master `Protect Main` ruleset `23809419` requires **only** `Project baseline / Common validation`; `Template Integrity` is manual-only.
-- Owner chose Option B: Claude independent exact-head review and explicit human merge approval are process-only, not enforced by required GitHub approving reviews.
-- M3 documentation fixes in current branch: retain paired CI caller/reusable workflow and project validator in generated children; remove the three master-only files; reconcile stronger brownfield CI and post-merge release consumers; align old two-workflow descriptions.
-
-## Current objective / in-progress work
-
-- Implemented in `f91bf763151b6b3c0022098ff797ff9cf82ef505`: `validate_ci_caller_wiring()` in `scripts/validate_project_profile.py` — if `.github/workflows/ci.yml` has a job-level `jobs.<job_id>.uses: ./.github/workflows/common-validation.yml`, that workflow must exist; otherwise fail closed. No ci.yml, or a ci.yml that does not call the template, is unaffected (brownfield).
-- Extended the existing `scripts/test_validate_project_profile.py` (no new runner): unit cases plus a physically pruned child fixture built from the repo's real caller/callee/validator, asserting guarded master-only steps, child CLI success, missing-callee failure, brownfield (custom CI / no ci.yml) success, and leftover master workflow still rejected.
-- Codex P2 remediation (handoff P8.0-C17): caller detection replaced the line regex with stdlib `calls_common_validation()`, which ignores comments, block scalars (`run: |`) and step-level `uses:`; regression tests added; task file marks implemented work completed.
-- Local evidence: the three minimum scripts pass; a mutation (wiring check disabled) makes the self-test fail.
-- Independent exact-head audit and separate owner merge approval are pending.
+- Owner decision: OpenAI (official `openai` SDK, Responses API, `OPENAI_MODEL`/`OPENAI_API_KEY`) replaces the Anthropic plan; no second provider in the MVP.
+- Validation at `658b948`: `validate_project_profile.py` PASS (24 files); `git diff --check` clean; hosted `Project baseline / Common validation` success (read via REST; `gh pr checks` is unavailable here because it needs GraphQL). Re-verify at the final head.
+- Created public project repository from `mrdzyn/ai-native-project-template`.
+- Prepared project-specific product, architecture, security, release, tests, AGENTS, README, license, environment example, and ~55-hour plan.
+- Selected only web design capability; pruned master-only and unused optional packs on this branch.
 
 ## Next actions
-
-1. Confirm the single hosted Project Baseline CI run passes at the final PR head (master inventory and self-test steps included).
-2. Genuinely independent exact-head audit using `P8.0-C17`; then fresh owner merge approval. Do not merge or deploy automatically.
-3. M4 final integration/least-privilege audit; optional manual Template Integrity dispatch only if separately owner-approved.
+1. Verify exact branch tree against canonical `docs/REPOSITORY-SETUP.md` greenfield checklist and run `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice`.
+2. Verify real child PR emits `Project baseline / Common validation`; investigate hosted CI availability separately and never mark blocked CI as PASS.
+3. Obtain independent exact-head audit and owner approval before merge.
+4. Approve screen map/mockup for NMI-P1, then scaffold React/Fastify/DB on new bounded branch.
+5. Obtain PayPal sandbox and OpenAI keys locally or in secret storage before integration (never in the repository).
 
 ## Known limitations
-
-- Master child-fixture unit tests cannot prove a real child repository's GitHub Actions workflow syntax; real child PR verification is still required for end-to-end proof.
-- P5.1 testing-budget observability is optional/deferred. No new release/provider automation is planned.
+- No runnable MVP, live demo or verified PayPal sandbox event yet.
+- TypeScript stack CI jobs, real integration smoke tests, multi-dialect migrations, and Render deployment remain future tasks.
+- This documentation bootstrap neither authorizes production deployment nor any PayPal live transaction.
+- **Judging-period blocker to resolve:** AG Studio 45-day trial duration and Render Free Postgres 30-day expiry may end before Dec 15; plan sustainable demo access or tested local setup.
