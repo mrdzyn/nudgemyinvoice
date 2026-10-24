@@ -160,4 +160,29 @@ If an existing repository already has a handoff/continuation mechanism:
 <!-- HANDOFF_ENTRIES_START -->
 <!-- Append project handoff sections before HANDOFF_ENTRIES_END. -->
 
+## Handoff: NMI-P0-C1
+
+- **Task / phase:** `tasks/NMI-P0-bootstrap.md`
+- **From:** Claude Code (implementation)
+- **To:** independent exact-head auditor
+- **Branch:** `phase-0/nmi-bootstrap-pruning`
+- **Implementation head:** `c7519ce7a200404d038754a97b23f3f0bacea94a`
+- **PR:** #1 (Draft)
+- **State:** READY FOR REVIEW
+
+### Completed
+- AI provider plan migrated from Anthropic to OpenAI (Responses API, `OPENAI_API_KEY`/`OPENAI_MODEL`); no Anthropic references remain except the one memory-rationale mention.
+
+### Validation
+- `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice` — PASS (24 files)
+- `git diff --check` — PASS
+- Hosted `Project baseline / Common validation` — success on `658b948` (prior head); must be re-confirmed on the final head. `gh pr checks` is unusable in this environment (GraphQL blocked); REST/MCP check-runs were used instead.
+
+### Continuation notes
+- Handoff-only commit follows the implementation head above.
+- PR #1 stays Draft; do not merge. Phase 1 is stacked on this branch (`phase-1/nmi-app-foundation`).
+
+### Next action
+Audit the exact PR #1 head against `tasks/NMI-P0-bootstrap.md` and `docs/REPOSITORY-SETUP.md`.
+
 <!-- HANDOFF_ENTRIES_END -->
