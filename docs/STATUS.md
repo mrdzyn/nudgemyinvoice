@@ -6,11 +6,11 @@
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal sandbox hackathon MVP
 - **Current phase:** NMI-P2-I1 — authenticated operator and PostgreSQL atomic approval foundation
-- **Status:** IMPLEMENTED — Draft PR #3 ready for independent Codex exact-head security/concurrency audit (not self-certified); owner merge approval pending
+- **Status:** C3 REMEDIATION IMPLEMENTED — independent audit of `7df7b7a` was FIX REQUIRED (two MEDIUM auth races); Draft PR #3 awaits Codex C3 re-audit of the new head (not self-certified); owner merge approval pending
 - **Primary branch:** `main` (`56ca7392c6b7f9f63d0f8fe484bb84835378dc26`)
 - **Working branch:** `phase-2/nmi-auth-atomic-approval-i1` (base `main`)
 - **Active task:** `tasks/NMI-P2-I1-auth-atomic-approvals.md`
-- **Active handoff:** NMI-P2-I1-C2
+- **Active handoff:** NMI-P2-I1-C3
 
 ## Completed
 - NMI-P0 PR #1: independently audited PASS; squash merged as `13ad78a`.
@@ -19,9 +19,10 @@
 - Owner directed start of Phase 2. Increment 1 is backend-only, so no material UI shell or design-gate bypass is involved.
 
 ## Current work
-- **Implemented (backend only):** single-operator authentication (`/api/auth/login|session|logout`, scrypt, hashed server-side sessions, Origin + CSRF + throttling, `TrustedActor` only from validated sessions); `PostgresApprovalStore` (one conditional `UPDATE ... RETURNING`, database-clock expiry); audit sink with allow-listed detail and DB triggers making `audit_log` append-only; migrations `0002`, `0003` (`0000`/`0001` unchanged).
-- **Evidence (manual CI at implementation SHA `112208d93b47d6a0341377778568a6e3110dbd57`, PostgreSQL 16.15):** 125 tests without a database + 74 real-PostgreSQL tests (30 constraints, 19 approval store incl. concurrency, 25 auth) = 199 passing; `pnpm test:db` 74/74 over three PG suites; eight deliberate mutants (non-atomic consume, missing approver/expiry/consumed checks, CSRF, Origin, revocation, password check) each made tests fail. Details in handoff `NMI-P2-I1-C2`. **Hosted CI ran on `db6ea1ceb1c5c7c07ecd24ab48405ff304d5e2d6` (implementation `112208d` plus the handoff commit): `Project baseline / Common validation` and `Stack validation` both succeeded** (runs 40094020506, 40094020500; Stack includes a `postgres:16` service running `pnpm test:db`). Any later docs-only commit needs its own hosted result.
-- **Still not true / not built:** no route issues or consumes approvals (no grant issuer); no PayPal write; no UI; throttling is in-memory per process; the audit-log role separation (INSERT/SELECT-only app role) is a deployment task; the Postgres-only vs SQLite decision remains with the owner.
+- **Audit history (PR #3):** C2 audit of `7df7b7a` = **FIX REQUIRED** (preserved): (1) a login verified under an old password could create a usable session after password rotation; (2) parallel guesses bypassed login throttling.
+- **C3 remediation (implementation SHA `013945b854ca7f4ac4eea44494710466e5b1d2b4`):** `operators.credential_version` (forward migration `0004`; `0000`-`0003` unchanged) with version-proved single-statement session issuance and one-transaction rotation; synchronous atomic two-budget admission (`AttemptLimiter`) plus bounded concurrent hashing (`BoundedWorkGate`) with `429` before any lookup/hashing. The earlier C2 implementation (auth, `PostgresApprovalStore`, audit triggers) is otherwise unchanged. The earlier C2 evidence does not transfer to this SHA.
+- **Evidence (manual CI at `013945b`, PostgreSQL 16.15, pnpm 10.28.0, clean frozen install):** 140 tests without a database + 108 against real PostgreSQL (31 constraints, 19 approval store, 25 auth, 16 auth-store race, 17 login-race) = 248 passing; `pnpm test:db` 108/108 over five PG suites; lint, format, typecheck, build, bundle scan, `pnpm audit --prod --audit-level high`, migration sync all pass; the store race suite ran 20 consecutive times and the login-race suite with it 10 more times, no failures. Mutation controls: every deliberate re-introduction of a defect failed tests, except one equivalent mutant (see handoff). `0004` was also applied on top of a database holding an existing operator and session (data preserved).
+- **Still not true / not built:** no route issues or consumes approvals (no grant issuer); no PayPal write; no UI; throttling is in-memory per process; consume and audit are separate statements; the audit-log role separation (INSERT/SELECT-only app role) is a deployment task; the Postgres-only vs SQLite decision remains with the owner.
 
 ## CI and review
 - Owner reported GitHub-hosted Actions unavailable until November 2026, but runs executed for this PR's head; record hosted results only for SHAs where they actually ran, and never claim PASS for unrun checks.
