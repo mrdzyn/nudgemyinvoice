@@ -258,3 +258,21 @@ Before release:
 - confirm migration/rollback readiness;
 - complete platform/store-specific checks;
 - complete the applicable release QA/manual validation gate.
+
+## NudgeMyInvoice objective-based validation contract
+
+Phase 0: run `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice`; verify greenfield pruning and paired CI workflow. The actual Github PR `Project baseline / Common validation` status is a separate gate. There is no TypeScript stack to test yet.
+
+After scaffold, add a project-owned CI sibling job covering `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` using a locked dependency install; configure as required when real checks and stable emitted contexts exist. Include dependency and secret checks.
+
+Required objective groups before demo:
+- AI parser: fixture-based schema output, ambiguous/missing currency or due date, invalid numeric units, prompt injection rejection, sensible manual fallback.
+- Currency math: supported fraction digits, exact totals, zero FX assumptions, no aggregation across currencies.
+- Human approval: authorization, exact payload digest, expiry, replay/double click, simulated model/tool/cron bypass attempts.
+- PayPal: real sandbox OAuth/draft/send API smoke and verified invoice payment event; normalize status and handle partial/pending correctly.
+- Webhooks: invalid/missing signature, replay window, duplicate event ID, out-of-order events, stored transactional idempotency.
+- UI: loading/empty/error/overdue, keyboard/zoom/responsive, human approval details and declined state, AG Grid sort/filter/currency grouping.
+
+Separate model fixtures, fake PayPal events and live sandbox smoke evidence. Mock/simulator events alone do NOT prove payment processing. An unexecuted hosted CI job remains NOT PASS; any documented runner-credit exception must meet `docs/REPOSITORY-SETUP.md` exact-HEAD human procedure and be explicitly scoped to this repo/PR.
+
+Before demo/release: clean clone/run instructions on separate machine, verified sandbox transaction, API secrets not in logs, screen-reader smoke, no disabled review gates, owner-approved Render deploy and <3-minute video.

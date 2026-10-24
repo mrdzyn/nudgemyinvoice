@@ -1,11 +1,13 @@
 {
   "schemaVersion": 1,
-  "repositoryMode": "template",
+  "repositoryMode": "project",
   "capabilities": {
-    "design": false,
+    "design": true,
     "storeRelease": false
   },
-  "platforms": [],
+  "platforms": [
+    "web"
+  ],
   "storefronts": [],
   "integrations": []
 }

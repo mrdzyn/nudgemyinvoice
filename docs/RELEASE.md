@@ -154,3 +154,13 @@ After release:
 - capture meaningful production feedback;
 - create bounded follow-up tasks;
 - update `docs/STATUS.md` when project state changes materially.
+
+## NudgeMyInvoice hackathon release controls
+
+The only permitted environment for the submitted application is a **PayPal sandbox** connected to synthetic demo invoices; no live PayPal API endpoint or real money. Release is human authorized, not implied by successful tests or UI approval.
+
+Before deploying to Render: confirm `PAYPAL_ENV=sandbox` startup guard, redact logs, set HTTPS and secure session flags, restrict dashboard to demo credentials, configure valid registered sandbox webhook URL/ID, database migrations, health endpoint, and privacy-appropriate reset of synthetic data.
+
+Owner release gate: exact SHA + required checks or approved documented CI-unavailability exception; independent audit, manual sandbox PayPal smoke, working runbook, accessible responsive QA, approval bypass regression and rollback plan. Owner must explicitly approve deploy; do not auto-publish via CI by default.
+
+Devpost deliverables: public repo + MIT LICENSE, demonstrated working sandbox app or verified setup commands, honest tools-used list, <3-minute original unencumbered video, submission answers. Schedule deployment/verification by Nov 9 Manila, ahead of Nov 12 12 PM PST deadline.
