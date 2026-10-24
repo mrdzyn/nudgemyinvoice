@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "repositoryMode": "template",
+  "capabilities": {
+    "design": false,
+    "storeRelease": false
+  },
+  "platforms": [],
+  "storefronts": [],
+  "integrations": []
+}

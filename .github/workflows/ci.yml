@@ -1,0 +1,19 @@
+name: Project Baseline CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-baseline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  project-baseline:
+    name: Project baseline
+    permissions:
+      contents: read
+    uses: ./.github/workflows/common-validation.yml

@@ -1,0 +1,35 @@
+name: Template Integrity
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: template-integrity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  template-integrity:
+    name: Template integrity
+    if: github.repository == 'mrdzyn/ai-native-project-template'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Validate complete master-template capability inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/validate_master_template.py
+
+
+      - name: Self-test capability profile matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/test_validate_project_profile.py
