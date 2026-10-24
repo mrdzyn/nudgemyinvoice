@@ -1,11 +1,11 @@
 # NMI-P1 — Application Foundation and OpenAI Invoice Parsing
 
-- **Status:** Review (stacked on NMI-P0; pending CI, independent audit, owner design approval and merge approval)
+- **Status:** Review (reconciled onto `main` after the NMI-P0 squash merge; pending independent verification of the new head, CI or approved exception, owner design approval and merge approval)
 - **Owner/orchestrator:** project owner
 - **Implementation agent:** Claude Code
-- **Target branch:** `phase-0/nmi-bootstrap-pruning` (stacked; retarget to `main` after PR #1 merges)
+- **Target branch:** `main`
 - **Working branch:** `phase-1/nmi-app-foundation`
-- **Dependency:** PR #1 (NMI-P0) must merge first. Do not merge this PR before PR #1.
+- **Dependency:** PR #1 (NMI-P0) is merged (`13ad78a`). This branch was reconciled onto `main` in C3.
 
 ## Objective
 Provide a strict-TypeScript pnpm workspace with a health-only API, a placeholder web app, shared exact-money contracts, an OpenAI structured invoice parser that treats model output as untrusted, the approval/tool-allowlist primitives, a replaceable PayPal sandbox adapter interface, and a database schema/migration strategy.
@@ -37,4 +37,6 @@ No invoice send, reminder send, cancel, refund, capture or mark-paid implementat
 - [x] Drizzle PostgreSQL schema and generated migration; dialect recommendation recorded.
 - [x] Stack CI workflow added alongside unchanged baseline caller/reusable pair.
 - [x] C2 audit remediation (independent audit of `393052a` = PARTIAL): trusted-actor + `consumeIfMatches` approval contract; PostgreSQL CHECK constraints + migration `0001`; expanded negative tests; calendar-valid reference date. Limits: no auth; DB atomicity of approval consumption unproven until the PostgreSQL adapter exists.
-- [ ] Hosted CI green at final head; independent exact-head audit; owner design approval (blocks UI shell work).
+- [x] C2 independent audit of `d481449` = PASS (original evidence; applies to that SHA only).
+- [x] C3 reconciliation onto squash-merged `main`: cherry-picked the four non-merge Phase 1 commits; tree identical to audited `d481449`; no features added.
+- [ ] Fresh independent verification of the reconciled head; hosted CI actually executed, or manual validation plus owner-approved CI-unavailable exception; independent exact-head audit; owner design approval (blocks UI shell work).

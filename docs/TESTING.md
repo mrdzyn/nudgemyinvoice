@@ -107,6 +107,9 @@ Required CI remains the normal merge gate. When GitHub-hosted CI cannot execute 
 
 `docs/REPOSITORY-SETUP.md` is the canonical source for eligibility, evidence, equivalent validation, independent review, owner/admin approval, PR-only bypass, trigger-economy, and optional self-hosted-runner guidance.
 
+### Project note: manual CI while Actions are unavailable
+The owner reports hosted GitHub Actions may be unavailable until November 2026. Every new commit then needs the full manual validation set listed in `docs/STATUS.md`, with exact commands, counts and SHA recorded in the PR or handoff. Hosted checks that did not run are NOT PASS, and a previous PASS never carries over to new SHAs. A real failure is never excused by this exception.
+
 ## Risk-proportionate testing ladder
 
 Use this as a default, then adapt to the actual project:

@@ -237,4 +237,34 @@ Audit the exact head; then obtain owner design approval before any UI shell work
 ### Next action
 Re-audit the exact PR #2 head against the four findings; do not merge.
 
+## Handoff: NMI-P1-C3
+
+- **Task / phase:** `tasks/NMI-P1-foundation.md`
+- **From:** Claude Code (post-squash reconciliation)
+- **To:** independent auditor (Codex)
+- **Branch:** `phase-1/nmi-app-foundation` (PR #2, Draft, base `main`)
+- **Implementation head:** `65699fc32b1a6e45fbc9017f9e8fedaf893d7efa` (docs-only commit follows; the PR head is authoritative)
+- **PR:** #2
+- **State:** READY FOR RE-VERIFICATION (prior PASS applies only to `d481449`)
+
+### Completed
+- `main` = `13ad78a` (PR #1 squash). Squash tree equals original Phase 0 head `a711673` tree.
+- Phase 1 rebuilt on `main` by cherry-picking `97a4ab5`, `393052a`, `bfadda5`, `d481449` (merge commit `90091fb` intentionally not replayed); no conflicts. Tree `6f58e0066ba860d090d0e3596b179e577d853db2` is identical to audited `d481449`. Recovery: branch `backup/phase-1-d481449`, tag `recovery/nmi-p1-d481449`.
+
+### Validation
+Manual, at `65699fc`, pnpm 10.28.0, `--frozen-lockfile`, PostgreSQL 16.15 disposable `nmi_test`:
+- profile validator PASS (24 files); lint PASS; format:check PASS; typecheck PASS
+- `pnpm test` 7 files / 113 tests PASS (includes 22 DB tests; 91 pass + 22 skipped without a DB URL)
+- `pnpm test:db` 22/22 PASS; build PASS; bundle secret scan clean (2 files)
+- `pnpm audit --prod --audit-level high` no known vulnerabilities
+- `pnpm db:generate` no changes; migration directory clean; `git diff --check` clean
+- Hosted CI for the new SHAs: see PR checks; if not executed it is NOT PASS (owner-reported Actions limitation until Nov 2026).
+
+### Continuation notes
+- Verify: audited functionality preserved; no Phase 0 duplication; migrations `0000`/`0001` intact; financial boundaries unchanged (no send/cancel/refund/capture/mark-paid, no auth, no webhook); PR base `main`; diff vs `main` equals `a711673..d481449`.
+- Still open: DB atomicity of approval consume unproven (needs PostgreSQL adapter); owner decisions on design, Postgres-only, AG Studio licence; Phase 2 not started.
+
+### Next action
+Independently verify the exact PR #2 head against this list; do not merge.
+
 <!-- HANDOFF_ENTRIES_END -->
