@@ -6,7 +6,7 @@ import { PostgresAuthStore, createAuditSink, createDb } from "@nmi/db";
 import { createScratchDatabase, testDatabaseUrl, type ScratchDatabase } from "@nmi/db/testing";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
-import { baseEnv } from "./app.test.js";
+import { baseEnv } from "./test-support.js";
 import { provisionOperator, ProvisionError } from "./auth/provision.js";
 
 /**

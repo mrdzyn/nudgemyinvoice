@@ -1,21 +1,9 @@
-import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import pg from "pg";
 import { createDb, type AuditEvent } from "@nmi/db";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
-
-export const baseEnv = {
-  NODE_ENV: "test",
-  PAYPAL_ENV: "sandbox",
-  PAYPAL_API_BASE_URL: "https://api-m.sandbox.paypal.com",
-  OPENAI_API_KEY: "sk-test-secret-value",
-  OPENAI_MODEL: "m",
-  DATABASE_URL: "postgres://nobody@127.0.0.1:1/nmi_test_unused",
-  // Random per run: no secret-looking literal lives in the repository.
-  SESSION_SECRET: randomBytes(32).toString("hex"),
-  WEB_ORIGIN: "http://localhost:5173",
-};
+import { baseEnv } from "./test-support.js";
 
 /** No database is reachable in these tests; a recording fake stands in for the audit sink. */
 function offlineApp() {
