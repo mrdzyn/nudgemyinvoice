@@ -210,4 +210,31 @@ Audit the exact PR #1 head against `tasks/NMI-P0-bootstrap.md` and `docs/REPOSIT
 ### Next action
 Audit the exact head; then obtain owner design approval before any UI shell work.
 
+## Handoff: NMI-P1-C2
+
+- **Task / phase:** `tasks/NMI-P1-foundation.md`
+- **From:** Claude Code (implementation, audit remediation)
+- **To:** independent re-auditor (Codex)
+- **Branch:** `phase-1/nmi-app-foundation` (stacked on `phase-0/nmi-bootstrap-pruning`)
+- **Implementation head:** `bfadda59eaa5298c0b615c5817e9ccd1619a8d48` (handoff-only commit follows; previous audited head `393052a96dc11dc1e2580bff95ca3a1af79f3d1c`)
+- **PR:** #2 (Draft)
+- **State:** READY FOR RE-AUDIT (prior verdict PARTIAL; not self-certified)
+
+### Completed
+- Finding 1: trusted-actor/approver binding and `consumeIfMatches` contract (`packages/domain`).
+- Finding 2: 13 new CHECK constraints, migration `0001`, real-PostgreSQL tests (`packages/db`).
+- Finding 3: expanded negative tests (tool dispatch, approval, concurrency, mutation).
+- Finding 4: reference-date calendar validation (`packages/ai`, `packages/shared`).
+
+### Validation
+- Unit tests (in-memory store): see PR; PostgreSQL 16 local disposable run: constraint suite 22/22 pass; negative controls (weakened store, removed constraint) fail as expected.
+- Hosted Stack CI (with `postgres:16` service) and baseline: see PR checks for the exact head.
+
+### Continuation notes
+- Approval atomicity on a real database remains UNPROVEN until a PostgreSQL adapter passes the store contract. No auth exists; `TrustedActor` is test-constructed.
+- Owner decisions still pending: design approval, Postgres-only, AG Studio licence.
+
+### Next action
+Re-audit the exact PR #2 head against the four findings; do not merge.
+
 <!-- HANDOFF_ENTRIES_END -->
