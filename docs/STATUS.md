@@ -6,11 +6,11 @@
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal sandbox hackathon MVP
 - **Current phase:** NMI-P2-I1 — authenticated operator and PostgreSQL atomic approval foundation
-- **Status:** AUTHORIZED / TASK BOOTSTRAPPED — code implementation not yet started; Draft PR for Claude implementation and independent Codex audit
+- **Status:** IMPLEMENTED — Draft PR #3 ready for independent Codex exact-head security/concurrency audit (not self-certified); owner merge approval pending
 - **Primary branch:** `main` (`56ca7392c6b7f9f63d0f8fe484bb84835378dc26`)
 - **Working branch:** `phase-2/nmi-auth-atomic-approval-i1` (base `main`)
 - **Active task:** `tasks/NMI-P2-I1-auth-atomic-approvals.md`
-- **Active handoff:** NMI-P2-I1-C1
+- **Active handoff:** NMI-P2-I1-C2
 
 ## Completed
 - NMI-P0 PR #1: independently audited PASS; squash merged as `13ad78a`.
@@ -19,9 +19,9 @@
 - Owner directed start of Phase 2. Increment 1 is backend-only, so no material UI shell or design-gate bypass is involved.
 
 ## Current work
-- NMI-P2-I1 task/branch/Draft PR preparation is docs-only. **No authentication, database approval adapter, or audit instrumentation is implemented yet.**
-- Build authenticated operator session boundary, PostgreSQL `ApprovalStore.consumeIfMatches` with real concurrency tests, and minimal audit trail. Keep PayPal writes disabled.
-- Read only the active task and relevant source/tests. Follow `AGENTS.md` and `docs/TESTING.md`.
+- **Implemented (backend only):** single-operator authentication (`/api/auth/login|session|logout`, scrypt, hashed server-side sessions, Origin + CSRF + throttling, `TrustedActor` only from validated sessions); `PostgresApprovalStore` (one conditional `UPDATE ... RETURNING`, database-clock expiry); audit sink with allow-listed detail and DB triggers making `audit_log` append-only; migrations `0002`, `0003` (`0000`/`0001` unchanged).
+- **Evidence (manual CI at implementation SHA `112208d93b47d6a0341377778568a6e3110dbd57`, PostgreSQL 16.15):** 125 tests without a database + 74 real-PostgreSQL tests (30 constraints, 19 approval store incl. concurrency, 25 auth) = 199 passing; `pnpm test:db` 74/74 over three PG suites; eight deliberate mutants (non-atomic consume, missing approver/expiry/consumed checks, CSRF, Origin, revocation, password check) each made tests fail. Details in handoff `NMI-P2-I1-C2`. **Hosted CI did not run and is NOT PASS.**
+- **Still not true / not built:** no route issues or consumes approvals (no grant issuer); no PayPal write; no UI; throttling is in-memory per process; the audit-log role separation (INSERT/SELECT-only app role) is a deployment task; the Postgres-only vs SQLite decision remains with the owner.
 
 ## CI and review
 - Owner reports GitHub-hosted Actions unavailable until November 2026. Do not claim hosted CI PASS for unrun checks.
