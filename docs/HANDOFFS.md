@@ -185,4 +185,29 @@ If an existing repository already has a handoff/continuation mechanism:
 ### Next action
 Audit the exact PR #1 head against `tasks/NMI-P0-bootstrap.md` and `docs/REPOSITORY-SETUP.md`.
 
+## Handoff: NMI-P1-C1
+
+- **Task / phase:** `tasks/NMI-P1-foundation.md`
+- **From:** Claude Code (implementation)
+- **To:** independent exact-head auditor; project owner (design approval)
+- **Branch:** `phase-1/nmi-app-foundation` (stacked on `phase-0/nmi-bootstrap-pruning`)
+- **Implementation head:** see PR head; handoff-only commit follows the implementation commit `97a4ab5`
+- **PR:** stacked Draft against PR #1's branch
+- **State:** READY FOR REVIEW
+
+### Completed
+- Workspace, health API, placeholder web, exact-money contracts, OpenAI parser, approval gate, tool allowlist, PayPal interfaces, Postgres schema + migration, stack CI, draft screen designs.
+
+### Validation
+- `pnpm lint`, `format:check`, `typecheck`, `test` (52 pass), `build`, `check:bundle`, `pnpm audit --prod` — PASS locally.
+- Hosted Stack CI / Project baseline on final head — see PR; not claimed here.
+- Real OpenAI and PayPal sandbox calls — NOT RUN (no keys).
+
+### Continuation notes
+- Owner decisions pending: design approval (`design/nmi-p1/SCREENS.md`), local Postgres vs SQLite (`docs/ARCHITECTURE.md`), AG Studio licence/trial terms.
+- `createOpenAIInvoiceClient` is typechecked but unexercised against the live API; first real smoke test should confirm `responses.parse` + `zodTextFormat` behavior and a supported `OPENAI_MODEL`.
+
+### Next action
+Audit the exact head; then obtain owner design approval before any UI shell work.
+
 <!-- HANDOFF_ENTRIES_END -->
