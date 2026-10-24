@@ -15,6 +15,7 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
+    "test:db": "REQUIRE_DB_TESTS=1 vitest run packages/db",
     "build": "pnpm -r --if-present build",
     "check:bundle": "node scripts/check-bundle-secrets.mjs",
     "db:generate": "pnpm --filter @nmi/db generate",

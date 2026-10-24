@@ -12,6 +12,18 @@ import {
 const MAX_LINE_ITEMS = 50;
 const MAX_TEXT = 200;
 
+/** True only for a real calendar date written exactly as YYYY-MM-DD (rejects 2026-02-30, 2026-13-01, 2026-1-1). */
+export function isValidIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split("-").map(Number) as [number, number, number];
+  // Date.UTC maps years 0-99 to 1900-1999, so set the full year explicitly.
+  const date = new Date(0);
+  date.setUTCFullYear(y, m - 1, d);
+  return (
+    y >= 1 && date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d
+  );
+}
+
 /** Strips control characters and collapses whitespace in untrusted text. */
 export function sanitizeText(value: string): string {
   const printable = Array.from(value, (ch) => {
@@ -42,7 +54,7 @@ export const invoiceDraftSchema = z.strictObject({
   customerEmail: z.string().max(254).email(),
   currency: currencyCodeSchema,
   lineItems: z.array(lineItemSchema).min(1).max(MAX_LINE_ITEMS),
-  dueDate: z.iso.date(),
+  dueDate: z.string().refine(isValidIsoDate, "Must be a valid YYYY-MM-DD date"),
   taxPercent: decimalString.nullable(),
   discount: discountSchema.nullable(),
 });

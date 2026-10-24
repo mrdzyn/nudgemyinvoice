@@ -12,6 +12,12 @@ import {
   date,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { CURRENCY_CODES } from "@nmi/shared";
+import { PRIVILEGED_ACTIONS } from "@nmi/domain";
+
+// Literal lists come from the domain constants (never user input), so persistence cannot drift
+// from the contract. Changing either list requires a new migration.
+const quoted = (xs: readonly string[]) => sql.raw(xs.map((x) => `'${x}'`).join(","));
 
 /** Money is stored as integer minor units plus an explicit ISO currency; there are no floats. */
 const money = (name: string) => bigint(name, { mode: "bigint" });
@@ -40,7 +46,17 @@ export const invoices = pgTable(
   },
   (t) => [
     uniqueIndex("invoices_paypal_invoice_id_uq").on(t.paypalInvoiceId),
+    check("invoices_subtotal_nonneg", sql`${t.subtotalMinor} >= 0`),
+    check("invoices_discount_nonneg", sql`${t.discountMinor} >= 0`),
+    check("invoices_tax_nonneg", sql`${t.taxMinor} >= 0`),
     check("invoices_total_nonneg", sql`${t.totalMinor} >= 0`),
+    check("invoices_discount_le_subtotal", sql`${t.discountMinor} <= ${t.subtotalMinor}`),
+    // Per-line sums cannot be a CHECK; the application computes subtotal from items exactly.
+    check(
+      "invoices_total_consistent",
+      sql`${t.totalMinor} = ${t.subtotalMinor} - ${t.discountMinor} + ${t.taxMinor}`,
+    ),
+    check("invoices_currency_supported", sql`${t.currency} in (${quoted(CURRENCY_CODES)})`),
     check(
       "invoices_status_chk",
       sql`${t.status} in ('draft','sent','paid','partially_paid','cancelled','refunded')`,
@@ -49,15 +65,22 @@ export const invoices = pgTable(
   ],
 );
 
-export const invoiceItems = pgTable("invoice_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  invoiceId: uuid("invoice_id")
-    .notNull()
-    .references(() => invoices.id, { onDelete: "cascade" }),
-  description: text("description").notNull(),
-  quantityHundredths: bigint("quantity_hundredths", { mode: "bigint" }).notNull(),
-  unitPriceMinor: money("unit_price_minor").notNull(),
-});
+export const invoiceItems = pgTable(
+  "invoice_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    description: text("description").notNull(),
+    quantityHundredths: bigint("quantity_hundredths", { mode: "bigint" }).notNull(),
+    unitPriceMinor: money("unit_price_minor").notNull(),
+  },
+  (t) => [
+    check("invoice_items_quantity_positive", sql`${t.quantityHundredths} > 0`),
+    check("invoice_items_unit_price_nonneg", sql`${t.unitPriceMinor} >= 0`),
+  ],
+);
 
 /** One-time approvals bound to action + resource + payload digest, with expiry. */
 export const approvals = pgTable(
@@ -72,7 +95,17 @@ export const approvals = pgTable(
     consumedAt: timestamp("consumed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("approvals_resource_idx").on(t.action, t.resourceId)],
+  (t) => [
+    index("approvals_resource_idx").on(t.action, t.resourceId),
+    check("approvals_action_allowed", sql`${t.action} in (${quoted(PRIVILEGED_ACTIONS)})`),
+    check("approvals_payload_digest_sha256_hex", sql`${t.payloadDigest} ~ '^[0-9a-f]{64}$'`),
+    check("approvals_approver_nonempty", sql`length(${t.approverId}) > 0`),
+    check("approvals_expiry_after_creation", sql`${t.expiresAt} > ${t.createdAt}`),
+    check(
+      "approvals_consumed_not_before_creation",
+      sql`${t.consumedAt} is null or ${t.consumedAt} >= ${t.createdAt}`,
+    ),
+  ],
 );
 
 export const paypalWebhookEvents = pgTable(

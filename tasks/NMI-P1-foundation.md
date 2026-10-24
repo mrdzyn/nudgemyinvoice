@@ -36,4 +36,5 @@ No invoice send, reminder send, cancel, refund, capture or mark-paid implementat
 - [x] `PayPalInvoicingReadDraft` / `PayPalInvoicingPrivileged` interfaces only; sandbox host guard.
 - [x] Drizzle PostgreSQL schema and generated migration; dialect recommendation recorded.
 - [x] Stack CI workflow added alongside unchanged baseline caller/reusable pair.
+- [x] C2 audit remediation (independent audit of `393052a` = PARTIAL): trusted-actor + `consumeIfMatches` approval contract; PostgreSQL CHECK constraints + migration `0001`; expanded negative tests; calendar-valid reference date. Limits: no auth; DB atomicity of approval consumption unproven until the PostgreSQL adapter exists.
 - [ ] Hosted CI green at final head; independent exact-head audit; owner design approval (blocks UI shell work).

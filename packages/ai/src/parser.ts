@@ -3,6 +3,7 @@ import {
   invoiceDraftSchema,
   isSupportedCurrency,
   CURRENCY_CODES,
+  isValidIsoDate,
   MoneyError,
   type ClarificationRequest,
   type ParseOutcome,
@@ -44,6 +45,17 @@ const ASK: Record<string, string> = {
  * persists data or touches PayPal.
  */
 export async function parseInvoiceRequest(text: string, opts: ParseOptions): Promise<ParseOutcome> {
+  // The reference date drives lexicographic comparison, so it must be a real calendar date.
+  // A bad value is a caller bug: refuse before any model call and say nothing provider-related.
+  if (!isValidIsoDate(opts.today)) {
+    return {
+      status: "invalid",
+      errors: [{ path: "today", message: "Reference date must be a valid YYYY-MM-DD date" }],
+    };
+  }
+  if (typeof text !== "string") {
+    return { status: "invalid", errors: [{ path: "input", message: "Request must be text" }] };
+  }
   const trimmed = text.trim();
   if (trimmed.length === 0) {
     return { status: "invalid", errors: [{ path: "input", message: "Request is empty" }] };

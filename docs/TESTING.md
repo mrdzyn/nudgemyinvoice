@@ -269,7 +269,9 @@ Required objective groups before demo:
 - AI parser: fixture-based schema output, ambiguous/missing currency or due date, invalid numeric units, prompt injection rejection, sensible manual fallback.
 - AI provider: deterministic tests use an injected fake `InvoiceModelClient`; they never require `OPENAI_API_KEY` or network. Real OpenAI smoke tests are separate, owner-triggered, and reported distinctly from fixture results.
 - Currency math: supported fraction digits, exact totals, zero FX assumptions, no aggregation across currencies.
-- Human approval: authorization, exact payload digest, expiry, replay/double click, simulated model/tool/cron bypass attempts.
+- Human approval: authorization, exact payload digest, expiry, replay/double click, simulated model/tool/cron bypass attempts. Implemented (unit, in-memory store): wrong/missing trusted approver, changed payload, expired, consumed, failed consume, 25 concurrent attempts yield exactly one success, and grant mutation between read and consume cannot authorize. **Not yet proven:** real-database atomicity (needs the PostgreSQL adapter).
+- Tool dispatch: every privileged action name, unknown and prototype-like names are refused and no handler runs.
+- PostgreSQL constraints: `pnpm test:db` applies the committed migrations into a scratch schema of a disposable `nmi_test*` database and asserts CHECK violations (SQLSTATE 23514). Without `TEST_DATABASE_URL` the suite is *skipped*, never reported as passed; hosted Stack CI runs it against a `postgres:16` service container with `REQUIRE_DB_TESTS=1`. Locally: start any disposable Postgres, create a database named `nmi_test`, then `TEST_DATABASE_URL=postgres://user@host:port/nmi_test pnpm test:db`.
 - PayPal: real sandbox OAuth/draft/send API smoke and verified invoice payment event; normalize status and handle partial/pending correctly.
 - Webhooks: invalid/missing signature, replay window, duplicate event ID, out-of-order events, stored transactional idempotency.
 - UI: loading/empty/error/overdue, keyboard/zoom/responsive, human approval details and declined state, AG Grid sort/filter/currency grouping.

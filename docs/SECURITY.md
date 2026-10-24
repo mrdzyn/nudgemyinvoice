@@ -122,6 +122,11 @@ Synthetic payer contacts, invoice line items, amounts, due dates and PayPal sand
 ### Authorization and approvals
 Backend enforces human approval for outbound notification or financial state changes, including sending invoice/reminder, cancellation, refund, PayPal's manual record-payment/mark-paid API, and order capture. Receiving a PayPal-verified paid-status event is permitted automatic reconciliation, not a privileged PayPal write. Approval is resource/action/payload-specific, human-authenticated, expires, and is consumed once atomically; log timestamp, approver, object ID, consent summary, request ID and result. UI control is necessary but NOT sufficient. No model/tool/cron/webhook bypass. Authentication is required for all personal/business invoice data in hosted demo; use a strictly scoped demo account, safe session cookies and CSRF protection.
 
+#### Approval contract (implemented in `@nmi/domain`, NMI-P1-C2)
+A privileged request carries a `TrustedActor` taken from the backend security context (never model output, tool arguments or a client field). The gate fails closed unless the actor is a human whose id equals the grant's `approverId`, and the grant matches the exact action, resource, payload digest, expiry and unconsumed state. Consumption goes through `ApprovalStore.consumeIfMatches`, which must be ONE conditional atomic operation binding all of those expected values (derived from the request, not from the earlier inspected copy) and consuming exactly one row.
+
+**Limits (explicit):** authentication does not exist yet, so `TrustedActor` is only constructed in tests. Database atomicity under concurrency is NOT proven: only the in-memory reference store is tested. It is proven only when a PostgreSQL adapter passes the same store contract against a real database (next phase). PostgreSQL CHECK constraints (see `docs/TESTING.md`) add defense in depth but do not replace the atomic consume.
+
 ### Webhook trust
 Use raw unmodified body; verify PayPal headers, registered WEBHOOK ID and signature (or PayPal verification API for real sandbox events) **before** DB mutation; validate timestamp/IDs, durable unique event key, and handle duplicates/out-of-order events. Simulated webhook events require a separate explicit test harness and must not mark real invoices paid. Never skip verification to make the demo pass.
 

@@ -15,6 +15,20 @@ jobs:
   stack:
     name: Stack validation
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nmi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     permissions:
       contents: read
     steps:
@@ -29,8 +43,14 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
+      - name: PostgreSQL constraint tests (disposable service container)
+        run: pnpm test:db
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/nmi_test
       - run: pnpm build
       - run: pnpm check:bundle
       - name: Migration is in sync with schema
-        run: pnpm db:generate && git diff --exit-code packages/db/migrations
+        run: |
+          pnpm db:generate
+          test -z "$(git status --porcelain packages/db/migrations)"
       - run: pnpm audit --prod --audit-level high
