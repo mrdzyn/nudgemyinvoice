@@ -16,7 +16,7 @@ Freelancers lose time translating unstructured work requests into invoices, chec
 2. User reviews and creates a draft invoice using the PayPal sandbox Invoicing API. No outbound notification from creating a draft.
 3. Human explicitly approves sending a selected invoice. Server validates approval and calls PayPal sandbox.
 4. Real verified invoice webhooks update local state; duplicate and out-of-order events are handled safely, with authoritative read fallback.
-5. AG Grid dashboard groups amounts and overdue status **by currency**; zero mixed-currency sums.
+5. AG Studio dashboard groups amounts and overdue status **by currency**; zero mixed-currency sums.
 6. AI drafts a context-appropriate reminder. Draft only unless a separately approved send implementation exists.
 
 ## Distinguishing demo

@@ -254,7 +254,7 @@ This section extends, and never weakens, the inherited human-gated operating mod
 - Build to the approved ~55-hour hackathon budget; do not add production SaaS, billing, subscriptions, a customer portal, multi-tenant onboarding, or other non-MVP scope without owner approval.
 
 ### Planned architecture
-- `apps/web`: React + Vite + TypeScript + AG Grid Community dashboard and approval UX.
+- `apps/web`: React + Vite + TypeScript + AG Studio dashboard (official hackathon 45-day trial, license terms verified before use) and approval UX.
 - `apps/api`: Node + TypeScript + Fastify HTTP API; PayPal REST sandbox client; webhook receiver.
 - `packages/shared`: schema validation and shared typed contracts; no privileged secrets.
 - `packages/db`: Drizzle data access with a Postgres deployment adapter and SQLite local adapter **only after parity tests**. If dual-dialect support threatens the deadline, escalate the alternative of local Postgres to the owner rather than silently substituting it.

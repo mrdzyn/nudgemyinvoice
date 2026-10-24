@@ -10,7 +10,7 @@
 2. Let a human inspect and approve sending an invoice via the **PayPal Invoicing API (sandbox)**.
 3. Reconcile invoice payment updates from **signature-verified PayPal invoicing webhooks** with deduplication and authoritative status checks.
 4. Flag overdue invoices and draft friendly, context-aware follow-up wording. **Never send reminders without approval.**
-5. Show invoices, statuses, amounts and currency-specific totals in an AG Grid dashboard.
+5. Show invoices, statuses, amounts and currency-specific totals in an AG Studio dashboard.
 
 **Multi-currency means managing invoices in multiple supported currencies, not foreign-exchange conversion or a mixed-currency grand total.**
 
@@ -24,7 +24,7 @@
 
 ## Stack (planned)
 
-React + Vite + TypeScript; AG Grid Community; Fastify/Node; Drizzle; Postgres on Render and SQLite locally (dialect parity must be verified); Anthropic SDK and schema-validated agent tools; PayPal Invoicing REST sandbox and webhooks; Render web service / Postgres / scheduled job; Vitest. APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
+React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on Render and SQLite locally (dialect parity must be verified); Anthropic SDK and schema-validated agent tools; PayPal Invoicing REST sandbox and webhooks; Render web service / Postgres / scheduled job; Vitest. APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
 
 ## Getting started
 
@@ -68,7 +68,7 @@ All company names, invoices, customer details and amounts in the demo are fictit
 - PayPal webhook integration: https://developer.paypal.com/api/rest/webhooks/
 - APIMatic Context Plugin for PayPal: https://context.apimatic.io/plugins/paypal/
 - Render: https://render.com/
-- AG Grid: https://www.ag-grid.com/
+- AG Studio: https://www.ag-grid.com/studio/react/quick-start/
 
 ## Security and release scope
 

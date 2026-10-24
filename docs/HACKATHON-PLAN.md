@@ -14,7 +14,7 @@ Deadline per Devpost: **2026-11-12 12:00 PST** = 2026-11-13 04:00 Asia/Manila. I
 ## Week 2 — Oct 31–Nov 6 (20 hours)
 - 7h: PayPal sandbox OAuth + Invoicing draft/send with exact human approval, contract tests and retries.
 - 6h: signature-verified invoicing webhooks, DB event idempotency, reconciliation and sandbox paid event evidence.
-- 4h: AG Grid currency-separated dashboard, overdue state and reminder drafts.
+- 4h: AG Studio currency-separated dashboard + one focused overdue custom widget, overdue state and reminder drafts.
 - 3h: responsive/error UX, auth/session and approval-boundary negative tests.
 
 **Gate:** genuine end-to-end sandbox create -> approve/send -> sandbox buyer payment -> webhook -> paid state for one invoice.
@@ -33,7 +33,7 @@ Orders API, refunds, sending AI reminders, real foreign exchange rates, teams, s
 
 ## Evaluation story
 **Implementation:** real sandbox + verified webhooks + idempotency and approval gate.
-**Design:** simple invoice composer and AG Grid oversight.
+**Design:** simple invoice composer and AG Studio interactive invoice oversight.
 **Impact:** less manual administrative work for small businesses.
 **Innovation:** agentic reads/drafts with explicit human consent for sends and money.
 **Presentation:** show cross-currency status without misleading FX totals.

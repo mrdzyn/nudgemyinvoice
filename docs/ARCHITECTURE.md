@@ -5,7 +5,7 @@ Status: **planned, not implemented**. Owner approves changes after independent r
 ## Context / components
 ```mermaid
 flowchart TD
-  U[Human owner] --> W[React Vite + AG Grid UI]
+  U[Human owner] --> W[React Vite + AG Studio dashboard]
   W --> A[Fastify API / authenticated session]
   A --> P[Policy + approval service]
   A --> D[(Drizzle database)]
@@ -53,7 +53,7 @@ Before material UI work: `docs/PRODUCT.md` -> screen map and flows -> mockups an
 Suggested screens: Invoice dashboard (AG Grid); New invoice natural-language editor and structured preview; Approval details; Invoice detail/timeline; Overdue reminders and draft preview; Settings/sandbox status.
 
 ## Planned tech
-- React, Vite, TS strict, AG Grid Community (verify any paid AG Grid Enterprise/Studio-specific dependencies separately).
+- React, Vite, TS strict, AG Studio using the hackathon-linked 45-day trial. Implement a focused custom overdue widget when feasible. Verify exact license terms, key setup and post-trial demo availability; no unlicensed Enterprise redistribution.
 - Fastify; Zod; Drizzle; PostgreSQL on Render, SQLite local **with dialect equivalence demonstrated**.
 - Anthropic SDK tool use, explicit schema validation and model fixtures; model selected via `ANTHROPIC_MODEL`.
 - PayPal Invoicing REST sandbox, OAuth client credentials, verification endpoint or documented cryptographic validation; read-only agent-tool allowlist.
