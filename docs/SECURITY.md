@@ -114,7 +114,7 @@ Before production release, confirm:
 ## NudgeMyInvoice sandbox payment / AI threat model
 
 ### Data
-Synthetic payer contacts, invoice line items, amounts, due dates and PayPal sandbox IDs may be stored for demo use. Never accept or store card numbers, real customer financial records, live account credentials, or production PayPal transactions. Minimize user input sent to Anthropic; redact emails/PII when possible, document remaining processing and retention, and include a demo-data reset procedure before judging.
+Synthetic payer contacts, invoice line items, amounts, due dates and PayPal sandbox IDs may be stored for demo use. Never accept or store card numbers, real customer financial records, live account credentials, or production PayPal transactions. Minimize user input sent to OpenAI; redact emails/PII when possible, document remaining processing and retention, and include a demo-data reset procedure before judging.
 
 ### Environment separation
 `PAYPAL_ENV=sandbox` and `PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com` are hard requirements. Validate at application startup and for every PayPal client; reject live hosts or missing explicit sandbox configuration. Keep all credentials server-side in ignored `.env` / Render environment variables. Public GitHub repository means every committed value is public.
@@ -129,7 +129,7 @@ Use raw unmodified body; verify PayPal headers, registered WEBHOOK ID and signat
 One currency per invoice; explicit supported ISO code and scale; amounts handled using decimal strings or integer minor units, never IEEE floating point; payables and totals displayed per currency. Reject unknown currencies and prohibited negative/invalid invoice amounts. No FX rates without an authoritative quote and explicit human consent; no invented exchange values.
 
 ### Agent/tool permissions
-Read-only tools and draft creation are allowlisted. Every privileged PayPal call must cross the same backend approval service independent of whether it originates from UI, Anthropic tool use, PayPal Agent Toolkit or an MCP server. Treat model output and external tool descriptions as untrusted. No secret exposure in tool returns.
+Read-only tools and draft creation are allowlisted. Every privileged PayPal call must cross the same backend approval service independent of whether it originates from UI, OpenAI tool/function calls, PayPal Agent Toolkit or an MCP server. Treat model output and external tool descriptions as untrusted. No secret exposure in tool returns.
 
 ### Tests / non-goals
 Require negative tests for forged signature, replay, duplicate delivery, privilege bypass, changed approved payload, stale approval, double click, wrong target invoice, live-host configuration, multiple currencies incorrectly summed, and refunds never enabled in MVP.

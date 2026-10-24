@@ -1,6 +1,6 @@
 # NudgeMyInvoice — Proposed Architecture (NMI-P0)
 
-Status: **planned, not implemented**. Owner approves changes after independent review.
+Status: **planned; Phase 1 foundation in progress on a separate stacked branch**. Owner approves changes after independent review.
 
 ## Context / components
 ```mermaid
@@ -9,7 +9,7 @@ flowchart TD
   W --> A[Fastify API / authenticated session]
   A --> P[Policy + approval service]
   A --> D[(Drizzle database)]
-  A --> AI[Anthropic SDK: parse + draft tools]
+  A --> AI[OpenAI SDK Responses API: parse + draft tools]
   P --> PP[PayPal Invoicing sandbox API]
   PP --> H[Signature-verified Fastify webhook]
   H --> D
@@ -28,7 +28,7 @@ packages/
   shared/                # Zod contracts and ISO currency/decimal utilities
   domain/                # approval policy, invoice state machine, overdue logic
   db/                    # Drizzle schema, migrations, SQLite/Postgres adapters
-  ai/                    # Anthropic tool allowlist, model fixtures, prompt adapters
+  ai/                    # OpenAI tool allowlist, model fixtures, prompt adapters
   paypal/                # OAuth sandbox adapter, invoice reads/draft/send, webhook verification
   test-fixtures/         # synthetic, sanitized PayPal/model events
 design/                   # retained project web design guidance, tokens and UI specs
@@ -55,7 +55,7 @@ Suggested screens: Invoice dashboard (AG Grid); New invoice natural-language edi
 ## Planned tech
 - React, Vite, TS strict, AG Studio using the hackathon-linked 45-day trial. Implement a focused custom overdue widget when feasible. Verify exact license terms, key setup and post-trial demo availability; no unlicensed Enterprise redistribution.
 - Fastify; Zod; Drizzle; PostgreSQL on Render, SQLite local **with dialect equivalence demonstrated**.
-- Anthropic SDK tool use, explicit schema validation and model fixtures; model selected via `ANTHROPIC_MODEL`.
+- Official `openai` Node SDK, Responses API structured output (`zodTextFormat`/`responses.parse`) with Zod re-validation of the result, server-side tool allowlist and deterministic model fixtures; model selected via `OPENAI_MODEL`, key via `OPENAI_API_KEY`. Single provider for the MVP.
 - PayPal Invoicing REST sandbox, OAuth client credentials, verification endpoint or documented cryptographic validation; read-only agent-tool allowlist.
 - Render web service/static assets, Postgres, cron/Workflows only if necessary for repeatable demo.
 - GitHub PR checks using canonical project baseline plus project stack jobs once scaffold exists.

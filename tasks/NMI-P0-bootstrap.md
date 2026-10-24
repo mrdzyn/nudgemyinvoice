@@ -15,6 +15,9 @@ Material user-facing UI: **No**; docs-only foundation, UI design gate not applic
 ## Allowed
 `AGENTS.md`, `README.md`, `LICENSE`, `.env.example`, `.gitignore`, `config/project-profile.json`, `docs/` product/status/architecture/security/testing/release/hackathon plan/handoff-memory pruning, `tasks/` prune and P0 task, remove unused `design/platforms/`, `design/integrations/`, `store/`, `integrations/`, `release/`, master-only CI scripts/workflow.
 
+## Amendment (owner decision)
+AI provider is OpenAI (official `openai` SDK, Responses API, Zod validation). All Anthropic configuration and proposed dependencies are removed.
+
 ## Forbidden
 Do not merge, deploy, create live PayPal integration, execute payments, introduce application runtime, weaken or remove baseline paired CI/validator, disable human approval or author real secrets.
 

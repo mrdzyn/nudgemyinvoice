@@ -7,7 +7,7 @@ Deadline per Devpost: **2026-11-12 12:00 PST** = 2026-11-13 04:00 Asia/Manila. I
 - 3h: UI requirements, navigation and screen states, reviewable mockups, human design approval.
 - 4h: React/Vite + Fastify monorepo scaffold, auth/demo gate, env validation, CI/lint/typecheck.
 - 4h: Drizzle + persistent invoices/items/approvals/events; DB dialect parity spike.
-- 5h: Anthropic schema-constrained invoice parsing with deterministic fixtures, currency amount precision, manual edit.
+- 5h: OpenAI Responses API schema-constrained invoice parsing with deterministic fixtures, currency amount precision, manual edit.
 
 **Gate:** parse natural language into auditable draft and display fixture UI; no privileged API bypass.
 

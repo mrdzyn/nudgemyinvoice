@@ -258,7 +258,7 @@ This section extends, and never weakens, the inherited human-gated operating mod
 - `apps/api`: Node + TypeScript + Fastify HTTP API; PayPal REST sandbox client; webhook receiver.
 - `packages/shared`: schema validation and shared typed contracts; no privileged secrets.
 - `packages/db`: Drizzle data access with a Postgres deployment adapter and SQLite local adapter **only after parity tests**. If dual-dialect support threatens the deadline, escalate the alternative of local Postgres to the owner rather than silently substituting it.
-- `packages/ai`: Anthropic SDK with schema-constrained parsing and tool orchestration.
+- `packages/ai`: official OpenAI Node SDK (`openai`), Responses API structured output validated with Zod, and a server-side tool allowlist. Model via `OPENAI_MODEL`, key via `OPENAI_API_KEY`. OpenAI is the only AI provider for the MVP; do not add a second.
 - `packages/paypal`: narrowly scoped HTTP adapter; SDK/context-plugin usage must be verified against official PayPal API docs.
 - `scripts/`: existing template profile validator plus future project-owned commands.
 - `docs/`: product/architecture/security/testing/release policy and current phase/task.
@@ -278,7 +278,7 @@ No production application code is present at Phase 0.
 - Monetary values are precise decimal strings or minor-unit integers with currency-specific scale; never use floating-point arithmetic for amounts.
 - HTTP handlers must be thin; business rules live in pure domain functions/services; third-party APIs are replaceable adapters with fixtures.
 - Parameterized DB queries, limited CORS, secure sessions, CSRF defenses for mutating authenticated requests, strict content security policy where practical, request limits, redacted structured logs.
-- PayPal OAuth tokens and Anthropic API keys remain server-side. Enforce sandbox hostname allowlist and fail on live values.
+- PayPal OAuth tokens and `OPENAI_API_KEY` remain server-side. Model output is untrusted input: validate with Zod before persistence or any PayPal call. Enforce sandbox hostname allowlist and fail on live values.
 - Deterministic Vitest model-fixture tests and sandbox contract tests; real sandbox smoke evidence is separate and never faked.
 - No fabricated features, demo claims, validation results, generated transaction IDs, or API responses.
 

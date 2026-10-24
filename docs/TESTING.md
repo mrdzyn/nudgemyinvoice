@@ -267,6 +267,7 @@ After scaffold, add a project-owned CI sibling job covering `pnpm lint`, `pnpm t
 
 Required objective groups before demo:
 - AI parser: fixture-based schema output, ambiguous/missing currency or due date, invalid numeric units, prompt injection rejection, sensible manual fallback.
+- AI provider: deterministic tests use an injected fake `InvoiceModelClient`; they never require `OPENAI_API_KEY` or network. Real OpenAI smoke tests are separate, owner-triggered, and reported distinctly from fixture results.
 - Currency math: supported fraction digits, exact totals, zero FX assumptions, no aggregation across currencies.
 - Human approval: authorization, exact payload digest, expiry, replay/double click, simulated model/tool/cron bypass attempts.
 - PayPal: real sandbox OAuth/draft/send API smoke and verified invoice payment event; normalize status and handle partial/pending correctly.

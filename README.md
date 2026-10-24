@@ -24,13 +24,13 @@
 
 ## Stack (planned)
 
-React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on Render and SQLite locally (dialect parity must be verified); Anthropic SDK and schema-validated agent tools; PayPal Invoicing REST sandbox and webhooks; Render web service / Postgres / scheduled job; Vitest. APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
+React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on Render and SQLite locally (dialect parity must be verified); OpenAI Node SDK (`openai`) with the Responses API and Zod-validated structured output; PayPal Invoicing REST sandbox and webhooks; Render web service / Postgres / scheduled job; Vitest. APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
 
 ## Getting started
 
 **Phase 0 only:** this repository is currently an operating-model and documentation bootstrap. `pnpm dev` **will not work** until the Phase 1 application scaffold has been implemented and reviewed.
 
-Prerequisites for the planned runnable MVP: Node LTS, pnpm, PayPal Developer sandbox app (client ID/secret and webhook ID), Anthropic API key, and local SQLite or Postgres.
+Prerequisites for the planned runnable MVP: Node LTS, pnpm, PayPal Developer sandbox app (client ID/secret and webhook ID), OpenAI API key and model ID (`OPENAI_API_KEY`, `OPENAI_MODEL`), and local SQLite or Postgres.
 
 ```bash
 git clone https://github.com/mrdzyn/nudgemyinvoice.git

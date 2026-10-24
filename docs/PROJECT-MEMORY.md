@@ -81,7 +81,7 @@ Do not add:
 **Rationale:** Correctness and transparent amounts are central to the differentiator.
 
 ### NMI-M003 — Hackathon build scope
-**Decision:** Public MIT repository, approximately 55 hours, verified PayPal invoicing/webhook demo, Anthropic tool use, AG Grid dashboard and Render deployment. Orders/refunds/automatic reminders remain stretch only.
+**Decision:** Public MIT repository, approximately 55 hours, verified PayPal invoicing/webhook demo, OpenAI Responses API structured output and tool use (owner chose the existing OpenAI account over Anthropic), AG Grid dashboard and Render deployment. Orders/refunds/automatic reminders remain stretch only.
 **Rationale:** Protect Nov 9 internal delivery target and demonstrate working integration rather than broad unverifiable features.
 
 
