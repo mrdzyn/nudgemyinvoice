@@ -72,3 +72,6 @@ PayPal Invoicing is central for MVP; PayPal Orders/refunds are stretch only. The
 
 ## Deployment
 Owner-approved sandbox-only Render service and database, with scoped environment secrets. Production PayPal hosts/credentials prohibited. Manual smoke verification and rollback documented in `docs/RELEASE.md`.
+
+## Database dialect recommendation (NMI-P1, awaiting owner decision)
+The committed schema (`packages/db`) is PostgreSQL only. Supporting SQLite locally as well would require a second Drizzle schema and migration set (different `bigint`, `date`, `jsonb`, partial-index and check-constraint behavior) plus parity tests for approval consume-once atomicity and webhook dedup, which are the correctness-critical paths. **Recommendation: use local PostgreSQL (e.g. Docker or a local install) for development and Render Postgres for deployment; drop SQLite.** This avoids dual-dialect maintenance inside the ~55-hour budget. The original plan is unchanged until the owner approves; `.env.example` still lists SQLite as the planned local default.

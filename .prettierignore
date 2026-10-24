@@ -1,0 +1,15 @@
+pnpm-lock.yaml
+**/dist
+packages/db/migrations
+docs
+design
+tasks
+store
+.github
+AGENTS.md
+README.md
+.agent
+config
+scripts/*.py
+.editorconfig
+LICENSE

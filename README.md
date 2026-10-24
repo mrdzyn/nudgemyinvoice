@@ -28,23 +28,23 @@ React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on
 
 ## Getting started
 
-**Phase 0 only:** this repository is currently an operating-model and documentation bootstrap. `pnpm dev` **will not work** until the Phase 1 application scaffold has been implemented and reviewed.
+**Foundation (NMI-P1) only:** the workspace runs, but there is no invoice UI yet. Available today: `GET /health`, a placeholder web page, and the tested parsing/validation/approval libraries.
 
-Prerequisites for the planned runnable MVP: Node LTS, pnpm, PayPal Developer sandbox app (client ID/secret and webhook ID), OpenAI API key and model ID (`OPENAI_API_KEY`, `OPENAI_MODEL`), and local SQLite or Postgres.
+Prerequisites: Node 22+, pnpm 10 (`corepack enable`). Optional later: PayPal sandbox app, OpenAI key and model ID (`OPENAI_API_KEY`, `OPENAI_MODEL`), PostgreSQL.
 
 ```bash
 git clone https://github.com/mrdzyn/nudgemyinvoice.git
 cd nudgemyinvoice
-cp .env.example .env
-# Set your own SANDBOX keys locally; NEVER commit .env.
-# Following commands will become available in Phase 1:
-# corepack enable
-# pnpm install
-# pnpm dev
-# pnpm test
+pnpm install
+cp .env.example .env   # set only SANDBOX values; NEVER commit .env
+pnpm test              # deterministic tests; no OpenAI key or network needed
+pnpm validate          # lint, format, typecheck, test, build, bundle-secret scan
+# API (needs PAYPAL_ENV=sandbox and PAYPAL_API_BASE_URL in the environment):
+PAYPAL_ENV=sandbox PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com pnpm --filter @nmi/api dev
+pnpm --filter @nmi/web dev   # http://localhost:5173
 ```
 
-When the app lands, this section will provide **working** `install / migrate / seed / run / sandbox-webhook` commands, seeded demo users, and setup for judges. Do not claim judges can run a build until verified end to end.
+Migrate/seed/webhook commands and judge setup will be added once those features exist. Do not claim judges can run a full demo until verified end to end.
 
 ## Safe demo script (planned)
 
