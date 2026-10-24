@@ -6,7 +6,7 @@ import { PostgresAuthStore, createAuditSink, type AuditSink, type Db } from "@nm
 import type { AppConfig } from "./config.js";
 import type { ScryptParams } from "./auth/password.js";
 import { registerAuth } from "./plugins/auth.js";
-import { authRoutes } from "./routes/auth.js";
+import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
 import { healthRoutes } from "./routes/health.js";
 
 export interface AppDeps {
@@ -16,6 +16,7 @@ export interface AppDeps {
   passwordParams?: ScryptParams;
   logStream?: Writable;
   now?: () => number;
+  authSeams?: AuthRouteSeams;
 }
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -85,6 +86,7 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     audit,
     ...(deps.passwordParams ? { passwordParams: deps.passwordParams } : {}),
     ...(deps.now ? { now: deps.now } : {}),
+    ...(deps.authSeams ? { seams: deps.authSeams } : {}),
   });
   return app;
 }

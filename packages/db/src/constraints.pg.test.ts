@@ -82,6 +82,7 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         "approvals_consumed_not_before_creation",
         "operators_username_format",
         "operators_password_hash_scheme",
+        "operators_credential_version_positive",
         "sessions_token_hash_hex",
         "sessions_expiry_after_creation",
         "audit_log_outcome_allowed",
@@ -248,6 +249,16 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         constraint: "operators_password_hash_scheme",
       });
       await client.query("ROLLBACK TO SAVEPOINT s4");
+    });
+    it("rejects a credential version below 1", async () => {
+      await client.query("SAVEPOINT s7");
+      await expect(
+        client.query("UPDATE operators SET credential_version = 0"),
+      ).rejects.toMatchObject({
+        code: "23514",
+        constraint: "operators_credential_version_positive",
+      });
+      await client.query("ROLLBACK TO SAVEPOINT s7");
     });
     it("rejects malformed session token hashes and non-future expiry", async () => {
       const op = (await client.query("SELECT id FROM operators LIMIT 1")).rows[0].id as string;

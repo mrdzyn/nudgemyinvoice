@@ -1,6 +1,7 @@
 import {
   bigint,
   char,
+  integer,
   check,
   index,
   pgTable,
@@ -159,6 +160,9 @@ export const operators = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     username: text("username").notNull(),
     passwordHash: text("password_hash").notNull(),
+    // Bumped on every password rotation. A session may only be issued for the exact version whose
+    // password the login verified (see PostgresAuthStore.createSession).
+    credentialVersion: integer("credential_version").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     disabledAt: timestamp("disabled_at", { withTimezone: true }),
   },
@@ -168,6 +172,7 @@ export const operators = pgTable(
     uniqueIndex("operators_single_row_uq").on(sql`(true)`),
     check("operators_username_format", sql`${t.username} ~ '^[a-z0-9._-]{3,64}$'`),
     check("operators_password_hash_scheme", sql`${t.passwordHash} like 'scrypt$%'`),
+    check("operators_credential_version_positive", sql`${t.credentialVersion} >= 1`),
   ],
 );
 

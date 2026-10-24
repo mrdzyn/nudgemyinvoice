@@ -1,6 +1,6 @@
 # NMI-P2-I1 — Authenticated Operator + PostgreSQL Atomic Approval Foundation
 
-- **Status:** Implemented on this branch; pending independent Codex exact-head audit (not self-certified). Draft PR.
+- **Status:** Implemented; C2 audit (`7df7b7a`) = FIX REQUIRED (two MEDIUM auth races), remediated in C3; pending independent Codex re-audit of the new head (not self-certified). Draft PR.
 - **Owner/orchestrator:** project owner / ChatGPT
 - **Implementation agent:** Claude Code
 - **Independent reviewer:** Codex (cannot self-certify)
@@ -75,3 +75,9 @@ Evidence for each checked criterion is in `tests` named in `docs/TESTING.md` and
 - Expiry for sessions and approvals uses the database clock; the caller-supplied `now` in `ConsumeExpectation` is ignored by the PostgreSQL adapter.
 - The API now requires `DATABASE_URL` (PostgreSQL) and `SESSION_SECRET`; `.env.example` no longer defaults to SQLite. This does **not** decide the SQLite question.
 - Not done, by design: grant issuance, any approval HTTP route, PayPal writes, UI.
+
+## C3 remediation record (audit of `7df7b7a`: FIX REQUIRED)
+- **Finding 1 (password rotation vs in-flight login):** added `operators.credential_version` (forward migration `0004`; `0000`-`0003` untouched). Session issuance is a single `INSERT ... SELECT ... WHERE credential_version = <verified> ... FOR UPDATE`; rotation is one transaction (lock, new hash, version bump, revoke sessions). scrypt runs with no lock held. A changed credential yields no session (fail closed, audit reason `credential_changed`).
+- **Finding 2 (parallel guesses bypass throttling):** `AttemptLimiter.tryAdmit` reserves in the per-account and per-address budgets atomically and synchronously before the first `await`; `BoundedWorkGate` bounds concurrent scrypt and rejects excess with `429` before any lookup or hashing; documented outcome accounting; `Retry-After` computed from the oldest counted slot.
+- Deterministic tests, mutation controls and counts: see handoff `NMI-P2-I1-C3`.
+- Unchanged limits: in-memory per-process throttling; no grant issuer or approval route; separate audit insert after approval consumption; audit-log role grants are a deployment task.

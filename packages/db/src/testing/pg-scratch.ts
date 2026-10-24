@@ -48,6 +48,8 @@ export async function applyMigrations(client: pg.ClientBase, schema: string): Pr
 
 export interface ScratchDatabase {
   schema: string;
+  /** application_name of every pooled connection; lets tests find THEIR backends in pg_stat_activity. */
+  appName: string;
   /** Pool whose every connection uses the scratch schema (several real connections). */
   pool: pg.Pool;
   drop(): Promise<void>;
@@ -71,9 +73,11 @@ export async function createScratchDatabase(
     connectionString: url,
     max: maxConnections,
     options: `-c search_path=${schema}`,
+    application_name: `nmi_${schema}`,
   });
   return {
     schema,
+    appName: `nmi_${schema}`,
     pool,
     async drop() {
       await pool.end();
@@ -86,4 +90,28 @@ export async function createScratchDatabase(
       }
     },
   };
+}
+
+/**
+ * Deterministic barrier: resolves once at least `count` of this scratch database's backends are
+ * blocked waiting on a lock (observed in pg_stat_activity). No fixed sleeps decide ordering; the
+ * short pause only paces the polling loop, and the wait fails loudly instead of guessing.
+ */
+export async function waitForBlockedBackends(
+  admin: pg.Pool,
+  appName: string,
+  count: number,
+  timeoutMs = 10_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const r = await admin.query(
+      `SELECT count(*)::int AS n FROM pg_stat_activity
+       WHERE application_name = $1 AND wait_event_type = 'Lock'`,
+      [appName],
+    );
+    if ((r.rows[0].n as number) >= count) return;
+    if (Date.now() > deadline) throw new Error(`timed out waiting for ${count} blocked backend(s)`);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
 }
