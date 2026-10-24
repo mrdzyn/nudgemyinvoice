@@ -267,4 +267,30 @@ Manual, at `65699fc`, pnpm 10.28.0, `--frozen-lockfile`, PostgreSQL 16.15 dispos
 ### Next action
 Independently verify the exact PR #2 head against this list; do not merge.
 
+## Handoff: NMI-P2-I1-C1
+
+- **Task / phase:** `tasks/NMI-P2-I1-auth-atomic-approvals.md`
+- **From:** ChatGPT (Phase 2 kickoff / task contract)
+- **To:** Claude Code (implementation)
+- **Branch:** `phase-2/nmi-auth-atomic-approval-i1`
+- **Implementation head:** N/A — task bootstrap only; base `main` `56ca7392c6b7f9f63d0f8fe484bb84835378dc26`. Verify current Draft PR HEAD before work.
+- **PR:** Phase 2 Increment 1 Draft PR (see branch; no merge authorized)
+- **State:** READY FOR IMPLEMENTATION
+
+### Completed
+- Phase 0 and Phase 1 squash merges verified on `main`.
+- Increment 1 scope defined: authenticated single-operator demo sessions, real PostgreSQL atomic approval consumption, and minimal append-only audit trail. PayPal writes remain disabled.
+
+### Validation
+- Documentation task/bootstrap only; app tests and hosted CI **NOT RUN** on this branch.
+- Phase 1 manual CI/independent audits are historical evidence, not Phase 2 validation.
+
+### Continuation notes
+- Read active task before editing; start from current branch tip and only relevant code.
+- Do not silently decide SQLite parity or implement the UI, PayPal sends, webhooks or real OpenAI calls.
+- Hosted Actions unavailable per owner until November; record new manual CI for the exact implementation SHA. PR #2's exception does not carry over.
+
+### Next action
+- Claude implements bounded P2-I1 on this Draft PR, runs targeted and required manual CI, records a new independent audit handoff; Codex audits exact implementation HEAD before any merge.
+
 <!-- HANDOFF_ENTRIES_END -->
