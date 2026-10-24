@@ -6,11 +6,11 @@
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed hackathon sandbox MVP
 - **Current phase:** NMI-P0 — greenfield foundation and pruning
-- **Status:** Bootstrap proposal in Draft PR (AI provider migrated to OpenAI); independent audit / owner merge approval pending
+- **Status:** Review — Draft PR #1 ready for independent exact-head audit (AI provider migrated to OpenAI); owner merge approval pending
 - **Primary branch:** `main`
 - **Working branch:** `phase-0/nmi-bootstrap-pruning`
 - **Active task:** `tasks/NMI-P0-bootstrap.md`
-- **Active handoff:** None
+- **Active handoff:** NMI-P0-C1
 
 ## Completed
 - Owner decision: OpenAI (official `openai` SDK, Responses API, `OPENAI_MODEL`/`OPENAI_API_KEY`) replaces the Anthropic plan; no second provider in the MVP.
