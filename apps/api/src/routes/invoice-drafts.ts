@@ -13,7 +13,7 @@ import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import type { AppConfig } from "../config.js";
 import { BoundedWorkGate } from "../auth/work-gate.js";
 import { WindowBudget } from "../auth/window-budget.js";
-import { createPayPalDraft } from "../services/paypal-draft-service.js";
+import { createPayPalDraft, type PayPalDraftDeps } from "../services/paypal-draft-service.js";
 
 export const MAX_PARSE_CHARS = 2000;
 
@@ -29,7 +29,7 @@ export interface InvoiceDraftRouteDeps {
   modelClient?: InvoiceModelClient | undefined;
   /** Absent unless real sandbox drafting is enabled and configured. */
   paypal?: PayPalInvoicingReadDraft | undefined;
-  clock?: (() => Date) | undefined;
+  clock?: ((req?: FastifyRequest) => Date) | undefined;
   seams?: InvoiceDraftSeams | undefined;
 }
 
@@ -40,6 +40,7 @@ export interface InvoiceDraftSeams {
   leaseSeconds?: number;
   coolOffSeconds?: number;
   maxIdempotencyAgeSeconds?: number;
+  ops?: PayPalDraftDeps["ops"] | ((req: FastifyRequest) => PayPalDraftDeps["ops"]);
 }
 
 const issues = (e: z.ZodError) =>
@@ -47,9 +48,11 @@ const issues = (e: z.ZodError) =>
 
 export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRouteDeps): void {
   const { config, audit } = deps;
-  const clock = deps.clock ?? (() => new Date());
+  const clock = (req?: FastifyRequest) => (deps.clock ? deps.clock(req) : new Date());
   const drafts = new PostgresInvoiceDraftStore(deps.db);
-  const ops = new PostgresPayPalOperationStore(deps.db);
+  const defaultOps = new PostgresPayPalOperationStore(deps.db);
+  const resolveOps = (req: FastifyRequest) =>
+    typeof deps.seams?.ops === "function" ? deps.seams.ops(req) : (deps.seams?.ops ?? defaultOps);
   // Cost bound for the paid provider call: a per-operator budget plus a tiny in-flight cap.
   const budget = new WindowBudget(deps.seams?.parseBudgetMax ?? 20, 10 * 60 * 1000);
   const gate = new BoundedWorkGate(deps.seams?.parseConcurrency ?? 2, 0);
@@ -80,7 +83,7 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
     if (!slot) return reply.code(429).header("retry-after", "2").send({ error: "busy" });
 
     try {
-      const today = clock().toISOString().slice(0, 10); // UTC calendar date; documented
+      const today = clock(req).toISOString().slice(0, 10); // UTC calendar date; documented
       const outcome = deps.modelClient
         ? await slot.run(() =>
             parseInvoiceRequest(body.data.text, {
@@ -155,7 +158,7 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
     if (!params.success) return reply.code(404).send({ error: "not_found" });
     const saved = await drafts.get(params.data.id);
     if (!saved) return reply.code(404).send({ error: "not_found" });
-    const op = await ops.get(saved.id);
+    const op = await resolveOps(req).get(saved.id);
     return reply.send({
       ...present(saved, false),
       paypal: op
@@ -179,14 +182,16 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
       const bodyOk = z.union([z.undefined(), z.null(), z.strictObject({})]).safeParse(req.body);
       if (!bodyOk.success) return reply.code(400).send({ error: "invalid_request" });
       const actor = operatorId(req);
+      const reqOps = resolveOps(req);
+      const reqClock = () => clock(req);
 
       const result = await createPayPalDraft(
         {
           drafts,
-          ops,
+          ops: reqOps,
           paypal: deps.paypal,
           audit,
-          clock,
+          clock: reqClock,
           ...(deps.seams?.leaseSeconds !== undefined
             ? { leaseSeconds: deps.seams.leaseSeconds }
             : {}),

@@ -523,4 +523,48 @@ Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_
 ### Next action
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
 
+## Handoff: NMI-P2-I2-C6
+
+- **Task / phase:** `tasks/NMI-P2-I2-invoice-draft-flow.md`
+- **From:** Antigravity (implementation agent)
+- **To:** ChatGPT GPT-6 (independent exact-head security, payment and idempotency audit)
+- **Branch:** `phase-2/nmi-invoice-drafts-i2` (Draft PR #4, base `main` `9ebc191`)
+- **PR:** #4 (Draft)
+- **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
+
+### Remediated findings (ChatGPT audit of `3e28c0c` — FIX REQUIRED)
+- **C4 finding confirmed resolved:** Persistence of exact `invoice_date` via migration `0006`, single clock sampling per request, and `docs/SECURITY.md` fail-closed reconciliation confirmed fixed.
+- **C5 MEDIUM (blocking) — Concurrent first-time reservation across UTC midnight sends mismatched `invoice_date`:**
+  - *Root cause:* Two concurrent requests racing on a fresh draft across midnight both sampled `ops.get = null` and pre-built their request bodies with their local sampled dates before `ops.reserve`. When request A won the atomic `reserve`, request B's `reserve` call returned request A's row on conflict. However, request B retained its pre-built body. If request B then won the fenced lease claim, `requestDigest(body)` (which excludes `invoice_date` for replay stability) matched `existing.payloadDigest`, so request B sent its pre-built body (dated D+1) to PayPal while the database row asserted date D.
+  - *Remediation implemented:*
+    1. **Rebuild canonical request body from atomic reservation row:** In `apps/api/src/services/paypal-draft-service.ts`, after `existing = await ops.reserve(...)`, canonical `canonicalInvoiceDate` is derived strictly from `existing.invoiceDate` returned by PostgreSQL. The request body (`body`) and verification expectation (`expected`) are rebuilt from `canonicalInvoiceDate` before lease claiming or dispatching.
+    2. **Enforce date identity independently of payload digest:** In addition to `existing.payloadDigest === requestDigest(body)`, explicitly enforce `claim.op.invoiceDate === null || claim.op.invoiceDate === body.detail.invoice_date`, guaranteeing date identity even with a date-excluding digest.
+    3. **Preserve fresh create vs reconciliation due date guards:** Fresh create attempts require `dueDate >= today` (even if adopting an earlier pending reservation date); reconciliation of already-attempted drafts validates against `canonicalInvoiceDate` without blocking on expired due dates.
+    4. **Safe legacy fallback:** Documented and verified safe fallback for legacy rows where `invoice_date IS NULL` (migration 0005) to `created_at`.
+    5. **Documentation updated:** Updated `docs/SECURITY.md` section on at-most-one draft creation to document canonical request body reconstruction from the atomic reservation row.
+- **Deterministic regressions:**
+  - `apps/api/src/invoice-drafts.pg.test.ts`:
+    - Added deterministic two-request test straddling UTC midnight where Request A reserves first (day D) and Request B claims first: asserts Request B rebuilds canonical body, outbound create has `detail.invoice_date = dateD`, DB row has `invoice_date = dateD`, exactly 1 create call, Request A gets 409 `in_progress`, and replay succeeds.
+    - Added deterministic test where Request A reserves first and claims first: asserts outbound `invoice_date = dateD`, exactly 1 create call, Request B gets 409.
+    - Added deterministic test where Request B reserves first (day D+1) and Request A claims first: asserts Request A adopts Request B's winning reservation date, outbound `invoice_date = dateD+1`, DB row has `dateD+1`, exactly 1 create call.
+    - Added deterministic test for earlier pending reservation whose due date has passed: asserts fresh create on D+1 is refused with 422 `due_date_past` without calling PayPal.
+    - Added deterministic test for legacy row with `invoice_date IS NULL`: asserts safe fallback to `created_at` and successful reconciliation without date mismatch.
+
+### Validation
+Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+- `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
+- `pnpm lint`: clean, no linter errors.
+- `pnpm format:check`: clean, all files formatted.
+- `pnpm typecheck`: clean, 8 workspace packages checked.
+- `pnpm test`: 235 passed unit tests.
+- `pnpm test:db`: 8 files, 187 tests passed against real PostgreSQL 16 (37 constraints, 19 approval store, 25 auth, 16 auth-store, 17 login races, 11 draft store, 9 operation store, 53 invoice-draft/PayPal routes). Total repository test count: 422 tests passing.
+- `pnpm build && pnpm check:bundle`: build clean, bundle secret scan clean (2 files).
+- `pnpm audit --prod --audit-level high`: 0 vulnerabilities.
+- `pnpm db:generate`: no schema drift, migrations `0000`-`0006` verified.
+- `git diff --check`: clean, no whitespace errors.
+- **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
+
+### Next action
+Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
+
 <!-- HANDOFF_ENTRIES_END -->

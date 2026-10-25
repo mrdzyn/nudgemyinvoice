@@ -2,13 +2,20 @@ import { Writable } from "node:stream";
 import { randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { PostgresAuthStore, createAuditSink, createDb } from "@nmi/db";
+import {
+  PostgresAuthStore,
+  PostgresPayPalOperationStore,
+  createAuditSink,
+  createDb,
+} from "@nmi/db";
 import { createScratchDatabase, testDatabaseUrl, type ScratchDatabase } from "@nmi/db/testing";
 import type { InvoiceModelClient } from "@nmi/ai";
 import {
   PayPalOutcomeUnknownError,
   PayPalRejectedError,
   PayPalSandboxClient,
+  buildInvoiceRequest,
+  requestDigest,
   type HttpRequest,
   type HttpTransport,
 } from "@nmi/paypal";
@@ -63,6 +70,16 @@ describe.skipIf(!url)("invoice drafts and PayPal sandbox drafts (real PostgreSQL
     },
   });
   const sql = async (q: string, p: unknown[] = []) => (await scratch.pool.query(q, p)).rows;
+
+  function deferred<T = void>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
 
   function makeApp(
     extra: Partial<AppDeps> & { env?: Record<string, string | undefined> } = {},
@@ -1116,6 +1133,384 @@ describe.skipIf(!url)("invoice drafts and PayPal sandbox drafts (real PostgreSQL
       expect(res.statusCode, res.body).toBe(201);
       expect((await op(id)).invoice_date).toBe("2026-10-25");
       expect(pp.log.create).toHaveLength(1);
+    });
+
+    it("C6: concurrent requests across UTC midnight: request B losing reserve but winning claim rebuilds canonical body from winning reservation (persisted date equals outbound date)", async () => {
+      const dateA = "2026-10-25";
+      const dateB = "2026-10-26";
+      const clockA = new Date(`${dateA}T23:59:59.999Z`);
+      const clockB = new Date(`${dateB}T00:00:00.001Z`);
+
+      const pp = fakePayPal();
+      const realOps = new PostgresPayPalOperationStore(createDb(scratch.pool));
+
+      // Deterministic barriers:
+      // 1. Both requests read ops.get = null before either calls ops.reserve
+      // 2. Request A reserves first (persisting dateA)
+      // 3. Request B reserves second (receives conflict, returning dateA row)
+      // 4. Request B claims first and wins the lease
+      // 5. Request A claims second and gets claimed: false (409 in_progress)
+      const barrierGetA = deferred();
+      const barrierGetB = deferred();
+      const barrierReserveA = deferred();
+      const barrierReserveB = deferred();
+      const barrierClaimB = deferred();
+
+      const opsA = Object.assign(Object.create(realOps), {
+        async get(invoiceId: string) {
+          barrierGetA.resolve();
+          await barrierGetB.promise;
+          return realOps.get(invoiceId);
+        },
+        async reserve(input: Parameters<typeof realOps.reserve>[0]) {
+          const res = await realOps.reserve(input);
+          barrierReserveA.resolve();
+          return res;
+        },
+        async claim(invoiceId: string, leaseSeconds: number) {
+          await barrierReserveB.promise;
+          // Request A waits until Request B has claimed first!
+          await barrierClaimB.promise;
+          return realOps.claim(invoiceId, leaseSeconds);
+        },
+      });
+
+      const opsB = Object.assign(Object.create(realOps), {
+        async get(invoiceId: string) {
+          barrierGetB.resolve();
+          await barrierGetA.promise;
+          return realOps.get(invoiceId);
+        },
+        async reserve(input: Parameters<typeof realOps.reserve>[0]) {
+          // Request B waits for Request A to reserve first!
+          await barrierReserveA.promise;
+          const res = await realOps.reserve(input);
+          barrierReserveB.resolve();
+          return res;
+        },
+        async claim(invoiceId: string, leaseSeconds: number) {
+          await barrierReserveB.promise;
+          // Request B claims first and wins the lease!
+          const res = await realOps.claim(invoiceId, leaseSeconds);
+          barrierClaimB.resolve();
+          return res;
+        },
+      });
+
+      const s = await session(
+        makeApp(
+          {
+            paypal: pp.client,
+            clock: (req) => (req?.headers["x-test-req"] === "B" ? clockB : clockA),
+          },
+          {
+            ops: (req) => (req.headers["x-test-req"] === "B" ? opsB : opsA),
+          },
+        ),
+      );
+      const id = await saveDraft(s, draft({ dueDate: "2026-11-15" }));
+
+      // Dispatch Request A and Request B concurrently
+      const promiseA = s.post(`/api/invoice-drafts/${id}/paypal-draft`, undefined, {
+        "x-test-req": "A",
+      });
+      const promiseB = s.post(`/api/invoice-drafts/${id}/paypal-draft`, undefined, {
+        "x-test-req": "B",
+      });
+
+      const [resA, resB] = await Promise.all([promiseA, promiseB]);
+
+      // Request B won the claim and succeeded with 201
+      expect(resB.statusCode, resB.body).toBe(201);
+      expect(resB.json()).toMatchObject({ status: "DRAFT", replayed: false });
+
+      // Request A lost the claim and received 409 in_progress
+      expect(resA.statusCode, resA.body).toBe(409);
+      expect(resA.json()).toEqual({ error: "in_progress" });
+
+      // Invariant 1: Exactly ONE remote create call was ever made to PayPal
+      expect(pp.log.create).toHaveLength(1);
+
+      // Invariant 2: Outbound request body sent by Request B MUST have invoice_date = dateA ("2026-10-25"),
+      // rebuilt from the winning reservation, NOT Request B's clock date ("2026-10-26")!
+      const outboundBody = pp.log.create[0]!.body as { detail: { invoice_date: string } };
+      expect(outboundBody.detail.invoice_date).toBe(dateA);
+
+      // Invariant 3: Persisted database operation invoice_date equals outbound invoice_date
+      const persistedOp = await op(id);
+      expect(persistedOp.invoice_date).toBe(dateA);
+      expect(outboundBody.detail.invoice_date).toBe(persistedOp.invoice_date);
+
+      // Invariant 4: Subsequent retry/reconciliation preserves identical request identity
+      const replay = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(replay.statusCode).toBe(200);
+      expect(replay.json()).toMatchObject({
+        paypalInvoiceId: persistedOp.paypal_invoice_id,
+        status: "DRAFT",
+        replayed: true,
+      });
+      expect(pp.log.create).toHaveLength(1);
+    });
+
+    it("C6: concurrent requests across UTC midnight: request A winning both reserve and claim sends persisted date", async () => {
+      const dateA = "2026-10-25";
+      const dateB = "2026-10-26";
+      const clockA = new Date(`${dateA}T23:59:59.999Z`);
+      const clockB = new Date(`${dateB}T00:00:00.001Z`);
+
+      const pp = fakePayPal();
+      const realOps = new PostgresPayPalOperationStore(createDb(scratch.pool));
+
+      const barrierGetA = deferred();
+      const barrierGetB = deferred();
+      const barrierReserveA = deferred();
+      const barrierReserveB = deferred();
+      const barrierClaimA = deferred();
+
+      const opsA = Object.assign(Object.create(realOps), {
+        async get(invoiceId: string) {
+          barrierGetA.resolve();
+          await barrierGetB.promise;
+          return realOps.get(invoiceId);
+        },
+        async reserve(input: Parameters<typeof realOps.reserve>[0]) {
+          const res = await realOps.reserve(input);
+          barrierReserveA.resolve();
+          return res;
+        },
+        async claim(invoiceId: string, leaseSeconds: number) {
+          await barrierReserveB.promise;
+          // Request A claims first and wins the lease!
+          const res = await realOps.claim(invoiceId, leaseSeconds);
+          barrierClaimA.resolve();
+          return res;
+        },
+      });
+
+      const opsB = Object.assign(Object.create(realOps), {
+        async get(invoiceId: string) {
+          barrierGetB.resolve();
+          await barrierGetA.promise;
+          return realOps.get(invoiceId);
+        },
+        async reserve(input: Parameters<typeof realOps.reserve>[0]) {
+          await barrierReserveA.promise;
+          const res = await realOps.reserve(input);
+          barrierReserveB.resolve();
+          return res;
+        },
+        async claim(invoiceId: string, leaseSeconds: number) {
+          await barrierReserveB.promise;
+          // Request B waits for Request A to claim first!
+          await barrierClaimA.promise;
+          return realOps.claim(invoiceId, leaseSeconds);
+        },
+      });
+
+      const s = await session(
+        makeApp(
+          {
+            paypal: pp.client,
+            clock: (req) => (req?.headers["x-test-req"] === "B" ? clockB : clockA),
+          },
+          {
+            ops: (req) => (req.headers["x-test-req"] === "B" ? opsB : opsA),
+          },
+        ),
+      );
+      const id = await saveDraft(s, draft({ dueDate: "2026-11-15" }));
+
+      const promiseA = s.post(`/api/invoice-drafts/${id}/paypal-draft`, undefined, {
+        "x-test-req": "A",
+      });
+      const promiseB = s.post(`/api/invoice-drafts/${id}/paypal-draft`, undefined, {
+        "x-test-req": "B",
+      });
+
+      const [resA, resB] = await Promise.all([promiseA, promiseB]);
+
+      expect(resA.statusCode, resA.body).toBe(201);
+      expect(resA.json()).toMatchObject({ status: "DRAFT", replayed: false });
+
+      expect(resB.statusCode, resB.body).toBe(409);
+      expect(resB.json()).toEqual({ error: "in_progress" });
+
+      expect(pp.log.create).toHaveLength(1);
+      const outboundBody = pp.log.create[0]!.body as { detail: { invoice_date: string } };
+      expect(outboundBody.detail.invoice_date).toBe(dateA);
+
+      const persistedOp = await op(id);
+      expect(persistedOp.invoice_date).toBe(dateA);
+      expect(outboundBody.detail.invoice_date).toBe(persistedOp.invoice_date);
+    });
+
+    it("C6: concurrent requests across UTC midnight: request B reserves first, request A claims first and sends B's persisted date", async () => {
+      const dateA = "2026-10-25";
+      const dateB = "2026-10-26";
+      const clockA = new Date(`${dateA}T23:59:59.999Z`);
+      const clockB = new Date(`${dateB}T00:00:00.001Z`);
+
+      const pp = fakePayPal();
+      const realOps = new PostgresPayPalOperationStore(createDb(scratch.pool));
+
+      const barrierGetA = deferred();
+      const barrierGetB = deferred();
+      const barrierReserveB = deferred();
+      const barrierReserveA = deferred();
+      const barrierClaimA = deferred();
+
+      const opsA = Object.assign(Object.create(realOps), {
+        async get(invoiceId: string) {
+          barrierGetA.resolve();
+          await barrierGetB.promise;
+          return realOps.get(invoiceId);
+        },
+        async reserve(input: Parameters<typeof realOps.reserve>[0]) {
+          // Request A waits for Request B to reserve first!
+          await barrierReserveB.promise;
+          const res = await realOps.reserve(input);
+          barrierReserveA.resolve();
+          return res;
+        },
+        async claim(invoiceId: string, leaseSeconds: number) {
+          await barrierReserveA.promise;
+          // Request A claims first and wins!
+          const res = await realOps.claim(invoiceId, leaseSeconds);
+          barrierClaimA.resolve();
+          return res;
+        },
+      });
+
+      const opsB = Object.assign(Object.create(realOps), {
+        async get(invoiceId: string) {
+          barrierGetB.resolve();
+          await barrierGetA.promise;
+          return realOps.get(invoiceId);
+        },
+        async reserve(input: Parameters<typeof realOps.reserve>[0]) {
+          // Request B reserves first!
+          const res = await realOps.reserve(input);
+          barrierReserveB.resolve();
+          return res;
+        },
+        async claim(invoiceId: string, leaseSeconds: number) {
+          await barrierReserveA.promise;
+          // Request B waits for Request A to claim first!
+          await barrierClaimA.promise;
+          return realOps.claim(invoiceId, leaseSeconds);
+        },
+      });
+
+      const s = await session(
+        makeApp(
+          {
+            paypal: pp.client,
+            clock: (req) => (req?.headers["x-test-req"] === "B" ? clockB : clockA),
+          },
+          {
+            ops: (req) => (req.headers["x-test-req"] === "B" ? opsB : opsA),
+          },
+        ),
+      );
+      const id = await saveDraft(s, draft({ dueDate: "2026-11-15" }));
+
+      const promiseA = s.post(`/api/invoice-drafts/${id}/paypal-draft`, undefined, {
+        "x-test-req": "A",
+      });
+      const promiseB = s.post(`/api/invoice-drafts/${id}/paypal-draft`, undefined, {
+        "x-test-req": "B",
+      });
+
+      const [resA, resB] = await Promise.all([promiseA, promiseB]);
+
+      expect(resA.statusCode, resA.body).toBe(201);
+      expect(resA.json()).toMatchObject({ status: "DRAFT", replayed: false });
+
+      expect(resB.statusCode, resB.body).toBe(409);
+      expect(resB.json()).toEqual({ error: "in_progress" });
+
+      expect(pp.log.create).toHaveLength(1);
+      // Crucial: Outbound date sent by Request A is dateB ("2026-10-26") matching B's winning reservation!
+      const outboundBody = pp.log.create[0]!.body as { detail: { invoice_date: string } };
+      expect(outboundBody.detail.invoice_date).toBe(dateB);
+
+      const persistedOp = await op(id);
+      expect(persistedOp.invoice_date).toBe(dateB);
+      expect(outboundBody.detail.invoice_date).toBe(persistedOp.invoice_date);
+    });
+
+    it("C6: earlier pending reservation whose due date has passed blocks fresh create on D+1 with due_date_past", async () => {
+      const dateD = "2026-10-25";
+      let appClock = new Date(`${dateD}T12:00:00.000Z`);
+      const pp = fakePayPal();
+
+      const s = await session(makeApp({ paypal: pp.client, clock: () => appClock }));
+      const id = await saveDraft(s, draft({ dueDate: dateD }));
+
+      // Create a pending reservation on Day 1 (no external create attempted)
+      const realOps = new PostgresPayPalOperationStore(createDb(scratch.pool));
+      await realOps.reserve({
+        invoiceId: id,
+        operatorId: (await sql("SELECT id FROM operators WHERE username = $1", [USER]))[0].id,
+        invoiceNumber: `NMI-${id.replaceAll("-", "").slice(0, 20)}`,
+        payloadDigest: "d".repeat(64),
+        invoiceDate: dateD,
+      });
+      expect((await op(id)).state).toBe("pending");
+      expect((await op(id)).create_attempted_at).toBeNull();
+
+      // Day 2: 2026-10-26. Clock advances.
+      appClock = new Date("2026-10-26T10:00:00.000Z");
+
+      // Attempt to create fresh draft on Day 2 with due date in the past must be refused
+      const res = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(res.statusCode, res.body).toBe(422);
+      expect(res.json()).toEqual({ error: "mapping_refused", reason: "due_date_past" });
+
+      // Zero calls made to PayPal
+      expect(pp.log.create).toHaveLength(0);
+    });
+
+    it("C6: legacy operation row with invoice_date IS NULL safely falls back to created_at and reconciles", async () => {
+      const dateD = "2026-10-25";
+      const appClock = new Date("2026-10-26T10:00:00.000Z");
+      const pp = fakePayPal();
+      const s = await session(makeApp({ paypal: pp.client, clock: () => appClock }));
+      const id = await saveDraft(s, draft({ dueDate: dateD }));
+
+      const opNumber = `NMI-${id.replaceAll("-", "").slice(0, 20)}`;
+      const candidateBody = buildInvoiceRequest(draft({ dueDate: dateD }), {
+        localInvoiceId: id,
+        invoiceDate: dateD,
+      });
+      const remoteId = pp.materialize(candidateBody);
+      const digest = requestDigest(candidateBody);
+
+      // Insert legacy row with invoice_date IS NULL in state 'unknown'
+      await sql(
+        `INSERT INTO paypal_draft_operations (invoice_id, created_by, invoice_number, payload_digest, state, create_attempted_at, created_at, attempts, invoice_date)
+         VALUES ($1, $2, $3, $4, 'unknown', '2026-10-25T12:00:00.000Z', '2026-10-25T12:00:00.000Z', 1, NULL)`,
+        [
+          id,
+          (await sql("SELECT id FROM operators WHERE username = $1", [USER]))[0].id,
+          opNumber,
+          digest,
+        ],
+      );
+
+      expect((await op(id)).invoice_date).toBeNull();
+
+      pp.on.find = async () => [remoteId];
+
+      const res = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(res.statusCode, res.body).toBe(201);
+      expect(res.json()).toMatchObject({
+        paypalInvoiceId: remoteId,
+        status: "DRAFT",
+        replayed: false,
+      });
+      expect(await linked(id)).toBe(remoteId);
+      expect((await op(id)).state).toBe("created");
     });
 
     it("created remotely but not verifiable (GET fails): recorded as unknown with the remote id, then reconciled without a second create", async () => {

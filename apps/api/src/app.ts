@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import type { Writable } from "node:stream";
@@ -24,7 +24,7 @@ export interface AppDeps {
   modelClient?: InvoiceModelClient;
   /** Real (or fake in tests) PayPal sandbox client; absent => PayPal drafting is disabled. */
   paypal?: PayPalInvoicingReadDraft;
-  clock?: () => Date;
+  clock?: ((req?: FastifyRequest) => Date) | undefined;
   invoiceSeams?: InvoiceDraftSeams;
 }
 

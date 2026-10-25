@@ -76,6 +76,10 @@ export async function createPayPalDraft(
     return { kind: "created", paypalInvoiceId: saved.paypalInvoiceId, replayed: true };
   }
 
+  // Capture clock once per request to avoid sampling drift across UTC midnight
+  const clockNow = deps.clock();
+  const today = clockNow.toISOString().slice(0, 10);
+
   const existingOp = await ops.get(saved.id);
   const isExistingAttempt =
     existingOp !== null &&
@@ -83,12 +87,10 @@ export async function createPayPalDraft(
       existingOp.state === "creating" ||
       existingOp.createAttemptedAt !== null);
 
-  // Capture clock once per request to avoid sampling drift across UTC midnight
-  const clockNow = deps.clock();
-  const today = clockNow.toISOString().slice(0, 10);
-  // Reconstruct exact immutable invoice_date from persisted operation when reconciling,
-  // avoiding independently sampled application/database dates that can disagree across midnight.
-  const canonicalInvoiceDate =
+  // Candidate invoice date for the atomic reservation attempt.
+  // Reconstruct exact immutable invoice_date from persisted operation if already present,
+  // otherwise use today from the single captured clock sample.
+  const candidateInvoiceDate =
     existingOp?.invoiceDate ??
     (existingOp ? existingOp.createdAt.toISOString().slice(0, 10) : today);
 
@@ -96,7 +98,7 @@ export async function createPayPalDraft(
     if (isExistingAttempt) {
       // For existing in-flight / unknown operations, validate mapping against the persisted original invoice date
       // so an expired due date does not block verification or reconciliation of an already-created remote draft.
-      assertExactMapping(saved.draft, canonicalInvoiceDate);
+      assertExactMapping(saved.draft, candidateInvoiceDate);
     } else {
       // New create attempts must have a due date >= today
       assertExactMapping(saved.draft, today);
@@ -106,16 +108,13 @@ export async function createPayPalDraft(
     throw e;
   }
 
-  // Stable invoiceDate: preserve the date from the original operation reservation across replays
-  const invoiceDate = canonicalInvoiceDate;
-  const body = buildInvoiceRequest(saved.draft, { localInvoiceId: saved.id, invoiceDate });
-  const expected = {
-    currency: saved.draft.currency,
-    total: saved.totals.total,
-    dueDate: saved.draft.dueDate,
-    invoiceNumber: invoiceNumberFor(saved.id),
+  const expectedInvoiceNumber = invoiceNumberFor(saved.id);
+  // Candidate body used to compute the reservation payload digest.
+  // Note: requestDigest intentionally excludes invoice_date so the payload digest is stable across dates.
+  const candidateBody = buildInvoiceRequest(saved.draft, {
     localInvoiceId: saved.id,
-  };
+    invoiceDate: candidateInvoiceDate,
+  });
 
   const audit = (
     outcome: "success" | "failure" | "denied" | "error",
@@ -132,15 +131,54 @@ export async function createPayPalDraft(
     });
   const auditBestEffort = (...a: Parameters<typeof audit>) => audit(...a).catch(() => undefined);
 
+  // Atomically insert or retrieve the durable operation row.
+  // In a concurrent race across midnight, the winning reservation's row is returned to both callers.
   const existing = await ops.reserve({
     invoiceId: saved.id,
     operatorId: input.operatorId,
-    invoiceNumber: expected.invoiceNumber,
-    payloadDigest: requestDigest(body),
-    invoiceDate: canonicalInvoiceDate,
+    invoiceNumber: expectedInvoiceNumber,
+    payloadDigest: requestDigest(candidateBody),
+    invoiceDate: candidateInvoiceDate,
   });
   const settledResult = asSettled(existing);
   if (settledResult) return settledResult;
+
+  // DERIVE CANONICAL REQUEST IDENTITY FROM THE PERSISTED OPERATION (C6):
+  // If a concurrent competing request won the reservation first, adopt its persisted invoice_date.
+  // Legacy rows with invoice_date IS NULL fall back to created_at (or today).
+  const canonicalInvoiceDate =
+    existing.invoiceDate ??
+    (existing.createdAt ? existing.createdAt.toISOString().slice(0, 10) : today);
+
+  const isAttempted =
+    existing.state === "unknown" ||
+    existing.state === "creating" ||
+    existing.createAttemptedAt !== null;
+
+  try {
+    if (isAttempted) {
+      assertExactMapping(saved.draft, canonicalInvoiceDate);
+    } else {
+      // Even if adopting an earlier reservation date, fresh create attempts must have dueDate >= today
+      assertExactMapping(saved.draft, today);
+    }
+  } catch (e) {
+    if (e instanceof PayPalMappingError) return { kind: "mapping_refused", reason: e.reason };
+    throw e;
+  }
+
+  // Rebuild the canonical request body and expected values using canonicalInvoiceDate from the persisted operation
+  const body = buildInvoiceRequest(saved.draft, {
+    localInvoiceId: saved.id,
+    invoiceDate: canonicalInvoiceDate,
+  });
+  const expected = {
+    currency: saved.draft.currency,
+    total: saved.totals.total,
+    dueDate: saved.draft.dueDate,
+    invoiceNumber: expectedInvoiceNumber,
+    localInvoiceId: saved.id,
+  };
 
   const claim = await ops.claim(saved.id, lease);
   if (!claim.claimed) {
@@ -148,7 +186,11 @@ export async function createPayPalDraft(
   }
   const fence = claim.op.attempts;
 
-  if (existing.payloadDigest !== requestDigest(body)) {
+  // Enforce both payload digest and date identity against the persisted operation
+  if (
+    existing.payloadDigest !== requestDigest(body) ||
+    (claim.op.invoiceDate !== null && claim.op.invoiceDate !== body.detail.invoice_date)
+  ) {
     await ops.markMismatch(saved.id, fence, "", "payload_digest_mismatch");
     await auditBestEffort("failure", "mismatch", "payload_digest_mismatch");
     return { kind: "mismatch", code: "payload_digest_mismatch" };
