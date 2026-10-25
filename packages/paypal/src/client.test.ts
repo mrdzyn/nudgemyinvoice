@@ -386,15 +386,101 @@ describe("read operations", () => {
       code: "response_unparseable",
     });
 
-    // Pagination / more items on subsequent pages indicates ambiguous remote matches
+    // Pagination / more items on subsequent pages fails closed as search_incomplete (never returns synthetic IDs)
     const paginatedMoreItems = fake({
       "POST /v1/oauth2/token": () => tokenOk,
       "POST /v2/invoicing/search-invoices": () =>
         ok({ total_items: 5, total_pages: 2, items: [{ id: "INV2-PAGE1" }] }),
     });
-    const paginatedIds = await client(paginatedMoreItems.transport).findInvoiceIdsByNumber("NMI-x");
-    expect(paginatedIds.length).toBeGreaterThan(1);
-    expect(paginatedIds).toContain("INV2-PAGE1");
+    await expect(
+      client(paginatedMoreItems.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "search_incomplete",
+    });
+
+    // Incomplete search where first page has NO matching invoice number
+    const paginatedNoMatchFirstPage = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_items: 2,
+          total_pages: 2,
+          items: [{ id: "INV2-OTHER", detail: { invoice_number: "OTHER" } }],
+        }),
+    });
+    await expect(
+      client(paginatedNoMatchFirstPage.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "search_incomplete",
+    });
+
+    // total_pages > 1 even if total_items is absent
+    const paginatedPagesOnly = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_pages: 2,
+          items: [{ id: "INV2-PAGE1" }],
+        }),
+    });
+    await expect(
+      client(paginatedPagesOnly.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "search_incomplete",
+    });
+
+    // Inconsistent total_pages = 0 with items present
+    const inconsistentPagesZeroWithItems = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_pages: 0,
+          items: [{ id: "INV2-PAGE1" }],
+        }),
+    });
+    await expect(
+      client(inconsistentPagesZeroWithItems.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "response_unparseable",
+    });
+
+    // Inconsistent total_items = 0 with total_pages > 0
+    const inconsistentZeroItemsPositivePages = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_items: 0,
+          total_pages: 1,
+          items: [],
+        }),
+    });
+    await expect(
+      client(inconsistentZeroItemsPositivePages.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "response_unparseable",
+    });
+
+    // Malformed remote ID in search item (violating REMOTE_ID regex)
+    const malformedRemoteId = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_items: 1,
+          total_pages: 1,
+          items: [{ id: "bad_remote_id_with_underscores" }],
+        }),
+    });
+    await expect(
+      client(malformedRemoteId.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "response_unparseable",
+    });
 
     const bad = fake({
       "POST /v1/oauth2/token": () => tokenOk,

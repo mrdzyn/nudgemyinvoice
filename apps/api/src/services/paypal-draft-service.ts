@@ -55,8 +55,9 @@ const MAX_IDEMPOTENCY_AGE_SECONDS = 45 * 24 * 3600; // 45 days (PayPal documente
  *  2. a single-statement fenced claim, so concurrent requests cannot both call PayPal;
  *  3. the claim and a `create_attempted_at` timestamp are durable BEFORE the request leaves;
  *  4. a deterministic remote `invoice_number` (+ `reference` = local id) lets an unclear outcome be
- *     looked up; after any unclear outcome we RECONCILE (search/get) before ever creating again, and
- *     only create again if PayPal shows nothing AND a cool-off since the last attempt has passed;
+ *     looked up; after any unclear outcome we RECONCILE (search/get) and NEVER automatically re-create;
+ *     an empty search result fails closed to `reconciliation_pending` (relying on human review or
+ *     delayed visibility rather than an unproven provider exactly-once guarantee);
  *  5. success is claimed only after GET shows a DRAFT with identical currency, total, due date,
  *     invoice number and reference.
  * Nothing here sends, reminds, cancels, pays or refunds.
@@ -76,15 +77,31 @@ export async function createPayPalDraft(
   }
 
   const existingOp = await ops.get(saved.id);
+  const isExistingAttempt =
+    existingOp !== null &&
+    (existingOp.state === "unknown" ||
+      existingOp.state === "creating" ||
+      existingOp.createAttemptedAt !== null);
+
   const today = deps.clock().toISOString().slice(0, 10);
+  const originalInvoiceDate = (existingOp?.createdAt ?? deps.clock()).toISOString().slice(0, 10);
+
   try {
-    assertExactMapping(saved.draft, today);
+    if (isExistingAttempt) {
+      // For existing in-flight / unknown operations, validate mapping against the persisted original intent
+      // so an expired due date does not block verification or reconciliation of an already-created remote draft.
+      assertExactMapping(saved.draft, originalInvoiceDate);
+    } else {
+      // New create attempts must have a due date >= today
+      assertExactMapping(saved.draft, today);
+    }
   } catch (e) {
     if (e instanceof PayPalMappingError) return { kind: "mapping_refused", reason: e.reason };
     throw e;
   }
+
   // Stable invoiceDate: preserve the date from the original operation reservation across replays
-  const invoiceDate = (existingOp?.createdAt ?? deps.clock()).toISOString().slice(0, 10);
+  const invoiceDate = originalInvoiceDate;
   const body = buildInvoiceRequest(saved.draft, { localInvoiceId: saved.id, invoiceDate });
   const expected = {
     currency: saved.draft.currency,
@@ -206,6 +223,11 @@ export async function createPayPalDraft(
   }
 
   // ---- Create. The intent is audited first: no audit trail, no external write. ----
+  if (saved.draft.dueDate < today) {
+    await ops.markRejected(saved.id, fence, "due_date_past");
+    await auditBestEffort("failure", "rejected", "due_date_past");
+    return { kind: "mapping_refused", reason: "due_date_past" };
+  }
   try {
     await audit("success", "creating", "intent");
   } catch {

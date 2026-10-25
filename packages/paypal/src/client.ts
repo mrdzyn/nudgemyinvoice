@@ -75,8 +75,19 @@ const invoiceResponse = z.object({
   amount: money.optional(),
 });
 const linkResponse = z.object({ href: z.string().max(2000) });
+const REMOTE_ID = /^[A-Za-z0-9-]{1,64}$/;
+const STATUSES: ReadonlySet<string> = new Set([
+  "DRAFT",
+  "SENT",
+  "PAID",
+  "PARTIALLY_PAID",
+  "CANCELLED",
+  "REFUNDED",
+  "UNKNOWN",
+]);
+
 const searchItem = z.object({
-  id: z.string().min(1).max(64),
+  id: z.string().regex(REMOTE_ID),
   detail: z
     .object({
       invoice_number: z.string().optional(),
@@ -117,17 +128,21 @@ const searchResponse = z
         message: "total_items is 0 but items array is not empty",
       });
     }
+    // If total_pages === 0 and items is present, items must be empty
+    if (data.total_pages === 0 && data.items && data.items.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "total_pages is 0 but items array is not empty",
+      });
+    }
+    // If total_items is 0 but total_pages > 0
+    if (data.total_items === 0 && data.total_pages !== undefined && data.total_pages > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "total_items is 0 but total_pages > 0",
+      });
+    }
   });
-
-const REMOTE_ID = /^[A-Za-z0-9-]{1,64}$/;
-const STATUSES: ReadonlySet<string> = new Set([
-  "DRAFT",
-  "SENT",
-  "PAID",
-  "PARTIALLY_PAID",
-  "CANCELLED",
-  "REFUNDED",
-]);
 
 /**
  * PayPal REST SANDBOX client for exactly four operations: OAuth token, create DRAFT invoice, show
@@ -291,15 +306,23 @@ export class PayPalSandboxClient {
     if (res.status !== 200) throw new PayPalOutcomeUnknownError(`http_${res.status}`);
     const parsed = searchResponse.safeParse(safeJson(res.body));
     if (!parsed.success) throw new PayPalOutcomeUnknownError("response_unparseable");
+
+    const totalPages = parsed.data.total_pages;
+    const totalItems = parsed.data.total_items;
     const items = parsed.data.items ?? [];
+
+    // Any incomplete or multi-page search fails closed as search_incomplete.
+    // NEVER return pseudo-identifiers or synthetic strings in the invoice ID list.
+    if (totalPages !== undefined && totalPages > 1) {
+      throw new PayPalOutcomeUnknownError("search_incomplete");
+    }
+    if (totalItems !== undefined && totalItems > items.length) {
+      throw new PayPalOutcomeUnknownError("search_incomplete");
+    }
+
     const matchingIds = items
       .filter((i) => !i.detail?.invoice_number || i.detail.invoice_number === invoiceNumber)
       .map((i) => i.id);
-
-    // If total_items indicates more matches than returned on this page:
-    if (parsed.data.total_items !== undefined && parsed.data.total_items > matchingIds.length) {
-      return [...matchingIds, "ambiguous_more_remote_pages"];
-    }
 
     return matchingIds;
   }

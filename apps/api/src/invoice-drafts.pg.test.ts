@@ -954,6 +954,69 @@ describe.skipIf(!url)("invoice drafts and PayPal sandbox drafts (real PostgreSQL
       expect((await op(id)).state).toBe("mismatch");
     });
 
+    it("due date crossing midnight during ambiguous create: rejects expired due dates for new creations, but permits reconciliation of already-attempted remote draft", async () => {
+      let testTime = new Date("2026-10-25T12:00:00Z");
+      const pp = fakePayPal();
+      let createdRemoteId: string | null = null;
+      let searchVisible = false;
+
+      // First create succeeds remotely, but response times out
+      pp.on.create = (input) => {
+        createdRemoteId = pp.materialize(input.body);
+        return timeout();
+      };
+      pp.on.find = async (invoiceNumber) => {
+        if (!searchVisible) return [];
+        return [...pp.remotes.values()]
+          .filter((r) => r.invoiceNumber === invoiceNumber)
+          .map((r) => r.paypalInvoiceId);
+      };
+
+      const s = await session(
+        makeApp({ paypal: pp.client, clock: () => testTime }, { coolOffSeconds: 300 }),
+      );
+
+      // Save a draft with due date = today (2026-10-25)
+      const id = await saveDraft(s, draft({ dueDate: "2026-10-25" }));
+
+      // Call 1 (at 2026-10-25): initial create attempt times out
+      const first = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(first.statusCode).toBe(502);
+      expect(first.json()).toMatchObject({ error: "paypal_outcome_unknown", code: "timeout" });
+      expect(pp.log.create).toHaveLength(1);
+      expect(createdRemoteId).toBeTruthy();
+
+      // Midnight passes: advance clock to 2026-10-26 (due date 2026-10-25 is now in the past)
+      testTime = new Date("2026-10-26T08:00:00Z");
+
+      // Verify that a NEW draft with due date in the past is rejected
+      const newDraftId = await saveDraft(s, draft({ dueDate: "2026-10-25" }));
+      const newAttempt = await s.post(`/api/invoice-drafts/${newDraftId}/paypal-draft`);
+      expect(newAttempt.statusCode).toBe(422);
+      expect(newAttempt.json()).toEqual({ error: "mapping_refused", reason: "due_date_past" });
+      expect(pp.log.create).toHaveLength(1); // No new create call made for newDraftId!
+
+      // For the existing draft, retry while search is not yet visible:
+      // must NOT fail with due_date_past; fails closed with reconciliation_pending and no 2nd create
+      const retryPending = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(retryPending.statusCode).toBe(409);
+      expect(retryPending.json()).toEqual({ error: "reconciliation_pending" });
+      expect(pp.log.create).toHaveLength(1); // Still exactly 1 create call
+
+      // Remote invoice appears in search later on the new day
+      searchVisible = true;
+      const reconciled = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(reconciled.statusCode, reconciled.body).toBe(201);
+      expect(reconciled.json()).toMatchObject({
+        paypalInvoiceId: createdRemoteId,
+        status: "DRAFT",
+        replayed: false,
+      });
+      expect(pp.log.create).toHaveLength(1); // Still exactly 1 create call
+      expect(await linked(id)).toBe(createdRemoteId);
+      expect((await op(id)).state).toBe("created");
+    });
+
     it("created remotely but not verifiable (GET fails): recorded as unknown with the remote id, then reconciled without a second create", async () => {
       const pp = fakePayPal();
       let getFails = true;
@@ -1243,6 +1306,127 @@ describe.skipIf(!url)("invoice drafts and PayPal sandbox drafts (real PostgreSQL
       expect(
         (await sql("SELECT paypal_invoice_id p FROM invoices WHERE id = $1", [id]))[0].p,
       ).toBeNull();
+    });
+
+    it("incomplete first-page search fails closed with search_incomplete, never persists a fake ID, and recovers when search completes", async () => {
+      let searchAttempt = 0;
+      let createdPayload: Record<string, unknown> | undefined;
+      const { calls, transport } = transportFor({
+        "POST /v1/oauth2/token": () => ({
+          status: 200,
+          body: { access_token: "tok-0123456789abcdef", token_type: "Bearer", expires_in: 3600 },
+        }),
+        "POST /v2/invoicing/invoices": (r) => {
+          createdPayload = JSON.parse(r.body as string);
+          // Simulate network failure / 503 on first create
+          return { status: 503, body: {} };
+        },
+        "POST /v2/invoicing/search-invoices": () => {
+          searchAttempt++;
+          if (searchAttempt === 1) {
+            // First search: PayPal reports 2 total pages/items, but page 1 has NO match for our invoice number
+            return {
+              status: 200,
+              body: {
+                total_items: 2,
+                total_pages: 2,
+                items: [{ id: "INV2-OTHER", detail: { invoice_number: "OTHER-NUMBER" } }],
+              },
+            };
+          }
+          // Subsequent search: search completes and returns single page with matching remote draft
+          const c = createdPayload as { detail: { invoice_number: string } };
+          return {
+            status: 200,
+            body: {
+              total_items: 1,
+              total_pages: 1,
+              items: [
+                { id: "INV2-RECOVERED", detail: { invoice_number: c.detail.invoice_number } },
+              ],
+            },
+          };
+        },
+        "GET /v2/invoicing/invoices/{id}": () => {
+          const c = createdPayload as {
+            detail: Record<string, unknown> & { payment_term: { due_date: string } };
+          };
+          return {
+            status: 200,
+            body: {
+              id: "INV2-RECOVERED",
+              status: "DRAFT",
+              detail: {
+                currency_code: "USD",
+                invoice_number: c.detail["invoice_number"],
+                reference: c.detail["reference"],
+                payment_term: { due_date: c.detail.payment_term.due_date },
+              },
+              amount: { currency_code: "USD", value: "500.00" },
+            },
+          };
+        },
+      });
+
+      const s = await session(makeApp({ paypal: realClient(transport) }));
+      const id = await saveDraft(s);
+
+      // Call 1: initial create attempt fails with 503
+      const first = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(first.statusCode).toBe(502);
+      expect(first.json()).toMatchObject({ error: "paypal_outcome_unknown", code: "http_503" });
+
+      // Call 2: search returns incomplete first page (total_pages: 2, no matching item on page 1)
+      const second = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(second.statusCode).toBe(502);
+      expect(second.json()).toMatchObject({
+        error: "paypal_outcome_unknown",
+        code: "search_incomplete",
+      });
+
+      // Assert: NO synthetic ID was saved! paypal_invoice_id in DB MUST BE NULL!
+      const opRow = (
+        await sql(
+          "SELECT state, paypal_invoice_id, last_error_code FROM paypal_draft_operations WHERE invoice_id = $1",
+          [id],
+        )
+      )[0];
+      expect(opRow.state).toBe("unknown");
+      expect(opRow.last_error_code).toBe("search_incomplete");
+      expect(opRow.paypal_invoice_id).toBeNull();
+      expect(
+        (await sql("SELECT paypal_invoice_id p FROM invoices WHERE id = $1", [id]))[0].p,
+      ).toBeNull();
+
+      // Assert: only 1 create call was ever sent to PayPal
+      const createCalls = calls.filter(
+        (c) => c.method === "POST" && c.url.endsWith("/v2/invoicing/invoices"),
+      );
+      expect(createCalls).toHaveLength(1);
+
+      // Call 3: search indexing completes (single page with matching remote draft)
+      const third = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(third.statusCode, third.body).toBe(201);
+      expect(third.json().paypalInvoiceId).toBe("INV2-RECOVERED");
+
+      // Assert: settled as created, remote ID linked
+      const settledOp = (
+        await sql(
+          "SELECT state, paypal_invoice_id FROM paypal_draft_operations WHERE invoice_id = $1",
+          [id],
+        )
+      )[0];
+      expect(settledOp.state).toBe("created");
+      expect(settledOp.paypal_invoice_id).toBe("INV2-RECOVERED");
+      expect((await sql("SELECT paypal_invoice_id p FROM invoices WHERE id = $1", [id]))[0].p).toBe(
+        "INV2-RECOVERED",
+      );
+
+      // Assert: STILL only 1 create call was sent across all 3 requests
+      const finalCreateCalls = calls.filter(
+        (c) => c.method === "POST" && c.url.endsWith("/v2/invoicing/invoices"),
+      );
+      expect(finalCreateCalls).toHaveLength(1);
     });
   });
 });

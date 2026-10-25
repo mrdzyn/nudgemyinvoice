@@ -1,9 +1,9 @@
 # NMI-P2-I2 — Authenticated AI Invoice Drafts and PayPal Sandbox Draft Creation
 
-- **State:** Implemented on this branch; pending independent Codex exact-head audit (not self-certified). Real OpenAI / PayPal sandbox smoke: **NOT TESTED**.
+- **State:** Implemented on this branch; pending independent ChatGPT GPT-6 exact-head audit (not self-certified). Real OpenAI / PayPal sandbox smoke: **NOT TESTED**.
 - **Owner/orchestrator:** project owner / ChatGPT
-- **Implementation agent:** Claude Code
-- **Independent auditor:** Codex
+- **Implementation agent:** Antigravity (replacing Claude Code)
+- **Independent auditor:** ChatGPT GPT-6 (replacing Codex)
 - **Baseline:** `main` at `9ebc1912e96b158b906b849cf1dc2b48cbf3c875` (PR #3 NMI-P2-I1 squash merged after independent C3 PASS).
 - **Branch:** `phase-2/nmi-invoice-drafts-i2`; one Draft PR, no merges without new owner approval.
 - **Type / design gate:** Backend/API + PostgreSQL + sandbox adapter + tests only. **UI design gate: Not applicable to this increment.** `design/nmi-p1/SCREENS.md` is still DRAFT and not approved. No business UI or AG Studio dependency may be implemented under this task.
