@@ -6,15 +6,22 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "provision-operator": "tsx src/cli/provision-operator.ts"
   },
   "dependencies": {
     "@nmi/paypal": "workspace:*",
     "fastify": "5.12.7",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@nmi/db": "workspace:*",
+    "@nmi/domain": "workspace:*",
+    "@fastify/cookie": "11.1.3",
+    "@fastify/cors": "11.3.1",
+    "pg": "8.23.1"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
-    "tsx": "4.23.15"
+    "tsx": "4.23.15",
+    "@types/pg": "8.23.1"
   }
 }
