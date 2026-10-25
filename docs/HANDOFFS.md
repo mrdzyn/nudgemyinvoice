@@ -384,4 +384,37 @@ Independently re-audit the exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) agai
 ### Next action
 - Claude implements the accepted backend task on this Draft PR, completes targeted + required validation and pushes a C2 exact-head independent Codex audit handoff; Codex audits before any owner merge decision.
 
+## Handoff: NMI-P2-I2-C2
+
+- **Task / phase:** `tasks/NMI-P2-I2-invoice-draft-flow.md`
+- **From:** Claude Code (implementation)
+- **To:** Codex (independent exact-head security, payment and idempotency audit)
+- **Branch:** `phase-2/nmi-invoice-drafts-i2` (Draft PR #4, base `main` `9ebc191`)
+- **Implementation head:** `33d917bac9b2082ea66d3179e44debd143dcbdc5` (docs-only handoff commit follows; the PR head is authoritative)
+- **PR:** #4 (Draft)
+- **State:** READY FOR AUDIT (not self-certified; no merge authorized)
+
+### Completed
+- Parse, strict exact save, read, explicit PayPal sandbox draft; durable fenced operation store; allowlisted PayPal sandbox client; migration `0005`; tests; docs. No send/remind/cancel/refund/capture/payment, webhook, UI, deployment.
+
+### Validation
+Manual CI at `33d917bac9b2082ea66d3179e44debd143dcbdc5` (hosted result: see PR checks for the head). pnpm 10.28.0, frozen install from clean `node_modules`, PostgreSQL 16.15 disposable `nmi_test`:
+- profile validator PASS (24 files); lint, format:check, typecheck, build PASS; bundle scan clean; `pnpm audit --prod --audit-level high` clean; `pnpm db:generate` no changes; migrations dir clean; `git diff --check` clean; migrations `0000`-`0004` byte-identical to `main`.
+- `pnpm test` without DB URL: 14 files run, 235 passed + 176 skipped; with DB URL: 22 files, 411 passed. `pnpm test:db`: 8 files, 176 passed (37 constraints, 19 approval store, 25 auth, 16 auth-store, 17 login races, 11 draft store, 9 operation store, 42 invoice-draft/PayPal routes).
+- Determinism: barriers are promises/observed lock waits, not sleeps (e.g. double click: 11 rivals refused while the winner is parked inside the external call). Route suite repeated 5x, full suite 3x, no failures.
+- Mutation controls (each broke tests): no claim barrier; remote verification ignored; no reconcile before re-create; cool-off ignored; exact-mapping guard removed; intent audit not enforced; feature flag ignored; parse budget removed; parse in-flight cap removed; allowlist admitting `/send`; `markCreated` not fenced.
+- Upgrade check: `0005` applied on a database with an existing legacy invoice and item (kept; item position backfilled 0).
+- **NOT TESTED:** real OpenAI parse; real PayPal sandbox OAuth/create/show/search. All PayPal behavior here is from fake clients or a fake HTTP transport and is labeled so.
+
+### Continuation notes (please verify)
+- Exactly-once rests on the operation row + fenced claim + durable `create_attempted_at` before the call + reconcile-before-retry (search by deterministic `invoice_number`, show by stored id) + cool-off + verified total; `PayPal-Request-Id` is sent but NOT relied on (not documented for create-invoice).
+- Fail-closed points: flag default off and creds mandatory when on; the intent is audited before the external write; a client absent => 503; any unclear outcome is `unknown`, never success; `mismatch` is terminal and unlinked.
+- Money: server recomputes totals; strict body (no client totals/status); mappings needing rounding are refused (`422 mapping_refused`); remote total compared exactly after creation.
+- Forbidden operations: transport allowlist (4 method+path patterns, sandbox host only, no redirects) plus no send/remind/cancel/refund routes (404 tested). `PayPalInvoicingPrivileged` is still an interface only.
+- Known limits: unverified PayPal shapes (recipient `name.full_name`, `amount.breakdown.discount.invoice_discount`, omitted `invoicer`, `search-invoices` body, duplicate `invoice_number` behavior, search lag); drafts are immutable; `mismatch`/`unknown` need operator action outside this increment; in-memory per-process parse budget; customer email goes to PayPal sandbox and parse text to OpenAI (`store:false`); a hand-inserted legacy row with tax/discount but no rate would block migration `0005` (no code path ever wrote invoices before this increment).
+- Owner decisions still pending: design approval, Postgres-only vs SQLite, AG Studio licence, relaxing the rounding refusal after a live smoke.
+
+### Next action
+Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED), re-run the manual set including `pnpm test:db` on a disposable PostgreSQL 16, and repeat the route and operation suites. Do not merge. After a PASS and owner approval, plan the owner-triggered live sandbox smoke (NMI-P2-I3) before any send capability.
+
 <!-- HANDOFF_ENTRIES_END -->
