@@ -356,4 +356,32 @@ Manual CI at `013945b` (pnpm 10.28.0, frozen install from clean `node_modules`, 
 ### Next action
 Independently re-audit the exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) against findings 1 and 2 and the preserved controls; re-run the manual set including `pnpm test:db` on a disposable PostgreSQL 16 and repeat the two race suites several times. Do not merge.
 
+## Handoff: NMI-P2-I2-C1
+
+- **Task / phase:** `tasks/NMI-P2-I2-invoice-draft-flow.md`
+- **From:** ChatGPT (Phase 2 Increment 2 kickoff)
+- **To:** Claude Code (implementation)
+- **Branch:** `phase-2/nmi-invoice-drafts-i2`
+- **Implementation head:** N/A — task kickoff only; baseline `main` `9ebc1912e96b158b906b849cf1dc2b48cbf3c875`. Verify Draft PR exact head first.
+- **PR:** Phase 2 Increment 2 Draft PR (create/open against `main`)
+- **State:** READY FOR IMPLEMENTATION; no app code has been changed.
+
+### Completed
+- Verified PR #3 merged into `main` as `9ebc1912e96b158b906b849cf1dc2b48cbf3c875`; previous security and race fixes preserved.
+- Scoped backend-only flow: authenticated `@nmi/ai` parse → strict schema validation → PostgreSQL local save → **explicit** PayPal sandbox draft create with stable idempotency and verified remote response.
+- Distinct send / customer-notification endpoints and all other privileged PayPal writes remain FORBIDDEN; no invoice UI before owner screen approval.
+
+### Validation
+- Task bootstrap only; Phase 2 I2 code tests and provider smoke **NOT RUN**.
+- Historical PR #3 exact-head hosted and manual CI passed; they do not cover new code.
+
+### Continuation notes
+- Read `AGENTS.md`, `docs/STATUS.md`, profile, active task, this handoff, relevant code/tests. Do not load handoff history.
+- Existing Postgres `invoices`, `invoice_items`, `PayPalInvoicingReadDraft`, OpenAI parser and Fastify session middleware are authoritative starting points.
+- Durable PayPal draft operation state, 1:1 remote ID mapping, exact-money parity, auth/CSRF checks, and network-side no-send proof are critical audit topics.
+- Genuine OpenAI and PayPal sandbox smoke tests require separately configured owner credentials and must be labeled NOT TESTED otherwise. No implied approval for deployment or real customer notifications.
+
+### Next action
+- Claude implements the accepted backend task on this Draft PR, completes targeted + required validation and pushes a C2 exact-head independent Codex audit handoff; Codex audits before any owner merge decision.
+
 <!-- HANDOFF_ENTRIES_END -->
