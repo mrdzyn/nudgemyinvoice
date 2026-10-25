@@ -39,6 +39,7 @@ export interface InvoiceDraftSeams {
   parseConcurrency?: number;
   leaseSeconds?: number;
   coolOffSeconds?: number;
+  maxIdempotencyAgeSeconds?: number;
 }
 
 const issues = (e: z.ZodError) =>
@@ -191,6 +192,9 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
             : {}),
           ...(deps.seams?.coolOffSeconds !== undefined
             ? { coolOffSeconds: deps.seams.coolOffSeconds }
+            : {}),
+          ...(deps.seams?.maxIdempotencyAgeSeconds !== undefined
+            ? { maxIdempotencyAgeSeconds: deps.seams.maxIdempotencyAgeSeconds }
             : {}),
         },
         { invoiceId: params.data.id, operatorId: actor, requestId: req.id },

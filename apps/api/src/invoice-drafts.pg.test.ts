@@ -835,29 +835,123 @@ describe.skipIf(!url)("invoice drafts and PayPal sandbox drafts (real PostgreSQL
       expect(pp.remotes.size).toBe(1);
     });
 
-    it("if PayPal shows nothing, a second create waits for the cool-off; afterwards it is allowed", async () => {
+    it("first create succeeds remotely but response times out, search yields empty beyond 300s, retries: fails closed with reconciliation_pending and NEVER creates a second remote draft", async () => {
       const pp = fakePayPal();
-      let n = 0;
-      pp.on.create = (input) =>
-        n++ === 0 ? timeout() : Promise.resolve({ paypalInvoiceId: pp.materialize(input.body) });
+      let createdRemoteId: string | null = null;
+      let searchVisible = false;
+
+      // First create succeeds remotely, but response times out
+      pp.on.create = (input) => {
+        createdRemoteId = pp.materialize(input.body);
+        return timeout();
+      };
+      // Search initially yields empty (simulating delayed search indexing visibility)
+      pp.on.find = async (invoiceNumber) => {
+        if (!searchVisible) return [];
+        return [...pp.remotes.values()]
+          .filter((r) => r.invoiceNumber === invoiceNumber)
+          .map((r) => r.paypalInvoiceId);
+      };
+
       const s = await session(makeApp({ paypal: pp.client }, { coolOffSeconds: 300 }));
       const id = await saveDraft(s);
-      expect((await s.post(`/api/invoice-drafts/${id}/paypal-draft`)).statusCode).toBe(502);
+
+      // Call 1: create times out remotely -> 502 paypal_outcome_unknown
+      const first = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(first.statusCode).toBe(502);
+      expect(first.json()).toMatchObject({ error: "paypal_outcome_unknown", code: "timeout" });
+      expect(pp.log.create).toHaveLength(1);
+      expect(createdRemoteId).toBeTruthy();
+
+      // Call 2: retry before 300s while search is empty -> 409 reconciliation_pending
       const wait = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
       expect(wait.statusCode).toBe(409);
       expect(wait.json()).toEqual({ error: "reconciliation_pending" });
       expect(Number(wait.headers["retry-after"])).toBeGreaterThan(0);
       expect(pp.log.create).toHaveLength(1);
       expect((await op(id)).state).toBe("unknown");
-      // time passes (create attempt becomes old)
+      expect((await op(id)).last_error_code).toBe("reconciliation_pending");
+
+      // Time passes: 10 minutes pass (beyond 300s cool-off)
       await sql(
         "UPDATE paypal_draft_operations SET create_attempted_at = now() - interval '10 minutes' WHERE invoice_id = $1",
         [id],
       );
-      const done = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
-      expect(done.statusCode, done.body).toBe(201);
-      expect(pp.log.create).toHaveLength(2);
+
+      // Call 3: retry after 10 minutes while search is STILL empty -> MUST NOT CREATE A SECOND DRAFT!
+      // Must fail closed with 409 reconciliation_pending!
+      const stillEmpty = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(stillEmpty.statusCode).toBe(409);
+      expect(stillEmpty.json()).toEqual({ error: "reconciliation_pending" });
+      expect(pp.log.create).toHaveLength(1); // STILL EXACTLY ONE CREATE CALL!
       expect((await op(id)).attempts).toBe(3);
+      expect((await op(id)).state).toBe("unknown");
+
+      // Call 4: search indexing catches up (delayed visibility resolved)
+      searchVisible = true;
+      const reconciled = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(reconciled.statusCode, reconciled.body).toBe(201);
+      expect(reconciled.json()).toMatchObject({
+        paypalInvoiceId: createdRemoteId,
+        status: "DRAFT",
+        replayed: false,
+      });
+      expect(pp.log.create).toHaveLength(1); // STILL EXACTLY ONE CREATE CALL!
+      expect((await op(id)).state).toBe("created");
+      expect(await linked(id)).toBe(createdRemoteId);
+    });
+
+    it("when an ambiguous attempt is older than idempotency retention, automatic retry is blocked with idempotency_expired", async () => {
+      const pp = fakePayPal();
+      pp.on.create = (input) => {
+        pp.materialize(input.body);
+        return timeout();
+      };
+      pp.on.find = async () => []; // Search returns empty
+
+      const s = await session(
+        makeApp({ paypal: pp.client }, { coolOffSeconds: 300, maxIdempotencyAgeSeconds: 86400 }),
+      );
+      const id = await saveDraft(s);
+
+      // Call 1: times out
+      expect((await s.post(`/api/invoice-drafts/${id}/paypal-draft`)).statusCode).toBe(502);
+      expect(pp.log.create).toHaveLength(1);
+
+      // Advance create_attempted_at past idempotency retention (e.g. 2 days ago, where max is 1 day)
+      await sql(
+        "UPDATE paypal_draft_operations SET create_attempted_at = now() - interval '2 days' WHERE invoice_id = $1",
+        [id],
+      );
+
+      // Call 2: retry beyond idempotency retention window -> returns 502 with idempotency_expired
+      const expired = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(expired.statusCode).toBe(502);
+      expect(expired.json()).toMatchObject({
+        error: "paypal_outcome_unknown",
+        code: "idempotency_expired",
+      });
+      expect(pp.log.create).toHaveLength(1); // No second create
+      expect((await op(id)).last_error_code).toBe("idempotency_expired");
+    });
+
+    it("a modified request body against an existing operation is refused as payload_digest_mismatch", async () => {
+      const pp = fakePayPal();
+      const s = await session(makeApp({ paypal: pp.client }));
+      const id = await saveDraft(s);
+
+      // Reserve an operation with an artificial payload_digest
+      await sql(
+        `INSERT INTO paypal_draft_operations (invoice_id, invoice_number, payload_digest)
+         VALUES ($1, $2, '0000000000000000000000000000000000000000000000000000000000000000')`,
+        [id, `NMI-${id.replaceAll("-", "").slice(0, 20)}`],
+      );
+
+      const res = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(res.statusCode).toBe(502);
+      expect(res.json()).toEqual({ error: "paypal_mismatch", code: "payload_digest_mismatch" });
+      expect(pp.log.create).toHaveLength(0);
+      expect((await op(id)).state).toBe("mismatch");
     });
 
     it("created remotely but not verifiable (GET fails): recorded as unknown with the remote id, then reconciled without a second create", async () => {

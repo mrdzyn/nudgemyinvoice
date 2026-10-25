@@ -75,9 +75,49 @@ const invoiceResponse = z.object({
   amount: money.optional(),
 });
 const linkResponse = z.object({ href: z.string().max(2000) });
-const searchResponse = z.object({
-  items: z.array(z.object({ id: z.string().min(1).max(64) })).optional(),
+const searchItem = z.object({
+  id: z.string().min(1).max(64),
+  detail: z
+    .object({
+      invoice_number: z.string().optional(),
+    })
+    .optional(),
 });
+const searchResponse = z
+  .object({
+    total_items: z.number().int().nonnegative().optional(),
+    total_pages: z.number().int().nonnegative().optional(),
+    items: z.array(searchItem).optional(),
+    links: z.array(z.unknown()).optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Both items and total_items missing => unrecognized / malformed payload (e.g. {} or error object)
+    if (data.items === undefined && data.total_items === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Search response must include items array or total_items",
+      });
+      return;
+    }
+    // If total_items > 0, items array must be present and non-empty
+    if (
+      data.total_items !== undefined &&
+      data.total_items > 0 &&
+      (!data.items || data.items.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "total_items > 0 but items array is missing or empty",
+      });
+    }
+    // If total_items === 0 and items is present, items must be empty
+    if (data.total_items === 0 && data.items && data.items.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "total_items is 0 but items array is not empty",
+      });
+    }
+  });
 
 const REMOTE_ID = /^[A-Za-z0-9-]{1,64}$/;
 const STATUSES: ReadonlySet<string> = new Set([
@@ -241,6 +281,9 @@ export class PayPalSandboxClient {
     try {
       res = await this.call("POST", "/v2/invoicing/search-invoices", {
         invoice_number: invoiceNumber,
+        page: 1,
+        page_size: 20,
+        total_required: true,
       });
     } catch (e) {
       throw new PayPalOutcomeUnknownError(e instanceof TransportError ? e.kind : "request_failed");
@@ -248,7 +291,17 @@ export class PayPalSandboxClient {
     if (res.status !== 200) throw new PayPalOutcomeUnknownError(`http_${res.status}`);
     const parsed = searchResponse.safeParse(safeJson(res.body));
     if (!parsed.success) throw new PayPalOutcomeUnknownError("response_unparseable");
-    return (parsed.data.items ?? []).map((i) => i.id);
+    const items = parsed.data.items ?? [];
+    const matchingIds = items
+      .filter((i) => !i.detail?.invoice_number || i.detail.invoice_number === invoiceNumber)
+      .map((i) => i.id);
+
+    // If total_items indicates more matches than returned on this page:
+    if (parsed.data.total_items !== undefined && parsed.data.total_items > matchingIds.length) {
+      return [...matchingIds, "ambiguous_more_remote_pages"];
+    }
+
+    return matchingIds;
   }
 }
 

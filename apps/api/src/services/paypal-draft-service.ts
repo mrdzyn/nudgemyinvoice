@@ -38,10 +38,13 @@ export interface PayPalDraftDeps {
   leaseSeconds?: number;
   /** After a create request was sent, wait this long before a second create may be considered. */
   coolOffSeconds?: number;
+  /** Maximum age in seconds after create_attempted_at beyond which idempotency retention expires. */
+  maxIdempotencyAgeSeconds?: number;
 }
 
 const LEASE_SECONDS = 120;
 const COOL_OFF_SECONDS = 300;
+const MAX_IDEMPOTENCY_AGE_SECONDS = 45 * 24 * 3600; // 45 days (PayPal documented retention)
 
 /**
  * Creates AT MOST ONE PayPal sandbox DRAFT invoice for a local draft, durably.
@@ -72,6 +75,7 @@ export async function createPayPalDraft(
     return { kind: "created", paypalInvoiceId: saved.paypalInvoiceId, replayed: true };
   }
 
+  const existingOp = await ops.get(saved.id);
   const today = deps.clock().toISOString().slice(0, 10);
   try {
     assertExactMapping(saved.draft, today);
@@ -79,7 +83,9 @@ export async function createPayPalDraft(
     if (e instanceof PayPalMappingError) return { kind: "mapping_refused", reason: e.reason };
     throw e;
   }
-  const body = buildInvoiceRequest(saved.draft, { localInvoiceId: saved.id, invoiceDate: today });
+  // Stable invoiceDate: preserve the date from the original operation reservation across replays
+  const invoiceDate = (existingOp?.createdAt ?? deps.clock()).toISOString().slice(0, 10);
+  const body = buildInvoiceRequest(saved.draft, { localInvoiceId: saved.id, invoiceDate });
   const expected = {
     currency: saved.draft.currency,
     total: saved.totals.total,
@@ -117,6 +123,12 @@ export async function createPayPalDraft(
     return asSettled(claim.op) ?? { kind: "in_progress", retryAfterSeconds: 5 };
   }
   const fence = claim.op.attempts;
+
+  if (existing.payloadDigest !== requestDigest(body)) {
+    await ops.markMismatch(saved.id, fence, "", "payload_digest_mismatch");
+    await auditBestEffort("failure", "mismatch", "payload_digest_mismatch");
+    return { kind: "mismatch", code: "payload_digest_mismatch" };
+  }
 
   /** Verifies a known remote id and records the verified outcome. */
   const verifyAndRecord = async (remoteId: string): Promise<PayPalDraftResult> => {
@@ -170,13 +182,27 @@ export async function createPayPalDraft(
     }
     if (remoteId) return verifyAndRecord(remoteId);
 
-    // PayPal shows nothing. Search may lag, so only create again after the cool-off.
+    // Search returned 0 matching invoice IDs.
+    // Check if the previous create attempt is older than PayPal's idempotency retention window.
+    const maxAge = deps.maxIdempotencyAgeSeconds ?? MAX_IDEMPOTENCY_AGE_SECONDS;
     const since = claim.secondsSinceCreateAttempt;
-    if (since !== null && since < coolOff) {
-      await ops.markUnknown(saved.id, fence, "reconcile_wait");
-      await auditBestEffort("denied", "unknown", "reconcile_wait");
-      return { kind: "reconciliation_pending", retryAfterSeconds: Math.ceil(coolOff - since) };
+    if (since !== null && since > maxAge) {
+      // Exceeded provider's idempotency retention limit (45 days).
+      // Automatic reconciliation cannot be proven safe; require human operator intervention.
+      await ops.markUnknown(saved.id, fence, "idempotency_expired");
+      await auditBestEffort("failure", "unknown", "idempotency_expired");
+      return { kind: "unknown", code: "idempotency_expired" };
     }
+
+    // PayPal search returned no matches. However, search indexing can lag (delayed visibility),
+    // and an empty search response NEVER proves the invoice was not created remotely.
+    // To guarantee at-most-one remote invoice, we fail closed: NEVER automatically create again.
+    // Instead, return reconciliation_pending for retry/operator review.
+    await ops.markUnknown(saved.id, fence, "reconciliation_pending");
+    await auditBestEffort("denied", "unknown", "reconciliation_pending");
+    const retryAfter =
+      since !== null && since < coolOff ? Math.max(5, Math.ceil(coolOff - since)) : 30;
+    return { kind: "reconciliation_pending", retryAfterSeconds: retryAfter };
   }
 
   // ---- Create. The intent is audited first: no audit trail, no external write. ----

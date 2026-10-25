@@ -16,6 +16,7 @@ export interface PayPalOperation {
   attempts: number;
   lastErrorCode: string | null;
   createAttemptedAt: Date | null;
+  createdAt: Date;
   updatedAt: Date;
   completedAt: Date | null;
 }
@@ -43,6 +44,7 @@ type Row = {
   attempts: number;
   last_error_code: string | null;
   create_attempted_at: Date | string | null;
+  created_at: Date | string;
   updated_at: Date | string;
   completed_at: Date | string | null;
   prev_state?: OperationState;
@@ -61,6 +63,7 @@ const toOp = (r: Row): PayPalOperation => ({
   attempts: Number(r.attempts),
   lastErrorCode: r.last_error_code,
   createAttemptedAt: toDate(r.create_attempted_at),
+  createdAt: new Date(r.created_at),
   updatedAt: new Date(r.updated_at),
   completedAt: toDate(r.completed_at),
 });

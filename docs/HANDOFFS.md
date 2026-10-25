@@ -417,4 +417,35 @@ Manual CI at `33d917bac9b2082ea66d3179e44debd143dcbdc5` (hosted result: see PR c
 ### Next action
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED), re-run the manual set including `pnpm test:db` on a disposable PostgreSQL 16, and repeat the route and operation suites. Do not merge. After a PASS and owner approval, plan the owner-triggered live sandbox smoke (NMI-P2-I3) before any send capability.
 
+## Handoff: NMI-P2-I2-C3
+
+- **Task / phase:** `tasks/NMI-P2-I2-invoice-draft-flow.md`
+- **From:** Antigravity (implementation agent, replacing Claude Code)
+- **To:** ChatGPT GPT-6 (independent exact-head security, payment and idempotency audit)
+- **Branch:** `phase-2/nmi-invoice-drafts-i2` (Draft PR #4, base `main` `9ebc191`)
+- **PR:** #4 (Draft)
+- **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
+
+### Remediated finding (ChatGPT audit of `42c0f4f` — FIX REQUIRED)
+- **Issue:** Ambiguous PayPal draft creation outcome risked a duplicate remote create when search returned empty after 300s cool-off (empty search does not prove remote absence due to delayed search indexing); malformed `{}` search response was indistinguishable from empty search; unbound idempotency retention.
+- **Remediation implemented:**
+  1. **Fail-closed reconciliation:** In `claim.mode === "reconcile"`, an empty search result NEVER falls through to `createDraftInvoice`. Instead, it records `reconciliation_pending` with exponential/cool-off retry backoff; an empty search response is never treated as proof of absence, protecting against delayed search visibility.
+  2. **Idempotency retention boundary:** Enforces maximum idempotency retention window (`maxIdempotencyAgeSeconds`, default 45 days per PayPal documentation). If an ambiguous attempt is older than retention, retries fail closed as `idempotency_expired`, requiring operator review rather than blind replay.
+  3. **Hardened search parsing:** `searchResponse` schema in `@nmi/paypal` strictly requires an explicit `items` array or `total_items = 0`. Malformed `{}` or inconsistent shapes (`total_items > 0` with missing items array) fail validation and throw `PayPalOutcomeUnknownError("response_unparseable")`. Multi-page pagination (`total_pages > 1` or `total_items > items.length`) returns multiple IDs triggering `ambiguous_remote`.
+  4. **Stable invoice date & payload digest:** Request body `invoice_date` is stabilized across replays using `saved.createdAt` / `existingOp.createdAt`. Payload digest is verified against reserved operation row; any body mismatch is rejected as `payload_digest_mismatch`.
+  5. **Deterministic regression tests:** Replaced the unsafe 2nd-create test with a test asserting that a timed-out first create followed by empty search beyond 300s cool-off fails closed with `reconciliation_pending` and NEVER creates a second remote draft (`pp.log.create.length === 1`), then successfully reconciles once visibility catches up. Added tests for idempotency retention expiry, payload digest mismatch, and malformed/paginated search responses.
+
+### Validation
+Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+- `pnpm validate`: lint, format:check, typecheck, unit tests (235 passed), build, bundle secret scan clean.
+- `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
+- `pnpm audit --prod --audit-level high`: 0 vulnerabilities.
+- `pnpm db:generate`: no schema changes, migrations in sync.
+- `pnpm test:db`: 8 files, 178 tests passed against real PostgreSQL 16 (37 constraints, 19 approval store, 25 auth, 16 auth-store, 17 login races, 11 draft store, 9 operation store, 44 invoice-draft/PayPal routes). Total repository test count: 413 tests passing.
+- `git diff --check`: clean, no whitespace errors.
+- **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
+
+### Next action
+Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
+
 <!-- HANDOFF_ENTRIES_END -->

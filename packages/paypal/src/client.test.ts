@@ -333,19 +333,69 @@ describe("read operations", () => {
       "POST /v2/invoicing/search-invoices": (r) => {
         expect(JSON.parse(r.body as string)).toEqual({
           invoice_number: "NMI-00000000000000000001",
+          page: 1,
+          page_size: 20,
+          total_required: true,
         });
-        return ok({ items: [{ id: "INV2-A" }, { id: "INV2-B" }] });
+        return ok({
+          total_items: 2,
+          total_pages: 1,
+          items: [{ id: "INV2-A" }, { id: "INV2-B" }],
+        });
       },
     });
     expect(await client(f.transport).findInvoiceIdsByNumber("NMI-00000000000000000001")).toEqual([
       "INV2-A",
       "INV2-B",
     ]);
-    const empty = fake({
+
+    // Valid empty search responses (must have explicit total_items or items array)
+    const emptyWithItems = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () => ok({ total_items: 0, items: [] }),
+    });
+    expect(await client(emptyWithItems.transport).findInvoiceIdsByNumber("NMI-x")).toEqual([]);
+
+    const emptyArrayOnly = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () => ok({ items: [] }),
+    });
+    expect(await client(emptyArrayOnly.transport).findInvoiceIdsByNumber("NMI-x")).toEqual([]);
+
+    // Malformed/unrecognized responses (like empty object {}) MUST fail closed as unknown
+    const unparseableEmptyObj = fake({
       "POST /v1/oauth2/token": () => tokenOk,
       "POST /v2/invoicing/search-invoices": () => ok({}),
     });
-    expect(await client(empty.transport).findInvoiceIdsByNumber("NMI-x")).toEqual([]);
+    await expect(
+      client(unparseableEmptyObj.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "response_unparseable",
+    });
+
+    // Inconsistent response (total_items > 0 but missing items array)
+    const missingItemsWhenTotalPos = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () => ok({ total_items: 1 }),
+    });
+    await expect(
+      client(missingItemsWhenTotalPos.transport).findInvoiceIdsByNumber("NMI-x"),
+    ).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "response_unparseable",
+    });
+
+    // Pagination / more items on subsequent pages indicates ambiguous remote matches
+    const paginatedMoreItems = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({ total_items: 5, total_pages: 2, items: [{ id: "INV2-PAGE1" }] }),
+    });
+    const paginatedIds = await client(paginatedMoreItems.transport).findInvoiceIdsByNumber("NMI-x");
+    expect(paginatedIds.length).toBeGreaterThan(1);
+    expect(paginatedIds).toContain("INV2-PAGE1");
+
     const bad = fake({
       "POST /v1/oauth2/token": () => tokenOk,
       "POST /v2/invoicing/search-invoices": () => ok({}, 500),
@@ -362,7 +412,7 @@ describe("no forbidden PayPal call can be made, and secrets never leak", () => {
       "POST /v1/oauth2/token": () => tokenOk,
       "POST /v2/invoicing/invoices": () => ok({ id: "INV2-S-1" }, 201),
       "GET /v2/invoicing/invoices/INV2-S-1": () => ok({}, 404),
-      "POST /v2/invoicing/search-invoices": () => ok({}),
+      "POST /v2/invoicing/search-invoices": () => ok({ total_items: 0, items: [] }),
     });
     const c = client(f.transport);
     await c.createDraftInvoice({ body: reqBody, requestId: "r" });
