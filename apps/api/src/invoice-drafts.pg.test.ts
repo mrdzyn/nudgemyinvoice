@@ -1017,6 +1017,107 @@ describe.skipIf(!url)("invoice drafts and PayPal sandbox drafts (real PostgreSQL
       expect((await op(id)).state).toBe("created");
     });
 
+    it("persists exact initial request invoice_date and reuses it during reconciliation even if operation created_at drifted across midnight", async () => {
+      // Date D is 2026-10-25; due date is D
+      const dateD = "2026-10-25";
+      let appClock = new Date(`${dateD}T23:59:59.999Z`);
+      const pp = fakePayPal();
+      let createdRemoteId: string | null = null;
+
+      pp.on.create = (input) => {
+        // Assert initial request body has invoice_date = dateD
+        expect((input.body as { detail: { invoice_date: string } }).detail.invoice_date).toBe(
+          dateD,
+        );
+        createdRemoteId = pp.materialize(input.body);
+        return timeout();
+      };
+      pp.on.find = async (invoiceNumber) => {
+        return [...pp.remotes.values()]
+          .filter((r) => r.invoiceNumber === invoiceNumber)
+          .map((r) => r.paypalInvoiceId);
+      };
+
+      const s = await session(
+        makeApp({ paypal: pp.client, clock: () => appClock }, { coolOffSeconds: 300 }),
+      );
+      const id = await saveDraft(s, draft({ dueDate: dateD }));
+
+      // Call 1: initial create attempt at 23:59:59.999Z -> times out
+      const first = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(first.statusCode).toBe(502);
+      expect(first.json()).toMatchObject({ error: "paypal_outcome_unknown", code: "timeout" });
+      expect(pp.log.create).toHaveLength(1);
+
+      // Verify that the canonical invoice_date was persisted as dateD in the DB
+      const initialOp = (
+        await sql(
+          "SELECT invoice_date, created_at FROM paypal_draft_operations WHERE invoice_id = $1",
+          [id],
+        )
+      )[0];
+      expect(initialOp.invoice_date).toBe(dateD);
+
+      // DELIBERATELY force the database created_at onto D+1 (2026-10-26T00:00:01.000Z)
+      // simulating a DB server stamp across UTC midnight
+      await sql(
+        "UPDATE paypal_draft_operations SET created_at = '2026-10-26T00:00:01.000Z' WHERE invoice_id = $1",
+        [id],
+      );
+
+      // Advance appClock to D+1 afternoon (2026-10-26T15:00:00.000Z)
+      appClock = new Date("2026-10-26T15:00:00.000Z");
+
+      // Verify DB divergence: created_at is 2026-10-26 while invoice_date is 2026-10-25
+      const divergedOp = (
+        await sql(
+          "SELECT invoice_date, created_at FROM paypal_draft_operations WHERE invoice_id = $1",
+          [id],
+        )
+      )[0];
+      expect(divergedOp.invoice_date).toBe(dateD);
+      expect(new Date(divergedOp.created_at).toISOString().slice(0, 10)).toBe("2026-10-26");
+
+      // Call 2: Retry reconciliation on day D+1
+      // Must NOT fail with mapping_refused: due_date_past!
+      // Must reconstruct canonical invoice_date = dateD, verify payload identity, and settle with 201
+      const reconciled = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(reconciled.statusCode, reconciled.body).toBe(201);
+      expect(reconciled.json()).toMatchObject({
+        paypalInvoiceId: createdRemoteId,
+        status: "DRAFT",
+        replayed: false,
+      });
+
+      // Assert exactly ONE create call was ever made to PayPal
+      expect(pp.log.create).toHaveLength(1);
+      expect(await linked(id)).toBe(createdRemoteId);
+      expect((await op(id)).state).toBe("created");
+    });
+
+    it("fresh create captures clock once and avoids clock sampling drift across midnight boundary", async () => {
+      // Clock ticks right between date D and D+1
+      let ticks = 0;
+      const clockWithDrift = () => {
+        ticks++;
+        return ticks === 1
+          ? new Date("2026-10-25T23:59:59.999Z")
+          : new Date("2026-10-26T00:00:00.001Z");
+      };
+
+      const pp = fakePayPal();
+      const s = await session(makeApp({ paypal: pp.client, clock: clockWithDrift }));
+      // Draft has dueDate = 2026-10-25
+      const id = await saveDraft(s, draft({ dueDate: "2026-10-25" }));
+
+      // Fresh create should capture clock once at start of request
+      // and use canonical invoice_date = 2026-10-25 consistently
+      const res = await s.post(`/api/invoice-drafts/${id}/paypal-draft`);
+      expect(res.statusCode, res.body).toBe(201);
+      expect((await op(id)).invoice_date).toBe("2026-10-25");
+      expect(pp.log.create).toHaveLength(1);
+    });
+
     it("created remotely but not verifiable (GET fails): recorded as unknown with the remote id, then reconciled without a second create", async () => {
       const pp = fakePayPal();
       let getFails = true;

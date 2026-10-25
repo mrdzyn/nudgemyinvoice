@@ -11,6 +11,7 @@ export interface PayPalOperation {
   requestId: string;
   invoiceNumber: string;
   payloadDigest: string;
+  invoiceDate: string | null;
   paypalInvoiceId: string | null;
   /** Fencing counter: each claim increments it; later writes must present the value they were granted. */
   attempts: number;
@@ -40,6 +41,7 @@ type Row = {
   request_id: string;
   invoice_number: string;
   payload_digest: string;
+  invoice_date?: string | null;
   paypal_invoice_id: string | null;
   attempts: number;
   last_error_code: string | null;
@@ -59,6 +61,7 @@ const toOp = (r: Row): PayPalOperation => ({
   requestId: r.request_id,
   invoiceNumber: r.invoice_number,
   payloadDigest: r.payload_digest,
+  invoiceDate: r.invoice_date ?? null,
   paypalInvoiceId: r.paypal_invoice_id,
   attempts: Number(r.attempts),
   lastErrorCode: r.last_error_code,
@@ -86,10 +89,11 @@ export class PostgresPayPalOperationStore {
     operatorId: string;
     invoiceNumber: string;
     payloadDigest: string;
+    invoiceDate?: string | null;
   }): Promise<PayPalOperation> {
     const res = await this.db.execute<Row>(sql`
-      INSERT INTO paypal_draft_operations (invoice_id, created_by, invoice_number, payload_digest)
-      VALUES (${input.invoiceId}, ${input.operatorId}, ${input.invoiceNumber}, ${input.payloadDigest})
+      INSERT INTO paypal_draft_operations (invoice_id, created_by, invoice_number, payload_digest, invoice_date)
+      VALUES (${input.invoiceId}, ${input.operatorId}, ${input.invoiceNumber}, ${input.payloadDigest}, ${input.invoiceDate ?? null})
       ON CONFLICT (invoice_id) DO UPDATE SET invoice_id = EXCLUDED.invoice_id
       RETURNING *`);
     return toOp(res.rows[0] as Row);

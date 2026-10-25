@@ -101,6 +101,7 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         "paypal_draft_operations_attempts_nonneg",
         "paypal_draft_operations_number_format",
         "paypal_draft_operations_digest_hex",
+        "paypal_draft_operations_invoice_date_format",
         "paypal_draft_operations_error_code_token",
         "audit_log_outcome_allowed",
       ].sort(),
@@ -436,6 +437,12 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         op,
         [inv, "pending", num, "xyz", null],
         "paypal_draft_operations_digest_hex",
+      );
+      await expectCheckViolation(
+        `INSERT INTO paypal_draft_operations (invoice_id, state, invoice_number, payload_digest, invoice_date)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [inv, "pending", num, dg, "bad-date"],
+        "paypal_draft_operations_invoice_date_format",
       );
     });
   });

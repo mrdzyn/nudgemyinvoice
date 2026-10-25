@@ -43,6 +43,13 @@
       "when": 1792903502169,
       "tag": "0005_glorious_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792940086541,
+      "tag": "0006_known_colleen_wing",
+      "breakpoints": true
     }
   ]
 }

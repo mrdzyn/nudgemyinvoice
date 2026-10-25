@@ -484,4 +484,43 @@ Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_
 ### Next action
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
 
+## Handoff: NMI-P2-I2-C5
+
+- **Task / phase:** `tasks/NMI-P2-I2-invoice-draft-flow.md`
+- **From:** Antigravity (implementation agent)
+- **To:** ChatGPT GPT-6 (independent exact-head security, payment and idempotency audit)
+- **Branch:** `phase-2/nmi-invoice-drafts-i2` (Draft PR #4, base `main` `9ebc191`)
+- **PR:** #4 (Draft)
+- **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
+
+### Remediated findings (ChatGPT audit of `7f871c5` — FIX REQUIRED)
+- **C3 findings confirmed resolved:** Search pagination pseudo-identifiers closed; main path of due date recovery resolved.
+- **Residual MEDIUM (blocking) — Midnight race corrupts reconstruction of initial invoice date:**
+  - *Root cause:* The initial create request sampled `deps.clock()` and built the request body with `invoice_date` before calling `ops.reserve`. The database row generated `created_at` independently via PostgreSQL `now()`. If a request arrived near UTC midnight, `created_at` could be stamped on D+1 while the outbound request was sent on day D. On subsequent retry/reconciliation, `existingOp.createdAt` yielded D+1, causing `assertExactMapping` to reject the draft as `due_date_past` before search/reconciliation, and mutating the rebuilt request body/digest.
+  - *Remediation implemented:*
+    1. **Persist canonical `invoice_date` in database:** Added column `invoice_date` and format check constraint (`invoice_date is null or invoice_date ~ '^\d{4}-\d{2}-\d{2}$'`) to `paypal_draft_operations` via forward migration `0006_known_colleen_wing.sql` (migrations `0000`-`0005` preserved byte-identical).
+    2. **Store on reservation:** `ops.reserve` accepts and persists the exact `invoiceDate` used for the initial request.
+    3. **Reconstruct from persisted operation:** On retry/reconciliation, `existingOp.invoiceDate` is used directly as the single immutable source of truth, completely decoupled from database `created_at` or future clock sampling.
+    4. **Single clock capture:** `deps.clock()` is sampled once per request at entry (`clockNow = deps.clock()`), preventing sampling drift across midnight during request handling.
+    5. **Security documentation corrected:** Updated `docs/SECURITY.md` (section "At-most-one sandbox draft creation") to remove outdated cool-off re-create wording and accurately document local fencing and fail-closed reconciliation.
+- **Deterministic regressions:**
+  - `apps/api/src/invoice-drafts.pg.test.ts`:
+    - Added test forcing a deliberate divergence where initial request body `invoice_date = 2026-10-25`, the DB row `created_at` is updated to `2026-10-26T00:00:01.000Z`, and retry occurs on day `2026-10-26` with `dueDate = 2026-10-25`. Asserts no pre-reconciliation refusal, stable payload digest identity, exactly one remote create call (`pp.log.create.length === 1`), and verified local link.
+    - Added test for clock sampling drift across midnight boundary on fresh create, proving consistent single-date usage.
+  - `packages/db/src/constraints.pg.test.ts`: Added assertion verifying `paypal_draft_operations_invoice_date_format` check constraint rejects invalid date strings.
+  - `packages/db/src/paypal-operation-store.pg.test.ts`: Added test asserting `ops.reserve` stores and returns `invoiceDate`.
+
+### Validation
+Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+- `pnpm validate`: lint, format:check, typecheck, unit tests (235 passed), build, bundle secret scan clean.
+- `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
+- `pnpm audit --prod --audit-level high`: 0 vulnerabilities.
+- `pnpm db:generate`: no uncommitted schema drift, migration `0006` in sync, `0000`-`0005` byte-identical.
+- `pnpm test:db`: 8 files, 182 tests passed against real PostgreSQL 16 (37 constraints, 19 approval store, 25 auth, 16 auth-store, 17 login races, 11 draft store, 9 operation store, 48 invoice-draft/PayPal routes). Total repository test count: 417 tests passing.
+- `git diff --check`: clean, no whitespace errors.
+- **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
+
+### Next action
+Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
+
 <!-- HANDOFF_ENTRIES_END -->

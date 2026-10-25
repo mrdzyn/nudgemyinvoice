@@ -146,6 +146,8 @@ export const paypalDraftOperations = pgTable(
     invoiceNumber: text("invoice_number").notNull(),
     // SHA-256 of the exact PayPal request body built at intent time.
     payloadDigest: char("payload_digest", { length: 64 }).notNull(),
+    // Exact YYYY-MM-DD invoice date sent to PayPal in the initial request body.
+    invoiceDate: text("invoice_date"),
     paypalInvoiceId: text("paypal_invoice_id"),
     attempts: integer("attempts").notNull().default(0),
     lastErrorCode: text("last_error_code"),
@@ -176,6 +178,10 @@ export const paypalDraftOperations = pgTable(
     check("paypal_draft_operations_attempts_nonneg", sql`${t.attempts} >= 0`),
     check("paypal_draft_operations_number_format", sql`${t.invoiceNumber} ~ '^NMI-[0-9a-f]{20}$'`),
     check("paypal_draft_operations_digest_hex", sql`${t.payloadDigest} ~ '^[0-9a-f]{64}$'`),
+    check(
+      "paypal_draft_operations_invoice_date_format",
+      sql`${t.invoiceDate} is null or ${t.invoiceDate} ~ '^\\d{4}-\\d{2}-\\d{2}$'`,
+    ),
     check(
       "paypal_draft_operations_error_code_token",
       sql`${t.lastErrorCode} is null or ${t.lastErrorCode} ~ '^[a-z0-9_.:-]{1,64}$'`,

@@ -83,14 +83,20 @@ export async function createPayPalDraft(
       existingOp.state === "creating" ||
       existingOp.createAttemptedAt !== null);
 
-  const today = deps.clock().toISOString().slice(0, 10);
-  const originalInvoiceDate = (existingOp?.createdAt ?? deps.clock()).toISOString().slice(0, 10);
+  // Capture clock once per request to avoid sampling drift across UTC midnight
+  const clockNow = deps.clock();
+  const today = clockNow.toISOString().slice(0, 10);
+  // Reconstruct exact immutable invoice_date from persisted operation when reconciling,
+  // avoiding independently sampled application/database dates that can disagree across midnight.
+  const canonicalInvoiceDate =
+    existingOp?.invoiceDate ??
+    (existingOp ? existingOp.createdAt.toISOString().slice(0, 10) : today);
 
   try {
     if (isExistingAttempt) {
-      // For existing in-flight / unknown operations, validate mapping against the persisted original intent
+      // For existing in-flight / unknown operations, validate mapping against the persisted original invoice date
       // so an expired due date does not block verification or reconciliation of an already-created remote draft.
-      assertExactMapping(saved.draft, originalInvoiceDate);
+      assertExactMapping(saved.draft, canonicalInvoiceDate);
     } else {
       // New create attempts must have a due date >= today
       assertExactMapping(saved.draft, today);
@@ -101,7 +107,7 @@ export async function createPayPalDraft(
   }
 
   // Stable invoiceDate: preserve the date from the original operation reservation across replays
-  const invoiceDate = originalInvoiceDate;
+  const invoiceDate = canonicalInvoiceDate;
   const body = buildInvoiceRequest(saved.draft, { localInvoiceId: saved.id, invoiceDate });
   const expected = {
     currency: saved.draft.currency,
@@ -131,6 +137,7 @@ export async function createPayPalDraft(
     operatorId: input.operatorId,
     invoiceNumber: expected.invoiceNumber,
     payloadDigest: requestDigest(body),
+    invoiceDate: canonicalInvoiceDate,
   });
   const settledResult = asSettled(existing);
   if (settledResult) return settledResult;

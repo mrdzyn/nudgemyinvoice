@@ -1,0 +1,2 @@
+ALTER TABLE "paypal_draft_operations" ADD COLUMN "invoice_date" text;--> statement-breakpoint
+ALTER TABLE "paypal_draft_operations" ADD CONSTRAINT "paypal_draft_operations_invoice_date_format" CHECK ("paypal_draft_operations"."invoice_date" is null or "paypal_draft_operations"."invoice_date" ~ '^\d{4}-\d{2}-\d{2}$');

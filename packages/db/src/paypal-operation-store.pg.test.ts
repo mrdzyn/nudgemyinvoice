@@ -37,9 +37,9 @@ describe.skipIf(!url)("PostgresPayPalOperationStore (real PostgreSQL)", () => {
     const hex = (++n).toString(16).padStart(20, "0");
     return { invoiceId: res.saved.id, invoiceNumber: `NMI-${hex}` };
   }
-  const reserve = async () => {
+  const reserve = async (invoiceDate: string | null = "2026-10-25") => {
     const inv = await newInvoice();
-    const op = await ops.reserve({ ...inv, operatorId, payloadDigest: DIGEST });
+    const op = await ops.reserve({ ...inv, operatorId, payloadDigest: DIGEST, invoiceDate });
     return { ...inv, op };
   };
 
@@ -65,9 +65,12 @@ describe.skipIf(!url)("PostgresPayPalOperationStore (real PostgreSQL)", () => {
       invoiceNumber,
       operatorId,
       payloadDigest: DIGEST,
+      invoiceDate: "2026-10-25",
     });
     expect(again.id).toBe(op.id);
     expect(again.requestId).toBe(op.requestId);
+    expect(op.invoiceDate).toBe("2026-10-25");
+    expect(again.invoiceDate).toBe("2026-10-25");
     expect(op.state).toBe("pending");
     expect(
       (
