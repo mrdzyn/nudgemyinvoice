@@ -54,30 +54,45 @@ Migrate/seed/webhook commands and judge setup will be added once those features 
 
 ## PayPal Developer sandbox setup — for humans and AI agents
 
-**Observed setup blocker (2026-10-25):** The owner's attempt to create a PayPal Sandbox REST app with the name **`NudgeMyInvoice`** was **rejected because the app name contained “invoice.”** The app **was not created** and **no Client ID or Client Secret was issued by that attempt**. Existing Sandbox **Business (merchant)** and **Personal (buyer)** test accounts were identified, and the dashboard remained in **Sandbox** mode. This records an actual setup result, **not a claim that every PayPal account or API has a universal name-ban rule**.
+### Confirmed owner-reported Sandbox state (2026-10-25)
 
-**Important distinction:** **NudgeMyInvoice remains the public product, GitHub repository and hackathon submission name.** A **PayPal REST app display name can differ from the product name**. If the dashboard rejects the word `invoice`, try an alternative that does not contain it, such as **`NudgeMyPayAgent`** (example only; availability and acceptance are **not yet verified**). Do **not** rename this repository or silently create a Live application as a workaround.
+| Item | Status |
+|---|---|
+| Environment | **Sandbox** selected; no Live environment was used |
+| Product / repository / hackathon name | **NudgeMyInvoice** — unchanged |
+| PayPal REST app display name | **`NudgeMyBillsAI`** — successfully created as a **Merchant** app |
+| Merchant association | Existing US **Sandbox Business** test account |
+| Buyer testing | Existing US **Sandbox Personal** test account identified |
+| Invoicing API | **Enabled and saved**; PayPal displayed “Application was saved successfully” |
+| Sandbox credentials | Client ID available, Secret masked in PayPal; **not copied into chat or project files** |
+| Provider smoke test | **NOT TESTED** — no OAuth request, invoice creation, send or payment performed |
 
-**Sandbox setup checklist:**
+**Naming note:** PayPal rejected an **earlier attempt** to register the REST app as `NudgeMyInvoice` because the name contained “invoice”; that **first attempt created no app**. The owner then successfully created `NudgeMyBillsAI`. This is an observed dashboard result, not a universal policy claim. **Do not rename the NudgeMyInvoice product or GitHub repository, and do not create another PayPal app for this project unless the owner explicitly directs it.**
 
-1. Open [PayPal Developer → Sandbox Apps & Credentials](https://developer.paypal.com/dashboard/applications/sandbox) and verify that the dashboard says **Sandbox**, not Live.
-2. Create the REST app with a name accepted by the current dashboard; record the accepted **non-secret display name** in a setup report. Associate it with the existing sandbox Business merchant account; confirm the Personal buyer account remains available for later payment testing.
-3. Keep the generated Sandbox Client ID and Client Secret **only in an ignored local `.env` or approved secret manager**. Never add them to Git, an issue, a PR, a model prompt, the README, test fixtures, screenshots, CI logs or demo footage. Do not copy real account passwords into the repo.
-4. Configure the **Sandbox** endpoint locally. The flags `PAYPAL_DRAFTS_ENABLED`, `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` belong to the **unmerged Draft PR #4**, not the current `main` release:
+For privacy, this public README intentionally **does not publish the Sandbox Business or Personal account email addresses, credentials, tokens, account IDs, or passwords**. The owner has those details privately.
+
+### Local-only configuration and activation
+
+1. Open [PayPal Developer → Sandbox Apps & Credentials](https://developer.paypal.com/dashboard/applications/sandbox). Locate **`NudgeMyBillsAI`** and confirm **Sandbox**, **Merchant**, and **Invoicing API enabled** before trying the integration. Use the existing Sandbox Business and Personal test accounts; do not create new ones unnecessarily.
+2. Copy the **Sandbox** Client ID and Secret **directly into your local server-side ignored `.env` file or approved secret manager**. Never commit or paste them into GitHub, chat, coding-agent prompts, browser-side variables, test snapshots, README text, PRs, CI logs or demo recordings. A masked Secret in the dashboard is not evidence the app is configured locally.
+3. Use these configuration **names** (no values or sample credentials are committed):
 
    ```dotenv
    PAYPAL_ENV=sandbox
    PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com
    PAYPAL_DRAFTS_ENABLED=false
-   # Set these in your local ignored .env / secret manager only, not in public docs:
-   # PAYPAL_CLIENT_ID=<sandbox-client-id>
-   # PAYPAL_CLIENT_SECRET=<sandbox-client-secret>
+   # Fill the following two variables privately in a server-only environment:
+   PAYPAL_CLIENT_ID=
+   PAYPAL_CLIENT_SECRET=
    ```
 
-5. **Do not enable the draft-write flag or run a genuine sandbox API smoke test until the owner explicitly approves it.** A draft must stay in `DRAFT` and must not notify a recipient. PayPal sending, reminders, refunds, captures, production payments, deployment and release require separate reviewed authorization.
-6. Report only the outcome (**Sandbox app created or blocked; non-secret display name; test-account roles present; provider smoke NOT TESTED / PASS / FAIL**). Never claim the app or provider integration is working from fake-client tests alone.
+   **Important:** `PAYPAL_DRAFTS_ENABLED`, `PAYPAL_CLIENT_ID`, and `PAYPAL_CLIENT_SECRET` are supported by **unmerged [Draft PR #4](https://github.com/mrdzyn/nudgemyinvoice/pull/4)**. The current `main` does not implement sandbox draft creation. Configure the variables only in a checkout of the implementation branch once it passes review. Merely saving an `.env` file does not prove the runtime loads it; verify the local server's documented env-loading mechanism without printing the values.
+4. Leave `PAYPAL_DRAFTS_ENABLED=false` until **the owner explicitly authorizes the sandbox draft smoke test** and the security/idempotency remediation in PR #4 has passed independent review. A separately approved smoke may obtain a Sandbox OAuth token, create **one** fictitious `DRAFT` invoice, retrieve and verify it, then stop. **Do not use the send endpoint, notify a buyer, execute a payment, enable Live APIs, deploy, or release.**
+5. Report non-secret readiness only: app display name, Sandbox/Merchant/Invoicing selection, test-account roles present, local secret configuration **yes/no**, API smoke **NOT TESTED/PASS/FAIL**, and any remaining blockers. Real OpenAI and PayPal provider tests must not be mislabeled PASS based on fake-client or CI tests.
 
-**AI agent operating rule:** Read [`AGENTS.md`](AGENTS.md), [`docs/STATUS.md`](docs/STATUS.md), [`config/project-profile.json`](config/project-profile.json), and the active task/handoff before making repository changes. Treat this README as onboarding context, **not permission** to create PayPal apps, expose credentials, enable paid API calls, merge, deploy, or release. If working in a logged-in PayPal browser session, remain in Sandbox and obtain explicit owner consent before creating an external app or making an API write.
+References: [PayPal REST authentication](https://developer.paypal.com/api/rest/authentication), [API base URLs](https://developer.paypal.com/api/make-api-requests), [Invoicing v2](https://developer.paypal.com/api/invoicing/v2/).
+
+**AI agent operating rule:** Before repository changes, read [`AGENTS.md`](AGENTS.md), [`docs/STATUS.md`](docs/STATUS.md), [`config/project-profile.json`](config/project-profile.json), and the active task/handoff. This README is onboarding context, **not authority** to create a duplicate app, inspect or reveal secrets, run live provider operations, enable draft writes, merge, deploy or release. An authenticated PayPal browser session does not imply permission to execute API calls.
 
 ## Safe demo script (planned)
 
