@@ -7,6 +7,9 @@ import type { AppConfig } from "./config.js";
 import type { ScryptParams } from "./auth/password.js";
 import { registerAuth } from "./plugins/auth.js";
 import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
+import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-drafts.js";
+import type { InvoiceModelClient } from "@nmi/ai";
+import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import { healthRoutes } from "./routes/health.js";
 
 export interface AppDeps {
@@ -17,6 +20,12 @@ export interface AppDeps {
   logStream?: Writable;
   now?: () => number;
   authSeams?: AuthRouteSeams;
+  /** OpenAI-backed parser client; absent => manual-entry fallback. */
+  modelClient?: InvoiceModelClient;
+  /** Real (or fake in tests) PayPal sandbox client; absent => PayPal drafting is disabled. */
+  paypal?: PayPalInvoicingReadDraft;
+  clock?: () => Date;
+  invoiceSeams?: InvoiceDraftSeams;
 }
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -78,6 +87,17 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     return reply.code(403).header("cache-control", "no-store").send({ error: "origin_rejected" });
   });
 
+  // Never echo internal error messages (SQL, stack, provider text) to clients.
+  app.setErrorHandler((error: unknown, req, reply) => {
+    const e = error as { statusCode?: number; name?: string };
+    const status = e.statusCode && e.statusCode >= 400 && e.statusCode < 500 ? e.statusCode : 500;
+    req.log.error({ err: e.name ?? "error", status }, "request failed");
+    return reply
+      .code(status)
+      .header("cache-control", "no-store")
+      .send({ error: status === 500 ? "internal" : "bad_request" });
+  });
+
   registerAuth(app, { config, store, audit });
   healthRoutes(app, config);
   authRoutes(app, {
@@ -87,6 +107,15 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     ...(deps.passwordParams ? { passwordParams: deps.passwordParams } : {}),
     ...(deps.now ? { now: deps.now } : {}),
     ...(deps.authSeams ? { seams: deps.authSeams } : {}),
+  });
+  invoiceDraftRoutes(app, {
+    config,
+    db: deps.db,
+    audit,
+    modelClient: deps.modelClient,
+    paypal: deps.paypal,
+    clock: deps.clock,
+    seams: deps.invoiceSeams,
   });
   return app;
 }

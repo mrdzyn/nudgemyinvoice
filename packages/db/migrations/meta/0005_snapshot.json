@@ -1,0 +1,1051 @@
+{
+  "id": "c2eeac0a-fe5c-47bb-9853-2d2ccdd2edce",
+  "prevId": "41f3b0d0-bf76-4c3f-b489-9e37e2a7b864",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.approvals": {
+      "name": "approvals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resource_id": {
+          "name": "resource_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload_digest": {
+          "name": "payload_digest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "approver_id": {
+          "name": "approver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "approvals_resource_idx": {
+          "name": "approvals_resource_idx",
+          "columns": [
+            {
+              "expression": "action",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "resource_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "approvals_action_allowed": {
+          "name": "approvals_action_allowed",
+          "value": "\"approvals\".\"action\" in ('sendInvoice','sendReminder','cancelInvoice','refundPayment','capturePayment','markPaid')"
+        },
+        "approvals_payload_digest_sha256_hex": {
+          "name": "approvals_payload_digest_sha256_hex",
+          "value": "\"approvals\".\"payload_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "approvals_approver_nonempty": {
+          "name": "approvals_approver_nonempty",
+          "value": "length(\"approvals\".\"approver_id\") > 0"
+        },
+        "approvals_expiry_after_creation": {
+          "name": "approvals_expiry_after_creation",
+          "value": "\"approvals\".\"expires_at\" > \"approvals\".\"created_at\""
+        },
+        "approvals_consumed_not_before_creation": {
+          "name": "approvals_consumed_not_before_creation",
+          "value": "\"approvals\".\"consumed_at\" is null or \"approvals\".\"consumed_at\" >= \"approvals\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "at": {
+          "name": "at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actor": {
+          "name": "actor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resource_id": {
+          "name": "resource_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "detail": {
+          "name": "detail",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        }
+      },
+      "indexes": {
+        "audit_log_at_idx": {
+          "name": "audit_log_at_idx",
+          "columns": [
+            {
+              "expression": "at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_log_outcome_allowed": {
+          "name": "audit_log_outcome_allowed",
+          "value": "\"audit_log\".\"outcome\" is null or \"audit_log\".\"outcome\" in ('success','failure','denied','error')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.invoice_items": {
+      "name": "invoice_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity_hundredths": {
+          "name": "quantity_hundredths",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price_minor": {
+          "name": "unit_price_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "invoice_items_position_uq": {
+          "name": "invoice_items_position_uq",
+          "columns": [
+            {
+              "expression": "invoice_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invoice_items_invoice_id_invoices_id_fk": {
+          "name": "invoice_items_invoice_id_invoices_id_fk",
+          "tableFrom": "invoice_items",
+          "tableTo": "invoices",
+          "columnsFrom": [
+            "invoice_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "invoice_items_quantity_positive": {
+          "name": "invoice_items_quantity_positive",
+          "value": "\"invoice_items\".\"quantity_hundredths\" > 0"
+        },
+        "invoice_items_unit_price_nonneg": {
+          "name": "invoice_items_unit_price_nonneg",
+          "value": "\"invoice_items\".\"unit_price_minor\" >= 0"
+        },
+        "invoice_items_position_nonneg": {
+          "name": "invoice_items_position_nonneg",
+          "value": "\"invoice_items\".\"position\" >= 0"
+        },
+        "invoice_items_description_bounded": {
+          "name": "invoice_items_description_bounded",
+          "value": "length(\"invoice_items\".\"description\") between 1 and 200"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.invoices": {
+      "name": "invoices",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "paypal_invoice_id": {
+          "name": "paypal_invoice_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "draft_digest": {
+          "name": "draft_digest",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tax_bps": {
+          "name": "tax_bps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discount_kind": {
+          "name": "discount_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discount_bps": {
+          "name": "discount_bps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "customer_name": {
+          "name": "customer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_email": {
+          "name": "customer_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "char(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtotal_minor": {
+          "name": "subtotal_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "discount_minor": {
+          "name": "discount_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "tax_minor": {
+          "name": "tax_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "total_minor": {
+          "name": "total_minor",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_date": {
+          "name": "due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "invoices_paypal_invoice_id_uq": {
+          "name": "invoices_paypal_invoice_id_uq",
+          "columns": [
+            {
+              "expression": "paypal_invoice_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invoices_due_date_idx": {
+          "name": "invoices_due_date_idx",
+          "columns": [
+            {
+              "expression": "due_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invoices_idempotency_uq": {
+          "name": "invoices_idempotency_uq",
+          "columns": [
+            {
+              "expression": "created_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"invoices\".\"idempotency_key\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invoices_created_by_operators_id_fk": {
+          "name": "invoices_created_by_operators_id_fk",
+          "tableFrom": "invoices",
+          "tableTo": "operators",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "invoices_subtotal_nonneg": {
+          "name": "invoices_subtotal_nonneg",
+          "value": "\"invoices\".\"subtotal_minor\" >= 0"
+        },
+        "invoices_discount_nonneg": {
+          "name": "invoices_discount_nonneg",
+          "value": "\"invoices\".\"discount_minor\" >= 0"
+        },
+        "invoices_tax_nonneg": {
+          "name": "invoices_tax_nonneg",
+          "value": "\"invoices\".\"tax_minor\" >= 0"
+        },
+        "invoices_total_nonneg": {
+          "name": "invoices_total_nonneg",
+          "value": "\"invoices\".\"total_minor\" >= 0"
+        },
+        "invoices_discount_le_subtotal": {
+          "name": "invoices_discount_le_subtotal",
+          "value": "\"invoices\".\"discount_minor\" <= \"invoices\".\"subtotal_minor\""
+        },
+        "invoices_total_consistent": {
+          "name": "invoices_total_consistent",
+          "value": "\"invoices\".\"total_minor\" = \"invoices\".\"subtotal_minor\" - \"invoices\".\"discount_minor\" + \"invoices\".\"tax_minor\""
+        },
+        "invoices_currency_supported": {
+          "name": "invoices_currency_supported",
+          "value": "\"invoices\".\"currency\" in ('USD','EUR','GBP','CAD','AUD','JPY')"
+        },
+        "invoices_status_chk": {
+          "name": "invoices_status_chk",
+          "value": "\"invoices\".\"status\" in ('draft','sent','paid','partially_paid','cancelled','refunded')"
+        },
+        "invoices_draft_digest_hex": {
+          "name": "invoices_draft_digest_hex",
+          "value": "\"invoices\".\"draft_digest\" is null or \"invoices\".\"draft_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "invoices_idempotency_key_format": {
+          "name": "invoices_idempotency_key_format",
+          "value": "\"invoices\".\"idempotency_key\" is null or \"invoices\".\"idempotency_key\" ~ '^[A-Za-z0-9_-]{8,128}$'"
+        },
+        "invoices_tax_bps_range": {
+          "name": "invoices_tax_bps_range",
+          "value": "\"invoices\".\"tax_bps\" is null or (\"invoices\".\"tax_bps\" between 0 and 10000)"
+        },
+        "invoices_tax_requires_rate": {
+          "name": "invoices_tax_requires_rate",
+          "value": "\"invoices\".\"tax_bps\" is not null or \"invoices\".\"tax_minor\" = 0"
+        },
+        "invoices_discount_shape": {
+          "name": "invoices_discount_shape",
+          "value": "(\"invoices\".\"discount_kind\" is null and \"invoices\".\"discount_bps\" is null and \"invoices\".\"discount_minor\" = 0)\n        or (\"invoices\".\"discount_kind\" is not null and \"invoices\".\"discount_kind\" = 'percent'\n            and \"invoices\".\"discount_bps\" is not null and \"invoices\".\"discount_bps\" between 0 and 10000)\n        or (\"invoices\".\"discount_kind\" is not null and \"invoices\".\"discount_kind\" = 'amount' and \"invoices\".\"discount_bps\" is null)"
+        },
+        "invoices_customer_fields_bounded": {
+          "name": "invoices_customer_fields_bounded",
+          "value": "length(\"invoices\".\"customer_name\") between 1 and 200 and length(\"invoices\".\"customer_email\") between 3 and 254"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.operators": {
+      "name": "operators",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "credential_version": {
+          "name": "credential_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "disabled_at": {
+          "name": "disabled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "operators_username_uq": {
+          "name": "operators_username_uq",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "operators_single_row_uq": {
+          "name": "operators_single_row_uq",
+          "columns": [
+            {
+              "expression": "(true)",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "operators_username_format": {
+          "name": "operators_username_format",
+          "value": "\"operators\".\"username\" ~ '^[a-z0-9._-]{3,64}$'"
+        },
+        "operators_password_hash_scheme": {
+          "name": "operators_password_hash_scheme",
+          "value": "\"operators\".\"password_hash\" like 'scrypt$%'"
+        },
+        "operators_credential_version_positive": {
+          "name": "operators_credential_version_positive",
+          "value": "\"operators\".\"credential_version\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.paypal_draft_operations": {
+      "name": "paypal_draft_operations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "invoice_number": {
+          "name": "invoice_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload_digest": {
+          "name": "payload_digest",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paypal_invoice_id": {
+          "name": "paypal_invoice_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_error_code": {
+          "name": "last_error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "create_attempted_at": {
+          "name": "create_attempted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "paypal_draft_operations_invoice_uq": {
+          "name": "paypal_draft_operations_invoice_uq",
+          "columns": [
+            {
+              "expression": "invoice_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "paypal_draft_operations_number_uq": {
+          "name": "paypal_draft_operations_number_uq",
+          "columns": [
+            {
+              "expression": "invoice_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "paypal_draft_operations_remote_uq": {
+          "name": "paypal_draft_operations_remote_uq",
+          "columns": [
+            {
+              "expression": "paypal_invoice_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"paypal_draft_operations\".\"paypal_invoice_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "paypal_draft_operations_invoice_id_invoices_id_fk": {
+          "name": "paypal_draft_operations_invoice_id_invoices_id_fk",
+          "tableFrom": "paypal_draft_operations",
+          "tableTo": "invoices",
+          "columnsFrom": [
+            "invoice_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "paypal_draft_operations_created_by_operators_id_fk": {
+          "name": "paypal_draft_operations_created_by_operators_id_fk",
+          "tableFrom": "paypal_draft_operations",
+          "tableTo": "operators",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "paypal_draft_operations_state_allowed": {
+          "name": "paypal_draft_operations_state_allowed",
+          "value": "\"paypal_draft_operations\".\"state\" in ('pending','creating','created','unknown','rejected','mismatch')"
+        },
+        "paypal_draft_operations_created_has_remote": {
+          "name": "paypal_draft_operations_created_has_remote",
+          "value": "\"paypal_draft_operations\".\"state\" <> 'created' or \"paypal_draft_operations\".\"paypal_invoice_id\" is not null"
+        },
+        "paypal_draft_operations_remote_only_when_known": {
+          "name": "paypal_draft_operations_remote_only_when_known",
+          "value": "\"paypal_draft_operations\".\"paypal_invoice_id\" is null or \"paypal_draft_operations\".\"state\" in ('created','mismatch','unknown','creating')"
+        },
+        "paypal_draft_operations_attempts_nonneg": {
+          "name": "paypal_draft_operations_attempts_nonneg",
+          "value": "\"paypal_draft_operations\".\"attempts\" >= 0"
+        },
+        "paypal_draft_operations_number_format": {
+          "name": "paypal_draft_operations_number_format",
+          "value": "\"paypal_draft_operations\".\"invoice_number\" ~ '^NMI-[0-9a-f]{20}$'"
+        },
+        "paypal_draft_operations_digest_hex": {
+          "name": "paypal_draft_operations_digest_hex",
+          "value": "\"paypal_draft_operations\".\"payload_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "paypal_draft_operations_error_code_token": {
+          "name": "paypal_draft_operations_error_code_token",
+          "value": "\"paypal_draft_operations\".\"last_error_code\" is null or \"paypal_draft_operations\".\"last_error_code\" ~ '^[a-z0-9_.:-]{1,64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.paypal_webhook_events": {
+      "name": "paypal_webhook_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "paypal_event_id": {
+          "name": "paypal_event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verification_result": {
+          "name": "verification_result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "paypal_webhook_events_event_id_uq": {
+          "name": "paypal_webhook_events_event_id_uq",
+          "columns": [
+            {
+              "expression": "paypal_event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "operator_id": {
+          "name": "operator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "sessions_token_hash_uq": {
+          "name": "sessions_token_hash_uq",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sessions_operator_idx": {
+          "name": "sessions_operator_idx",
+          "columns": [
+            {
+              "expression": "operator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sessions_operator_id_operators_id_fk": {
+          "name": "sessions_operator_id_operators_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "operators",
+          "columnsFrom": [
+            "operator_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "sessions_token_hash_hex": {
+          "name": "sessions_token_hash_hex",
+          "value": "\"sessions\".\"token_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "sessions_expiry_after_creation": {
+          "name": "sessions_expiry_after_creation",
+          "value": "\"sessions\".\"expires_at\" > \"sessions\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

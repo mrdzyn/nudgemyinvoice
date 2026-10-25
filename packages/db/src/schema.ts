@@ -29,6 +29,15 @@ export const invoices = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     paypalInvoiceId: text("paypal_invoice_id"),
+    // Ownership and client-retry de-duplication (see PostgresInvoiceDraftStore.save).
+    createdBy: uuid("created_by").references(() => operators.id),
+    idempotencyKey: text("idempotency_key"),
+    // SHA-256 of the canonical validated draft; a replayed key must present the same draft.
+    draftDigest: char("draft_digest", { length: 64 }),
+    // Original (un-rounded) tax/discount inputs, so PayPal mapping and round trips are exact.
+    taxBps: integer("tax_bps"),
+    discountKind: text("discount_kind"),
+    discountBps: integer("discount_bps"),
     customerName: text("customer_name").notNull(),
     customerEmail: text("customer_email").notNull(),
     currency: currency(),
@@ -63,6 +72,30 @@ export const invoices = pgTable(
       sql`${t.status} in ('draft','sent','paid','partially_paid','cancelled','refunded')`,
     ),
     index("invoices_due_date_idx").on(t.dueDate),
+    uniqueIndex("invoices_idempotency_uq")
+      .on(t.createdBy, t.idempotencyKey)
+      .where(sql`${t.idempotencyKey} is not null`),
+    check(
+      "invoices_draft_digest_hex",
+      sql`${t.draftDigest} is null or ${t.draftDigest} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "invoices_idempotency_key_format",
+      sql`${t.idempotencyKey} is null or ${t.idempotencyKey} ~ '^[A-Za-z0-9_-]{8,128}$'`,
+    ),
+    check("invoices_tax_bps_range", sql`${t.taxBps} is null or (${t.taxBps} between 0 and 10000)`),
+    check("invoices_tax_requires_rate", sql`${t.taxBps} is not null or ${t.taxMinor} = 0`),
+    check(
+      "invoices_discount_shape",
+      sql`(${t.discountKind} is null and ${t.discountBps} is null and ${t.discountMinor} = 0)
+        or (${t.discountKind} is not null and ${t.discountKind} = 'percent'
+            and ${t.discountBps} is not null and ${t.discountBps} between 0 and 10000)
+        or (${t.discountKind} is not null and ${t.discountKind} = 'amount' and ${t.discountBps} is null)`,
+    ),
+    check(
+      "invoices_customer_fields_bounded",
+      sql`length(${t.customerName}) between 1 and 200 and length(${t.customerEmail}) between 3 and 254`,
+    ),
   ],
 );
 
@@ -73,6 +106,7 @@ export const invoiceItems = pgTable(
     invoiceId: uuid("invoice_id")
       .notNull()
       .references(() => invoices.id, { onDelete: "cascade" }),
+    position: integer("position").notNull().default(0),
     description: text("description").notNull(),
     quantityHundredths: bigint("quantity_hundredths", { mode: "bigint" }).notNull(),
     unitPriceMinor: money("unit_price_minor").notNull(),
@@ -80,6 +114,72 @@ export const invoiceItems = pgTable(
   (t) => [
     check("invoice_items_quantity_positive", sql`${t.quantityHundredths} > 0`),
     check("invoice_items_unit_price_nonneg", sql`${t.unitPriceMinor} >= 0`),
+    check("invoice_items_position_nonneg", sql`${t.position} >= 0`),
+    check("invoice_items_description_bounded", sql`length(${t.description}) between 1 and 200`),
+    uniqueIndex("invoice_items_position_uq").on(t.invoiceId, t.position),
+  ],
+);
+
+/**
+ * Durable record of the (single) PayPal sandbox draft creation for a local invoice.
+ * One row per invoice (unique invoice_id) is the barrier that makes a second external create
+ * impossible without an explicit, fenced claim. `attempts` is the fencing counter: every state
+ * change after a claim must present the attempts value it was granted.
+ *
+ * states: pending (reserved) -> creating (claimed; lease) -> created | rejected | mismatch | unknown.
+ * `unknown` means the outcome of the external call is not known; it is reconciled by looking the
+ * invoice up by its deterministic invoice_number BEFORE any further create.
+ */
+export const paypalDraftOperations = pgTable(
+  "paypal_draft_operations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "restrict" }),
+    createdBy: uuid("created_by").references(() => operators.id),
+    state: text("state").notNull().default("pending"),
+    // Stable PayPal-Request-Id for every attempt (sent, but NOT relied upon: PayPal documents it
+    // only for some Invoicing endpoints, not invoices.create).
+    requestId: uuid("request_id").notNull().defaultRandom(),
+    // Deterministic remote invoice number we choose; used to find the invoice after an unclear outcome.
+    invoiceNumber: text("invoice_number").notNull(),
+    // SHA-256 of the exact PayPal request body built at intent time.
+    payloadDigest: char("payload_digest", { length: 64 }).notNull(),
+    paypalInvoiceId: text("paypal_invoice_id"),
+    attempts: integer("attempts").notNull().default(0),
+    lastErrorCode: text("last_error_code"),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
+    createAttemptedAt: timestamp("create_attempted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("paypal_draft_operations_invoice_uq").on(t.invoiceId),
+    uniqueIndex("paypal_draft_operations_number_uq").on(t.invoiceNumber),
+    uniqueIndex("paypal_draft_operations_remote_uq")
+      .on(t.paypalInvoiceId)
+      .where(sql`${t.paypalInvoiceId} is not null`),
+    check(
+      "paypal_draft_operations_state_allowed",
+      sql`${t.state} in ('pending','creating','created','unknown','rejected','mismatch')`,
+    ),
+    check(
+      "paypal_draft_operations_created_has_remote",
+      sql`${t.state} <> 'created' or ${t.paypalInvoiceId} is not null`,
+    ),
+    check(
+      "paypal_draft_operations_remote_only_when_known",
+      sql`${t.paypalInvoiceId} is null or ${t.state} in ('created','mismatch','unknown','creating')`,
+    ),
+    check("paypal_draft_operations_attempts_nonneg", sql`${t.attempts} >= 0`),
+    check("paypal_draft_operations_number_format", sql`${t.invoiceNumber} ~ '^NMI-[0-9a-f]{20}$'`),
+    check("paypal_draft_operations_digest_hex", sql`${t.payloadDigest} ~ '^[0-9a-f]{64}$'`),
+    check(
+      "paypal_draft_operations_error_code_token",
+      sql`${t.lastErrorCode} is null or ${t.lastErrorCode} ~ '^[a-z0-9_.:-]{1,64}$'`,
+    ),
   ],
 );
 

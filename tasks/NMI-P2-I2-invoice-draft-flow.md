@@ -1,6 +1,6 @@
 # NMI-P2-I2 — Authenticated AI Invoice Drafts and PayPal Sandbox Draft Creation
 
-- **State:** Authorized to start; docs-only task bootstrap; application implementation **NOT YET STARTED**.
+- **State:** Implemented on this branch; pending independent Codex exact-head audit (not self-certified). Real OpenAI / PayPal sandbox smoke: **NOT TESTED**.
 - **Owner/orchestrator:** project owner / ChatGPT
 - **Implementation agent:** Claude Code
 - **Independent auditor:** Codex
@@ -54,15 +54,15 @@ All routes require a verified server-side session. The existing global Origin an
 
 **Primary objective:** prove that a validated proposal can be saved exactly as a local draft, and an explicit authenticated action can create **at most one matching PayPal sandbox draft**, without any notification or privileged PayPal action.
 
-- [ ] Parse route: 401 without session, 403 for CSRF/Origin bypass, 400 for malformed/overlong input, correct `needs_clarification`, `invalid`, `draft`, provider unavailable/manual fallback. Mocked-model path deterministic.
-- [ ] Local save: strict schema, same money/currency/tax/discount numbers before and after a real PostgreSQL round trip; line items and invoice inserted transactionally, rollback on failure; duplicate/idempotent client request behavior defined.
-- [ ] 2+ currencies (e.g., USD/EUR) retained independently; supported fractional quantities and money scaling, rounding, tax and discount consistency; no summed cross-currency total.
-- [ ] Sandbox client: fake-HTTP OAuth and create-draft responses; exact endpoint/host, request headers and body, parsed remote ID/status, controlled timeouts/retries and secret redaction.
-- [ ] Durable create intent: two concurrent requests / double-click / replay produce at most one external create; after timeout, uncertain state is detectable and retry/reconciliation is safe. Stable `PayPal-Request-Id` preserved. Never claim a draft exists without a verified remote reference.
-- [ ] Network fakes prove no calls to `/send`, `/remind`, `/cancel`, `/payments`, `/refunds` or production host. Reject any attempt to use model/tool text to trigger an external call.
-- [ ] Existing auth, credential-rotation races, rate-limiter, approval concurrency and audit integrity tests stay green; migration rollback/upgrade safety and previously committed migrations preserved.
-- [ ] Pure unit/integration CI without real secrets or network passes. One **optional, owner-triggered** sandbox smoke against a sandbox account records a genuine PayPal draft ID **only when the owner has configured credentials**; otherwise state `NOT TESTED`. Real OpenAI smoke similarly optional, never forged.
-- [ ] No UI, PayPal send, live transaction, webhook, deployment or release performed.
+- [x] Parse route: 401 without session, 403 for CSRF/Origin bypass, 400 for malformed/overlong input, correct `needs_clarification`, `invalid`, `draft`, provider unavailable/manual fallback. Mocked-model path deterministic.
+- [x] Local save: strict schema, same money/currency/tax/discount numbers before and after a real PostgreSQL round trip; line items and invoice inserted transactionally, rollback on failure; duplicate/idempotent client request behavior defined.
+- [x] 2+ currencies (e.g., USD/EUR) retained independently; supported fractional quantities and money scaling, rounding, tax and discount consistency; no summed cross-currency total.
+- [x] Sandbox client: fake-HTTP OAuth and create-draft responses; exact endpoint/host, request headers and body, parsed remote ID/status, controlled timeouts/retries and secret redaction.
+- [x] Durable create intent: two concurrent requests / double-click / replay produce at most one external create; after timeout, uncertain state is detectable and retry/reconciliation is safe. Stable `PayPal-Request-Id` preserved. Never claim a draft exists without a verified remote reference.
+- [x] Network fakes prove no calls to `/send`, `/remind`, `/cancel`, `/payments`, `/refunds` or production host. Reject any attempt to use model/tool text to trigger an external call.
+- [x] Existing auth, credential-rotation races, rate-limiter, approval concurrency and audit integrity tests stay green; migration rollback/upgrade safety and previously committed migrations preserved.
+- [x] Pure unit/integration CI without real secrets or network passes. The **optional, owner-triggered** real PayPal sandbox and OpenAI smokes are **NOT TESTED** (procedure in `docs/TESTING.md`); nothing was forged.
+- [x] No UI, PayPal send, live transaction, webhook, deployment or release performed.
 
 ## Delivery / reviews
 
@@ -73,3 +73,10 @@ Update `docs/STATUS.md`, task acceptance, and the next single active handoff. Co
 ## Explicitly deferred
 
 Human grant **issuance and actual PayPal send**, verified webhook receipt/reconciliation, browser application shell (awaits design approval), AG Studio licence, scheduling and overdue reminders, production PayPal, credentials in repository, and deployment. These may be separately planned after I2 independently passes.
+
+## Implementation record (Claude, NMI-P2-I2)
+- **Final endpoint names:** `POST /api/invoice-drafts/parse`, `POST /api/invoice-drafts` (optional `Idempotency-Key`), `GET /api/invoice-drafts/:id`, `POST /api/invoice-drafts/:id/paypal-draft`.
+- **Key design finding:** PayPal documents `PayPal-Request-Id` for some Invoicing endpoints but not for create-invoice (published OpenAPI schema), so it is sent but not relied on; exactly-once creation rests on a durable fenced operation row, a deterministic `invoice_number`/`reference`, reconcile-before-retry, a cool-off, and verification of the remote draft.
+- **Deviation / decision for the owner:** drafts whose totals depend on rounding (some tax/discount combinations, sub-cent line products) are *refused* instead of mapped, because PayPal's rounding is unverified. Relax only after a live sandbox smoke proves PayPal's rounding.
+- **Unverified PayPal assumptions** (fake HTTP only) are listed in `docs/SECURITY.md`.
+- Migration `0005` is forward-only; `0000`-`0004` byte-identical. No UI, send, webhook, deployment or release.

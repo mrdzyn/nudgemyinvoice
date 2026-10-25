@@ -10,8 +10,12 @@ describe("sanitizeAuditDetail", () => {
         approvalId: "11111111-1111-4111-8111-111111111111",
         sessionId: "22222222-2222-4222-8222-222222222222",
         privilegedAction: "sendInvoice",
+        invoiceId: "33333333-3333-4333-8333-333333333333",
+        state: "created",
       }),
     ).toEqual({
+      invoiceId: "33333333-3333-4333-8333-333333333333",
+      state: "created",
       reason: "bad_credentials",
       usernameKnown: true,
       approvalId: "11111111-1111-4111-8111-111111111111",
@@ -40,6 +44,9 @@ describe("sanitizeAuditDetail", () => {
     expect(sanitizeAuditDetail({ approvalId: "not-a-uuid" })).toEqual({});
     expect(sanitizeAuditDetail({ privilegedAction: "autoApprove" })).toEqual({});
     expect(sanitizeAuditDetail({ usernameKnown: "yes" as never })).toEqual({});
+    expect(sanitizeAuditDetail({ invoiceId: "INV2-REMOTE" })).toEqual({});
+    expect(sanitizeAuditDetail({ state: "billing@acme.example" })).toEqual({});
+    expect(sanitizeAuditDetail({ state: "has space" })).toEqual({});
     expect(sanitizeAuditDetail(undefined)).toEqual({});
   });
 });

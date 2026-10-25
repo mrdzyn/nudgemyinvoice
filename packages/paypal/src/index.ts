@@ -1,55 +1,24 @@
-import type { CurrencyCode, InvoiceDraft } from "@nmi/shared";
 import type { PrivilegedAction } from "@nmi/domain";
+import type { RemoteInvoice } from "./client.js";
 
-/** The only PayPal host this project may talk to. Live hosts are rejected, never fallen back to. */
-export const PAYPAL_SANDBOX_HOST = "api-m.sandbox.paypal.com";
+export * from "./sandbox.js";
 
-export class SandboxConfigError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "SandboxConfigError";
-  }
-}
+export * from "./http.js";
+export * from "./mapping.js";
+export * from "./client.js";
 
-export function assertSandboxConfig(env: {
-  PAYPAL_ENV?: string | undefined;
-  PAYPAL_API_BASE_URL?: string | undefined;
-}): URL {
-  if (env.PAYPAL_ENV !== "sandbox")
-    throw new SandboxConfigError("PAYPAL_ENV must be exactly 'sandbox'");
-  let url: URL;
-  try {
-    url = new URL(env.PAYPAL_API_BASE_URL ?? "");
-  } catch {
-    throw new SandboxConfigError("PAYPAL_API_BASE_URL is not a valid URL");
-  }
-  if (
-    url.protocol !== "https:" ||
-    url.hostname !== PAYPAL_SANDBOX_HOST ||
-    url.port ||
-    url.username ||
-    url.password
-  ) {
-    throw new SandboxConfigError(`PAYPAL_API_BASE_URL must be https://${PAYPAL_SANDBOX_HOST}`);
-  }
-  return url;
-}
-
-export type RemoteInvoiceStatus =
-  "DRAFT" | "SENT" | "PAID" | "PARTIALLY_PAID" | "CANCELLED" | "REFUNDED" | "UNKNOWN";
-
-export interface RemoteInvoice {
-  paypalInvoiceId: string;
-  status: RemoteInvoiceStatus;
-  currency: CurrencyCode;
-  total: string;
-  dueDate: string;
-}
-
-/** Read and draft operations: the only PayPal surface an agent may reach. No send/cancel/refund here. */
+/**
+ * Read and draft operations: the only PayPal surface this project may use. There is deliberately no
+ * send, remind, cancel, payment, refund, update or delete method here, in the client, or in the
+ * transport allowlist.
+ */
 export interface PayPalInvoicingReadDraft {
-  createDraftInvoice(draft: InvoiceDraft): Promise<RemoteInvoice>;
-  getInvoice(paypalInvoiceId: string): Promise<RemoteInvoice>;
+  createDraftInvoice(input: {
+    body: import("./mapping.js").PayPalInvoiceRequest;
+    requestId: string;
+  }): Promise<{ paypalInvoiceId: string }>;
+  getInvoice(paypalInvoiceId: string): Promise<RemoteInvoice | null>;
+  findInvoiceIdsByNumber(invoiceNumber: string): Promise<string[]>;
 }
 
 /**

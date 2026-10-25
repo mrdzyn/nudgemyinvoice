@@ -36,6 +36,13 @@
       "when": 1792867024773,
       "tag": "0004_zippy_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792903502169,
+      "tag": "0005_glorious_giant_girl",
+      "breakpoints": true
     }
   ]
 }
