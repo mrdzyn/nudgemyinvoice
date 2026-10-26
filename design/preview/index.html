@@ -1,0 +1,3288 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>NudgeMyInvoice Design Preview</title>
+    <style>
+      /* ==========================================================================
+       NMI-UI-01A design preview. Static, fixture-only, no network, no provider calls.
+       Semantic tokens mirror design/tokens/design-tokens.json.
+       ========================================================================== */
+      :root {
+        --canvas: #f8fafc;
+        --surface: #ffffff;
+        --surface-sunken: #f1f5f9;
+        --border: #e2e8f0;
+        --border-input: #64748b;
+        --text: #0f172a;
+        --text-2: #475569;
+        --text-muted: #55657a;
+        --link: #1d4ed8;
+        --action-bg: #2563eb;
+        --action-bg-hover: #1d4ed8;
+        --action-text: #ffffff;
+        --focus: #1d4ed8;
+        --accent: #6d28d9;
+        --sandbox-bg: #fffbeb;
+        --sandbox-border: #d97706;
+        --sandbox-text: #78350f;
+        --sandbox-pill-bg: #fef3c7;
+        --ok-bg: #ecfdf5;
+        --ok-text: #065f46;
+        --ok-border: #059669;
+        --warn-bg: #fffbeb;
+        --warn-text: #92400e;
+        --warn-border: #d97706;
+        --err-bg: #fef2f2;
+        --err-text: #991b1b;
+        --err-border: #dc2626;
+        --info-bg: #eff6ff;
+        --info-text: #1e40af;
+        --info-border: #93c5fd;
+        --neutral-bg: #f1f5f9;
+        --neutral-text: #334155;
+        --neutral-border: #94a3b8;
+        --ai-bg: #f5f3ff;
+        --ai-text: #5b21b6;
+        --ai-border: #c4b5fd;
+        --bar-bg: #0f172a;
+        --bar-text: #e2e8f0;
+        --bar-control: #1e293b;
+        --shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono: "Roboto Mono", "SF Mono", Menlo, Consolas, monospace;
+        --radius: 8px;
+        --radius-lg: 12px;
+      }
+      :root[data-theme="dark"] {
+        --canvas: #0b0f19;
+        --surface: #131b2e;
+        --surface-sunken: #0d1424;
+        --border: #25324a;
+        --border-input: #8798ad;
+        --text: #f8fafc;
+        --text-2: #cbd5e1;
+        --text-muted: #a3b2c6;
+        --link: #7cb0ff;
+        --action-bg: #2563eb;
+        --action-bg-hover: #3b73f0;
+        --action-text: #ffffff;
+        --focus: #93c5fd;
+        --accent: #c4b5fd;
+        --sandbox-bg: #261604;
+        --sandbox-border: #b45309;
+        --sandbox-text: #fde68a;
+        --sandbox-pill-bg: #451a03;
+        --ok-bg: #064e3b;
+        --ok-text: #a7f3d0;
+        --ok-border: #059669;
+        --warn-bg: #3b2205;
+        --warn-text: #fcd34d;
+        --warn-border: #b45309;
+        --err-bg: #450a0a;
+        --err-text: #fecaca;
+        --err-border: #dc2626;
+        --info-bg: #172554;
+        --info-text: #bfdbfe;
+        --info-border: #3b82f6;
+        --neutral-bg: #1e293b;
+        --neutral-text: #e2e8f0;
+        --neutral-border: #64748b;
+        --ai-bg: #1e1b4b;
+        --ai-text: #ddd6fe;
+        --ai-border: #6d28d9;
+        --bar-bg: #020617;
+        --bar-text: #e2e8f0;
+        --bar-control: #1e293b;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.5;
+        background: var(--canvas);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+      a {
+        color: var(--link);
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+      }
+      .mono,
+      .num {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      :focus-visible,
+      input[type="date"]:focus-within {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .skip-link {
+        position: absolute;
+        left: 8px;
+        top: -64px;
+        background: var(--action-bg);
+        color: var(--action-text);
+        padding: 8px 14px;
+        border-radius: var(--radius);
+        z-index: 3000;
+      }
+      .skip-link:focus {
+        top: 8px;
+      }
+
+      /* ------------------------------ review controls ------------------------------ */
+      .review-controls {
+        background: var(--bar-bg);
+        color: var(--bar-text);
+        border-bottom: 1px solid #334155;
+        font-size: 13px;
+      }
+      .review-controls summary {
+        padding: 10px 16px;
+        cursor: pointer;
+        font-weight: 600;
+        list-style-position: inside;
+      }
+      .review-controls-body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        padding: 0 16px 12px;
+        align-items: center;
+      }
+      .rc-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+      }
+      .rc-label {
+        color: #cbd5e1;
+        font-weight: 600;
+      }
+      .rc-btn,
+      .rc-select {
+        background: var(--bar-control);
+        color: var(--bar-text);
+        border: 1px solid #64748b;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 13px;
+        min-height: 32px;
+        cursor: pointer;
+      }
+      .rc-btn[aria-pressed="true"],
+      .rc-btn[aria-current="true"] {
+        background: #2563eb;
+        border-color: #93c5fd;
+        color: #fff;
+        font-weight: 600;
+      }
+      .review-controls :focus-visible {
+        outline-color: #93c5fd;
+      }
+      .rc-note {
+        color: #cbd5e1;
+        flex-basis: 100%;
+      }
+
+      /* ------------------------------ app shell ------------------------------ */
+      .sandbox-banner {
+        background: var(--sandbox-bg);
+        color: var(--sandbox-text);
+        border-bottom: 1px solid var(--sandbox-border);
+        padding: 8px 24px;
+        font-size: 13px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        justify-content: space-between;
+      }
+      .banner-offline {
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-bottom: 1px solid var(--warn-border);
+        padding: 8px 24px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .app-header {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 17px;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: var(--radius);
+        background: linear-gradient(135deg, #2563eb, #6d28d9);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+      }
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .sandbox-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--sandbox-pill-bg);
+        color: var(--sandbox-text);
+        border: 1px solid var(--sandbox-border);
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .app-nav {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        display: flex;
+        gap: 20px;
+      }
+      .nav-link {
+        background: none;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        padding: 12px 4px;
+        cursor: pointer;
+        color: var(--text-2);
+        font-weight: 500;
+      }
+      .nav-link[aria-current="page"] {
+        color: var(--link);
+        border-bottom-color: var(--link);
+        font-weight: 700;
+      }
+      .mobile-nav {
+        display: none;
+      }
+      main {
+        padding: 24px;
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+      main:focus {
+        outline: none;
+      }
+      .screen-title {
+        font-size: 24px;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+      }
+      .screen-title:focus {
+        outline: none;
+      }
+      .subtitle {
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-top: 2px;
+      }
+      .page-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      /* ------------------------------ components ------------------------------ */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+      .card + .card {
+        margin-top: 16px;
+      }
+      .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 8px 16px;
+        border-radius: var(--radius);
+        border: 1px solid transparent;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        background: transparent;
+      }
+      .btn-primary {
+        background: var(--action-bg);
+        color: var(--action-text);
+      }
+      .btn-primary:hover {
+        background: var(--action-bg-hover);
+      }
+      .btn-secondary {
+        background: var(--surface);
+        border-color: var(--border-input);
+        color: var(--text);
+      }
+      .btn-secondary:hover {
+        background: var(--surface-sunken);
+      }
+      .btn-danger {
+        background: var(--err-bg);
+        color: var(--err-text);
+        border-color: var(--err-border);
+      }
+      .btn-link {
+        background: none;
+        border: 0;
+        padding: 0 2px;
+        min-height: 24px;
+        display: inline-flex;
+        align-items: center;
+        text-align: left;
+        color: var(--link);
+        text-decoration: underline;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn[disabled],
+      .btn[aria-disabled="true"] {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .btn-sm {
+        min-height: 32px;
+        padding: 4px 12px;
+        font-size: 13px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        border: 1px solid;
+        padding: 1px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .badge-ok {
+        background: var(--ok-bg);
+        color: var(--ok-text);
+        border-color: var(--ok-border);
+      }
+      .badge-warn {
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-color: var(--warn-border);
+      }
+      .badge-err {
+        background: var(--err-bg);
+        color: var(--err-text);
+        border-color: var(--err-border);
+      }
+      .badge-neutral {
+        background: var(--neutral-bg);
+        color: var(--neutral-text);
+        border-color: var(--neutral-border);
+      }
+      .badge-info {
+        background: var(--info-bg);
+        color: var(--info-text);
+        border-color: var(--info-border);
+      }
+      .notice {
+        display: flex;
+        gap: 10px;
+        border: 1px solid;
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      .notice > div {
+        flex: 1;
+        min-width: 0;
+      }
+      .notice-info {
+        background: var(--info-bg);
+        color: var(--info-text);
+        border-color: var(--info-border);
+      }
+      .notice-warn {
+        background: var(--warn-bg);
+        color: var(--warn-text);
+        border-color: var(--warn-border);
+      }
+      .notice-err {
+        background: var(--err-bg);
+        color: var(--err-text);
+        border-color: var(--err-border);
+      }
+      .notice-ok {
+        background: var(--ok-bg);
+        color: var(--ok-text);
+        border-color: var(--ok-border);
+      }
+      .notice-ai {
+        background: var(--ai-bg);
+        color: var(--ai-text);
+        border-color: var(--ai-border);
+      }
+      .notice ul,
+      .notice ol {
+        margin: 6px 0 0;
+        padding-left: 20px;
+      }
+      .notice .btn-link {
+        color: inherit;
+      }
+
+      /* forms */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 14px;
+        min-width: 0;
+      }
+      .field > label,
+      .field > .label {
+        font-size: 13.5px;
+        font-weight: 600;
+        display: flex;
+        gap: 4px;
+      }
+      .field > label.spread {
+        justify-content: space-between;
+      }
+      .req {
+        color: var(--err-text);
+      }
+      .hint {
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+      .input,
+      .select,
+      .textarea {
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 12px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border-input);
+        background: var(--surface);
+        color: var(--text);
+      }
+      .textarea {
+        min-height: 130px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+      .input[aria-invalid="true"],
+      .select[aria-invalid="true"],
+      .textarea[aria-invalid="true"] {
+        border-color: var(--err-border);
+        border-width: 2px;
+        background: var(--err-bg);
+      }
+      .input[disabled],
+      .textarea[disabled] {
+        opacity: 0.6;
+      }
+      .field-error {
+        color: var(--err-text);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .field-error::before {
+        content: "\26A0\FE0E  ";
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16px;
+      }
+      .counter {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .counter.over {
+        color: var(--err-text);
+        font-weight: 700;
+      }
+
+      /* tabs */
+      .tablist {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+      }
+      .tab {
+        background: none;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        padding: 10px 16px;
+        cursor: pointer;
+        color: var(--text-2);
+        font-weight: 500;
+        min-height: 44px;
+      }
+      .tab[aria-selected="true"] {
+        color: var(--link);
+        border-bottom-color: var(--link);
+        font-weight: 700;
+      }
+
+      /* login */
+      .login-wrap {
+        display: grid;
+        place-items: center;
+        min-height: 60vh;
+      }
+      .login-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 28px;
+      }
+      .login-head {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .login-head .brand-mark {
+        margin: 0 auto 10px;
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+      }
+
+      /* dashboard */
+      .currency-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+      .currency-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+      }
+      .currency-card .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: var(--text-2);
+      }
+      .currency-card .amount {
+        font-size: 26px;
+        font-weight: 700;
+      }
+      .currency-card .meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .pill {
+        background: var(--surface);
+        border: 1px solid var(--border-input);
+        border-radius: 999px;
+        padding: 4px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        min-height: 32px;
+      }
+      .pill[aria-pressed="true"] {
+        background: var(--info-bg);
+        color: var(--info-text);
+        border-color: var(--info-border);
+        font-weight: 700;
+      }
+      .table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-top: 16px;
+        overflow: hidden;
+      }
+      table.data {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      table.data caption {
+        text-align: left;
+      }
+      table.data th {
+        text-align: left;
+        background: var(--surface-sunken);
+        color: var(--text-muted);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      table.data td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      table.data tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      table.data th.r,
+      table.data td.r {
+        text-align: right;
+      }
+      .cell-sub {
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+      .grid-footer {
+        padding: 10px 16px;
+        border-top: 1px dashed var(--border-input);
+        background: var(--surface-sunken);
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+      .skeleton {
+        background: linear-gradient(90deg, var(--surface-sunken), var(--border), var(--surface-sunken));
+        background-size: 200% 100%;
+        border-radius: 6px;
+        animation: shimmer 1.4s linear infinite;
+      }
+      @keyframes shimmer {
+        from {
+          background-position: 200% 0;
+        }
+        to {
+          background-position: -200% 0;
+        }
+      }
+      .empty {
+        padding: 48px 20px;
+        text-align: center;
+      }
+      .empty h2 {
+        font-size: 18px;
+        margin-bottom: 6px;
+      }
+      .empty p {
+        color: var(--text-muted);
+        max-width: 420px;
+        margin: 0 auto 16px;
+      }
+
+      /* composer */
+      .composer {
+        max-width: 820px;
+        margin: 0 auto;
+      }
+      .chip-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .chip {
+        text-align: left;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-input);
+        border-radius: var(--radius);
+        padding: 10px 12px;
+        cursor: pointer;
+        font-size: 13.5px;
+        min-height: 44px;
+        color: var(--text-2);
+      }
+      .chip:hover {
+        border-color: var(--link);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+      .actions .spacer {
+        margin-right: auto;
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        display: inline-block;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* review */
+      .review-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+      }
+      .line-head,
+      .line-row {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) 90px 130px 120px 84px;
+        gap: 10px;
+        align-items: start;
+      }
+      .line-head {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 10px;
+      }
+      .line-row {
+        padding-bottom: 10px;
+      }
+      .line-row .field {
+        margin-bottom: 0;
+      }
+      .line-total {
+        padding-top: 10px;
+        text-align: right;
+        font-weight: 600;
+      }
+      .m-label {
+        display: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text-2);
+      }
+      .totals {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        position: sticky;
+        top: 12px;
+      }
+      .totals-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 5px 0;
+        color: var(--text-2);
+      }
+      .totals-row.final {
+        border-top: 2px solid var(--border-input);
+        margin-top: 8px;
+        padding-top: 10px;
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .discount-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 12px;
+      }
+
+      /* detail */
+      .meta-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px 20px;
+        margin: 0;
+      }
+      .meta-list dt {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+      }
+      .meta-list dd {
+        margin: 2px 0 0;
+        overflow-wrap: anywhere;
+      }
+      .paypal-panel {
+        border: 2px solid var(--sandbox-border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        padding: 20px;
+        margin: 16px 0;
+      }
+      .paypal-panel .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .paypal-status {
+        font-size: 17px;
+        font-weight: 700;
+        margin: 8px 0 4px;
+      }
+
+      /* dialog */
+      dialog {
+        border: 1px solid var(--border-input);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        color: var(--text);
+        padding: 24px;
+        max-width: 480px;
+        width: calc(100% - 32px);
+      }
+      dialog::backdrop {
+        background: rgba(2, 6, 23, 0.65);
+      }
+      dialog h2 {
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+      dialog .actions {
+        border: 0;
+        padding-top: 0;
+      }
+
+      /* ------------------------------ responsive ------------------------------ */
+      @media (max-width: 1023px) {
+        .review-grid {
+          grid-template-columns: 1fr;
+        }
+        .totals {
+          position: static;
+        }
+      }
+      @media (max-width: 767px) {
+        body {
+          font-size: 16px;
+          padding-bottom: 68px;
+        }
+        main {
+          padding: 16px;
+        }
+        .sandbox-banner,
+        .app-header {
+          padding: 10px 16px;
+        }
+        .app-nav {
+          display: none;
+        }
+        .mobile-nav {
+          display: flex;
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: var(--surface);
+          border-top: 1px solid var(--border);
+          padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+          z-index: 500;
+          justify-content: space-around;
+        }
+        .mobile-nav button {
+          background: none;
+          border: 0;
+          min-height: 48px;
+          min-width: 80px;
+          padding: 4px 10px;
+          color: var(--text-2);
+          font-weight: 500;
+          font-size: 13px;
+          border-radius: var(--radius);
+        }
+        .mobile-nav button[aria-current="page"] {
+          color: var(--link);
+          font-weight: 700;
+        }
+        .btn,
+        .input,
+        .select,
+        .pill,
+        .chip,
+        .tab {
+          min-height: 44px;
+        }
+        .btn-sm,
+        .btn-link,
+        .brand {
+          min-height: 44px;
+        }
+        .grid-2,
+        .discount-grid {
+          grid-template-columns: 1fr;
+        }
+        .currency-grid {
+          grid-template-columns: 1fr;
+        }
+        .filters {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .actions {
+          flex-direction: column-reverse;
+          align-items: stretch;
+        }
+        .actions .btn {
+          width: 100%;
+        }
+        .actions .spacer {
+          margin: 0;
+        }
+        .line-head {
+          display: none;
+        }
+        .line-row {
+          grid-template-columns: 1fr 1fr;
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+        .line-row .f-desc {
+          grid-column: 1 / -1;
+        }
+        .line-row .f-total {
+          grid-column: 1 / 2;
+        }
+        .line-row .f-remove {
+          grid-column: 2 / 3;
+          justify-self: end;
+          align-self: end;
+        }
+        .line-total {
+          text-align: left;
+          padding-top: 0;
+        }
+        .m-label {
+          display: block;
+        }
+        table.data thead {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+        }
+        table.data.stack tr {
+          display: block;
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--border);
+        }
+        table.data.stack td {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          border: 0;
+          padding: 4px 0;
+          text-align: right;
+        }
+        table.data.stack td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          color: var(--text-muted);
+          text-align: left;
+          flex: 0 0 auto;
+        }
+        table.data.stack td.r {
+          text-align: right;
+        }
+        table.data.static-lines thead {
+          position: static;
+          width: auto;
+          height: auto;
+          clip: auto;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+        .spinner {
+          border-right-color: currentColor;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content" data-action="skip">Skip to main content</a>
+
+    <details class="review-controls" id="review-controls" open>
+      <summary>Design review controls (not part of the product UI)</summary>
+      <div class="review-controls-body">
+        <div class="rc-group" role="group" aria-label="Screen">
+          <span class="rc-label" id="rc-screen">Screen</span>
+          <button type="button" class="rc-btn" data-action="goto" data-screen="login">1 Login</button>
+          <button type="button" class="rc-btn" data-action="goto" data-screen="dashboard">2 Dashboard</button>
+          <button type="button" class="rc-btn" data-action="goto" data-screen="composer">3 Composer</button>
+          <button type="button" class="rc-btn" data-action="goto" data-screen="review">4 Review</button>
+          <button type="button" class="rc-btn" data-action="goto" data-screen="detail">5 Detail</button>
+        </div>
+        <div class="rc-group">
+          <label class="rc-label" for="state-select">State</label>
+          <select id="state-select" class="rc-select">
+            <option value="default">Default / working flow</option>
+            <optgroup label="Login">
+              <option value="login-error">Login failed (401)</option>
+              <option value="login-throttled">Too many attempts (429)</option>
+              <option value="session-expired">Session expired</option>
+            </optgroup>
+            <optgroup label="Dashboard">
+              <option value="empty">Empty</option>
+              <option value="loading">Loading</option>
+              <option value="list-error">List request failed</option>
+              <option value="offline">Offline</option>
+            </optgroup>
+            <optgroup label="Composer">
+              <option value="over-limit">Over 2,000-character limit</option>
+              <option value="ai-clarification">AI needs clarification</option>
+              <option value="ai-invalid">AI could not read the text</option>
+              <option value="ai-unavailable">AI unavailable</option>
+            </optgroup>
+            <optgroup label="Review and save">
+              <option value="validation-errors">Validation errors</option>
+              <option value="rounding">Rounding in totals</option>
+              <option value="save-replay">Duplicate save (replayed)</option>
+              <option value="save-conflict">Idempotency conflict (409)</option>
+            </optgroup>
+            <optgroup label="PayPal Sandbox draft">
+              <option value="paypal-disabled">Disabled (503)</option>
+              <option value="paypal-refused">Refused, rounding or tax rule (422)</option>
+              <option value="paypal-creating">In progress (409)</option>
+              <option value="paypal-reconciling">Reconciling (409)</option>
+              <option value="paypal-unknown">Outcome unknown (502)</option>
+              <option value="paypal-rejected">Rejected (502)</option>
+              <option value="paypal-mismatch">Remote mismatch (502)</option>
+              <option value="paypal-created">Created</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="rc-group">
+          <button type="button" class="rc-btn" id="theme-btn" data-action="theme" aria-pressed="false">Dark theme</button>
+        </div>
+        <p class="rc-note">
+          Synthetic fixtures only. No network, PayPal or OpenAI call is made. Credentials typed here are never sent
+          anywhere.
+        </p>
+      </div>
+    </details>
+
+    <div id="live" class="sr-only" role="status" aria-live="polite"></div>
+
+    <div class="sandbox-banner" role="note" aria-label="PayPal Sandbox notice">
+      <span
+        ><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email
+        the customer.</span
+      >
+      <span class="mono">sandbox · draft-only</span>
+    </div>
+    <div id="offline-banner" class="banner-offline" role="alert" hidden>
+      Offline. Parsing, saving and PayPal draft creation are unavailable until the connection returns.
+    </div>
+
+    <header class="app-header" id="app-header">
+      <a class="brand" href="#" data-action="brand">
+        <span class="brand-mark" aria-hidden="true">N</span>
+        <span>NudgeMyInvoice</span>
+      </a>
+      <div class="header-controls" id="header-controls">
+        <span class="sandbox-pill">PayPal Sandbox</span>
+        <span id="operator-chip" class="cell-sub" hidden>Signed in as operator</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="signout-btn" data-action="signout" hidden>
+          Sign out
+        </button>
+      </div>
+    </header>
+    <nav class="app-nav" id="app-nav" aria-label="Main" hidden>
+      <button type="button" class="nav-link" data-action="goto" data-screen="dashboard" data-nav="dashboard">
+        Invoice drafts
+      </button>
+      <button type="button" class="nav-link" data-action="goto" data-screen="composer" data-nav="composer">
+        New invoice
+      </button>
+    </nav>
+
+    <main id="main-content" tabindex="-1">
+      <!-- 1 LOGIN -->
+      <section id="screen-login" aria-labelledby="login-title" hidden>
+        <div class="login-wrap">
+          <div class="card login-card">
+            <div class="login-head">
+              <div class="brand-mark" aria-hidden="true">N</div>
+              <h1 class="screen-title" id="login-title" tabindex="-1">Operator sign in</h1>
+              <p class="subtitle">Single-operator console for the PayPal Sandbox demo</p>
+            </div>
+            <div id="login-notice"></div>
+            <form id="login-form" novalidate autocomplete="on">
+              <div class="field">
+                <label for="login-username">Username <span class="req" aria-hidden="true">*</span></label>
+                <input
+                  class="input"
+                  id="login-username"
+                  name="username"
+                  type="text"
+                  autocomplete="username"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  required
+                  maxlength="64"
+                  aria-describedby="err-login-username"
+                />
+                <p class="field-error" id="err-login-username" hidden></p>
+              </div>
+              <div class="field">
+                <label for="login-password">Password <span class="req" aria-hidden="true">*</span></label>
+                <input
+                  class="input"
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  maxlength="256"
+                  aria-describedby="err-login-password"
+                />
+                <p class="field-error" id="err-login-password" hidden></p>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%" id="login-submit">Sign in</button>
+            </form>
+            <p class="hint" style="margin-top: 16px; text-align: center">
+              Design preview: any non-empty username and password continue to the dashboard. Nothing is sent
+              anywhere. The real form posts <code>username</code> and <code>password</code> to
+              <code>POST /api/auth/login</code>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 DASHBOARD -->
+      <section id="screen-dashboard" aria-labelledby="dash-title" hidden>
+        <div class="notice notice-info" role="note">
+          <span aria-hidden="true">ℹ</span>
+          <div>
+            <strong>Synthetic fixtures.</strong> The backend has <code>GET /api/invoice-drafts/:id</code> but no list
+            endpoint (<code>GET /api/invoice-drafts</code> is not implemented). This dashboard is a design of a
+            future list view; every row below is fabricated.
+          </div>
+        </div>
+        <div class="page-head">
+          <div>
+            <h1 class="screen-title" id="dash-title" tabindex="-1">Invoice drafts</h1>
+            <p class="subtitle">Local drafts and their PayPal Sandbox draft status</p>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="goto" data-screen="composer">
+            New invoice
+          </button>
+        </div>
+        <div id="dash-body"></div>
+      </section>
+
+      <!-- 3 COMPOSER -->
+      <section id="screen-composer" aria-labelledby="comp-title" hidden>
+        <div class="composer">
+          <div class="page-head">
+            <div>
+              <h1 class="screen-title" id="comp-title" tabindex="-1">New invoice</h1>
+              <p class="subtitle">Describe the work in plain language, or enter the invoice by hand</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tablist" role="tablist" aria-label="How to start">
+              <button type="button" class="tab" role="tab" id="tab-ai" aria-controls="panel-ai" data-action="tab" data-tab="ai">
+                Describe it (AI)
+              </button>
+              <button type="button" class="tab" role="tab" id="tab-manual" aria-controls="panel-manual" data-action="tab" data-tab="manual">
+                Enter manually
+              </button>
+            </div>
+            <div id="panel-ai" role="tabpanel" aria-labelledby="tab-ai">
+              <div id="comp-banner"></div>
+              <div class="field">
+                <label class="spread" for="comp-text">
+                  <span>Invoice description <span class="req" aria-hidden="true">*</span></span>
+                  <span class="counter" id="comp-counter" aria-live="off">0 / 2,000</span>
+                </label>
+                <textarea
+                  class="textarea"
+                  id="comp-text"
+                  rows="6"
+                  aria-describedby="comp-hint comp-error"
+                  placeholder="Example: Invoice Acme Design for 2 logo concepts at 250 USD each, 8% tax, due December 15."
+                ></textarea>
+                <p class="hint" id="comp-hint">
+                  Up to 2,000 characters. Include the customer's name and email, currency, amounts and due date.
+                </p>
+                <p class="field-error" id="comp-error" role="alert" hidden></p>
+              </div>
+              <div class="notice notice-info" role="note" id="privacy-note">
+                <span aria-hidden="true">🔒</span>
+                <div>
+                  <strong>Privacy.</strong> When AI parsing is configured on the server, the text you enter,
+                  including any customer names and email addresses, may be sent to OpenAI to be parsed. Do not paste
+                  card numbers, passwords or other secrets. The result is a proposal: review every field before
+                  saving. <span class="hint">Design note: real provider parsing is NOT TESTED.</span>
+                </div>
+              </div>
+              <div id="comp-clar"></div>
+              <div>
+                <p class="label" id="chips-label" style="font-weight: 600; font-size: 13.5px">
+                  Synthetic example prompts
+                </p>
+                <div class="chip-list" role="group" aria-labelledby="chips-label" id="chip-list"></div>
+                <p class="hint" style="margin-top: 8px">
+                  In this preview only these four examples are recognized. Any other text returns the
+                  "could not read" outcome so that state can be reviewed.
+                </p>
+              </div>
+              <div class="actions">
+                <span class="spacer">Endpoint: <code>POST /api/invoice-drafts/parse</code></span>
+                <button type="button" class="btn btn-secondary" data-action="goto" data-screen="dashboard">Cancel</button>
+                <button type="button" class="btn btn-primary" id="parse-btn" data-action="parse">Parse with AI</button>
+              </div>
+            </div>
+            <div id="panel-manual" role="tabpanel" aria-labelledby="tab-manual" hidden>
+              <p style="margin-bottom: 12px">
+                Fill in the customer, currency, due date and line items yourself. Nothing is sent to an AI service.
+              </p>
+              <div class="actions" style="border: 0; padding-top: 0; margin-top: 8px">
+                <button type="button" class="btn btn-primary" data-action="manual-form">Open blank invoice form</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 REVIEW -->
+      <section id="screen-review" aria-labelledby="rev-title" hidden>
+        <div class="page-head">
+          <div>
+            <h1 class="screen-title" id="rev-title" tabindex="-1">Review invoice</h1>
+            <p class="subtitle" id="rev-subtitle"></p>
+          </div>
+          <span class="badge badge-neutral">Not saved yet</span>
+        </div>
+        <div id="rev-banner"></div>
+        <div id="err-summary" class="notice notice-err" role="alert" tabindex="-1" hidden></div>
+        <form id="review-form" novalidate>
+          <div class="review-grid">
+            <div>
+              <div class="card">
+                <h2 class="card-title">Customer and terms</h2>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="f-customerName">Customer name <span class="req" aria-hidden="true">*</span></label>
+                    <input class="input" id="f-customerName" data-field="customerName" type="text" autocomplete="off" required maxlength="200" aria-describedby="err-customerName" />
+                    <p class="field-error" id="err-customerName" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="f-customerEmail">Customer email <span class="req" aria-hidden="true">*</span></label>
+                    <input class="input" id="f-customerEmail" data-field="customerEmail" type="email" autocomplete="off" required maxlength="254" aria-describedby="err-customerEmail" />
+                    <p class="field-error" id="err-customerEmail" hidden></p>
+                  </div>
+                  <div class="field">
+                    <label for="f-currency">Currency <span class="req" aria-hidden="true">*</span></label>
+                    <select class="select" id="f-currency" data-field="currency" aria-describedby="hint-currency">
+                      <option value="USD">USD · US dollar</option>
+                      <option value="EUR">EUR · Euro</option>
+                      <option value="GBP">GBP · Pound sterling</option>
+                      <option value="CAD">CAD · Canadian dollar</option>
+                      <option value="AUD">AUD · Australian dollar</option>
+                      <option value="JPY">JPY · Japanese yen (no decimals)</option>
+                    </select>
+                    <p class="hint" id="hint-currency">One currency per invoice. Changing it does not convert amounts.</p>
+                  </div>
+                  <div class="field">
+                    <label for="f-dueDate">Due date <span class="req" aria-hidden="true">*</span></label>
+                    <input class="input" id="f-dueDate" data-field="dueDate" type="date" required aria-describedby="err-dueDate hint-dueDate" />
+                    <p class="hint" id="hint-dueDate"></p>
+                    <p class="field-error" id="err-dueDate" hidden></p>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px">
+                  <h2 class="card-title" style="margin: 0" id="lines-title">Line items</h2>
+                  <button type="button" class="btn btn-secondary btn-sm" data-action="add-line" id="add-line-btn">Add line item</button>
+                </div>
+                <div role="group" aria-labelledby="lines-title">
+                  <div class="line-head" aria-hidden="true">
+                    <span>Description</span><span>Quantity</span><span>Unit price</span><span style="text-align: right">Line total</span><span></span>
+                  </div>
+                  <div id="lines"></div>
+                </div>
+                <p class="field-error" id="err-lines" hidden></p>
+                <p class="hint" id="lines-hint"></p>
+              </div>
+              <div class="card">
+                <h2 class="card-title">Tax and discount <span class="hint" style="font-weight: 400">(optional)</span></h2>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="f-taxPercent">Tax rate (percent)</label>
+                    <input class="input" id="f-taxPercent" data-field="taxPercent" type="text" inputmode="decimal" autocomplete="off" aria-describedby="err-taxPercent hint-tax" />
+                    <p class="hint" id="hint-tax">Percent only, up to 2 decimals, for example 8.25. A fixed tax amount is not supported.</p>
+                    <p class="field-error" id="err-taxPercent" hidden></p>
+                  </div>
+                  <div>
+                    <div class="discount-grid">
+                      <div class="field">
+                        <label for="f-discountKind">Discount type</label>
+                        <select class="select" id="f-discountKind" data-field="discountKind">
+                          <option value="none">None</option>
+                          <option value="percent">Percent</option>
+                          <option value="amount">Fixed amount</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="f-discountValue">Discount value</label>
+                        <input class="input" id="f-discountValue" data-field="discountValue" type="text" inputmode="decimal" autocomplete="off" aria-describedby="err-discountValue" />
+                        <p class="field-error" id="err-discountValue" hidden></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <aside aria-labelledby="totals-title">
+              <div class="totals">
+                <h2 class="card-title" id="totals-title">Estimated totals</h2>
+                <p class="hint" style="margin-bottom: 10px" id="totals-hint">
+                  A preview calculation in the browser. The server recomputes the totals when you save and its result
+                  is the only authoritative figure.
+                </p>
+                <div id="totals-body" aria-live="polite"></div>
+                <div id="paypal-hint" style="margin-top: 12px"></div>
+                <div id="save-msg"></div>
+                <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px">
+                  <button type="submit" class="btn btn-primary" id="save-btn">Save local draft</button>
+                  <button type="button" class="btn btn-secondary" data-action="goto" data-screen="composer" data-keep="1">Back to composer</button>
+                  <button type="button" class="btn btn-danger" data-action="discard">Discard</button>
+                </div>
+                <p class="hint" style="margin-top: 12px">
+                  Saving stores a local draft only (<code>POST /api/invoice-drafts</code> with
+                  <code id="idem-key">Idempotency-Key</code>). Nothing is sent to PayPal.
+                </p>
+              </div>
+            </aside>
+          </div>
+        </form>
+      </section>
+
+      <!-- 5 DETAIL -->
+      <section id="screen-detail" aria-labelledby="det-title" hidden>
+        <div id="det-body"></div>
+      </section>
+    </main>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Main (mobile)" hidden>
+      <button type="button" data-action="goto" data-screen="dashboard" data-nav="dashboard">Drafts</button>
+      <button type="button" data-action="goto" data-screen="composer" data-nav="composer">New invoice</button>
+      <button type="button" data-action="signout">Sign out</button>
+    </nav>
+
+    <dialog id="dlg" aria-labelledby="dlg-title" aria-describedby="dlg-body">
+      <h2 id="dlg-title"></h2>
+      <div id="dlg-body"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="dlg-cancel" data-action="dlg-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="dlg-ok" data-action="dlg-ok">Confirm</button>
+      </div>
+    </dialog>
+
+    <script id="nmi-fixtures" type="application/json">
+{
+  "_meta": {
+    "description": "Synthetic invoice fixtures for NudgeMyInvoice design review (NMI-UI-01A). Every name, email, ID and amount is fabricated. Shapes mirror GET /api/invoice-drafts/:id; totals are recomputed and checked by design/fixtures/verify-fixtures.mjs. No real PayPal or OpenAI response is represented.",
+    "currenciesRepresented": [
+      "USD",
+      "EUR",
+      "GBP",
+      "JPY"
+    ],
+    "fixtureIdPolicy": "Draft ids and PayPal ids are fabricated. PayPal ids use the INV2-DEMO-FAKE prefix and never equal a real Sandbox id.",
+    "backendShape": "id, draft (strict invoiceDraftSchema), totals (server-computed), paypalInvoiceId, createdAt, paypal{state,paypalInvoiceId,lastErrorCode}"
+  },
+  "invoices": [
+    {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "draft": {
+        "customerName": "Acme Design LLC",
+        "customerEmail": "billing@acme.example",
+        "currency": "USD",
+        "lineItems": [
+          {
+            "description": "Brand identity & primary logo system",
+            "quantity": "2",
+            "unitPrice": "250.00"
+          },
+          {
+            "description": "Typography and color specification guide",
+            "quantity": "1",
+            "unitPrice": "150.00"
+          }
+        ],
+        "dueDate": "2026-12-15",
+        "taxPercent": "8",
+        "discount": null
+      },
+      "totals": {
+        "currency": "USD",
+        "lineTotals": [
+          "500.00",
+          "150.00"
+        ],
+        "subtotal": "650.00",
+        "discount": "0.00",
+        "tax": "52.00",
+        "total": "702.00"
+      },
+      "paypalInvoiceId": "INV2-DEMO-FAKE-0000-0001",
+      "paypal": {
+        "state": "created",
+        "paypalInvoiceId": "INV2-DEMO-FAKE-0000-0001",
+        "lastErrorCode": null
+      },
+      "createdAt": "2026-10-26T12:00:00.000Z"
+    },
+    {
+      "id": "e7b8f2a1-6c3d-4e9f-8a1b-3d5e7f9a2c4e",
+      "draft": {
+        "customerName": "Beispiel GmbH",
+        "customerEmail": "rechnung@beispiel.example",
+        "currency": "EUR",
+        "lineItems": [
+          {
+            "description": "Frontend component architecture & review",
+            "quantity": "15",
+            "unitPrice": "85.00"
+          }
+        ],
+        "dueDate": "2026-11-20",
+        "taxPercent": "19",
+        "discount": null
+      },
+      "totals": {
+        "currency": "EUR",
+        "lineTotals": [
+          "1275.00"
+        ],
+        "subtotal": "1275.00",
+        "discount": "0.00",
+        "tax": "242.25",
+        "total": "1517.25"
+      },
+      "paypalInvoiceId": null,
+      "paypal": {
+        "state": "none",
+        "paypalInvoiceId": null,
+        "lastErrorCode": null
+      },
+      "createdAt": "2026-10-26T14:30:00.000Z"
+    },
+    {
+      "id": "f4a2b9c8-1d3e-4f5a-9b7c-8e2a1d4f6b8c",
+      "draft": {
+        "customerName": "Sakura Creative Studio (サクラ・クリエイティブ)",
+        "customerEmail": "accounting@sakura.example",
+        "currency": "JPY",
+        "lineItems": [
+          {
+            "description": "Technical advisory retainer (hours)",
+            "quantity": "4",
+            "unitPrice": "12500"
+          }
+        ],
+        "dueDate": "2026-12-05",
+        "taxPercent": "10",
+        "discount": {
+          "kind": "amount",
+          "value": "5000"
+        }
+      },
+      "totals": {
+        "currency": "JPY",
+        "lineTotals": [
+          "50000"
+        ],
+        "subtotal": "50000",
+        "discount": "5000",
+        "tax": "4500",
+        "total": "49500"
+      },
+      "paypalInvoiceId": null,
+      "paypal": {
+        "state": "creating",
+        "paypalInvoiceId": null,
+        "lastErrorCode": null
+      },
+      "createdAt": "2026-10-26T16:45:00.000Z"
+    },
+    {
+      "id": "3c6d1a58-92e4-4b7f-a0d3-5e8b4c7f1a29",
+      "draft": {
+        "customerName": "Northwind Studio Ltd",
+        "customerEmail": "accounts@northwind.example",
+        "currency": "GBP",
+        "lineItems": [
+          {
+            "description": "Design workshop (days)",
+            "quantity": "3",
+            "unitPrice": "275.00"
+          },
+          {
+            "description": "Asset licensing",
+            "quantity": "1",
+            "unitPrice": "150.00"
+          }
+        ],
+        "dueDate": "2026-12-10",
+        "taxPercent": "20",
+        "discount": {
+          "kind": "percent",
+          "value": "10"
+        }
+      },
+      "totals": {
+        "currency": "GBP",
+        "lineTotals": [
+          "825.00",
+          "150.00"
+        ],
+        "subtotal": "975.00",
+        "discount": "97.50",
+        "tax": "175.50",
+        "total": "1053.00"
+      },
+      "paypalInvoiceId": null,
+      "paypal": {
+        "state": "none",
+        "paypalInvoiceId": null,
+        "lastErrorCode": null
+      },
+      "createdAt": "2026-10-27T09:15:00.000Z"
+    }
+  ],
+  "parseScenarios": [
+    {
+      "id": "usd-draft",
+      "label": "USD · clear request",
+      "currency": "USD",
+      "text": "Invoice Acme Design (billing@acme.example) for 2 brand identity logo concepts at 250 USD each and 1 typography guide at 150 USD. 8% tax, due December 15.",
+      "outcome": {
+        "status": "draft",
+        "draft": {
+          "customerName": "Acme Design LLC",
+          "customerEmail": "billing@acme.example",
+          "currency": "USD",
+          "lineItems": [
+            {
+              "description": "Brand identity & primary logo system",
+              "quantity": "2",
+              "unitPrice": "250.00"
+            },
+            {
+              "description": "Typography and color specification guide",
+              "quantity": "1",
+              "unitPrice": "150.00"
+            }
+          ],
+          "dueDate": "2026-12-15",
+          "taxPercent": "8",
+          "discount": null
+        },
+        "totals": {
+          "currency": "USD",
+          "lineTotals": [
+            "500.00",
+            "150.00"
+          ],
+          "subtotal": "650.00",
+          "discount": "0.00",
+          "tax": "52.00",
+          "total": "702.00"
+        }
+      }
+    },
+    {
+      "id": "eur-clarify",
+      "label": "EUR · needs clarification",
+      "currency": "EUR",
+      "text": "Bill Beispiel GmbH for 12 hours of advisory at 110 EUR per hour plus 197.25 EUR travel. VAT applies.",
+      "outcome": {
+        "status": "needs_clarification",
+        "questions": [
+          {
+            "field": "customerEmail",
+            "question": "What billing email address should be used for Beispiel GmbH?"
+          },
+          {
+            "field": "dueDate",
+            "question": "What due date should the invoice use?"
+          }
+        ]
+      },
+      "afterClarification": {
+        "status": "draft",
+        "draft": {
+          "customerName": "Beispiel GmbH",
+          "customerEmail": "rechnung@beispiel.example",
+          "currency": "EUR",
+          "lineItems": [
+            {
+              "description": "Advisory (hours)",
+              "quantity": "12",
+              "unitPrice": "110.00"
+            },
+            {
+              "description": "Travel expense",
+              "quantity": "1",
+              "unitPrice": "197.25"
+            }
+          ],
+          "dueDate": "2026-11-30",
+          "taxPercent": "19",
+          "discount": null
+        },
+        "totals": {
+          "currency": "EUR",
+          "lineTotals": [
+            "1320.00",
+            "197.25"
+          ],
+          "subtotal": "1517.25",
+          "discount": "0.00",
+          "tax": "288.28",
+          "total": "1805.53"
+        }
+      }
+    },
+    {
+      "id": "jpy-draft",
+      "label": "JPY · zero-decimal currency",
+      "currency": "JPY",
+      "text": "Sakura Creative Studio (accounting@sakura.example): 4 advisory hours at 12500 JPY. 5000 JPY discount, 10% tax, due December 5.",
+      "outcome": {
+        "status": "draft",
+        "draft": {
+          "customerName": "Sakura Creative Studio (サクラ・クリエイティブ)",
+          "customerEmail": "accounting@sakura.example",
+          "currency": "JPY",
+          "lineItems": [
+            {
+              "description": "Technical advisory retainer (hours)",
+              "quantity": "4",
+              "unitPrice": "12500"
+            }
+          ],
+          "dueDate": "2026-12-05",
+          "taxPercent": "10",
+          "discount": {
+            "kind": "amount",
+            "value": "5000"
+          }
+        },
+        "totals": {
+          "currency": "JPY",
+          "lineTotals": [
+            "50000"
+          ],
+          "subtotal": "50000",
+          "discount": "5000",
+          "tax": "4500",
+          "total": "49500"
+        }
+      }
+    },
+    {
+      "id": "unparseable",
+      "label": "Unparseable request",
+      "currency": null,
+      "text": "Please send the invoice we talked about last week.",
+      "outcome": {
+        "status": "invalid",
+        "errors": [
+          {
+            "path": "lineItems",
+            "message": "No billable line items could be identified in the text."
+          }
+        ]
+      }
+    }
+  ]
+}
+    </script>
+    <script>
+(() => {
+  "use strict";
+  /* NMI-UI-01A design preview. Fixture-only: no fetch, no XHR, no storage, no provider calls. */
+  const FIX = JSON.parse(document.getElementById("nmi-fixtures").textContent);
+  const TODAY = "2026-10-27"; // fixed "today" so the design is reproducible
+  const MAX_CHARS = 2000; // MAX_PARSE_CHARS in apps/api/src/routes/invoice-drafts.ts
+  const CUR = {
+    USD: { exp: 2, sym: "$" },
+    EUR: { exp: 2, sym: "€" },
+    GBP: { exp: 2, sym: "£" },
+    CAD: { exp: 2, sym: "CA$" },
+    AUD: { exp: 2, sym: "A$" },
+    JPY: { exp: 0, sym: "¥" },
+  };
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const REFUSAL_TEXT = {
+    rounding_required_line: "A line total (quantity × unit price) is not an exact number of minor units.",
+    rounding_required_tax: "The tax amount is not an exact number of minor units.",
+    rounding_required_discount: "The percent discount is not an exact number of minor units.",
+    tax_with_discount_multiline: "Tax combined with a discount is only supported on single-line invoices.",
+    due_date_past: "The due date is in the past.",
+  };
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const esc = (v) =>
+    String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const clean = (s) => String(s).replace(/\s+/g, " ").trim();
+
+  /* ------------------------------------------------------------------ money (mirrors packages/shared) */
+  class MoneyErr extends Error {}
+  const DEC = /^(\d{1,12})(?:\.(\d+))?$/;
+  function pMoney(v, c) {
+    const m = DEC.exec(String(v).trim());
+    if (!m) throw new MoneyErr("Enter an amount such as 250 or 250.00.");
+    const e = CUR[c].exp;
+    const f = m[2] || "";
+    if (f.length > e)
+      throw new MoneyErr(e === 0 ? `${c} amounts have no decimal places.` : `${c} amounts allow at most ${e} decimal places.`);
+    return BigInt(m[1] + f.padEnd(e, "0"));
+  }
+  function fMoney(n, c) {
+    const e = CUR[c].exp;
+    const s = n.toString().padStart(e + 1, "0");
+    return e === 0 ? s : s.slice(0, -e) + "." + s.slice(-e);
+  }
+  function pQty(v) {
+    const m = DEC.exec(String(v).trim());
+    if (!m) throw new MoneyErr("Enter a quantity such as 1 or 2.5.");
+    const f = m[2] || "";
+    if (f.length > 2) throw new MoneyErr("Quantity allows at most 2 decimal places.");
+    const h = BigInt(m[1] + f.padEnd(2, "0"));
+    if (h <= 0n) throw new MoneyErr("Quantity must be greater than zero.");
+    if (h > 10000000n) throw new MoneyErr("Quantity is unreasonably large.");
+    return h;
+  }
+  function pPct(v) {
+    const m = DEC.exec(String(v).trim());
+    if (!m) throw new MoneyErr("Enter a percentage such as 8 or 8.25.");
+    const f = m[2] || "";
+    if (f.length > 2) throw new MoneyErr("Percentages allow at most 2 decimal places.");
+    const b = BigInt(m[1] + f.padEnd(2, "0"));
+    if (b > 10000n) throw new MoneyErr("A percentage must be between 0 and 100.");
+    return b;
+  }
+  const divHalfUp = (n, d) => (n * 2n + d) / (d * 2n);
+  function show(str, c) {
+    const [w, f] = String(str).split(".");
+    return CUR[c].sym + w.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (f ? "." + f : "");
+  }
+  function calc(d) {
+    const c = d.currency;
+    let sub = 0n;
+    let rounded = false;
+    const lines = d.lineItems.map((i) => {
+      const p = pMoney(i.unitPrice, c) * pQty(i.quantity);
+      if (p % 100n !== 0n) rounded = true;
+      const l = divHalfUp(p, 100n);
+      sub += l;
+      return l;
+    });
+    let disc = 0n;
+    if (d.discount) {
+      if (d.discount.kind === "percent") {
+        const p = sub * pPct(d.discount.value);
+        if (p % 10000n !== 0n) rounded = true;
+        disc = divHalfUp(p, 10000n);
+      } else disc = pMoney(d.discount.value, c);
+      if (disc > sub) throw new MoneyErr("The discount exceeds the subtotal.");
+    }
+    const taxable = sub - disc;
+    let tax = 0n;
+    if (d.taxPercent) {
+      const p = taxable * pPct(d.taxPercent);
+      if (p % 10000n !== 0n) rounded = true;
+      tax = divHalfUp(p, 10000n);
+    }
+    return {
+      currency: c,
+      lineTotals: lines.map((l) => fMoney(l, c)),
+      subtotal: fMoney(sub, c),
+      discount: fMoney(disc, c),
+      tax: fMoney(tax, c),
+      total: fMoney(taxable + tax, c),
+      rounded,
+    };
+  }
+  /** Mirrors assertExactMapping() in packages/paypal; the server decides, this only previews. */
+  function refusal(d) {
+    if (d.dueDate && d.dueDate < TODAY) return "due_date_past";
+    const c = d.currency;
+    const lines = d.lineItems.map((i) => {
+      const p = pMoney(i.unitPrice, c) * pQty(i.quantity);
+      return p % 100n !== 0n ? null : p / 100n;
+    });
+    if (lines.includes(null)) return "rounding_required_line";
+    const sub = lines.reduce((a, b) => a + b, 0n);
+    const tax = d.taxPercent ? pPct(d.taxPercent) : null;
+    const di = d.discount;
+    const exact = (b, bps) => (b * bps) % 10000n === 0n;
+    if (tax !== null && di) {
+      if (lines.length !== 1) return "tax_with_discount_multiline";
+      let disc;
+      if (di.kind === "percent") {
+        const bps = pPct(di.value);
+        if (!exact(sub, bps)) return "rounding_required_discount";
+        disc = (sub * bps) / 10000n;
+      } else disc = pMoney(di.value, c);
+      if (!exact(sub - disc, tax)) return "rounding_required_tax";
+    } else if (tax !== null) {
+      for (const l of lines) if (!exact(l, tax)) return "rounding_required_tax";
+    } else if (di && di.kind === "percent" && !exact(sub, pPct(di.value))) return "rounding_required_discount";
+    return null;
+  }
+
+  /* ------------------------------------------------------------------ formatting */
+  function fmtDate(v) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || "");
+    return m ? `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}` : "—";
+  }
+  const shortId = (id) => id.slice(0, 8);
+  function isDate(v) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v || "")) return false;
+    const [y, m, d] = v.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  }
+  function badge(kind, text, glyph) {
+    return `<span class="badge badge-${kind}"><span aria-hidden="true">${glyph}</span>${esc(text)}</span>`;
+  }
+  function ppBadge(st) {
+    switch (st) {
+      case "created":
+        return badge("ok", "PayPal draft created", "✓");
+      case "pending":
+      case "creating":
+        return badge("warn", "Creation in progress", "◔");
+      case "reconciling":
+        return badge("warn", "Reconciling", "◔");
+      case "unknown":
+        return badge("warn", "Outcome unknown", "?");
+      case "rejected":
+        return badge("err", "PayPal rejected", "✕");
+      case "mismatch":
+        return badge("err", "Needs operator review", "!");
+      case "refused":
+        return badge("neutral", "Not eligible", "–");
+      default:
+        return badge("neutral", "No PayPal draft", "○");
+    }
+  }
+
+  /* ------------------------------------------------------------------ state */
+  const S = {
+    screen: "login",
+    authed: false,
+    state: "default",
+    offline: false,
+    theme: "light",
+    loginNotice: null,
+    drafts: structuredClone(FIX.invoices),
+    detailId: null,
+    detailNotice: null,
+    dashMode: "normal",
+    dash: { cur: "ALL", q: "", st: "ALL" },
+    tab: "ai",
+    text: "",
+    parse: { status: "idle" },
+    form: null,
+    formSource: "manual",
+    showErrors: false,
+    saving: false,
+    saveMode: "normal",
+    saveKey: "",
+    ppDisabled: false,
+    ppOverride: null,
+    ppBusy: false,
+    savedCount: 0,
+    ppCount: 1,
+  };
+  const scenario = (id) => FIX.parseScenarios.find((s) => s.id === id);
+  const live = $("#live");
+  function announce(msg) {
+    live.textContent = "";
+    setTimeout(() => (live.textContent = msg), 30);
+  }
+  const newKey = () => "demo-" + Math.random().toString(16).slice(2, 14).padEnd(12, "0");
+
+  /* ------------------------------------------------------------------ forms */
+  function blankForm() {
+    return {
+      customerName: "",
+      customerEmail: "",
+      currency: "USD",
+      dueDate: "",
+      taxPercent: "",
+      discountKind: "none",
+      discountValue: "",
+      lines: [{ description: "", quantity: "1", unitPrice: "" }],
+    };
+  }
+  function formFromDraft(d) {
+    return {
+      customerName: d.customerName,
+      customerEmail: d.customerEmail,
+      currency: d.currency,
+      dueDate: d.dueDate,
+      taxPercent: d.taxPercent ?? "",
+      discountKind: d.discount ? d.discount.kind : "none",
+      discountValue: d.discount ? d.discount.value : "",
+      lines: d.lineItems.map((l) => ({ ...l })),
+    };
+  }
+  function toDraft(f) {
+    return {
+      customerName: clean(f.customerName),
+      customerEmail: f.customerEmail.trim(),
+      currency: f.currency,
+      lineItems: f.lines.map((l) => ({
+        description: clean(l.description),
+        quantity: l.quantity.trim(),
+        unitPrice: l.unitPrice.trim(),
+      })),
+      dueDate: f.dueDate,
+      taxPercent: f.taxPercent.trim() === "" ? null : f.taxPercent.trim(),
+      discount: f.discountKind === "none" ? null : { kind: f.discountKind, value: f.discountValue.trim() },
+    };
+  }
+  /** Mirrors invoiceDraftSchema. Returns field errors in document order. */
+  function validate(f) {
+    const errs = [];
+    const E = (id, msg) => errs.push({ id, msg });
+    const name = clean(f.customerName);
+    if (!name) E("customerName", "Customer name is required.");
+    else if (name.length > 200) E("customerName", "Customer name must be 200 characters or fewer.");
+    const email = f.customerEmail.trim();
+    if (!email) E("customerEmail", "Customer email is required.");
+    else if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      E("customerEmail", "Enter a valid email address, for example billing@company.example.");
+    if (!isDate(f.dueDate)) E("dueDate", "Enter a valid due date.");
+    const c = f.currency;
+    f.lines.forEach((l, i) => {
+      const d = clean(l.description);
+      if (!d) E(`line-${i}-description`, `Line ${i + 1}: description is required.`);
+      else if (d.length > 200) E(`line-${i}-description`, `Line ${i + 1}: description must be 200 characters or fewer.`);
+      try {
+        pQty(l.quantity);
+      } catch (e) {
+        E(`line-${i}-quantity`, `Line ${i + 1}: ${e.message}`);
+      }
+      try {
+        pMoney(l.unitPrice, c);
+      } catch (e) {
+        E(`line-${i}-unitPrice`, `Line ${i + 1}: ${e.message}`);
+      }
+    });
+    if (f.lines.length < 1) E("lines", "Add at least one line item.");
+    if (f.taxPercent.trim() !== "") {
+      try {
+        pPct(f.taxPercent);
+      } catch (e) {
+        E("taxPercent", e.message);
+      }
+    }
+    if (f.discountKind !== "none") {
+      if (f.discountValue.trim() === "") E("discountValue", "Enter a discount value, or choose None.");
+      else {
+        try {
+          if (f.discountKind === "percent") pPct(f.discountValue);
+          else pMoney(f.discountValue, c);
+        } catch (e) {
+          E("discountValue", e.message);
+        }
+      }
+    }
+    if (!errs.length) {
+      try {
+        calc(toDraft(f));
+      } catch (e) {
+        E("discountValue", e.message);
+      }
+    }
+    return { errs, draft: errs.length ? null : toDraft(f) };
+  }
+  const fieldInputId = (id) => (id === "lines" ? "add-line-btn" : "f-" + id);
+
+  /* ------------------------------------------------------------------ routing and chrome */
+  const TITLES = {
+    login: ["login-title", "Operator sign in"],
+    dashboard: ["dash-title", "Invoice drafts"],
+    composer: ["comp-title", "New invoice"],
+    review: ["rev-title", "Review invoice"],
+    detail: ["det-title", "Invoice draft"],
+  };
+  function writeHash() {
+    const p = new URLSearchParams();
+    p.set("screen", S.screen);
+    if (S.state !== "default") p.set("state", S.state);
+    p.set("theme", S.theme);
+    history.replaceState(null, "", "#" + p.toString());
+  }
+  function setTheme(t) {
+    S.theme = t;
+    document.documentElement.dataset.theme = t;
+    $("#theme-btn").setAttribute("aria-pressed", String(t === "dark"));
+    writeHash();
+  }
+  function go(screen, { focus = true } = {}) {
+    S.screen = screen;
+    if (screen !== "login") S.authed = true;
+    if (screen === "composer" && S.parse.status === "loading") S.parse = { status: "idle" };
+    if (screen === "review" && !S.form) startReview(formFromDraft(scenario("usd-draft").outcome.draft), "ai");
+    render();
+    document.title = `${TITLES[screen][1]} · NudgeMyInvoice design preview`;
+    writeHash();
+    if (focus) {
+      const t = $("#" + TITLES[screen][0]);
+      if (t) t.focus();
+      window.scrollTo(0, 0);
+    }
+  }
+  function render() {
+    for (const id of Object.keys(TITLES)) $("#screen-" + id).hidden = id !== S.screen;
+    const shell = S.screen !== "login";
+    $("#app-nav").hidden = !shell;
+    $("#mobile-nav").hidden = !shell;
+    $("#signout-btn").hidden = !shell;
+    $("#operator-chip").hidden = !shell;
+    $$("[data-nav]").forEach((b) => {
+      const on = b.dataset.nav === S.screen || (b.dataset.nav === "dashboard" && S.screen === "detail");
+      if (on) b.setAttribute("aria-current", "page");
+      else b.removeAttribute("aria-current");
+    });
+    $$("[data-action=goto][data-screen]", $("#review-controls")).forEach((b) => {
+      if (b.dataset.screen === S.screen) b.setAttribute("aria-current", "true");
+      else b.removeAttribute("aria-current");
+    });
+    $("#state-select").value = S.state;
+    $("#offline-banner").hidden = !S.offline;
+    if (S.screen === "login") renderLogin();
+    if (S.screen === "dashboard") renderDashboard();
+    if (S.screen === "composer") renderComposer();
+    if (S.screen === "review") renderReview();
+    if (S.screen === "detail") renderDetail();
+    applyOffline();
+  }
+  function applyOffline() {
+    for (const id of ["parse-btn", "save-btn", "create-pp-btn"]) {
+      const b = document.getElementById(id);
+      if (!b) continue;
+      if (S.offline) {
+        b.setAttribute("aria-disabled", "true");
+        b.title = "Unavailable while offline";
+      } else if (b.dataset.keepDisabled !== "1") {
+        b.removeAttribute("aria-disabled");
+        b.removeAttribute("title");
+      }
+    }
+  }
+
+  /* ------------------------------------------------------------------ 1 login */
+  function renderLogin() {
+    const n = S.loginNotice;
+    const box = $("#login-notice");
+    if (!n) box.innerHTML = "";
+    else
+      box.innerHTML = `<div class="notice notice-${n.kind}" role="${n.kind === "err" ? "alert" : "status"}"><div>${n.html}</div></div>`;
+    const u = $("#login-username");
+    const p = $("#login-password");
+    for (const el of [u, p]) el.removeAttribute("aria-invalid");
+    $("#err-login-username").hidden = true;
+    $("#err-login-password").hidden = true;
+    $("#login-submit").disabled = false;
+  }
+  const LOGIN_NOTICES = {
+    "login-error": {
+      kind: "err",
+      html: "<strong>Sign-in failed.</strong> The username or password is incorrect. (HTTP 401 <code>invalid_credentials</code>. The same message is shown whichever of the two is wrong.)",
+    },
+    "login-throttled": {
+      kind: "warn",
+      html: "<strong>Too many sign-in attempts.</strong> Wait about 30 seconds, then try again. (HTTP 429 <code>too_many_attempts</code> with a Retry-After header.)",
+    },
+  };
+  async function submitLogin(e) {
+    e.preventDefault();
+    const u = $("#login-username");
+    const p = $("#login-password");
+    let bad = null;
+    const mark = (el, errId, msg) => {
+      el.setAttribute("aria-invalid", "true");
+      const er = $("#" + errId);
+      er.textContent = msg;
+      er.hidden = false;
+      bad = bad || el;
+    };
+    $("#err-login-username").hidden = true;
+    $("#err-login-password").hidden = true;
+    u.removeAttribute("aria-invalid");
+    p.removeAttribute("aria-invalid");
+    if (!u.value.trim()) mark(u, "err-login-username", "Enter your username.");
+    if (!p.value) mark(p, "err-login-password", "Enter your password.");
+    if (bad) {
+      bad.focus();
+      return;
+    }
+    if (S.offline) {
+      S.loginNotice = { kind: "warn", html: "You appear to be offline. Sign-in needs a connection." };
+      renderLogin();
+      return;
+    }
+    $("#login-submit").disabled = true;
+    announce("Signing in");
+    await sleep(500);
+    if (LOGIN_NOTICES[S.state]) {
+      S.loginNotice = LOGIN_NOTICES[S.state];
+      renderLogin();
+      p.value = "";
+      p.focus();
+      return;
+    }
+    S.loginNotice = null;
+    p.value = "";
+    go("dashboard");
+  }
+
+  /* ------------------------------------------------------------------ 2 dashboard */
+  function renderDashboard() {
+    const body = $("#dash-body");
+    const mode = S.dashMode;
+    if (mode === "loading") {
+      body.innerHTML = `<div aria-busy="true"><p class="sr-only" role="status">Loading drafts…</p>
+        <div class="currency-grid">${[1, 2, 3].map(() => `<div class="currency-card"><div class="skeleton" style="height:18px;width:40%"></div><div class="skeleton" style="height:30px;width:70%;margin-top:12px"></div><div class="skeleton" style="height:14px;width:55%;margin-top:12px"></div></div>`).join("")}</div>
+        <div class="table-card" style="padding:16px">${[1, 2, 3, 4].map(() => `<div class="skeleton" style="height:22px;margin:14px 0"></div>`).join("")}</div>
+        <p class="hint" style="margin-top:12px">Loading state, shown for design review. It applies once a list request exists.</p></div>`;
+      return;
+    }
+    if (mode === "error") {
+      body.innerHTML = `<div class="notice notice-err" role="alert"><div><strong>Could not load invoice drafts.</strong> The request failed (HTTP 500). Your saved drafts are not affected.
+        <div style="margin-top:10px"><button type="button" class="btn btn-secondary btn-sm" data-action="retry-list">Retry</button></div></div></div>`;
+      return;
+    }
+    const list = mode === "empty" ? [] : S.drafts;
+    if (!list.length) {
+      body.innerHTML = `<div class="table-card"><div class="empty"><h2>No invoice drafts yet</h2>
+        <p>Describe the work in plain language or enter an invoice by hand. Drafts stay local until you choose to create a PayPal Sandbox draft.</p>
+        <button type="button" class="btn btn-primary" data-action="goto" data-screen="composer">Create your first invoice</button></div></div>`;
+      return;
+    }
+    const order = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"].filter((c) => list.some((i) => i.draft.currency === c));
+    const cards = order
+      .map((c) => {
+        const mine = list.filter((i) => i.draft.currency === c);
+        const sum = mine.reduce((a, i) => a + pMoney(i.totals.total, c), 0n);
+        const made = mine.filter((i) => i.paypal.state === "created").length;
+        return `<div class="currency-card"><div class="top"><span>${c}</span>${badge("neutral", `${mine.length} draft${mine.length === 1 ? "" : "s"}`, "")}</div>
+          <div class="amount num">${esc(show(fMoney(sum, c), c))}</div>
+          <div class="meta">Sum of local draft totals in ${c} · PayPal Sandbox drafts created: ${made}</div></div>`;
+      })
+      .join("");
+    const pills = ["ALL", ...order]
+      .map(
+        (c) =>
+          `<button type="button" class="pill" data-action="filter-cur" data-cur="${c}" aria-pressed="${S.dash.cur === c}">${c === "ALL" ? "All currencies" : c}</button>`,
+      )
+      .join("");
+    body.innerHTML = `<h2 class="sr-only">Totals by currency</h2><div class="currency-grid">${cards}</div>
+      <p class="hint">Each card sums one currency only. Amounts in different currencies are never added together or converted.</p>
+      <div class="table-card">
+        <div class="filters">
+          <div class="pills" role="group" aria-label="Filter by currency">${pills}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <div><label class="sr-only" for="dash-search">Search drafts</label>
+              <input class="input" id="dash-search" type="search" placeholder="Search drafts" value="${esc(S.dash.q)}" autocomplete="off" style="min-width:230px"></div>
+            <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label>
+              <select class="select" id="dash-status">
+                <option value="ALL">All PayPal statuses</option>
+                <option value="none">No PayPal draft</option>
+                <option value="progress">In progress</option>
+                <option value="created">PayPal draft created</option>
+                <option value="attention">Needs attention</option>
+              </select></div>
+          </div>
+        </div>
+        <div id="dash-table"></div>
+        <div class="grid-footer">Native accessible table. AG Studio is not enabled: its license and trial coverage are unconfirmed and need owner confirmation before use.</div>
+      </div>`;
+    $("#dash-status").value = S.dash.st;
+    renderDashTable();
+  }
+  function ppGroup(st) {
+    if (st === "created") return "created";
+    if (st === "pending" || st === "creating") return "progress";
+    if (st === "unknown" || st === "rejected" || st === "mismatch") return "attention";
+    return "none";
+  }
+  function renderDashTable() {
+    const q = S.dash.q.trim().toLowerCase();
+    const rows = S.drafts.filter((i) => {
+      if (S.dash.cur !== "ALL" && i.draft.currency !== S.dash.cur) return false;
+      if (S.dash.st !== "ALL" && ppGroup(i.paypal.state) !== S.dash.st) return false;
+      if (q && !(i.draft.customerName + " " + i.draft.customerEmail + " " + i.id).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const host = $("#dash-table");
+    if (!rows.length) {
+      host.innerHTML = `<div class="empty"><h2>No drafts match these filters</h2><p>Try another currency or search term.</p>
+        <button type="button" class="btn btn-secondary" data-action="clear-filters">Clear filters</button></div>`;
+    } else {
+      host.innerHTML = `<table class="data stack"><caption class="sr-only">Invoice drafts (synthetic fixtures), ${rows.length} shown of ${S.drafts.length}</caption>
+        <thead><tr><th scope="col">Draft</th><th scope="col">Customer</th><th scope="col">Due</th><th scope="col" class="r">Total</th><th scope="col">PayPal Sandbox</th><th scope="col" class="r"><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>${rows
+          .map((i) => {
+            const c = i.draft.currency;
+            return `<tr><td data-label="Draft"><button type="button" class="btn-link" data-action="open" data-id="${esc(i.id)}">Draft ${esc(shortId(i.id))}</button><div class="cell-sub">Created ${esc(fmtDate(i.createdAt))}</div></td>
+              <td data-label="Customer"><div>${esc(i.draft.customerName)}</div><div class="cell-sub">${esc(i.draft.customerEmail)}</div></td>
+              <td data-label="Due">${esc(fmtDate(i.draft.dueDate))}</td>
+              <td data-label="Total" class="r num"><strong>${esc(show(i.totals.total, c))}</strong> <span class="cell-sub">${c}</span></td>
+              <td data-label="PayPal Sandbox">${ppBadge(i.paypal.state)}</td>
+              <td data-label="" class="r"><button type="button" class="btn btn-secondary btn-sm" data-action="open" data-id="${esc(i.id)}" aria-label="View draft ${esc(shortId(i.id))} for ${esc(i.draft.customerName)}">View</button></td></tr>`;
+          })
+          .join("")}</tbody></table>`;
+    }
+    announce(`${rows.length} of ${S.drafts.length} drafts shown`);
+  }
+
+  /* ------------------------------------------------------------------ 3 composer */
+  function renderComposer() {
+    const ai = S.tab === "ai";
+    $("#panel-ai").hidden = !ai;
+    $("#panel-manual").hidden = ai;
+    for (const t of ["ai", "manual"]) {
+      const b = $("#tab-" + t);
+      b.setAttribute("aria-selected", String(S.tab === t));
+      b.tabIndex = S.tab === t ? 0 : -1;
+    }
+    const ta = $("#comp-text");
+    if (ta.value !== S.text) ta.value = S.text;
+    $("#chip-list").innerHTML = FIX.parseScenarios
+      .map((s) => `<button type="button" class="chip" data-action="chip" data-id="${esc(s.id)}"><strong>${esc(s.label)}:</strong> ${esc(s.text)}</button>`)
+      .join("");
+    renderComposerState();
+  }
+  function renderComposerState() {
+    const p = S.parse;
+    const ta = $("#comp-text");
+    const btn = $("#parse-btn");
+    const busy = p.status === "loading";
+    ta.disabled = busy;
+    ta.setAttribute("aria-busy", String(busy));
+    btn.innerHTML = busy ? '<span class="spinner" aria-hidden="true"></span>Analyzing invoice text…' : "Parse with AI";
+    btn.setAttribute("aria-disabled", String(busy));
+    updateCounter();
+    const banner = $("#comp-banner");
+    if (p.status === "unavailable")
+      banner.innerHTML = `<div class="notice notice-warn" role="alert"><div><strong>AI parsing is unavailable.</strong> It is not configured on the server, or the provider could not be reached. Nothing was sent. You can enter the invoice manually.
+        <div style="margin-top:10px"><button type="button" class="btn btn-primary btn-sm" data-action="manual-form">Continue with manual entry</button></div></div></div>`;
+    else if (p.status === "invalid")
+      banner.innerHTML = `<div class="notice notice-warn" role="alert"><div><strong>The AI could not turn this text into an invoice.</strong>
+        <ul>${p.errors.map((e) => `<li>${esc(e.message)}</li>`).join("")}</ul>Edit the text and try again, or <button type="button" class="btn-link" data-action="manual-form">enter the invoice manually</button>.</div></div>`;
+    else banner.innerHTML = "";
+    const clar = $("#comp-clar");
+    if (p.status === "clarify")
+      clar.innerHTML = `<div class="notice notice-ai" role="region" aria-labelledby="clar-title" id="clar-box"><div>
+        <strong id="clar-title">The AI needs a little more information</strong>
+        <p style="margin-top:4px">Answer each question. Your answers are added to the text and the request is parsed again.</p>
+        ${p.questions
+          .map(
+            (q, i) => `<div class="field" style="margin:12px 0 0"><label for="clar-${i}">${i + 1}. ${esc(q.question)}</label>
+              <input class="input" id="clar-${i}" type="text" autocomplete="off" aria-describedby="clar-err"></div>`,
+          )
+          .join("")}
+        <p class="field-error" id="clar-err" role="alert" hidden></p>
+        <div style="margin-top:12px"><button type="button" class="btn btn-primary btn-sm" data-action="clar-submit">Add answers and parse again</button></div></div></div>`;
+    else clar.innerHTML = "";
+  }
+  function updateCounter() {
+    const n = S.text.trim().length;
+    const over = n > MAX_CHARS;
+    const c = $("#comp-counter");
+    c.textContent = over
+      ? `${n.toLocaleString("en-US")} / 2,000 · ${(n - MAX_CHARS).toLocaleString("en-US")} over the limit`
+      : `${n.toLocaleString("en-US")} / 2,000`;
+    c.classList.toggle("over", over);
+    const ta = $("#comp-text");
+    const err = $("#comp-error");
+    if (over) {
+      ta.setAttribute("aria-invalid", "true");
+      err.textContent = `The description is ${(n - MAX_CHARS).toLocaleString("en-US")} characters over the 2,000-character limit. Shorten it to continue.`;
+      err.hidden = false;
+      $("#parse-btn").dataset.keepDisabled = "1";
+      $("#parse-btn").setAttribute("aria-disabled", "true");
+    } else {
+      if (!S.compErr) {
+        ta.removeAttribute("aria-invalid");
+        err.hidden = true;
+      }
+      delete $("#parse-btn").dataset.keepDisabled;
+      if (S.parse.status !== "loading" && !S.offline) $("#parse-btn").removeAttribute("aria-disabled");
+    }
+  }
+  function setCompError(msg) {
+    S.compErr = msg;
+    const err = $("#comp-error");
+    const ta = $("#comp-text");
+    err.textContent = msg;
+    err.hidden = false;
+    ta.setAttribute("aria-invalid", "true");
+    ta.focus();
+  }
+  function clearCompError() {
+    S.compErr = null;
+    updateCounter();
+  }
+  async function runParse(clarified) {
+    const p = S.parse;
+    if (p.status === "loading") return;
+    if (S.offline) return setCompError("You are offline. Parsing needs a connection.");
+    const t = S.text.trim();
+    if (!t) return setCompError("Enter a description of the invoice before parsing.");
+    if (t.length > MAX_CHARS) return setCompError(`The description is over the ${MAX_CHARS.toLocaleString("en-US")}-character limit.`);
+    clearCompError();
+    const prior = clarified ? p : null;
+    S.parse = { status: "loading" };
+    renderComposerState();
+    announce("Analyzing invoice text");
+    await sleep(900);
+    let outcome;
+    if (S.state === "ai-unavailable") outcome = { status: "unavailable" };
+    else if (prior && prior.scenario && prior.scenario.afterClarification) outcome = prior.scenario.afterClarification;
+    else {
+      const sc = FIX.parseScenarios.find((s) => s.text === t);
+      outcome = sc
+        ? sc.outcome
+        : { status: "invalid", errors: [{ path: "lineItems", message: "No billable line items could be identified in the text." }] };
+      if (sc && outcome.status === "needs_clarification") S.parse = { status: "clarify", questions: outcome.questions, scenario: sc };
+    }
+    if (outcome.status === "draft") {
+      startReview(formFromDraft(outcome.draft), "ai");
+      S.parse = { status: "idle" };
+      go("review");
+      announce("Proposal ready for review");
+      return;
+    }
+    if (outcome.status === "needs_clarification") {
+      renderComposerState();
+      announce("The AI needs more information");
+      const first = $("#clar-0");
+      if (first) first.focus();
+      return;
+    }
+    S.parse = outcome.status === "unavailable" ? { status: "unavailable" } : { status: "invalid", errors: outcome.errors };
+    renderComposerState();
+    announce(outcome.status === "unavailable" ? "AI parsing is unavailable" : "The AI could not read the text");
+  }
+  function submitClarification() {
+    const qs = S.parse.questions || [];
+    const answers = qs.map((_, i) => ($("#clar-" + i).value || "").trim());
+    const err = $("#clar-err");
+    const blank = answers.findIndex((a) => !a);
+    if (blank >= 0) {
+      err.textContent = "Answer every question, or edit the text above yourself.";
+      err.hidden = false;
+      $("#clar-" + blank).setAttribute("aria-invalid", "true");
+      $("#clar-" + blank).focus();
+      return;
+    }
+    const add = "\n" + qs.map((q, i) => `${q.question} ${answers[i]}`).join("\n");
+    if ((S.text.trim() + add).length > MAX_CHARS) {
+      err.textContent = "Adding the answers would exceed the 2,000-character limit. Shorten the text first.";
+      err.hidden = false;
+      return;
+    }
+    S.text = S.text.trim() + add;
+    $("#comp-text").value = S.text;
+    runParse(true);
+  }
+
+  /* ------------------------------------------------------------------ 4 review */
+  function startReview(form, source) {
+    S.form = form;
+    S.formSource = source;
+    S.showErrors = false;
+    S.saving = false;
+    S.saveKey = newKey();
+    S.saveMsg = null;
+  }
+  function renderReview() {
+    const f = S.form;
+    $("#rev-subtitle").textContent =
+      S.formSource === "ai" ? "Check what the AI proposed before saving" : "Enter the invoice details";
+    $("#rev-banner").innerHTML =
+      S.formSource === "ai"
+        ? `<div class="notice notice-ai" role="note"><span aria-hidden="true">✦</span><div><strong>Proposed by the AI parser.</strong> It can be wrong. Check the customer, email, currency, due date and every amount, then save. Nothing is sent to PayPal.</div></div>`
+        : `<div class="notice notice-info" role="note"><span aria-hidden="true">✎</span><div><strong>Manual entry.</strong> Required fields are marked with *.</div></div>`;
+    $("#f-customerName").value = f.customerName;
+    $("#f-customerEmail").value = f.customerEmail;
+    $("#f-currency").value = f.currency;
+    $("#f-dueDate").value = f.dueDate;
+    $("#f-taxPercent").value = f.taxPercent;
+    $("#f-discountKind").value = f.discountKind;
+    $("#f-discountValue").value = f.discountValue;
+    $("#idem-key").textContent = "Idempotency-Key: " + S.saveKey;
+    renderLines();
+    refreshDerived();
+    const r = validate(f);
+    if (S.showErrors) showErrors(r.errs, false);
+    else clearErrors();
+    renderSaveMsg();
+  }
+  function renderLines() {
+    const f = S.form;
+    const ph = CUR[f.currency].exp === 0 ? "0" : "0.00";
+    $("#lines").innerHTML = f.lines
+      .map(
+        (l, i) => `<div class="line-row" role="group" aria-label="Line item ${i + 1}">
+        <div class="field f-desc"><span class="m-label" aria-hidden="true">Description</span>
+          <input class="input" id="f-line-${i}-description" data-line="${i}" data-k="description" aria-label="Description, line ${i + 1}" value="${esc(l.description)}" maxlength="400" autocomplete="off" aria-describedby="err-line-${i}-description">
+          <p class="field-error" id="err-line-${i}-description" hidden></p></div>
+        <div class="field"><span class="m-label" aria-hidden="true">Quantity</span>
+          <input class="input num" id="f-line-${i}-quantity" data-line="${i}" data-k="quantity" aria-label="Quantity, line ${i + 1}" inputmode="decimal" value="${esc(l.quantity)}" autocomplete="off" aria-describedby="err-line-${i}-quantity">
+          <p class="field-error" id="err-line-${i}-quantity" hidden></p></div>
+        <div class="field"><span class="m-label" aria-hidden="true">Unit price (${f.currency})</span>
+          <input class="input num" id="f-line-${i}-unitPrice" data-line="${i}" data-k="unitPrice" aria-label="Unit price in ${f.currency}, line ${i + 1}" inputmode="decimal" placeholder="${ph}" value="${esc(l.unitPrice)}" autocomplete="off" aria-describedby="err-line-${i}-unitPrice">
+          <p class="field-error" id="err-line-${i}-unitPrice" hidden></p></div>
+        <div class="f-total"><span class="m-label" aria-hidden="true">Line total (estimate)</span><div class="line-total num" id="lt-${i}">—</div></div>
+        <div class="f-remove"><button type="button" class="btn btn-secondary btn-sm" data-action="remove-line" data-i="${i}" aria-label="Remove line ${i + 1}" ${f.lines.length === 1 ? "disabled" : ""}>Remove</button></div></div>`,
+      )
+      .join("");
+    $("#lines-hint").textContent = `${f.lines.length} of 50 line items. ${CUR[f.currency].exp === 0 ? "JPY has no decimal places." : ""}`;
+    $("#add-line-btn").disabled = f.lines.length >= 50;
+  }
+  function refreshDerived() {
+    const f = S.form;
+    const d = toDraft(f);
+    // per-line estimates
+    f.lines.forEach((l, i) => {
+      const cell = $("#lt-" + i);
+      if (!cell) return;
+      try {
+        const t = divHalfUp(pMoney(l.unitPrice, f.currency) * pQty(l.quantity), 100n);
+        cell.textContent = show(fMoney(t, f.currency), f.currency);
+      } catch {
+        cell.textContent = "—";
+      }
+    });
+    // due date hint
+    $("#hint-dueDate").textContent =
+      isDate(f.dueDate) && f.dueDate < TODAY
+        ? "This date is in the past. It can be saved locally, but a PayPal Sandbox draft will be refused."
+        : "Choose the date the customer should pay by.";
+    // totals
+    const body = $("#totals-body");
+    const hint = $("#paypal-hint");
+    let t;
+    try {
+      t = calc(d);
+    } catch (e) {
+      body.innerHTML = `<p class="hint">Totals appear once every amount is valid.${e instanceof MoneyErr && e.message.includes("exceeds") ? " " + esc(e.message) : ""}</p>`;
+      hint.innerHTML = "";
+      return;
+    }
+    const c = f.currency;
+    const row = (label, v, extra = "") => `<div class="totals-row${extra}"><span>${label}</span><span class="num">${v}</span></div>`;
+    body.innerHTML =
+      row("Subtotal", esc(show(t.subtotal, c))) +
+      (d.discount ? row(`Discount (${d.discount.kind === "percent" ? esc(d.discount.value) + "%" : "fixed"})`, "−" + esc(show(t.discount, c))) : "") +
+      (d.taxPercent ? row(`Tax (${esc(d.taxPercent)}%)`, "+" + esc(show(t.tax, c))) : "") +
+      row(`Estimated total (${c})`, esc(show(t.total, c)), " final") +
+      (t.rounded
+        ? `<div class="notice notice-warn" style="margin:12px 0 0" role="note"><div><strong>Rounding applied.</strong> A figure was rounded half up to the smallest currency unit. The server computes the final amounts; PayPal Sandbox drafting refuses totals that depend on rounding.</div></div>`
+        : "");
+    let why = null;
+    try {
+      why = refusal(d);
+    } catch {
+      why = null;
+    }
+    hint.innerHTML = why
+      ? `<div class="notice notice-warn" style="margin:0" role="note"><div><strong>PayPal Sandbox draft would be refused.</strong> ${esc(REFUSAL_TEXT[why])} You can still save the local draft. The server makes the final decision.</div></div>`
+      : `<p class="hint">PayPal Sandbox draft: eligible under the exact-mapping rules. The server makes the final decision.</p>`;
+  }
+  function clearErrors() {
+    $$(".field-error", $("#screen-review")).forEach((e) => (e.hidden = true));
+    $$("[aria-invalid]", $("#screen-review")).forEach((e) => e.removeAttribute("aria-invalid"));
+    const sum = $("#err-summary");
+    sum.hidden = true;
+    sum.innerHTML = "";
+  }
+  function showErrors(errs, focusSummary) {
+    clearErrors();
+    for (const e of errs) {
+      const input = document.getElementById(fieldInputId(e.id));
+      const msg = document.getElementById("err-" + e.id);
+      if (input && e.id !== "lines") input.setAttribute("aria-invalid", "true");
+      if (msg) {
+        msg.textContent = e.msg;
+        msg.hidden = false;
+      }
+    }
+    const sum = $("#err-summary");
+    if (errs.length) {
+      sum.innerHTML = `<span aria-hidden="true">⚠</span><div><strong>${errs.length} problem${errs.length === 1 ? "" : "s"} to fix before saving</strong><ul>${errs
+        .map((e) => `<li><a href="#${fieldInputId(e.id)}" data-action="focus-field" data-target="${fieldInputId(e.id)}">${esc(e.msg)}</a></li>`)
+        .join("")}</ul></div>`;
+      sum.hidden = false;
+      if (focusSummary) sum.focus();
+    }
+  }
+  function renderSaveMsg() {
+    const host = $("#save-msg");
+    if (S.saveMode === "conflict" && S.saveMsg === "conflict")
+      host.innerHTML = `<div class="notice notice-err" role="alert" style="margin:12px 0 0"><div><strong>Save rejected (HTTP 409).</strong> This Idempotency-Key was already used for a different invoice body, so the server refused it.
+        <div style="margin-top:8px"><button type="button" class="btn btn-secondary btn-sm" data-action="new-key">Use a new key and keep my edits</button></div></div></div>`;
+    else if (S.offline && S.screen === "review")
+      host.innerHTML = `<div class="notice notice-warn" role="note" style="margin:12px 0 0"><div>You are offline. Saving is unavailable until the connection returns. Your edits stay on this page.</div></div>`;
+    else host.innerHTML = "";
+  }
+  const nextFakeId = () => {
+    S.savedCount += 1;
+    return `00000000-0000-4000-8000-${String(S.savedCount).padStart(12, "0")}`;
+  };
+  async function saveDraft() {
+    if (S.saving) return;
+    if (S.offline) {
+      renderSaveMsg();
+      announce("You are offline. Saving is unavailable.");
+      return;
+    }
+    const { errs, draft } = validate(S.form);
+    S.showErrors = true;
+    if (errs.length) {
+      showErrors(errs, true);
+      announce(`${errs.length} problems to fix before saving`);
+      return;
+    }
+    clearErrors();
+    S.saving = true;
+    const btn = $("#save-btn");
+    btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>Saving draft…';
+    btn.setAttribute("aria-disabled", "true");
+    $$("input,select,button:not(#save-btn)", $("#screen-review")).forEach((el) => {
+      el.dataset.wasDisabled = el.disabled ? "1" : "0";
+      el.disabled = true;
+    });
+    announce("Saving draft");
+    await sleep(800);
+    S.saving = false;
+    $$("input,select,button:not(#save-btn)", $("#screen-review")).forEach((el) => {
+      el.disabled = el.dataset.wasDisabled === "1";
+    });
+    btn.textContent = "Save local draft";
+    btn.removeAttribute("aria-disabled");
+    if (S.saveMode === "conflict") {
+      S.saveMsg = "conflict";
+      renderSaveMsg();
+      announce("Save rejected: idempotency conflict");
+      return;
+    }
+    const t = calc(draft);
+    delete t.rounded;
+    const rec = {
+      id: nextFakeId(),
+      draft,
+      totals: t,
+      paypalInvoiceId: null,
+      paypal: { state: "none", paypalInvoiceId: null, lastErrorCode: null },
+      createdAt: "2026-10-27T10:00:00.000Z",
+      simulated: true,
+    };
+    S.drafts.unshift(rec);
+    S.detailId = rec.id;
+    S.ppOverride = null;
+    S.detailNotice = S.saveMode === "replay" ? "replayed" : "created";
+    S.form = null;
+    go("detail");
+    announce(S.detailNotice === "replayed" ? "Duplicate save: existing draft returned" : "Local draft saved");
+  }
+
+  /* ------------------------------------------------------------------ 5 detail */
+  const cur = () => S.drafts.find((i) => i.id === S.detailId) || S.drafts[0];
+  function ppView(inv) {
+    const ov = S.ppOverride;
+    const st = ov ? ov.state : inv.paypal.state;
+    const code = ov ? ov.code : inv.paypal.lastErrorCode;
+    let id = inv.paypal.paypalInvoiceId;
+    if (st === "created" && !id) id = "INV2-DEMO-FAKE-0000-0002";
+    return { st, code, id };
+  }
+  function renderPayPal(inv) {
+    const { st, code, id } = ppView(inv);
+    if (S.ppBusy)
+      return `<p class="paypal-status" role="status"><span class="spinner" aria-hidden="true"></span> Creating the PayPal Sandbox draft…</p><p class="hint">Contacting the PayPal Sandbox. The server keeps one create attempt in flight at a time.</p>`;
+    const disabledMsg = `<div class="notice notice-warn" id="pp-disabled" role="note" style="margin:12px 0 0"><div><strong>PayPal Sandbox drafting is switched off.</strong> The server answered HTTP 503 <code>paypal_disabled</code> because drafting is turned off in its configuration (<code>PAYPAL_DRAFTS_ENABLED=false</code>). Local drafts still work.</div></div>`;
+    const btn = (label, action = "create-pp") =>
+      `<button type="button" class="btn btn-primary" id="create-pp-btn" data-action="${action}" ${S.ppDisabled ? 'disabled aria-describedby="pp-disabled"' : ""} ${S.ppDisabled ? 'data-keep-disabled="1"' : ""}>${label}</button>`;
+    const header = (text) => `<div class="paypal-status">${text}</div>`;
+    switch (st) {
+      case "created":
+        return `<div class="row"><div>${ppBadge("created")}${header("The draft exists in the PayPal Sandbox")}
+          <dl class="meta-list" style="margin-top:8px"><div><dt>PayPal invoice id (fabricated)</dt><dd class="mono">${esc(id)}</dd></div><div><dt>Status when created</dt><dd>DRAFT</dd></div></dl></div></div>
+          <p style="margin-top:12px"><strong>The customer has not been emailed.</strong> This version cannot send, remind or collect payment.</p>`;
+      case "creating":
+      case "pending":
+        return `<div class="row"><div>${ppBadge("creating")}${header("Creation in progress")}<p>Another request is creating this draft (HTTP 409 <code>in_progress</code>). Check again in a few seconds. You do not need to create it again.</p></div>
+          <button type="button" class="btn btn-secondary" data-action="check-pp">Check status</button></div>`;
+      case "reconciling":
+        return `<div class="row"><div>${ppBadge("reconciling")}${header("Checking PayPal before doing anything else")}<p>An earlier attempt had an uncertain result, so the server is reconciling with PayPal first (HTTP 409 <code>reconciliation_pending</code>). It will not create a second draft blindly.</p></div>
+          <button type="button" class="btn btn-secondary" data-action="check-pp">Check status</button></div>`;
+      case "unknown":
+        return `<div class="row"><div>${ppBadge("unknown")}${header("PayPal did not confirm the result")}<p>The last attempt ended without a confirmed answer (HTTP 502 <code>paypal_outcome_unknown</code>${code ? `, code <code>${esc(code)}</code>` : ""}). A draft may or may not exist in PayPal. Retrying is safe: the server checks PayPal first.</p></div>
+          ${btn("Retry (checks PayPal first)", "retry-pp")}</div>${S.ppDisabled ? disabledMsg : ""}`;
+      case "rejected":
+        return `<div class="row"><div>${ppBadge("rejected")}${header("PayPal rejected the request")}<p>No draft was created (HTTP 502 <code>paypal_rejected</code>${code ? `, code <code>${esc(code)}</code>` : ""}). The local draft is unchanged. You can try again.</p></div>
+          ${btn("Try again", "retry-pp")}</div>${S.ppDisabled ? disabledMsg : ""}`;
+      case "mismatch":
+        return `<div class="row"><div>${ppBadge("mismatch")}${header("The PayPal draft does not match this invoice")}<p>The draft found in PayPal differs from this local invoice (HTTP 502 <code>paypal_mismatch</code>${code ? `, code <code>${esc(code)}</code>` : ""}). The app does not change it. Review it in the PayPal Sandbox dashboard. No retry is offered.</p></div></div>`;
+      case "refused":
+        return `<div class="row"><div>${ppBadge("refused")}${header("This invoice cannot be created as a PayPal draft")}<p>Refused before contacting PayPal (HTTP 422 <code>mapping_refused</code>): ${esc(REFUSAL_TEXT[code] || "its totals depend on rounding")}</p>
+          <p style="margin-top:6px">The local draft is unchanged. Drafts cannot be edited in this version, so create a new invoice with amounts that need no rounding, or a single line when using both tax and a discount.</p></div>
+          <button type="button" class="btn btn-secondary" data-action="goto" data-screen="composer">Start a new invoice</button></div>`;
+      default: {
+        let why = null;
+        try {
+          why = refusal(inv.draft);
+        } catch {
+          why = null;
+        }
+        return `<div class="row"><div>${ppBadge("none")}${header("Not created in PayPal Sandbox")}
+          <p>Creating the draft makes one <strong>DRAFT</strong> invoice in the PayPal Sandbox. It does <strong>not</strong> email or notify the customer and does not request payment.</p>
+          ${why ? `<div class="notice notice-warn" style="margin:12px 0 0" role="note"><div><strong>Expected to be refused.</strong> ${esc(REFUSAL_TEXT[why])} You can still try; the server decides.</div></div>` : ""}</div>
+          ${btn("Create PayPal Sandbox draft…")}</div>${S.ppDisabled ? disabledMsg : ""}`;
+      }
+    }
+  }
+  function renderDetail() {
+    const inv = cur();
+    const d = inv.draft;
+    const t = inv.totals;
+    const c = d.currency;
+    const notice =
+      S.detailNotice === "created"
+        ? `<div class="notice notice-ok" role="status"><span aria-hidden="true">✓</span><div><strong>Local draft saved.</strong> It exists only in this app's database. Nothing has been sent to PayPal.</div></div>`
+        : S.detailNotice === "replayed"
+          ? `<div class="notice notice-info" role="status"><span aria-hidden="true">ℹ</span><div><strong>Duplicate save detected.</strong> The same Idempotency-Key was sent again, so the server returned the existing draft (HTTP 200, <code>replayed: true</code>). No second draft was created.</div></div>`
+          : "";
+    $("#det-body").innerHTML = `
+      <div class="page-head"><div><h1 class="screen-title" id="det-title" tabindex="-1">${esc(d.customerName)}</h1>
+        <p class="subtitle">Local draft <span class="mono">${esc(shortId(inv.id))}</span> · ${c}</p></div>
+        <button type="button" class="btn btn-secondary" data-action="goto" data-screen="dashboard">Back to drafts</button></div>
+      ${notice}
+      <section class="paypal-panel" aria-labelledby="pp-title" aria-busy="${S.ppBusy}">
+        <span class="sandbox-pill">PayPal Sandbox</span>
+        <h2 class="card-title" id="pp-title" style="margin:8px 0 0">PayPal Sandbox draft</h2>
+        <div id="pp-body" aria-live="polite">${renderPayPal(inv)}</div>
+      </section>
+      <div class="card"><h2 class="card-title">Invoice</h2>
+        <dl class="meta-list">
+          <div><dt>Customer email</dt><dd>${esc(d.customerEmail)}</dd></div>
+          <div><dt>Currency</dt><dd>${c}</dd></div>
+          <div><dt>Due date</dt><dd>${esc(fmtDate(d.dueDate))}</dd></div>
+          <div><dt>Created</dt><dd>${esc(fmtDate(inv.createdAt))}</dd></div>
+          <div><dt>Draft id</dt><dd class="mono">${esc(inv.id)}</dd></div>
+        </dl></div>
+      <div class="card"><h2 class="card-title">Line items and totals</h2>
+        <table class="data stack static-lines"><caption class="sr-only">Line items</caption>
+          <thead><tr><th scope="col">Description</th><th scope="col" class="r">Quantity</th><th scope="col" class="r">Unit price</th><th scope="col" class="r">Line total</th></tr></thead>
+          <tbody>${d.lineItems
+            .map(
+              (l, i) => `<tr><td data-label="Description">${esc(l.description)}</td><td data-label="Quantity" class="r num">${esc(l.quantity)}</td>
+              <td data-label="Unit price" class="r num">${esc(show(l.unitPrice, c))}</td><td data-label="Line total" class="r num">${esc(show(t.lineTotals[i], c))}</td></tr>`,
+            )
+            .join("")}</tbody></table>
+        <div style="max-width:340px;margin:16px 0 0 auto">
+          <div class="totals-row"><span>Subtotal</span><span class="num">${esc(show(t.subtotal, c))}</span></div>
+          ${d.discount ? `<div class="totals-row"><span>Discount (${d.discount.kind === "percent" ? esc(d.discount.value) + "%" : "fixed"})</span><span class="num">−${esc(show(t.discount, c))}</span></div>` : ""}
+          ${d.taxPercent ? `<div class="totals-row"><span>Tax (${esc(d.taxPercent)}%)</span><span class="num">+${esc(show(t.tax, c))}</span></div>` : ""}
+          <div class="totals-row final"><span>Total (${c})</span><span class="num">${esc(show(t.total, c))}</span></div>
+          <p class="hint" style="margin-top:8px">${badge("ok", "Server-computed", "✓")} ${inv.simulated ? "Simulated server response in this design preview." : "Totals come from the saved record; the server computed them in integer minor units."}</p>
+        </div></div>`;
+  }
+  async function createPayPal() {
+    const inv = cur();
+    if (S.offline) return announce("You are offline. PayPal draft creation is unavailable.");
+    if (S.ppDisabled) return;
+    const ok = await confirmDialog({
+      title: "Create a PayPal Sandbox draft?",
+      body: `<p>This creates one <strong>DRAFT</strong> invoice for <strong>${esc(inv.draft.customerName)}</strong> (${esc(show(inv.totals.total, inv.draft.currency))} ${inv.draft.currency}) in the PayPal <strong>Sandbox</strong>.</p>
+        <div class="notice notice-warn" style="margin:14px 0 0"><div><strong>The customer will not be emailed.</strong> No money moves. This app version cannot send invoices.</div></div>`,
+      ok: "Create draft",
+    });
+    if (!ok) return;
+    S.ppBusy = true;
+    S.ppOverride = null;
+    renderDetail();
+    announce("Creating the PayPal Sandbox draft");
+    await sleep(1000);
+    S.ppBusy = false;
+    let why = null;
+    try {
+      why = refusal(inv.draft);
+    } catch {
+      why = null;
+    }
+    if (why) S.ppOverride = { state: "refused", code: why };
+    else {
+      S.ppCount += 1;
+      inv.paypal = { state: "created", paypalInvoiceId: `INV2-DEMO-FAKE-0000-${String(S.ppCount).padStart(4, "0")}`, lastErrorCode: null };
+      inv.paypalInvoiceId = inv.paypal.paypalInvoiceId;
+    }
+    renderDetail();
+    announce(why ? "PayPal draft refused before contacting PayPal" : "PayPal Sandbox draft created. The customer was not emailed.");
+    const h = $("#det-title");
+    if (h) h.focus();
+  }
+
+  /* ------------------------------------------------------------------ dialog */
+  const dlg = $("#dlg");
+  let dlgResolve = null;
+  // Keep Tab / Shift+Tab inside the open dialog so focus never escapes to the page behind it.
+  dlg.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const items = $$("button:not([disabled])", dlg);
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+  function confirmDialog({ title, body, ok, danger }) {
+    return new Promise((resolve) => {
+      $("#dlg-title").textContent = title;
+      $("#dlg-body").innerHTML = body;
+      const okBtn = $("#dlg-ok");
+      okBtn.textContent = ok;
+      okBtn.className = "btn " + (danger ? "btn-danger" : "btn-primary");
+      dlgResolve = resolve;
+      dlg.showModal();
+      $("#dlg-cancel").focus();
+    });
+  }
+  function closeDialog(result) {
+    const r = dlgResolve;
+    dlgResolve = null;
+    if (dlg.open) dlg.close();
+    if (r) r(result);
+  }
+  dlg.addEventListener("close", () => closeDialog(false));
+
+  /* ------------------------------------------------------------------ states (design-review controls) */
+  function applyState(name) {
+    S.state = name;
+    S.loginNotice = null;
+    S.dashMode = "normal";
+    S.parse = { status: "idle" };
+    S.compErr = null;
+    S.showErrors = false;
+    S.saveMode = "normal";
+    S.saveMsg = null;
+    S.ppOverride = null;
+    S.ppDisabled = false;
+    S.ppBusy = false;
+    S.detailNotice = null;
+    S.offline = name === "offline" || !navigator.onLine;
+    const inv = (id) => S.drafts.find((i) => i.id === id);
+    const EUR = FIX.invoices[1].id;
+    const USD = FIX.invoices[0].id;
+    const GBP = FIX.invoices[3].id;
+    const JPY = FIX.invoices[2].id;
+    let screen = null;
+    switch (name) {
+      case "login-error":
+      case "login-throttled":
+        S.authed = false;
+        S.loginNotice = LOGIN_NOTICES[name];
+        screen = "login";
+        break;
+      case "session-expired":
+        S.authed = false;
+        S.loginNotice = { kind: "warn", html: "<strong>Your session has expired.</strong> Sign in again to continue. Unsaved edits are not kept by the server." };
+        screen = "login";
+        break;
+      case "empty":
+        S.dashMode = "empty";
+        screen = "dashboard";
+        break;
+      case "loading":
+        S.dashMode = "loading";
+        screen = "dashboard";
+        break;
+      case "list-error":
+        S.dashMode = "error";
+        screen = "dashboard";
+        break;
+      case "offline":
+        screen = S.screen === "login" ? "dashboard" : S.screen;
+        break;
+      case "over-limit": {
+        let t = "";
+        while (t.length < 2143) t += "Invoice Acme Design for brand identity work, logo concepts and typography guides. ";
+        S.text = t.slice(0, 2143);
+        S.tab = "ai";
+        screen = "composer";
+        break;
+      }
+      case "ai-clarification": {
+        const sc = scenario("eur-clarify");
+        S.text = sc.text;
+        S.parse = { status: "clarify", questions: sc.outcome.questions, scenario: sc };
+        S.tab = "ai";
+        screen = "composer";
+        break;
+      }
+      case "ai-invalid": {
+        const sc = scenario("unparseable");
+        S.text = sc.text;
+        S.parse = { status: "invalid", errors: sc.outcome.errors };
+        S.tab = "ai";
+        screen = "composer";
+        break;
+      }
+      case "ai-unavailable":
+        S.text = scenario("usd-draft").text;
+        S.parse = { status: "unavailable" };
+        S.tab = "ai";
+        screen = "composer";
+        break;
+      case "validation-errors":
+        startReview(
+          {
+            customerName: "",
+            customerEmail: "billing@",
+            currency: "JPY",
+            dueDate: "",
+            taxPercent: "120",
+            discountKind: "percent",
+            discountValue: "",
+            lines: [{ description: "", quantity: "0", unitPrice: "85.50" }],
+          },
+          "manual",
+        );
+        S.showErrors = true;
+        screen = "review";
+        break;
+      case "rounding":
+        startReview(formFromDraft(scenario("eur-clarify").afterClarification.draft), "ai");
+        screen = "review";
+        break;
+      case "save-replay":
+      case "save-conflict":
+        startReview(formFromDraft(scenario("usd-draft").outcome.draft), "ai");
+        S.saveMode = name === "save-replay" ? "replay" : "conflict";
+        screen = "review";
+        break;
+      case "paypal-disabled":
+        S.ppDisabled = true;
+        S.detailId = EUR;
+        screen = "detail";
+        break;
+      case "paypal-refused":
+        S.detailId = GBP;
+        S.ppOverride = { state: "refused", code: refusal(inv(GBP).draft) };
+        screen = "detail";
+        break;
+      case "paypal-creating":
+        S.detailId = JPY;
+        screen = "detail";
+        break;
+      case "paypal-reconciling":
+        S.detailId = EUR;
+        S.ppOverride = { state: "reconciling", code: null };
+        screen = "detail";
+        break;
+      case "paypal-unknown":
+        S.detailId = EUR;
+        S.ppOverride = { state: "unknown", code: "created_not_visible" };
+        screen = "detail";
+        break;
+      case "paypal-rejected":
+        S.detailId = EUR;
+        S.ppOverride = { state: "rejected", code: "paypal_validation_error" };
+        screen = "detail";
+        break;
+      case "paypal-mismatch":
+        S.detailId = EUR;
+        S.ppOverride = { state: "mismatch", code: "payload_digest_mismatch" };
+        screen = "detail";
+        break;
+      case "paypal-created":
+        S.detailId = USD;
+        screen = "detail";
+        break;
+      default:
+        break;
+    }
+    if (screen) go(screen, { focus: false });
+    else render();
+    writeHash();
+    announce("State: " + $("#state-select").selectedOptions[0].textContent);
+  }
+
+  /* ------------------------------------------------------------------ actions */
+  const actions = {
+    skip() {
+      $("#main-content").focus();
+    },
+    goto(el) {
+      const target = el.dataset.screen;
+      const fromBar = Boolean(el.closest("#review-controls"));
+      if (fromBar && target === "login") S.authed = false;
+      if (!fromBar && target === "composer" && !el.dataset.keep) {
+        S.text = "";
+        S.parse = { status: "idle" };
+        S.tab = "ai";
+        S.compErr = null;
+      }
+      if (target === "dashboard") S.detailNotice = null;
+      go(target);
+    },
+    brand() {
+      if (S.authed) go("dashboard");
+    },
+    theme() {
+      setTheme(S.theme === "dark" ? "light" : "dark");
+    },
+    signout() {
+      S.authed = false;
+      S.loginNotice = { kind: "ok", html: "You have been signed out." };
+      go("login");
+      announce("Signed out");
+    },
+    tab(el) {
+      S.tab = el.dataset.tab;
+      renderComposer();
+      $("#tab-" + S.tab).focus();
+    },
+    chip(el) {
+      const sc = scenario(el.dataset.id);
+      S.text = sc.text;
+      S.parse = { status: "idle" };
+      clearCompError();
+      $("#comp-text").value = S.text;
+      renderComposerState();
+      $("#comp-text").focus();
+      announce("Example prompt loaded");
+    },
+    parse() {
+      runParse(false);
+    },
+    "clar-submit": submitClarification,
+    "manual-form"() {
+      startReview(blankForm(), "manual");
+      S.parse = { status: "idle" };
+      go("review");
+    },
+    "add-line"() {
+      S.form.lines.push({ description: "", quantity: "1", unitPrice: "" });
+      renderLines();
+      refreshDerived();
+      if (S.showErrors) showErrors(validate(S.form).errs, false);
+      const i = S.form.lines.length - 1;
+      $("#f-line-" + i + "-description").focus();
+      announce(`Line ${i + 1} added`);
+    },
+    "remove-line"(el) {
+      const i = Number(el.dataset.i);
+      if (S.form.lines.length <= 1) return;
+      S.form.lines.splice(i, 1);
+      renderLines();
+      refreshDerived();
+      if (S.showErrors) showErrors(validate(S.form).errs, false);
+      const f = $("#f-line-" + Math.min(i, S.form.lines.length - 1) + "-description");
+      if (f) f.focus();
+      announce(`Line ${i + 1} removed`);
+    },
+    async discard() {
+      const ok = await confirmDialog({
+        title: "Discard this invoice?",
+        body: "<p>Nothing has been saved yet, so the entered details will be lost.</p>",
+        ok: "Discard",
+        danger: true,
+      });
+      if (ok) {
+        S.form = null;
+        go("dashboard");
+      }
+    },
+    "new-key"() {
+      S.saveKey = newKey();
+      S.saveMode = "normal";
+      S.saveMsg = null;
+      $("#idem-key").textContent = "Idempotency-Key: " + S.saveKey;
+      renderSaveMsg();
+      announce("New idempotency key generated");
+    },
+    "focus-field"(el) {
+      const t = document.getElementById(el.dataset.target);
+      if (t) t.focus();
+    },
+    open(el) {
+      S.detailId = el.dataset.id;
+      S.ppOverride = null;
+      S.detailNotice = null;
+      go("detail");
+    },
+    "filter-cur"(el) {
+      S.dash.cur = el.dataset.cur;
+      $$("[data-action=filter-cur]").forEach((b) => b.setAttribute("aria-pressed", String(b === el)));
+      renderDashTable();
+    },
+    "clear-filters"() {
+      S.dash = { cur: "ALL", q: "", st: "ALL" };
+      renderDashboard();
+    },
+    "retry-list"() {
+      applyState("default");
+      S.screen = "dashboard";
+      render();
+    },
+    "create-pp": createPayPal,
+    "retry-pp"() {
+      S.ppOverride = null;
+      createPayPal();
+    },
+    "check-pp"() {
+      announce("Status checked: still the same. The preview shows a fixed state.");
+      const b = $("#pp-body");
+      if (b && !$("#check-note")) b.insertAdjacentHTML("beforeend", '<p class="hint" id="check-note">Checked just now: no change. The preview shows a fixed state.</p>');
+    },
+    "dlg-ok"() {
+      closeDialog(true);
+    },
+    "dlg-cancel"() {
+      closeDialog(false);
+    },
+  };
+
+  /* ------------------------------------------------------------------ events */
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-action]");
+    if (!el) return;
+    if (el.getAttribute("aria-disabled") === "true" && !["parse", "create-pp"].includes(el.dataset.action)) return;
+    if (el.tagName === "A") e.preventDefault();
+    const fn = actions[el.dataset.action];
+    if (!fn) {
+      console.error("No handler for data-action=" + el.dataset.action);
+      return;
+    }
+    fn(el, e);
+  });
+  document.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.id === "comp-text") {
+      S.text = t.value;
+      if (S.compErr && t.value.trim()) S.compErr = null;
+      updateCounter();
+    } else if (t.id === "dash-search") {
+      S.dash.q = t.value;
+      renderDashTable();
+    } else if (t.dataset && t.dataset.line !== undefined) {
+      S.form.lines[Number(t.dataset.line)][t.dataset.k] = t.value;
+      refreshDerived();
+      if (S.showErrors) showErrors(validate(S.form).errs, false);
+    } else if (t.dataset && t.dataset.field && S.form) {
+      S.form[t.dataset.field] = t.value;
+      refreshDerived();
+      if (S.showErrors) showErrors(validate(S.form).errs, false);
+    }
+  });
+  document.addEventListener("change", (e) => {
+    const t = e.target;
+    if (t.id === "state-select") return applyState(t.value);
+    if (t.id === "dash-status") {
+      S.dash.st = t.value;
+      return renderDashTable();
+    }
+    if (t.id === "f-currency") {
+      S.form.currency = t.value;
+      renderLines();
+      refreshDerived();
+      if (S.showErrors) showErrors(validate(S.form).errs, false);
+      announce(`Currency set to ${t.value}. Existing amounts were not converted.`);
+    }
+    if (t.id === "f-discountKind") {
+      S.form.discountKind = t.value;
+      if (t.value === "none") {
+        S.form.discountValue = "";
+        $("#f-discountValue").value = "";
+      }
+      refreshDerived();
+      if (S.showErrors) showErrors(validate(S.form).errs, false);
+    }
+  });
+  $("#login-form").addEventListener("submit", submitLogin);
+  $("#review-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    saveDraft();
+  });
+  document.addEventListener("keydown", (e) => {
+    const tab = e.target.closest && e.target.closest("[role=tab]");
+    if (tab && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
+      e.preventDefault();
+      const order = ["ai", "manual"];
+      let i = order.indexOf(S.tab);
+      if (e.key === "ArrowRight") i = (i + 1) % 2;
+      else if (e.key === "ArrowLeft") i = (i + 1) % 2;
+      else i = e.key === "Home" ? 0 : 1;
+      S.tab = order[i];
+      renderComposer();
+      $("#tab-" + S.tab).focus();
+    }
+  });
+  window.addEventListener("online", () => {
+    S.offline = S.state === "offline";
+    render();
+  });
+  window.addEventListener("offline", () => {
+    S.offline = true;
+    render();
+  });
+  window.addEventListener("hashchange", () => {
+    readHash(false);
+  });
+
+  function readHash(initial) {
+    const p = new URLSearchParams(location.hash.slice(1));
+    const theme = p.get("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    if (theme !== S.theme || initial) setTheme(theme === "dark" ? "dark" : "light");
+    const st = p.get("state") || "default";
+    const sc = p.get("screen");
+    if (!initial && st === S.state && (!sc || sc === S.screen)) return;
+    if (st !== "default" || initial) applyState(st);
+    if (sc && TITLES[sc]) {
+      if (sc === "login") S.authed = false;
+      go(sc, { focus: false });
+    } else if (initial && st === "default") go("login", { focus: false });
+  }
+
+  window.__NMI_PREVIEW__ = { actions, state: S, calc, refusal, validate };
+  if (matchMedia("(max-width: 767px)").matches) $("#review-controls").open = false;
+  readHash(true);
+})();
+    </script>
+  </body>
+</html>
