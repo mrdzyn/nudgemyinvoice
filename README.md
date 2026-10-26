@@ -4,52 +4,106 @@
 
 > Hackathon MVP — PayPal **sandbox only**. Not a production payment service; no escrow, automatic refunds, or autonomous sending.
 
-## What it will do
+## Product vision and implemented capabilities
 
-1. Parse a plain-language request into a structured invoice draft with clear customer, items, due date, **one currency per invoice**, and calculated totals.
-2. Let a human inspect and approve sending an invoice via the **PayPal Invoicing API (sandbox)**.
-3. Reconcile invoice payment updates from **signature-verified PayPal invoicing webhooks** with deduplication and authoritative status checks.
-4. Flag overdue invoices and draft friendly, context-aware follow-up wording. **Never send reminders without approval.**
-5. Show invoices, statuses, amounts and currency-specific totals in an AG Studio dashboard.
+The system differentiates implemented backend capabilities from the planned product roadmap.
+
+### Implemented backend capabilities
+- **Structured invoice draft persistence & validation:** Authenticated operator save, integer minor-unit money arithmetic, supported per-invoice ISO currency, and manual-entry fallback (`POST /api/invoice-drafts`, `GET /api/invoice-drafts/:id`).
+- **OpenAI parser integration (Responses API):** Schema-validated parser integration (`POST /api/invoice-drafts/parse`) producing structured invoice proposals with deterministic fake-model tests; real OpenAI provider verification is **pending / not tested**.
+- **PayPal Sandbox DRAFT creation:** Explicitly triggered DRAFT creation via `@nmi/paypal` (`POST /api/invoice-drafts/:id/paypal-draft`) with durable operation fencing; verified in Sandbox for a single happy-path draft (no sending, reminders, or payments; default-disabled via `PAYPAL_DRAFTS_ENABLED=false`).
+
+### Planned capabilities (not delivered)
+- **Human approval screen for sending:** Reviewing and approving invoice sending via PayPal Invoicing API (sandbox) remains planned; no send endpoint is wired.
+- **Webhook payment reconciliation:** Signature-verified PayPal invoicing webhook receipt, event deduplication, and authoritative payment status reconciliation remain planned.
+- **Overdue invoice detection & reminder drafting:** Friendly, context-aware nudge generation remains planned (autonomous reminder sending is strictly forbidden).
+- **Business dashboard & invoice UI:** AG Studio React frontend shell and visual status tracking remain planned (web UI is currently an unapproved placeholder).
 
 **Multi-currency means managing invoices in multiple supported currencies, not foreign-exchange conversion or a mixed-currency grand total.**
 
 ## Status and demo
 
-- Phase: `NMI-P0` — greenfield repository foundation (no runnable application yet).
-- Hosted demo: _To be added after deployed sandbox MVP is verified. Keep access operational through Dec 15, 2026 judging._
-- Demo video (under 3 minutes): _To be added._
+- **Accepted backend increment:** NMI-P2-I2, independently audited at `4982201918d0030234fdbabbc297375c02c01e5d`; [PR #4](https://github.com/mrdzyn/nudgemyinvoice/pull/4) owner-approved and squash-merged into `main` as `07409bf32068362b9f5b711b64ef0399d588169e` on 2026-10-26.
+- **Real PayPal Sandbox acceptance:** `NMI-P2-I2-SANDBOX-SMOKE-01` **PASS** (AG's local provider evidence): OAuth HTTP 200; one draft-create HTTP 201; read-only invoice GET HTTP 200; `INV2-U92W-76NX-3P2E-AGUZ`, status `DRAFT`, USD 5.00. No sending, reminders, or payments.
+- **Independent CI:** Project Baseline CI and Stack CI passed on PR #4 at audited implementation HEAD `4982201918d0030234fdbabbc297375c02c01e5d`; AG reports 235 unit + 187 PostgreSQL integration tests passed. PR #5 has its own exact-HEAD CI checks on GitHub.
+- **Not yet verified:** genuine OpenAI API parsing; end-user invoice UI, sends, verified webhooks, hosted demo, and production readiness.
+- Hosted demo: _Pending separate owner-approved deployment and full end-to-end verification._
+- Demo video (under 3 minutes): _Pending._
 - Hackathon deadline: Nov 12, 2026, 12:00 PM PST (Nov 13, 4:00 AM Asia/Manila).
 - Public repository: https://github.com/mrdzyn/nudgemyinvoice
 
-## Stack (planned)
+## Stack (implemented and planned)
 
-React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on Render and SQLite locally (dialect parity must be verified); OpenAI Node SDK (`openai`) with the Responses API and Zod-validated structured output; PayPal Invoicing REST sandbox and webhooks; Render web service / Postgres / scheduled job; Vitest. APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
+React + Vite + TypeScript (web shell pending design approval); Fastify/Node; Drizzle + **PostgreSQL** (current runtime; SQLite support is undecided); OpenAI Node SDK (`openai`) / Responses API with Zod-validated structured output; PayPal Invoicing REST **sandbox only**; Vitest. **Planned, not yet delivered:** PayPal webhooks, AG Studio (subject to license/design approval), Render hosting, and customer-facing UI. APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
 
 ## Getting started
 
-**Foundation (NMI-P1) only:** the workspace runs, but there is no invoice UI yet. Available today: `GET /health`, operator login/session/logout (`/api/auth/*`), authenticated invoice-draft APIs (`/api/invoice-drafts`: parse, save, read, and an explicit PayPal **sandbox draft** action; nothing is ever sent), a placeholder web page, and the tested parsing/validation/approval libraries with a PostgreSQL approval store. No PayPal write is wired.
+**Current backend on `main`:** `GET /health`; authenticated operator login/session/logout (`/api/auth/*`); `POST /api/invoice-drafts/parse`, `POST /api/invoice-drafts`, `GET /api/invoice-drafts/:id`, and opt-in `POST /api/invoice-drafts/:id/paypal-draft`. The web app is a placeholder; there is **no usable invoice dashboard** or sending/payment route.
 
-Prerequisites: Node 22+, pnpm 10 (`corepack enable`). Optional later: PayPal sandbox app, OpenAI key and model ID (`OPENAI_API_KEY`, `OPENAI_MODEL`), PostgreSQL.
+Prerequisites: Node 22+, pnpm 10, local PostgreSQL, a strong server-side `SESSION_SECRET` (at least 32 characters), and `DATABASE_URL`. For normal local development, leave `PAYPAL_DRAFTS_ENABLED=false`; no PayPal credentials or real OpenAI key are needed for deterministic tests and manual entry.
 
 ```bash
 git clone https://github.com/mrdzyn/nudgemyinvoice.git
 cd nudgemyinvoice
-pnpm install
-cp .env.example .env   # set only SANDBOX values; NEVER commit .env
-pnpm test              # deterministic tests; no OpenAI key or network needed
-pnpm validate          # lint, format, typecheck, test, build, bundle-secret scan
-# API: needs PostgreSQL. Set DATABASE_URL, SESSION_SECRET (>=32 chars), PAYPAL_ENV=sandbox and
-# PAYPAL_API_BASE_URL (see .env.example), apply migrations from packages/db/migrations, then provision the
-# single operator once (secrets from your shell, never from a file you commit):
-NMI_OPERATOR_USERNAME=... NMI_OPERATOR_PASSWORD=... pnpm --filter @nmi/api provision-operator
-pnpm --filter @nmi/api dev
-# Real-PostgreSQL tests (disposable database named nmi_test*):
+pnpm install --frozen-lockfile
+cp .env.example .env
+# Configure DATABASE_URL, SESSION_SECRET and sandbox-only values privately in ignored .env.
+# Initialize a dedicated local PostgreSQL database and apply the seven checked-in Drizzle
+# journal migrations (0000-0006) using a migration-aware process; do not replay SQL blindly.
+# Provision the single operator securely (NMI_OPERATOR_USERNAME and NMI_OPERATOR_PASSWORD
+# via a private process environment; never put the password in a committed file or logs).
+pnpm --filter @nmi/api exec -- node --env-file=../../.env --import tsx src/cli/provision-operator.ts
+pnpm --filter @nmi/api exec -- node --env-file=../../.env --import tsx src/server.ts
+# In another terminal:
+pnpm --filter @nmi/web dev
+# Local deterministic checks; real PostgreSQL tests require a disposable nmi_test* database:
+pnpm validate
 TEST_DATABASE_URL=postgres://user@localhost:5432/nmi_test pnpm test:db
-pnpm --filter @nmi/web dev   # http://localhost:5173
 ```
 
-Migrate/seed/webhook commands and judge setup will be added once those features exist. Do not claim judges can run a full demo until verified end to end.
+The verified API launcher is relative to `apps/api` through `pnpm --filter @nmi/api exec --`; plain `pnpm --filter @nmi/api dev` does **not** automatically load the repository-root `.env`. No automatic production migration/deploy path is established. Do not repeat the one-create real Sandbox smoke without a new owner authorization.
+
+## PayPal Developer sandbox setup — for humans and AI agents
+
+### Owner-reported Sandbox setup and verified smoke (2026-10-25 to 2026-10-26)
+
+| Item | Status |
+|---|---|
+| Environment | **Sandbox** selected; no Live environment was used |
+| Product / repository / hackathon name | **NudgeMyInvoice** — unchanged |
+| PayPal REST app display name | **`NudgeMyBillsAI`** — successfully created as a **Merchant** app |
+| Merchant association | Existing US **Sandbox Business** test account |
+| Buyer testing | Existing US **Sandbox Personal** test account identified |
+| Invoicing API | **Enabled and saved**; PayPal displayed “Application was saved successfully” |
+| Sandbox credentials | Locally configured server-side for the completed smoke; secret values are not published or committed |
+| Provider smoke test | **PASS** on 2026-10-26 for exactly one Sandbox DRAFT create/read-only verify; no send or payment |
+
+**Naming note:** PayPal rejected an **earlier attempt** to register the REST app as `NudgeMyInvoice` because the name contained “invoice”; that **first attempt created no app**. The owner then successfully created `NudgeMyBillsAI`. This is an observed dashboard result, not a universal policy claim. **Do not rename the NudgeMyInvoice product or GitHub repository, and do not create another PayPal app for this project unless the owner explicitly directs it.**
+
+For privacy, this public README intentionally **does not publish the Sandbox Business or Personal account email addresses, credentials, tokens, account IDs, or passwords**. The owner has those details privately.
+
+### Local-only configuration and activation
+
+1. Open [PayPal Developer → Sandbox Apps & Credentials](https://developer.paypal.com/dashboard/applications/sandbox). Locate **`NudgeMyBillsAI`** and confirm **Sandbox**, **Merchant**, and **Invoicing API enabled** before trying the integration. Use the existing Sandbox Business and Personal test accounts; do not create new ones unnecessarily.
+2. Copy the **Sandbox** Client ID and Secret **directly into your local server-side ignored `.env` file or approved secret manager**. Never commit or paste them into GitHub, chat, coding-agent prompts, browser-side variables, test snapshots, README text, PRs, CI logs or demo recordings. A masked Secret in the dashboard is not evidence the app is configured locally.
+3. Use these configuration **names** (no values or sample credentials are committed):
+
+   ```dotenv
+   PAYPAL_ENV=sandbox
+   PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com
+   PAYPAL_DRAFTS_ENABLED=false
+   # Fill the following two variables privately in a server-only environment:
+   PAYPAL_CLIENT_ID=
+   PAYPAL_CLIENT_SECRET=
+   ```
+
+   **Important:** PayPal Sandbox drafting is implemented on `main` but remains **disabled by default**. Credentials are server-only and never required for deterministic tests. Loading the ignored `.env` is explicit: use the verified launcher in Getting started. No Live PayPal endpoint is permitted.
+4. Keep `PAYPAL_DRAFTS_ENABLED=false` during ordinary development. The already authorized single-create acceptance ran and its one-request budget is exhausted; **do not repeat it without new owner authorization**. The implemented adapter cannot send invoices, remind buyers, initiate payments, or use Live APIs. Do not deploy or release without separate approval.
+5. Report only sanitized acceptance evidence. The real PayPal Sandbox draft acceptance is **PASS based on AG's actual provider execution** (`NMI-P2-I2-SANDBOX-SMOKE-01`: one USD 5.00 line item, no tax, no discount, one create, one show); genuine provider search, reconciliation, timeout, and error paths are mock-tested only, not verified against live PayPal Sandbox responses. Genuine OpenAI parsing remains **NOT TESTED** and mock-provider CI must not be mislabeled as live evidence.
+
+References: [PayPal REST authentication](https://developer.paypal.com/api/rest/authentication), [API base URLs](https://developer.paypal.com/api/make-api-requests), [Invoicing v2](https://developer.paypal.com/api/invoicing/v2/).
+
+**AI agent operating rule:** Before repository changes, read [`AGENTS.md`](AGENTS.md), [`docs/STATUS.md`](docs/STATUS.md), [`config/project-profile.json`](config/project-profile.json), and the active task/handoff. This README is onboarding context, **not authority** to create a duplicate app, inspect or reveal secrets, run live provider operations, enable draft writes, merge, deploy or release. An authenticated PayPal browser session does not imply permission to execute API calls.
 
 ## Safe demo script (planned)
 
@@ -77,7 +131,7 @@ All company names, invoices, customer details and amounts in the demo are fictit
 
 ## Security and release scope
 
-Sandbox only. The server validates approval, API permissions, payload digests, and webhook signatures. Model outputs are untrusted. The system does not store payment-card credentials or initiate production payments. See [security boundaries](docs/SECURITY.md).
+Sandbox only. The server enforces authenticated access, Origin/CSRF checks, exact monetary validation, durable fenced draft creation and fail-closed reconciliation (reconciliation, search, and error paths are verified with deterministic mock transports and PostgreSQL tests; only single happy-path draft creation and GET verification were exercised against genuine PayPal Sandbox). The approval store exists, but **no production grant-issuer or send flow is wired; webhook signature processing remains planned**, not implemented. Model outputs are untrusted. The system does not store payment-card credentials or initiate production payments. See [security boundaries](docs/SECURITY.md).
 
 ## License
 

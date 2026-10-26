@@ -1,11 +1,11 @@
 # NMI-P2-I2 — Authenticated AI Invoice Drafts and PayPal Sandbox Draft Creation
 
-- **State:** Implemented on this branch; pending independent ChatGPT GPT-6 exact-head audit (not self-certified). Real OpenAI / PayPal sandbox smoke: **NOT TESTED**.
+- **State:** **ACCEPTED AND SQUASH-MERGED** on 2026-10-26. Independent GPT-6 C6 exact-head review **PASS (scoped)** at `4982201918d0030234fdbabbc297375c02c01e5d`; PR #4 merged as `07409bf32068362b9f5b711b64ef0399d588169e`. Genuine PayPal Sandbox create/read-only verification **PASS** per AG evidence `NMI-P2-I2-SANDBOX-SMOKE-01`; genuine OpenAI provider parsing **NOT TESTED**.
 - **Owner/orchestrator:** project owner / ChatGPT
 - **Implementation agent:** Antigravity (replacing Claude Code)
 - **Independent auditor:** ChatGPT GPT-6 (replacing Codex)
 - **Baseline:** `main` at `9ebc1912e96b158b906b849cf1dc2b48cbf3c875` (PR #3 NMI-P2-I1 squash merged after independent C3 PASS).
-- **Branch:** `phase-2/nmi-invoice-drafts-i2`; one Draft PR, no merges without new owner approval.
+- **Historical implementation branch:** `phase-2/nmi-invoice-drafts-i2` (PR #4 merged following separate owner authorization). Documentation synchronization continues in Draft PR #5; no further merge or deployment authorized.
 - **Type / design gate:** Backend/API + PostgreSQL + sandbox adapter + tests only. **UI design gate: Not applicable to this increment.** `design/nmi-p1/SCREENS.md` is still DRAFT and not approved. No business UI or AG Studio dependency may be implemented under this task.
 
 ## Goal and user journey
@@ -61,14 +61,16 @@ All routes require a verified server-side session. The existing global Origin an
 - [x] Durable create intent: two concurrent requests / double-click / replay produce at most one external create; after timeout, uncertain state is detectable and retry/reconciliation is safe. Stable `PayPal-Request-Id` preserved. Never claim a draft exists without a verified remote reference.
 - [x] Network fakes prove no calls to `/send`, `/remind`, `/cancel`, `/payments`, `/refunds` or production host. Reject any attempt to use model/tool text to trigger an external call.
 - [x] Existing auth, credential-rotation races, rate-limiter, approval concurrency and audit integrity tests stay green; migration rollback/upgrade safety and previously committed migrations preserved.
-- [x] Pure unit/integration CI without real secrets or network passes. The **optional, owner-triggered** real PayPal sandbox and OpenAI smokes are **NOT TESTED** (procedure in `docs/TESTING.md`); nothing was forged.
+- [x] Pure unit/integration CI without real secrets or network passes (235 unit + 187 real PostgreSQL integration tests, 422 total per AG; two hosted CI workflows independently confirmed at audited HEAD).
+- [x] Optional owner-authorized genuine PayPal Sandbox DRAFT smoke **PASS** on 2026-10-26: OAuth 200, one create 201, show 200; DRAFT USD 5.00, date/number/reference matched; no sending/payment; feature flag disabled afterward. Evidence: `NMI-P2-I2-SANDBOX-SMOKE-01` (AG provider execution; not an independent provider-account query).
+- [ ] Genuine OpenAI Responses provider parsing smoke **NOT TESTED**; deterministic fake-model parser tests PASS. This is an explicitly deferred gate, not a claim of full provider completion.
 - [x] No UI, PayPal send, live transaction, webhook, deployment or release performed.
 
 ## Delivery / reviews
 
 Read the canonical repo startup files, task and active handoff, and only relevant source/tests. Implement directly on the existing Draft branch, not a new PR. Use the pinned pnpm + frozen lockfile and disposable PostgreSQL 16; targeted tests plus required manual set (project profile, lint, format, typecheck, unit, real DB tests, build, secret scan, dependency audit, migration synchronization, diff checks). Record exact head, counts, missing runs and CI status accurately. Running hosted PR checks is allowed, but does not authorize merge.
 
-Update `docs/STATUS.md`, task acceptance, and the next single active handoff. Codex independently audits the **exact** final PR SHA and security/payment/idempotency boundaries. The owner must separately approve any squash merge. No deployment/release.
+Implementation was independently audited at the **exact** final PR #4 SHA by GPT-6; the owner subsequently accepted and separately authorized the squash merge. Follow-up documentation resides in Draft PR #5, independently reviewed before any further merge. No deployment/release.
 
 ## Explicitly deferred
 
@@ -78,5 +80,12 @@ Human grant **issuance and actual PayPal send**, verified webhook receipt/reconc
 - **Final endpoint names:** `POST /api/invoice-drafts/parse`, `POST /api/invoice-drafts` (optional `Idempotency-Key`), `GET /api/invoice-drafts/:id`, `POST /api/invoice-drafts/:id/paypal-draft`.
 - **Key design finding:** PayPal documents `PayPal-Request-Id` for some Invoicing endpoints but not for create-invoice (published OpenAPI schema), so it is sent but not relied on; exactly-once creation rests on a durable fenced operation row, a deterministic `invoice_number`/`reference`, reconcile-before-retry, a cool-off, and verification of the remote draft.
 - **Deviation / decision for the owner:** drafts whose totals depend on rounding (some tax/discount combinations, sub-cent line products) are *refused* instead of mapped, because PayPal's rounding is unverified. Relax only after a live sandbox smoke proves PayPal's rounding.
-- **Unverified PayPal assumptions** (fake HTTP only) are listed in `docs/SECURITY.md`.
+- **Provider evidence boundary:** simple USD 5.00 draft creation (single line item, zero tax, zero discount) and GET verification were genuinely exercised in Sandbox (`NMI-P2-I2-SANDBOX-SMOKE-01`); invoice-level discount placement, line-item tax/discount body mappings, alternative recipient/invoicer formats, alternative 201 response shapes, search pagination, delayed indexing, duplicate-number behavior, and ambiguous-outcome reconciliation error paths were not verified against PayPal's live Sandbox API (verified via deterministic mock transports and PostgreSQL tests only). See `docs/SECURITY.md`.
 - Migration `0005` is forward-only; `0000`-`0004` byte-identical. No UI, send, webhook, deployment or release.
+
+## Closure record (2026-10-26)
+- **Owner accepted:** NMI-P2-I2 backend-only increment; [acceptance comment](https://github.com/mrdzyn/nudgemyinvoice/pull/4#issuecomment-6416498360).
+- **Audited implementation:** `4982201918d0030234fdbabbc297375c02c01e5d`; [PR #4](https://github.com/mrdzyn/nudgemyinvoice/pull/4) squash-merged as `07409bf32068362b9f5b711b64ef0399d588169e`.
+- **Evidence:** exact-head CI and C6 audit PASS; AG reports 422 passing automated tests and real Sandbox draft smoke `NMI-P2-I2-SANDBOX-SMOKE-01` PASS.
+- **Not accepted:** real OpenAI provider test, material UI, privileged PayPal sending/payment actions, webhooks, deployment or production release. Further external draft creation requires new authorization.
+- **Known follow-up remediation:** Codex review on PR #4 identified that CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omits `Idempotency-Key`. Recorded as an open code remediation to be resolved in a separate bounded follow-up task before cross-origin browser invoice-save integration.

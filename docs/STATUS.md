@@ -1,41 +1,46 @@
 # Project Status
 
-> Current operational state only. Durable decisions belong in docs/PROJECT-MEMORY.md.
+> Current operational state only. Durable decisions and historical audit details belong in the task and handoff records.
 
 ## Project
 - **Name:** NudgeMyInvoice
-- **Mode:** Public MIT-licensed PayPal sandbox hackathon MVP
-- **Current phase:** NMI-P2-I2 — authenticated AI drafts, PostgreSQL persistence and sandbox PayPal draft creation
-- **Status:** C6 REMEDIATION IMPLEMENTED — independent audit of `3e28c0c` (C5) was FIX REQUIRED on concurrent first-time reservation across UTC midnight (MEDIUM). Remediated by rebuilding canonical PayPal request body and expected values directly from the winning persisted operation returned by atomic `ops.reserve`, enforcing date identity independently against persisted row, preserving `dueDate >= today` for fresh creates while permitting reconciliation after due date passes for already-attempted creates, safe legacy `invoice_date IS NULL` fallback, updating `docs/SECURITY.md`, and adding 5 deterministic PostgreSQL regressions covering both claim orders across UTC midnight, reservation winning order, earlier pending reservation expiration, and legacy row reconciliation; Draft PR #4 awaits independent ChatGPT GPT-6 audit (not self-certified); owner merge approval pending. Real OpenAI and PayPal sandbox smokes: **NOT TESTED**.
-- **Primary branch:** `main` (`9ebc1912e96b158b906b849cf1dc2b48cbf3c875`, PR #3 squash merge)
-- **Working branch:** `phase-2/nmi-invoice-drafts-i2` (Draft PR, base `main`)
-- **Active task:** `tasks/NMI-P2-I2-invoice-draft-flow.md`
-- **Active handoff:** NMI-P2-I2-C6
+- **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
+- **Current phase:** NMI-P2-I2 — **OWNER ACCEPTED AND SQUASH-MERGED** on 2026-10-26.
+- **Status:** Backend invoice proposal, authenticated PostgreSQL invoice drafts and explicit PayPal Sandbox DRAFT creation accepted within defined scope. Independent exact-HEAD C6 audit **PASS (scoped)** at `4982201918d0030234fdbabbc297375c02c01e5d`; owner acceptance [PR #4 comment](https://github.com/mrdzyn/nudgemyinvoice/pull/4#issuecomment-6416498360); GitHub squash merge `07409bf32068362b9f5b711b64ef0399d588169e`.
+- **Primary branch:** `main` (merge commit `07409bf32068362b9f5b711b64ef0399d588169e`).
+- **Working branch:** `docs/paypal-sandbox-app-name` (Draft PR #5, documentation reconciliation; **not merged**).
+- **Active task:** `tasks/NMI-P2-I2-invoice-draft-flow.md` (completed; next increment not yet owner-activated).
+- **Active handoff:** NMI-P2-I2-ACCEPTANCE
 
-## Completed
-- Phase 0 PR #1 squash merged at `13ad78a`, Phase 1 PR #2 at `56ca739`.
-- NMI-P2-I1 PR #3: independent exact-head Codex C3 **PASS** at `923bb906d0a2ec1ee56cf013eacae622199b89ae`; both hosted checks PASS on that HEAD, manual suite 248 PASS including 108 PostgreSQL tests. Owner-approved squash merged into `main` as `9ebc1912e96b158b906b849cf1dc2b48cbf3c875`.
-- Existing foundation: authenticated single-operator sessions, CSRF/Origin checks, concurrent-login throttle and password-rotation protection, PostgreSQL atomic `ApprovalStore`, audit triggers, OpenAI parser + fake-model tests, sandbox-only PayPal interfaces, exact money and migrations `0000` through `0004`.
+## Accepted evidence
+- **Audit and CI:** C6 exact-head independent source/security audit PASS; Project Baseline CI and Stack CI SUCCESS on PR #4 at `4982201918d0030234fdbabbc297375c02c01e5d`. PR #5 has its own exact-HEAD CI checks on GitHub.
+- **AG automated validation:** 235/235 unit and 187/187 PostgreSQL 16 integration tests passed (422 total); lint, formatting, typecheck, build, bundle scan and migrations verified in the accepted phase.
+- **Real PayPal Sandbox (AG local provider evidence):** `NMI-P2-I2-SANDBOX-SMOKE-01` on 2026-10-26: real OAuth `200`, exactly one invoice-create `201`, and read-only show `200` (exercised with one fictitious USD 5.00 line item, no tax, no discount); invoice `INV2-U92W-76NX-3P2E-AGUZ` status `DRAFT`, USD 5.00, due 2026-11-30, exact invoice-number/reference and durable PostgreSQL link. No send/reminder/cancel/refund/payment operations. Local default restored: `PAYPAL_DRAFTS_ENABLED=false`. Persistent one-create test guard budget `1/1` exhausted (private local evidence).
+- **Provider search, reconciliation and error paths:** **NOT TESTED** against live PayPal Sandbox; search, delayed indexing, timeout, duplicate-number, and fail-closed reconciliation behavior are mock-tested only via deterministic fake transports and PostgreSQL tests.
+- **Evidence attribution:** GPT-6 independently reviewed the GitHub source and hosted CI; the real provider and local database responses are from AG's sanitized local execution evidence, not an independent PayPal-account query.
+- **Real OpenAI Responses API parsing:** **NOT TESTED** against provider; parser behavior exercised via deterministic fake-model tests.
 
-## Current work
-- **Audit history (PR #4):**
-  - C2 audit of `42c0f4f` = **FIX REQUIRED** (ChatGPT): ambiguous PayPal draft creation outcome risked a duplicate remote create when search returned empty after 300s cool-off (empty search does not prove remote absence due to delayed search indexing); malformed `{}` search response was indistinguishable from empty search; unbound idempotency retention.
-  - C3 audit of `355bf6a` = **FIX REQUIRED** (ChatGPT, [issue comment 6394882096](https://github.com/mrdzyn/nudgemyinvoice/pull/4#issuecomment-6394882096)): C2 blocker confirmed resolved; two blocking MEDIUM findings: (1) pagination sentinel became a fake invoice ID when page 1 had no matching item, poisoning recovery; (2) due-date validation against `today` rejected subsequent reconciliation of drafts whose due date passed during ambiguous create.
-  - C4 audit of `7f871c5` = **FIX REQUIRED** (ChatGPT, [issue comment 6399106857](https://github.com/mrdzyn/nudgemyinvoice/pull/4#issuecomment-6399106857)): C3 MEDIUM-1 (pagination) confirmed resolved; C3 MEDIUM-2 main path resolved, but residual MEDIUM on midnight race: initial request body `invoice_date` sampled `deps.clock()` before row reservation, while PostgreSQL independently generated `created_at`; a midnight boundary straddle could stamp `created_at` on D+1, causing retry on D+1 to fail `assertExactMapping` before reconciliation. Outdated duplicate-create description in `docs/SECURITY.md`.
-  - C5 audit of `3e28c0c` = **FIX REQUIRED** (ChatGPT, [issue comment 6399342071](https://github.com/mrdzyn/nudgemyinvoice/pull/4#issuecomment-6399342071)): C4 finding confirmed resolved; blocking MEDIUM: concurrent first-time reservation across UTC midnight could cause losing reservation claimant to send pre-built body with a date different from winning persisted operation row (`requestDigest` zeroes date, preventing mismatch detection).
-- **C6 remediation:**
-  1. **Rebuild canonical request body from returned operation:** After atomic `ops.reserve` call, canonical `invoiceDate` is derived strictly from the returned persisted row. Request body and expected verification values are rebuilt using this canonical date before claiming the lease or sending externally.
-  2. **Independent date identity enforcement:** In addition to payload digest, explicitly verify `claim.op.invoiceDate === body.detail.invoice_date`, guaranteeing date identity even though `requestDigest` excludes dates for replay stability.
-  3. **Preserve fresh vs reconciliation due date guards:** Fresh create attempts require `dueDate >= today` (even if adopting an earlier pending reservation date); reconciliation of already-attempted drafts validates against `canonicalInvoiceDate` without blocking on expired due date.
-  4. **Document safe legacy fallback:** Legacy rows with `invoice_date IS NULL` fall back to `created_at` without false-positive date mismatch.
-  5. **Security documentation updated:** Updated `docs/SECURITY.md` to document rebuilding canonical request body from atomic reservation row.
-- **Evidence (manual CI, PostgreSQL 16.15, pnpm 10.28.0, clean frozen install):** 235 tests without a database + 187 against real PostgreSQL (37 constraints, 19 approval store, 25 auth, 16 auth-store races, 17 login races, 11 draft store, 9 operation store, 53 draft/PayPal routes; `packages/paypal` 86 tests) = 422 passing; `pnpm test:db` 187/187 over eight PG suites; lint, format:check, typecheck, build, bundle scan, `python3 scripts/validate_project_profile.py` (24 files), `pnpm audit --prod --audit-level high`, migration sync all pass. 5 new deterministic PostgreSQL regressions added.
-- **Still not built:** PayPal send/reminder/cancel/refund/capture, webhooks, grant issuer/approval route, invoice UI, AG Studio, deployment.
+## Delivered on main
+- Single-operator authenticated sessions, rotation protection, rate limits and Origin/CSRF controls.
+- Strict invoice parsing/proposal validation with manual-entry fallback; integer-minor-unit totals and per-invoice currency boundaries.
+- PostgreSQL transactions, audited invoice draft persistence, seven committed migrations (`0000`–`0006`).
+- PayPal Sandbox-only draft-create adapter, explicit authenticated trigger, durable operation fencing, exact remote verification, and fail-closed reconciliation without blind recreates (note: search, reconciliation, timeout and error-path behavior are mock-tested and PostgreSQL-verified only, not verified against genuine PayPal Sandbox responses).
+- No business-ready invoice UI; frontend remains a placeholder.
 
-## Gates / limitations
-- CI status applies only to the SHA that executed the check. No prior owner CI exception carries forward. Run targeted security/payment tests, real PostgreSQL 16 integration, standard CI/manual validations and independent Codex exact-head audit.
-- In-memory auth throttling remains single-process; approval consumption and audit are separate statements; DB app-role grant enforcement is for deployment. Do not claim production readiness.
-- **UI design gate remains unapproved:** `design/nmi-p1/SCREENS.md` draft only. No full UI or AG Studio dependency in P2-I2.
-- PayPal sandbox credentials and OpenAI key are not committed. Genuine provider smoke tests are **NOT TESTED** unless owner supplies env secrets locally and authorizes them.
-- Open architecture/product decisions: PostgreSQL-only vs adding SQLite support; AG Studio trial/licensing through judging; future hosting/Render availability. The task uses the existing PostgreSQL runtime without resolving those independent product choices.
-- No merge, deployment, release, webhook processing, sending, reminders, refund, cancellation, capture or live payment authorized.
+## Deferred / open gates
+- Human-approved UI design, browser shell/dashboard, AG Studio licensing and design integration.
+- Real OpenAI smoke; PayPal sending/grant issuance, reminder automation, webhook receipt/payment reconciliation, deployment, and production PayPal use.
+- Architecture decisions: PostgreSQL-only versus SQLite support, hosting strategy, demo availability through judging.
+- Do **not** reuse the completed one-create Sandbox authorization or reset its exhausted budget. New external writes require new owner approval.
+- **Operational limitations:** In-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](SECURITY.md).
+- **Open code remediation (known review finding):** Codex review on PR #4 identified that CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omits `Idempotency-Key` (though invoice save supports that header). It has no effect today because the web app is a placeholder and Vite proxies only `/health`, but it will block cross-origin browser callers sending an idempotency key. This code remediation is deferred from this docs-only PR to a proposed bounded follow-up task before cross-origin browser invoice-save integration:
+  1. Add `Idempotency-Key` to CORS `allowedHeaders` in `apps/api/src/app.ts`.
+  2. Add browser-style `OPTIONS` preflight regression test in `apps/api/src/app.test.ts`.
+  3. Verify unapproved origins remain blocked.
+  4. Verify session, Origin, and CSRF checks remain unchanged.
+  5. Independent review before merge.
+- **Draft PR #5:** docs-only synchronization now awaiting independent review and later separate merge approval. Required CI applies to PR #5's own HEAD; prior PR #4 PASS is not automatically transferable.
+- No deployment, production release or privileged PayPal financial operation authorized.
+
+## Next action
+Independently review Draft PR #5 for documentation accuracy, privacy, status consistency, and exact-HEAD CI. Keep it unmerged until separate owner approval. Do not activate a new implementation phase without owner direction.
