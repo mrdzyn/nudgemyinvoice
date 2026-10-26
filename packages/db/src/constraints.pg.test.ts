@@ -54,8 +54,10 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
   });
 
   const insertInvoice = `INSERT INTO invoices
-    (customer_name, customer_email, currency, subtotal_minor, discount_minor, tax_minor, total_minor, due_date)
-    VALUES ('A','a@example.com',$1,$2,$3,$4,$5,'2026-11-01')`;
+    (customer_name, customer_email, currency, subtotal_minor, discount_minor, tax_minor, total_minor, due_date,
+     tax_bps, discount_kind)
+    VALUES ('A','a@example.com',$1,$2,$3,$4,$5,'2026-11-01',
+     CASE WHEN $4::bigint <> 0 THEN 1000 END, CASE WHEN $3::bigint <> 0 THEN 'amount' END)`;
 
   it("has every named constraint installed", async () => {
     const r = await client.query(
@@ -85,6 +87,22 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         "operators_credential_version_positive",
         "sessions_token_hash_hex",
         "sessions_expiry_after_creation",
+        "invoices_draft_digest_hex",
+        "invoices_idempotency_key_format",
+        "invoices_tax_bps_range",
+        "invoices_tax_requires_rate",
+        "invoices_discount_shape",
+        "invoices_customer_fields_bounded",
+        "invoice_items_position_nonneg",
+        "invoice_items_description_bounded",
+        "paypal_draft_operations_state_allowed",
+        "paypal_draft_operations_created_has_remote",
+        "paypal_draft_operations_remote_only_when_known",
+        "paypal_draft_operations_attempts_nonneg",
+        "paypal_draft_operations_number_format",
+        "paypal_draft_operations_digest_hex",
+        "paypal_draft_operations_invoice_date_format",
+        "paypal_draft_operations_error_code_token",
         "audit_log_outcome_allowed",
       ].sort(),
     );
@@ -131,7 +149,8 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
       const r = await client.query(`${insertInvoice} RETURNING id`, ["USD", 100, 0, 0, 100]);
       invoiceId = r.rows[0].id as string;
     });
-    const insertItem = `INSERT INTO invoice_items (invoice_id, description, quantity_hundredths, unit_price_minor) VALUES ($1,'x',$2,$3)`;
+    const insertItem = `INSERT INTO invoice_items (invoice_id, position, description, quantity_hundredths, unit_price_minor)
+       VALUES ($1, (SELECT count(*) FROM invoice_items WHERE invoice_id = $1), 'x', $2, $3)`;
 
     it("accepts positive quantity and zero or positive price", async () => {
       await client.query(insertItem, [invoiceId, 150, 0]);
@@ -280,6 +299,150 @@ describe.skipIf(!url)("PostgreSQL constraints (real database)", () => {
         `INSERT INTO audit_log (actor, action, outcome) VALUES ('a','auth.login',$1)`,
         ["maybe"],
         "audit_log_outcome_allowed",
+      );
+    });
+  });
+
+  describe("invoice drafts and PayPal draft operations (NMI-P2-I2)", () => {
+    const base = `INSERT INTO invoices (customer_name, customer_email, currency, subtotal_minor, discount_minor, tax_minor,
+      total_minor, due_date, tax_bps, discount_kind, discount_bps, idempotency_key, draft_digest) VALUES
+      ('A','a@example.com','USD',1000,$1,$2,$3,'2026-11-01',$4,$5,$6,$7,$8) RETURNING id`;
+    const none = [null, null, null, null];
+    it("accepts a percent discount with its basis points and a tax with its rate", async () => {
+      await client.query("SAVEPOINT a1");
+      await client.query(base, [100, 90, 990, 1000, "percent", 1000, null, null]);
+      await client.query("ROLLBACK TO SAVEPOINT a1");
+    });
+    it("rejects tax without a rate, discount without a kind, and malformed shapes", async () => {
+      await expectCheckViolation(
+        base,
+        [0, 90, 1090, null, null, null, null, null],
+        "invoices_tax_requires_rate",
+      );
+      await expectCheckViolation(
+        base,
+        [100, 0, 900, null, null, null, null, null],
+        "invoices_discount_shape",
+      );
+      await expectCheckViolation(
+        base,
+        [100, 0, 900, null, "percent", null, null, null],
+        "invoices_discount_shape",
+      );
+      await expectCheckViolation(
+        base,
+        [100, 0, 900, null, "amount", 500, null, null],
+        "invoices_discount_shape",
+      );
+      await expectCheckViolation(
+        base,
+        [0, 0, 1000, null, "fixed", null, null, null],
+        "invoices_discount_shape",
+      );
+      await expectCheckViolation(
+        base,
+        [0, 10, 1010, 10001, null, null, null, null],
+        "invoices_tax_bps_range",
+      );
+    });
+    it("rejects a malformed idempotency key and draft digest", async () => {
+      await expectCheckViolation(
+        base,
+        [0, 0, 1000, ...none.slice(0, 3), "short", null],
+        "invoices_idempotency_key_format",
+      );
+      await expectCheckViolation(
+        base,
+        [0, 0, 1000, ...none.slice(0, 3), null, "ABC"],
+        "invoices_draft_digest_hex",
+      );
+    });
+    it("enforces one invoice item per position and bounded descriptions", async () => {
+      const inv = (await client.query(base, [0, 0, 1000, null, null, null, null, null])).rows[0]
+        .id as string;
+      const item = `INSERT INTO invoice_items (invoice_id, position, description, quantity_hundredths, unit_price_minor) VALUES ($1,$2,$3,100,1000)`;
+      await client.query(item, [inv, 0, "ok"]);
+      await client.query("SAVEPOINT a2");
+      await expect(client.query(item, [inv, 0, "dup position"])).rejects.toMatchObject({
+        code: "23505",
+        constraint: "invoice_items_position_uq",
+      });
+      await client.query("ROLLBACK TO SAVEPOINT a2");
+      await expectCheckViolation(item, [inv, 1, ""], "invoice_items_description_bounded");
+      await expectCheckViolation(
+        item,
+        [inv, 1, "x".repeat(201)],
+        "invoice_items_description_bounded",
+      );
+      await expectCheckViolation(item, [inv, -1, "neg"], "invoice_items_position_nonneg");
+    });
+    it("allows at most one PayPal draft operation per invoice and per remote id and invoice number", async () => {
+      const mk = async () =>
+        (await client.query(base, [0, 0, 1000, null, null, null, null, null])).rows[0].id as string;
+      const [a, b] = [await mk(), await mk()];
+      const op = `INSERT INTO paypal_draft_operations (invoice_id, state, invoice_number, payload_digest, paypal_invoice_id)
+                  VALUES ($1,$2,$3,$4,$5)`;
+      const dg = "a".repeat(64);
+      await client.query(op, [a, "pending", "NMI-" + "1".repeat(20), dg, null]);
+      for (const [args, constraint] of [
+        [[a, "pending", "NMI-" + "2".repeat(20), dg, null], "paypal_draft_operations_invoice_uq"],
+        [[b, "pending", "NMI-" + "1".repeat(20), dg, null], "paypal_draft_operations_number_uq"],
+      ] as const) {
+        await client.query("SAVEPOINT a3");
+        await expect(client.query(op, [...args])).rejects.toMatchObject({
+          code: "23505",
+          constraint,
+        });
+        await client.query("ROLLBACK TO SAVEPOINT a3");
+      }
+      await client.query(op, [b, "created", "NMI-" + "3".repeat(20), dg, "INV2-REMOTE-1"]);
+      const c = await mk();
+      await client.query("SAVEPOINT a4");
+      await expect(
+        client.query(op, [c, "created", "NMI-" + "4".repeat(20), dg, "INV2-REMOTE-1"]),
+      ).rejects.toMatchObject({
+        code: "23505",
+        constraint: "paypal_draft_operations_remote_uq",
+      });
+      await client.query("ROLLBACK TO SAVEPOINT a4");
+    });
+    it("rejects impossible operation states", async () => {
+      const inv = (await client.query(base, [0, 0, 1000, null, null, null, null, null])).rows[0]
+        .id as string;
+      const op = `INSERT INTO paypal_draft_operations (invoice_id, state, invoice_number, payload_digest, paypal_invoice_id)
+                  VALUES ($1,$2,$3,$4,$5)`;
+      const dg = "b".repeat(64);
+      const num = "NMI-" + "5".repeat(20);
+      await expectCheckViolation(
+        op,
+        [inv, "created", num, dg, null],
+        "paypal_draft_operations_created_has_remote",
+      );
+      await expectCheckViolation(
+        op,
+        [inv, "rejected", num, dg, "INV2-X"],
+        "paypal_draft_operations_remote_only_when_known",
+      );
+      await expectCheckViolation(
+        op,
+        [inv, "sent", num, dg, null],
+        "paypal_draft_operations_state_allowed",
+      );
+      await expectCheckViolation(
+        op,
+        [inv, "pending", "NMI-short", dg, null],
+        "paypal_draft_operations_number_format",
+      );
+      await expectCheckViolation(
+        op,
+        [inv, "pending", num, "xyz", null],
+        "paypal_draft_operations_digest_hex",
+      );
+      await expectCheckViolation(
+        `INSERT INTO paypal_draft_operations (invoice_id, state, invoice_number, payload_digest, invoice_date)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [inv, "pending", num, dg, "bad-date"],
+        "paypal_draft_operations_invoice_date_format",
       );
     });
   });

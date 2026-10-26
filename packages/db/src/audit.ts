@@ -10,6 +10,9 @@ export const AUDIT_ACTIONS = [
   "auth.request_denied",
   "operator.provision",
   "approval.consume",
+  "invoice.parse",
+  "invoice.draft_save",
+  "paypal.draft_create",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -20,6 +23,9 @@ export interface AuditDetail {
   sessionId?: string | undefined;
   usernameKnown?: boolean | undefined;
   privilegedAction?: string | undefined;
+  invoiceId?: string | undefined;
+  /** Closed-token state such as `created`, `unknown`, `needs_clarification`. */
+  state?: string | undefined;
 }
 
 export interface AuditEvent {
@@ -58,6 +64,9 @@ export function sanitizeAuditDetail(
   ) {
     out["privilegedAction"] = d["privilegedAction"];
   }
+  if (typeof d["invoiceId"] === "string" && UUID.test(d["invoiceId"]))
+    out["invoiceId"] = d["invoiceId"];
+  if (typeof d["state"] === "string" && SAFE_TOKEN.test(d["state"])) out["state"] = d["state"];
   return out;
 }
 
