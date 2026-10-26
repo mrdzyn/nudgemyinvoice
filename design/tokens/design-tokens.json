@@ -1,42 +1,166 @@
 {
   "_meta": {
-    "template": true,
-    "description": "Starter semantic design tokens. Replace brand values in generated projects while preserving semantic roles."
+    "project": "NudgeMyInvoice",
+    "description": "Semantic design tokens for NudgeMyInvoice SaaS web application. Includes light/dark theme roles, PayPal Sandbox brand tokens, and currency/status roles.",
+    "wcagTarget": "WCAG 2.2 AA",
+    "version": "1.0.0"
   },
   "color": {
-    "background": {
-      "default": "#FFFFFF",
-      "subtle": "#F6F7F9",
-      "inverse": "#111827"
+    "light": {
+      "background": {
+        "default": "#F8FAFC",
+        "subtle": "#F1F5F9",
+        "inverse": "#0F172A"
+      },
+      "surface": {
+        "default": "#FFFFFF",
+        "raised": "#FFFFFF",
+        "overlay": "#FFFFFF",
+        "muted": "#F8FAFC",
+        "sandboxBanner": "#FEF3C7",
+        "card": "#FFFFFF",
+        "cardHighlight": "#F0FDF4"
+      },
+      "text": {
+        "primary": "#0F172A",
+        "secondary": "#475569",
+        "muted": "#64748B",
+        "inverse": "#FFFFFF",
+        "onAction": "#FFFFFF",
+        "sandboxBanner": "#92400E",
+        "link": "#2563EB",
+        "linkHover": "#1D4ED8"
+      },
+      "border": {
+        "default": "#E2E8F0",
+        "strong": "#CBD5E1",
+        "focus": "#2563EB",
+        "sandbox": "#F59E0B",
+        "danger": "#EF4444"
+      },
+      "action": {
+        "primary": "#0F172A",
+        "primaryHover": "#1E293B",
+        "secondary": "#F1F5F9",
+        "secondaryHover": "#E2E8F0",
+        "secondaryText": "#0F172A",
+        "paypal": "#0070E0",
+        "paypalHover": "#005EA6",
+        "danger": "#DC2626",
+        "dangerHover": "#B91C1C",
+        "ghost": "transparent",
+        "ghostHover": "#F1F5F9"
+      },
+      "status": {
+        "localDraft": {
+          "background": "#F1F5F9",
+          "text": "#475569",
+          "border": "#CBD5E1"
+        },
+        "paypalDraft": {
+          "background": "#EFF6FF",
+          "text": "#1D4ED8",
+          "border": "#93C5FD"
+        },
+        "sent": {
+          "background": "#F5F3FF",
+          "text": "#6D28D9",
+          "border": "#C4B5FD"
+        },
+        "paid": {
+          "background": "#ECFDF5",
+          "text": "#047857",
+          "border": "#6EE7B7"
+        },
+        "warning": {
+          "background": "#FFFBEB",
+          "text": "#B45309",
+          "border": "#FCD34D"
+        },
+        "error": {
+          "background": "#FEF2F2",
+          "text": "#B91C1C",
+          "border": "#FCA5A5"
+        }
+      }
     },
-    "surface": {
-      "default": "#FFFFFF",
-      "raised": "#FFFFFF",
-      "muted": "#F3F4F6"
-    },
-    "text": {
-      "primary": "#111827",
-      "secondary": "#4B5563",
-      "muted": "#6B7280",
-      "inverse": "#FFFFFF",
-      "onAction": "#FFFFFF"
-    },
-    "border": {
-      "default": "#D1D5DB",
-      "strong": "#9CA3AF",
-      "focus": "#2563EB"
-    },
-    "action": {
-      "primary": "#2563EB",
-      "primaryHover": "#1D4ED8",
-      "secondary": "#4B5563",
-      "danger": "#B91C1C"
-    },
-    "feedback": {
-      "success": "#047857",
-      "warning": "#B45309",
-      "error": "#B91C1C",
-      "info": "#1D4ED8"
+    "dark": {
+      "background": {
+        "default": "#0B0F19",
+        "subtle": "#111827",
+        "inverse": "#F8FAFC"
+      },
+      "surface": {
+        "default": "#111827",
+        "raised": "#1E293B",
+        "overlay": "#1E293B",
+        "muted": "#0F172A",
+        "sandboxBanner": "#78350F",
+        "card": "#111827",
+        "cardHighlight": "#064E3B"
+      },
+      "text": {
+        "primary": "#F8FAFC",
+        "secondary": "#CBD5E1",
+        "muted": "#94A3B8",
+        "inverse": "#0F172A",
+        "onAction": "#FFFFFF",
+        "sandboxBanner": "#FDE68A",
+        "link": "#60A5FA",
+        "linkHover": "#93C5FD"
+      },
+      "border": {
+        "default": "#1F2937",
+        "strong": "#374151",
+        "focus": "#60A5FA",
+        "sandbox": "#D97706",
+        "danger": "#EF4444"
+      },
+      "action": {
+        "primary": "#3B82F6",
+        "primaryHover": "#2563EB",
+        "secondary": "#1E293B",
+        "secondaryHover": "#334155",
+        "secondaryText": "#F8FAFC",
+        "paypal": "#0070E0",
+        "paypalHover": "#1E88E5",
+        "danger": "#EF4444",
+        "dangerHover": "#DC2626",
+        "ghost": "transparent",
+        "ghostHover": "#1E293B"
+      },
+      "status": {
+        "localDraft": {
+          "background": "#1E293B",
+          "text": "#94A3B8",
+          "border": "#334155"
+        },
+        "paypalDraft": {
+          "background": "#1E3A8A",
+          "text": "#93C5FD",
+          "border": "#2563EB"
+        },
+        "sent": {
+          "background": "#4C1D95",
+          "text": "#DDD6FE",
+          "border": "#7C3AED"
+        },
+        "paid": {
+          "background": "#064E3B",
+          "text": "#A7F3D0",
+          "border": "#059669"
+        },
+        "warning": {
+          "background": "#78350F",
+          "text": "#FDE68A",
+          "border": "#D97706"
+        },
+        "error": {
+          "background": "#7F1D1D",
+          "text": "#FECACA",
+          "border": "#DC2626"
+        }
+      }
     }
   },
   "spacing": {
@@ -62,7 +186,8 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": "system-ui"
+      "sans": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+      "mono": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace"
     },
     "size": {
       "xs": 12,
@@ -79,13 +204,31 @@
       "medium": 500,
       "semibold": 600,
       "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.25,
+      "normal": 1.5,
+      "relaxed": 1.75
     }
+  },
+  "shadow": {
+    "sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    "md": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    "lg": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    "banner": "0 1px 3px 0 rgb(245 158 11 / 0.2)"
   },
   "motion": {
     "duration": {
       "fastMs": 120,
       "normalMs": 200,
       "slowMs": 320
-    }
+    },
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  "breakpoints": {
+    "mobile": "0px",
+    "tablet": "768px",
+    "desktop": "1024px",
+    "wide": "1280px"
   }
 }

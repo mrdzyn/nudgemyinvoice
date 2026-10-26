@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NudgeMyInvoice — Interface Design Preview (NMI-UI-01A)</title>
+  <style>
+    /* ==========================================================================
+       CSS RESET & DESIGN TOKENS
+       ========================================================================== */
+    :root {
+      /* Colors - Light Theme Default */
+      --color-brand-primary: #2563EB;
+      --color-brand-primary-hover: #1D4ED8;
+      --color-brand-primary-subtle: #EFF6FF;
+      --color-brand-secondary: #0F172A;
+      --color-brand-accent: #8B5CF6;
+
+      --color-canvas: #F8FAFC;
+      --color-surface-card: #FFFFFF;
+      --color-surface-elevated: #FFFFFF;
+      --color-surface-sunken: #F1F5F9;
+
+      --color-border-subtle: #E2E8F0;
+      --color-border-default: #CBD5E1;
+      --color-border-strong: #94A3B8;
+
+      --color-text-primary: #0F172A;
+      --color-text-secondary: #475569;
+      --color-text-muted: #64748B;
+      --color-text-inverse: #FFFFFF;
+
+      --color-sandbox-badge-bg: #FEF3C7;
+      --color-sandbox-badge-text: #78350F;
+      --color-sandbox-badge-border: #F59E0B;
+      --color-sandbox-banner-bg: #FFFBEB;
+      --color-sandbox-banner-border: #FCD34D;
+      --color-sandbox-banner-text: #92400E;
+
+      --color-status-success-bg: #ECFDF5;
+      --color-status-success-text: #065F46;
+      --color-status-success-border: #10B981;
+
+      --color-status-warning-bg: #FFFBEB;
+      --color-status-warning-text: #92400E;
+      --color-status-warning-border: #F59E0B;
+
+      --color-status-error-bg: #FEF2F2;
+      --color-status-error-text: #991B1B;
+      --color-status-error-border: #EF4444;
+
+      --color-status-neutral-bg: #F1F5F9;
+      --color-status-neutral-text: #334155;
+      --color-status-neutral-border: #94A3B8;
+
+      /* Typography */
+      --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-family-mono: 'Roboto Mono', "SF Mono", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+
+      /* Spacing */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+
+      /* Radii */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --radius-full: 9999px;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] {
+      --color-brand-primary: #3B82F6;
+      --color-brand-primary-hover: #60A5FA;
+      --color-brand-primary-subtle: #1E293B;
+      --color-brand-secondary: #F8FAFC;
+      --color-brand-accent: #A78BFA;
+
+      --color-canvas: #0B0F19;
+      --color-surface-card: #131B2E;
+      --color-surface-elevated: #1E293B;
+      --color-surface-sunken: #070B14;
+
+      --color-border-subtle: #1E293B;
+      --color-border-default: #334155;
+      --color-border-strong: #475569;
+
+      --color-text-primary: #F8FAFC;
+      --color-text-secondary: #CBD5E1;
+      --color-text-muted: #94A3B8;
+      --color-text-inverse: #0F172A;
+
+      --color-sandbox-badge-bg: #451A03;
+      --color-sandbox-badge-text: #FCD34D;
+      --color-sandbox-badge-border: #F59E0B;
+      --color-sandbox-banner-bg: #261604;
+      --color-sandbox-banner-border: #78350F;
+      --color-sandbox-banner-text: #FDE68A;
+
+      --color-status-success-bg: #064E3B;
+      --color-status-success-text: #6EE7B7;
+      --color-status-success-border: #059669;
+
+      --color-status-warning-bg: #451A03;
+      --color-status-warning-text: #FCD34D;
+      --color-status-warning-border: #D97706;
+
+      --color-status-error-bg: #450A0A;
+      --color-status-error-text: #FCA5A5;
+      --color-status-error-border: #DC2626;
+
+      --color-status-neutral-bg: #1E293B;
+      --color-status-neutral-text: #E2E8F0;
+      --color-status-neutral-border: #475569;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family-sans);
+      background-color: #030712;
+      color: #F8FAFC;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       TOP CONTROL TOOLBAR (DESIGN REVIEW CONTROLLER)
+       ========================================================================== */
+    .reviewer-toolbar {
+      background-color: #111827;
+      border-bottom: 1px solid #1F2937;
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      font-size: 13px;
+    }
+
+    .toolbar-left, .toolbar-center, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-title {
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar-pill {
+      background-color: #2563EB;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.5px;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      background-color: #1F2937;
+      border-radius: var(--radius-md);
+      padding: 3px;
+    }
+
+    .toolbar-btn {
+      background: none;
+      border: none;
+      color: #9CA3AF;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .toolbar-btn:hover {
+      color: #FFFFFF;
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .toolbar-btn.active {
+      background-color: #2563EB;
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    .toolbar-select {
+      background-color: #1F2937;
+      color: #F3F4F6;
+      border: 1px solid #374151;
+      padding: 5px 8px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .toolbar-select:focus {
+      border-color: #3B82F6;
+    }
+
+    /* ==========================================================================
+       VIEWPORT SIMULATOR CANVAS
+       ========================================================================== */
+    .viewport-canvas {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+      overflow-y: auto;
+      background-color: #030712;
+      background-image: radial-gradient(#1E293B 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .viewport-frame {
+      width: 100%;
+      max-width: 1280px;
+      background-color: var(--color-canvas);
+      color: var(--color-text-primary);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--color-border-subtle);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .viewport-frame[data-size="tablet"] {
+      max-width: 768px;
+    }
+
+    .viewport-frame[data-size="mobile"] {
+      max-width: 375px;
+    }
+
+    /* ==========================================================================
+       APPLICATION SHELL STYLES
+       ========================================================================== */
+    .app-header {
+      background-color: var(--color-surface-card);
+      border-bottom: 1px solid var(--color-border-subtle);
+      padding: var(--space-3) var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 50;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      text-decoration: none;
+      color: var(--color-text-primary);
+    }
+
+    .app-brand-logo {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-accent));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-brand-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .sandbox-pill {
+      background-color: var(--color-sandbox-badge-bg);
+      color: var(--color-sandbox-badge-text);
+      border: 1px solid var(--color-sandbox-badge-border);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: help;
+    }
+
+    .sandbox-pill::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #F59E0B;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .app-header-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .operator-profile {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .operator-avatar {
+      width: 28px;
+      height: 28px;
+      background-color: var(--color-surface-sunken);
+      border: 1px solid var(--color-border-default);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* Sandbox Notification Banner */
+    .sandbox-alert-banner {
+      background-color: var(--color-sandbox-banner-bg);
+      border-bottom: 1px solid var(--color-sandbox-banner-border);
+      color: var(--color-sandbox-banner-text);
+      padding: var(--space-2) var(--space-6);
+      font-size: 12.5px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .sandbox-alert-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Navigation Bar */
+    .app-navigation {
+      background-color: var(--color-surface-card);
+      border-bottom: 1px solid var(--color-border-subtle);
+      padding: 0 var(--space-6);
+      display: flex;
+      gap: var(--space-6);
+    }
+
+    .nav-tab {
+      padding: var(--space-3) var(--space-2);
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab:hover {
+      color: var(--color-text-primary);
+    }
+
+    .nav-tab.active {
+      color: var(--color-brand-primary);
+      border-bottom-color: var(--color-brand-primary);
+      font-weight: 600;
+    }
+
+    .nav-tab.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .nav-tag-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+      background-color: var(--color-surface-sunken);
+      color: var(--color-text-muted);
+    }
+
+    /* Mobile Bottom Navigation */
+    .mobile-bottom-nav {
+      display: none;
+      background-color: var(--color-surface-card);
+      border-top: 1px solid var(--color-border-subtle);
+      padding: 8px 16px;
+      position: sticky;
+      bottom: 0;
+      z-index: 90;
+      justify-content: space-around;
+    }
+
+    .viewport-frame[data-size="mobile"] .mobile-bottom-nav {
+      display: flex;
+    }
+
+    .viewport-frame[data-size="mobile"] .app-navigation {
+      display: none;
+    }
+
+    .mobile-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .mobile-nav-btn.active {
+      color: var(--color-brand-primary);
+      font-weight: 600;
+    }
+
+    /* Offline Bar */
+    .offline-alert-banner {
+      display: none;
+      background-color: #FEF3C7;
+      color: #92400E;
+      border-bottom: 1px solid #F59E0B;
+      padding: 8px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .offline-alert-banner.visible {
+      display: flex;
+    }
+
+    /* Main Container */
+    .app-main {
+      padding: var(--space-6);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================================================
+       SHARED UI COMPONENTS
+       ========================================================================== */
+    .card {
+      background-color: var(--color-surface-card);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-6);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--color-brand-primary);
+      color: #FFFFFF;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-brand-primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--color-surface-card);
+      border-color: var(--color-border-default);
+      color: var(--color-text-primary);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--color-surface-sunken);
+      border-color: var(--color-border-strong);
+    }
+
+    .btn-danger {
+      background-color: var(--color-status-error-bg);
+      color: var(--color-status-error-text);
+      border-color: var(--color-status-error-border);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12.5px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      border: 1px solid transparent;
+    }
+
+    .badge-success {
+      background-color: var(--color-status-success-bg);
+      color: var(--color-status-success-text);
+      border-color: var(--color-status-success-border);
+    }
+
+    .badge-warning {
+      background-color: var(--color-status-warning-bg);
+      color: var(--color-status-warning-text);
+      border-color: var(--color-status-warning-border);
+    }
+
+    .badge-neutral {
+      background-color: var(--color-status-neutral-bg);
+      color: var(--color-status-neutral-text);
+      border-color: var(--color-status-neutral-border);
+    }
+
+    .badge-error {
+      background-color: var(--color-status-error-bg);
+      color: var(--color-status-error-text);
+      border-color: var(--color-status-error-border);
+    }
+
+    .tabular-numbers {
+      font-variant-numeric: tabular-nums;
+      font-family: var(--font-family-mono);
+    }
+
+    /* Form Inputs */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: var(--space-4);
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      background-color: var(--color-surface-card);
+      border: 1px solid var(--color-border-default);
+      color: var(--color-text-primary);
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-family: var(--font-family-sans);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--color-brand-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .form-input.error {
+      border-color: var(--color-status-error-border);
+      background-color: var(--color-status-error-bg);
+    }
+
+    .form-error-msg {
+      font-size: 11.5px;
+      color: var(--color-status-error-text);
+      font-weight: 500;
+    }
+
+    /* Notice callout */
+    .notice-box {
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.5;
+    }
+
+    .notice-info {
+      background-color: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E40AF;
+    }
+
+    [data-theme="dark"] .notice-info {
+      background-color: #1E293B;
+      border-color: #3B82F6;
+      color: #93C5FD;
+    }
+
+    .notice-warning {
+      background-color: var(--color-sandbox-banner-bg);
+      border: 1px solid var(--color-sandbox-banner-border);
+      color: var(--color-sandbox-banner-text);
+    }
+
+    /* ==========================================================================
+       SCREEN 1: OPERATOR LOGIN & AUTH SHELL
+       ========================================================================== */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+      padding: 24px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      padding: var(--space-8);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: var(--space-6);
+    }
+
+    .login-brand-logo {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--color-brand-primary), var(--color-brand-accent));
+      border-radius: var(--radius-lg);
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 22px;
+    }
+
+    .login-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .login-subtitle {
+      font-size: 13.5px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    /* ==========================================================================
+       SCREEN 2: INVOICE DASHBOARD
+       ========================================================================== */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-6);
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+
+    .page-subtitle {
+      font-size: 13.5px;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    /* Multi-currency cards */
+    .currency-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+
+    .viewport-frame[data-size="tablet"] .currency-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .viewport-frame[data-size="mobile"] .currency-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .currency-card {
+      background-color: var(--color-surface-card);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .currency-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-3);
+    }
+
+    .currency-code {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .currency-amount {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .currency-meta {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Table & Filter Bar */
+    .table-container {
+      background-color: var(--color-surface-card);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: var(--space-4);
+    }
+
+    .table-filter-bar {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--color-border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-pill {
+      background: none;
+      border: 1px solid var(--color-border-default);
+      color: var(--color-text-secondary);
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .filter-pill.active {
+      background-color: var(--color-brand-primary-subtle);
+      color: var(--color-brand-primary);
+      border-color: var(--color-brand-primary);
+      font-weight: 600;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+
+    .data-table th {
+      background-color: var(--color-surface-sunken);
+      padding: 12px 16px;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .data-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--color-border-subtle);
+      vertical-align: middle;
+    }
+
+    .data-table tr:hover td {
+      background-color: var(--color-surface-sunken);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* AG Studio Fallback Banner */
+    .ag-studio-boundary {
+      background-color: var(--color-surface-sunken);
+      border-top: 1px dashed var(--color-border-strong);
+      padding: 8px 16px;
+      font-size: 11.5px;
+      color: var(--color-text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ==========================================================================
+       SCREEN 3: INVOICE COMPOSER (AI & MANUAL)
+       ========================================================================== */
+    .composer-card {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .composer-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--color-border-subtle);
+      margin-bottom: var(--space-6);
+    }
+
+    .composer-tab-btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .composer-tab-btn.active {
+      color: var(--color-brand-primary);
+      border-bottom-color: var(--color-brand-primary);
+      font-weight: 600;
+    }
+
+    .prompt-chips-group {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .prompt-chip {
+      background-color: var(--color-surface-sunken);
+      border: 1px solid var(--color-border-subtle);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .prompt-chip:hover {
+      background-color: var(--color-brand-primary-subtle);
+      border-color: var(--color-brand-primary);
+      color: var(--color-brand-primary);
+    }
+
+    .clarification-box {
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #F5F3FF;
+      border: 1px solid #DDD6FE;
+      border-radius: var(--radius-md);
+      color: #5B21B6;
+    }
+
+    [data-theme="dark"] .clarification-box {
+      background-color: #1E1B4B;
+      border-color: #6D28D9;
+      color: #DDD6FE;
+    }
+
+    /* ==========================================================================
+       SCREEN 4: STRUCTURED REVIEW & EDIT
+       ========================================================================== */
+    .review-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-6);
+    }
+
+    .viewport-frame[data-size="tablet"] .review-grid,
+    .viewport-frame[data-size="mobile"] .review-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .line-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: var(--space-4) 0;
+    }
+
+    .line-items-table th {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border-subtle);
+      padding: 8px;
+      text-align: left;
+    }
+
+    .line-items-table td {
+      padding: 8px;
+      vertical-align: top;
+    }
+
+    .totals-summary-card {
+      background-color: var(--color-surface-sunken);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      position: sticky;
+      top: 20px;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13.5px;
+      color: var(--color-text-secondary);
+    }
+
+    .totals-row.final {
+      border-top: 2px solid var(--color-border-default);
+      margin-top: 8px;
+      padding-top: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    /* ==========================================================================
+       SCREEN 5: INVOICE DETAIL & PAYPAL SANDBOX STATUS
+       ========================================================================== */
+    .detail-sandbox-card {
+      background: linear-gradient(135deg, var(--color-surface-card), var(--color-surface-sunken));
+      border: 2px solid var(--color-sandbox-badge-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
+      position: relative;
+    }
+
+    .timeline {
+      margin-top: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-left: 2px solid var(--color-border-default);
+      padding-left: 16px;
+      margin-left: 8px;
+    }
+
+    .timeline-item {
+      position: relative;
+      font-size: 13px;
+    }
+
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -21px;
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--color-brand-primary);
+    }
+
+    /* Modals & Overlays */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background-color: var(--color-surface-card);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-xl);
+      max-width: 480px;
+      width: 90%;
+      padding: var(--space-6);
+      box-shadow: var(--shadow-xl);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       REVIEWER CONTROL TOOLBAR
+       ======================================================================== -->
+  <header class="reviewer-toolbar" role="region" aria-label="Design Review Controller">
+    <div class="toolbar-left">
+      <div class="toolbar-title">
+        <span>NudgeMyInvoice</span>
+        <span class="toolbar-pill">NMI-UI-01A DESIGN PREVIEW</span>
+      </div>
+      <div class="toolbar-group">
+        <button class="toolbar-btn active" data-screen="login" onclick="switchScreen('login')">1. Login</button>
+        <button class="toolbar-btn" data-screen="dashboard" onclick="switchScreen('dashboard')">2. Dashboard</button>
+        <button class="toolbar-btn" data-screen="composer" onclick="switchScreen('composer')">3. Composer (AI)</button>
+        <button class="toolbar-btn" data-screen="review" onclick="switchScreen('review')">4. Review/Edit</button>
+        <button class="toolbar-btn" data-screen="detail" onclick="switchScreen('detail')">5. Detail & PayPal</button>
+      </div>
+    </div>
+
+    <div class="toolbar-center">
+      <div class="toolbar-group">
+        <button class="toolbar-btn active" data-size="desktop" onclick="setViewport('desktop')">Desktop (1280px)</button>
+        <button class="toolbar-btn" data-size="tablet" onclick="setViewport('tablet')">Tablet (768px)</button>
+        <button class="toolbar-btn" data-size="mobile" onclick="setViewport('mobile')">Mobile (375px)</button>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <label for="state-switcher" style="color: #9CA3AF; font-size: 12px;">State:</label>
+      <select id="state-switcher" class="toolbar-select" onchange="switchState(this.value)">
+        <option value="happy">Default / Happy Path</option>
+        <option value="empty">Empty Dashboard State</option>
+        <option value="loading">Loading Skeleton State</option>
+        <option value="clarification">AI Clarification Needed</option>
+        <option value="ai-unavailable">AI Service Unavailable</option>
+        <option value="validation-error">Validation / Form Errors</option>
+        <option value="offline">Offline Banner Active</option>
+        <option value="paypal-disabled">PayPal Drafting Disabled (503)</option>
+        <option value="session-expired">Session Expired (Screen 1)</option>
+      </select>
+
+      <button class="toolbar-btn" onclick="toggleTheme()" id="theme-toggle-btn" aria-label="Toggle theme">
+        <span>☀️ Light</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       VIEWPORT SIMULATOR CANVAS
+       ======================================================================== -->
+  <main class="viewport-canvas">
+    <div id="viewport-frame" class="viewport-frame" data-size="desktop" data-theme="light">
+
+      <!-- ====================================================================
+           AUTHENTICATED SHELL HEADER & PERSISTENT BANNERS
+           ==================================================================== -->
+      <div id="shell-container">
+        <!-- Persistent Sandbox Warning Strip -->
+        <div class="sandbox-alert-banner" role="alert">
+          <div class="sandbox-alert-content">
+            <span style="font-size: 16px;">🧪</span>
+            <span><strong>PayPal Sandbox Mode Active</strong> — Invoices created here are for testing only. They will <strong>NOT</strong> charge real cards or email recipients.</span>
+          </div>
+          <span style="font-family: var(--font-family-mono); font-size: 11px; opacity: 0.85;">ENV: sandbox.paypal.com</span>
+        </div>
+
+        <!-- Offline Banner (Controlled by State Switcher) -->
+        <div id="offline-banner" class="offline-alert-banner" role="alert">
+          <span>📡 <strong>Offline Mode</strong>: Network connection lost. Changes cannot be saved until connectivity is restored.</span>
+        </div>
+
+        <!-- Global App Header -->
+        <header class="app-header">
+          <a href="#" class="app-brand" onclick="switchScreen('dashboard'); return false;">
+            <div class="app-brand-logo">N</div>
+            <div>
+              <div class="app-brand-title">NudgeMyInvoice</div>
+              <div style="font-size: 11px; color: var(--color-text-muted);">Freelance Invoicing</div>
+            </div>
+          </a>
+
+          <div class="app-header-controls">
+            <div class="sandbox-pill" title="Connected to PayPal Sandbox API (api-m.sandbox.paypal.com)">
+              PayPal Sandbox
+            </div>
+
+            <div class="operator-profile">
+              <div class="operator-avatar">OP</div>
+              <span style="font-weight: 500;">operator</span>
+              <button class="btn btn-sm btn-secondary" onclick="switchScreen('login')" title="Log out of operator session">Sign Out</button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="app-navigation" aria-label="Main Navigation">
+          <a class="nav-tab active" data-nav="dashboard" onclick="switchScreen('dashboard')">
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-tab" data-nav="composer" onclick="switchScreen('composer')">
+            <span>+ New Invoice</span>
+          </a>
+          <a class="nav-tab disabled" title="Settings will be available in future releases">
+            <span>Settings</span>
+            <span class="nav-tag-badge">Future</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- ====================================================================
+           SCREEN 1: OPERATOR LOGIN
+           ==================================================================== -->
+      <section id="screen-login" class="app-main screen-section" style="display: none;">
+        <div class="login-container">
+          <div class="card login-card">
+            <div class="login-header">
+              <div class="login-brand-logo">N</div>
+              <h1 class="login-title">NudgeMyInvoice</h1>
+              <p class="login-subtitle">Operator Authentication</p>
+            </div>
+
+            <!-- Session Expired Notice if State matches -->
+            <div id="session-expired-alert" class="notice-box notice-warning" style="display: none; margin-bottom: 16px;">
+              <span>⚠️ <strong>Session Expired</strong>: Your operator session has timed out. Please authenticate to resume.</span>
+            </div>
+
+            <form onsubmit="handleLogin(event)">
+              <div class="form-group">
+                <label class="form-label" for="login-password">Operator Password</label>
+                <input type="password" id="login-password" class="form-input" value="••••••••••••••••" required placeholder="Enter operator password">
+              </div>
+
+              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                <input type="checkbox" id="remember-me" checked>
+                <label for="remember-me" style="font-size: 12.5px; color: var(--color-text-secondary); cursor: pointer;">Maintain active session</label>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                Sign In to Operator Console
+              </button>
+            </form>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border-subtle); font-size: 12px; color: var(--color-text-muted); text-align: center;">
+              Protected system. Authorized operator access only.<br>
+              Target: <span style="font-family: var(--font-family-mono);">POST /api/auth/login</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SCREEN 2: INVOICE DASHBOARD
+           ==================================================================== -->
+      <section id="screen-dashboard" class="app-main screen-section">
+        <!-- Persistent Fixture / Architecture Seam Notice -->
+        <div class="notice-box notice-info" style="margin-bottom: 20px;">
+          <span>ℹ️</span>
+          <div>
+            <strong>Synthetic Fixtures Active</strong> — The current backend implements single draft retrieval (<code style="font-family: var(--font-family-mono); font-size: 12px;">GET /api/invoice-drafts/:id</code>) but lacks a general list endpoint (<code style="font-family: var(--font-family-mono); font-size: 12px;">GET /api/invoice-drafts</code>). This dashboard demonstrates multi-currency formatting and UX with synthetic fixtures.
+          </div>
+        </div>
+
+        <div class="dashboard-header">
+          <div>
+            <h1 class="page-title">Invoice Drafts</h1>
+            <p class="page-subtitle">Multi-currency drafts and PayPal Sandbox staging</p>
+          </div>
+          <div>
+            <button class="btn btn-primary" onclick="switchScreen('composer')">
+              <span>+ Create Invoice Draft</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3 Currency Summary Cards (USD, EUR, JPY) -->
+        <div class="currency-grid">
+          <!-- USD Summary Card -->
+          <div class="currency-card">
+            <div class="currency-card-top">
+              <span class="currency-code">🇺🇸 USD ($)</span>
+              <span class="badge badge-neutral">1 Draft</span>
+            </div>
+            <div class="currency-amount tabular-numbers">$633.26</div>
+            <div class="currency-meta">
+              <span>PayPal Staged:</span>
+              <strong class="tabular-numbers" style="color: var(--color-status-success-text);">$633.26 (1 remote)</strong>
+            </div>
+          </div>
+
+          <!-- EUR Summary Card -->
+          <div class="currency-card">
+            <div class="currency-card-top">
+              <span class="currency-code">🇪🇺 EUR (€)</span>
+              <span class="badge badge-neutral">1 Draft</span>
+            </div>
+            <div class="currency-amount tabular-numbers">€1,517.25</div>
+            <div class="currency-meta">
+              <span>PayPal Staged:</span>
+              <strong class="tabular-numbers">€0.00 (0 remote)</strong>
+            </div>
+          </div>
+
+          <!-- JPY Summary Card (0 exponent) -->
+          <div class="currency-card">
+            <div class="currency-card-top">
+              <span class="currency-code">🇯🇵 JPY (¥)</span>
+              <span class="badge badge-neutral">1 Draft</span>
+            </div>
+            <div class="currency-amount tabular-numbers">¥143,000</div>
+            <div class="currency-meta">
+              <span>Zero Exponent:</span>
+              <strong class="tabular-numbers">¥0 (0 remote)</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drafts Data Table / Container -->
+        <div class="table-container">
+          <div class="table-filter-bar">
+            <div class="filter-tabs">
+              <button class="filter-pill active">All Currencies</button>
+              <button class="filter-pill">USD</button>
+              <button class="filter-pill">EUR</button>
+              <button class="filter-pill">JPY</button>
+            </div>
+            <div style="font-size: 12.5px; color: var(--color-text-muted);">
+              Showing 3 Synthetic Drafts
+            </div>
+          </div>
+
+          <!-- Empty State (Toggled by State Switcher) -->
+          <div id="dashboard-empty-state" style="display: none; padding: 48px 24px; text-align: center;">
+            <div style="font-size: 36px; margin-bottom: 12px;">📄</div>
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 6px;">No Invoice Drafts Found</h3>
+            <p style="font-size: 13px; color: var(--color-text-muted); max-width: 400px; margin: 0 auto 16px;">
+              Create your first invoice draft using the natural-language AI composer or manual entry form.
+            </p>
+            <button class="btn btn-primary" onclick="switchScreen('composer')">+ Create First Invoice</button>
+          </div>
+
+          <!-- Native Data Table -->
+          <table class="data-table" id="dashboard-data-table">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Recipient</th>
+                <th>Dates</th>
+                <th>Amount</th>
+                <th>Local Status</th>
+                <th>PayPal Sandbox</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row 1: USD Acme Design (Has PayPal Draft) -->
+              <tr>
+                <td>
+                  <a href="#" onclick="switchScreen('detail'); return false;" style="font-weight: 600; color: var(--color-brand-primary); text-decoration: none;">
+                    INV-2026-001
+                  </a>
+                </td>
+                <td>
+                  <div style="font-weight: 500;">Acme Creative Labs</div>
+                  <div style="font-size: 11.5px; color: var(--color-text-muted);">billing@acme-design.example.com</div>
+                </td>
+                <td style="font-size: 12.5px;">
+                  <div>Due: <strong>Nov 08, 2026</strong></div>
+                  <div style="color: var(--color-text-muted); font-size: 11px;">Issued: Oct 24, 2026</div>
+                </td>
+                <td class="tabular-numbers" style="font-weight: 700; font-size: 14px;">
+                  $633.26
+                </td>
+                <td>
+                  <span class="badge badge-neutral">Saved Draft</span>
+                </td>
+                <td>
+                  <span class="badge badge-success" title="PayPal Remote ID: INV2-9A4B-C7D8-90EF">
+                    Draft Created (INV2)
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <button class="btn btn-sm btn-secondary" onclick="switchScreen('detail')">View</button>
+                </td>
+              </tr>
+
+              <!-- Row 2: EUR Beispiel Solutions (Local Only) -->
+              <tr>
+                <td>
+                  <a href="#" onclick="switchScreen('detail'); return false;" style="font-weight: 600; color: var(--color-brand-primary); text-decoration: none;">
+                    INV-2026-002
+                  </a>
+                </td>
+                <td>
+                  <div style="font-weight: 500;">Beispiel Solutions GmbH</div>
+                  <div style="font-size: 11.5px; color: var(--color-text-muted);">buchhaltung@beispiel.example.com</div>
+                </td>
+                <td style="font-size: 12.5px;">
+                  <div>Due: <strong>Nov 24, 2026</strong></div>
+                  <div style="color: var(--color-text-muted); font-size: 11px;">Issued: Oct 25, 2026</div>
+                </td>
+                <td class="tabular-numbers" style="font-weight: 700; font-size: 14px;">
+                  €1,517.25
+                </td>
+                <td>
+                  <span class="badge badge-neutral">Saved Draft</span>
+                </td>
+                <td>
+                  <span class="badge badge-neutral" style="opacity: 0.7;">Not Staged</span>
+                </td>
+                <td style="text-align: right;">
+                  <button class="btn btn-sm btn-secondary" onclick="switchScreen('detail')">View</button>
+                </td>
+              </tr>
+
+              <!-- Row 3: JPY Sakura Creative (Local Only) -->
+              <tr>
+                <td>
+                  <a href="#" onclick="switchScreen('detail'); return false;" style="font-weight: 600; color: var(--color-brand-primary); text-decoration: none;">
+                    INV-2026-003
+                  </a>
+                </td>
+                <td>
+                  <div style="font-weight: 500;">Sakura Creative Studio</div>
+                  <div style="font-size: 11.5px; color: var(--color-text-muted);">finance@sakura.example.jp</div>
+                </td>
+                <td style="font-size: 12.5px;">
+                  <div>Due: <strong>Nov 10, 2026</strong></div>
+                  <div style="color: var(--color-text-muted); font-size: 11px;">Issued: Oct 26, 2026</div>
+                </td>
+                <td class="tabular-numbers" style="font-weight: 700; font-size: 14px;">
+                  ¥143,000
+                </td>
+                <td>
+                  <span class="badge badge-neutral">Saved Draft</span>
+                </td>
+                <td>
+                  <span class="badge badge-neutral" style="opacity: 0.7;">Not Staged</span>
+                </td>
+                <td style="text-align: right;">
+                  <button class="btn btn-sm btn-secondary" onclick="switchScreen('detail')">View</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- AG Studio Integration Seam Footer -->
+          <div class="ag-studio-boundary">
+            <span>Grid Architecture: Accessible HTML5 Table Fallback</span>
+            <span><code>ag-studio-react</code> integration seam (active trial through Dec 15)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SCREEN 3: NATURAL-LANGUAGE INVOICE COMPOSER
+           ==================================================================== -->
+      <section id="screen-composer" class="app-main screen-section" style="display: none;">
+        <div class="composer-card card">
+          <div class="composer-tabs">
+            <button class="composer-tab-btn active" id="tab-btn-ai" onclick="switchComposerTab('ai')">
+              <span>✨ Natural Language (AI)</span>
+            </button>
+            <button class="composer-tab-btn" id="tab-btn-manual" onclick="switchComposerTab('manual')">
+              <span>📝 Manual Form Entry</span>
+            </button>
+          </div>
+
+          <!-- AI Service Unavailable Alert (Controlled by State Switcher) -->
+          <div id="ai-unavailable-alert" class="notice-box notice-warning" style="display: none; margin-bottom: 16px;">
+            <span>⚠️</span>
+            <div>
+              <strong>AI Parsing Service Unavailable</strong>: Unable to contact OpenAI structured parser. Please enter invoice details using the manual form or retry shortly.
+              <div style="margin-top: 8px;">
+                <button class="btn btn-sm btn-secondary" onclick="switchComposerTab('manual')">Switch to Manual Entry</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="composer-ai-view">
+            <div class="form-group">
+              <label class="form-label" for="composer-textarea">
+                <span>Describe your billable work or invoice details</span>
+                <span style="font-size: 11.5px; color: var(--color-text-muted);">AI structured extraction</span>
+              </label>
+              <textarea id="composer-textarea" class="form-textarea" rows="5" style="resize: vertical; font-size: 14px; line-height: 1.5;" placeholder="e.g. Billed Acme Creative Labs for 24 hours of UI/UX design at $85/hr, plus $500 for the brand asset bundle. Payment terms Net 15, reference PO-ACME-409."></textarea>
+            </div>
+
+            <!-- Clarification Box (Controlled by State Switcher) -->
+            <div id="clarification-box" class="clarification-box" style="display: none;">
+              <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 6px;">🤔 Clarification Required by AI:</div>
+              <ul style="font-size: 13px; margin-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
+                <li>Is the $500 brand asset bundle subject to standard state sales tax?</li>
+                <li>Should the invoice due date be calculated from today or the service completion date?</li>
+              </ul>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" class="form-input" style="flex: 1; font-size: 12.5px;" placeholder="Type clarifications here...">
+                <button class="btn btn-sm btn-primary" onclick="simulateClarificationResponse()">Submit Clarification</button>
+              </div>
+            </div>
+
+            <div style="margin-top: 16px;">
+              <div style="font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 8px;">
+                OR CHOOSE A SYNTHETIC EXAMPLE PROMPT:
+              </div>
+              <div class="prompt-chips-group">
+                <button class="prompt-chip" onclick="loadPromptFixture('usd')">
+                  <strong>USD:</strong> "Acme Creative Labs: 24 hrs UI design @ $85/hr, $500 brand bundle, 8.25% tax. Due Net 15."
+                </button>
+                <button class="prompt-chip" onclick="loadPromptFixture('eur')">
+                  <strong>EUR:</strong> "Beispiel Solutions GmbH: 12 hrs advisory @ €110/hr + €197.25 travel expenses. 20% VAT. Net 30."
+                </button>
+                <button class="prompt-chip" onclick="loadPromptFixture('jpy')">
+                  <strong>JPY:</strong> "Sakura Creative Studio: 22 hrs mobile engineering @ ¥6,500/hr. Tax exempt. Due in 15 days."
+                </button>
+              </div>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border-subtle); padding-top: 16px;">
+              <span style="font-size: 12px; color: var(--color-text-muted);">
+                Endpoint: <code style="font-family: var(--font-family-mono);">POST /api/invoice-drafts/parse</code>
+              </span>
+              <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="switchScreen('dashboard')">Cancel</button>
+                <button class="btn btn-primary" id="parse-btn" onclick="simulateParseInvoice()">
+                  <span>⚡ Parse with AI</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SCREEN 4: STRUCTURED REVIEW & EDIT
+           ==================================================================== -->
+      <section id="screen-review" class="app-main screen-section" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h1 class="page-title">Review & Edit Invoice</h1>
+            <p class="page-subtitle">Verify parsed line items and computed minor-unit totals before saving</p>
+          </div>
+          <div class="badge badge-neutral" style="font-family: var(--font-family-mono);">
+            Mode: Local Draft Preparation
+          </div>
+        </div>
+
+        <div class="review-grid">
+          <!-- Left Column: Invoice Fields & Line Items -->
+          <div>
+            <div class="card" style="margin-bottom: 20px;">
+              <h2 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Recipient & Invoice Details</h2>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label" for="review-recipient">Recipient Name *</label>
+                  <input type="text" id="review-recipient" class="form-input" value="Acme Creative Labs">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="review-email">Recipient Email</label>
+                  <input type="email" id="review-email" class="form-input" value="billing@acme-design.example.com">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label" for="review-invoice-num">Invoice Number *</label>
+                  <input type="text" id="review-invoice-num" class="form-input tabular-numbers" value="INV-2026-001">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="review-currency">Currency *</label>
+                  <select id="review-currency" class="form-select" onchange="updateCurrencySymbol(this.value)">
+                    <option value="USD" selected>USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="JPY">JPY (¥ - 0 Exp)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="review-reference">PO / Reference</label>
+                  <input type="text" id="review-reference" class="form-input" value="PO-ACME-409">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label" for="review-issue-date">Issue Date</label>
+                  <input type="date" id="review-issue-date" class="form-input" value="2026-10-24">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="review-due-date">Due Date *</label>
+                  <input type="date" id="review-due-date" class="form-input" value="2026-11-08">
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Items Table Card -->
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h2 style="font-size: 15px; font-weight: 700;">Line Items</h2>
+                <button class="btn btn-sm btn-secondary" onclick="addLineItem()">+ Add Item</button>
+              </div>
+
+              <table class="line-items-table" id="line-items-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50%;">Description</th>
+                    <th style="width: 15%;">Qty</th>
+                    <th style="width: 20%;">Unit Price</th>
+                    <th style="width: 15%; text-align: right;">Total</th>
+                  </tr>
+                </thead>
+                <tbody id="line-items-body">
+                  <tr>
+                    <td>
+                      <input type="text" class="form-input" style="width: 100%;" value="UI/UX Interface Design Sprint">
+                    </td>
+                    <td>
+                      <input type="number" class="form-input tabular-numbers" style="width: 100%;" value="24" onchange="recalculateTotals()">
+                    </td>
+                    <td>
+                      <input type="text" class="form-input tabular-numbers" style="width: 100%;" value="85.00" onchange="recalculateTotals()">
+                    </td>
+                    <td class="tabular-numbers" style="text-align: right; font-weight: 600; padding-top: 14px;">
+                      $2,040.00
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <input type="text" class="form-input" style="width: 100%;" value="Brand Design Kit & Assets">
+                    </td>
+                    <td>
+                      <input type="number" class="form-input tabular-numbers" style="width: 100%;" value="1" onchange="recalculateTotals()">
+                    </td>
+                    <td>
+                      <input type="text" class="form-input tabular-numbers" style="width: 100%;" value="500.00" onchange="recalculateTotals()">
+                    </td>
+                    <td class="tabular-numbers" style="text-align: right; font-weight: 600; padding-top: 14px;">
+                      $500.00
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Column: Computed Totals & Save Actions -->
+          <div>
+            <div class="totals-summary-card">
+              <h2 style="font-size: 15px; font-weight: 700; margin-bottom: 14px;">Financial Calculations</h2>
+
+              <div class="totals-row">
+                <span>Line Items Subtotal:</span>
+                <span class="tabular-numbers" id="calc-subtotal">$2,540.00</span>
+              </div>
+              <div class="totals-row">
+                <span>Discount / Credit:</span>
+                <span class="tabular-numbers" id="calc-discount">-$500.00</span>
+              </div>
+              <div class="totals-row">
+                <span>Tax Rate (8.25%):</span>
+                <span class="tabular-numbers" id="calc-tax">+$168.30</span>
+              </div>
+              <div class="totals-row final">
+                <span>Total Amount Due:</span>
+                <span class="tabular-numbers" id="calc-total">$2,208.30</span>
+              </div>
+
+              <!-- Minor-Unit Math Guarantee -->
+              <div style="margin-top: 16px; padding: 10px; background-color: var(--color-surface-card); border-radius: var(--radius-md); font-size: 11.5px; color: var(--color-text-muted); line-height: 1.4;">
+                🔒 <strong>Integer Math Guarantee:</strong> Stored as exact integer minor units (<code style="font-family: var(--font-family-mono);" id="calc-minor-units">220830 cents</code>). Zero floating-point rounding drift.
+              </div>
+
+              <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-primary" id="save-draft-btn" onclick="simulateSaveDraft()" style="width: 100%;">
+                  💾 Save Local Invoice Draft
+                </button>
+                <button class="btn btn-secondary" onclick="switchScreen('composer')" style="width: 100%;">
+                  ← Back to Composer
+                </button>
+              </div>
+
+              <div style="margin-top: 14px; font-size: 11.5px; color: var(--color-text-muted); text-align: center;">
+                Includes client <code style="font-family: var(--font-family-mono);">Idempotency-Key</code> header to prevent accidental duplicate saves.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SCREEN 5: INVOICE DETAIL & PAYPAL SANDBOX STATUS
+           ==================================================================== -->
+      <section id="screen-detail" class="app-main screen-section" style="display: none;">
+        <!-- Top Action & Navigation Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h1 class="page-title" style="font-family: var(--font-family-mono);">INV-2026-001</h1>
+              <span class="badge badge-neutral">Local Draft Saved</span>
+              <span class="badge badge-success">USD ($)</span>
+            </div>
+            <p class="page-subtitle">Acme Creative Labs • Issued Oct 24, 2026 • Due Nov 08, 2026</p>
+          </div>
+          <div>
+            <button class="btn btn-secondary" onclick="switchScreen('dashboard')">← Back to Dashboard</button>
+          </div>
+        </div>
+
+        <!-- Dedicated External Integration Boundary Card -->
+        <div class="detail-sandbox-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="sandbox-pill">PAYPAL SANDBOX INTEGRATION</span>
+                <span style="font-size: 13px; font-weight: 600; color: var(--color-text-primary);" id="detail-paypal-status-text">Draft Staged in PayPal Sandbox</span>
+              </div>
+              <p style="font-size: 13px; color: var(--color-text-secondary); max-width: 650px; line-height: 1.5;">
+                Staging this invoice creates a <strong>DRAFT</strong> in your PayPal Sandbox account. It does <strong>NOT</strong> notify the customer, dispatch payment reminders, or collect funds.
+              </p>
+            </div>
+
+            <div id="paypal-action-container">
+              <!-- When already staged in happy path: -->
+              <div style="text-align: right;">
+                <span class="badge badge-success" style="font-size: 12px; margin-bottom: 6px;">
+                  Remote ID: INV2-9A4B-C7D8-90EF
+                </span>
+                <div>
+                  <a href="https://www.sandbox.paypal.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-secondary" style="margin-top: 4px;">
+                    View in PayPal Sandbox ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audit Timeline -->
+          <div class="timeline">
+            <div class="timeline-item">
+              <strong>Local Draft Saved</strong>
+              <div style="font-size: 11.5px; color: var(--color-text-muted);">2026-10-24 10:14:02 UTC — Saved by operator via POST /api/invoice-drafts</div>
+            </div>
+            <div class="timeline-item" id="timeline-paypal-event">
+              <strong>PayPal Sandbox Draft Created</strong>
+              <div style="font-size: 11.5px; color: var(--color-text-muted);">2026-10-24 10:14:47 UTC — Dispatched to api-m.sandbox.paypal.com (INV2-9A4B-C7D8-90EF). Status: DRAFT</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Readonly Line Items and Totals Display -->
+        <div class="card">
+          <h2 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Invoice Line Items & Totals</h2>
+          
+          <table class="data-table" style="margin-bottom: 20px;">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Quantity</th>
+                <th style="text-align: right;">Unit Price</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>UI/UX Interface Design Sprint</td>
+                <td class="tabular-numbers" style="text-align: right;">24</td>
+                <td class="tabular-numbers" style="text-align: right;">$85.00</td>
+                <td class="tabular-numbers" style="text-align: right; font-weight: 600;">$2,040.00</td>
+              </tr>
+              <tr>
+                <td>Brand Design Kit & Assets</td>
+                <td class="tabular-numbers" style="text-align: right;">1</td>
+                <td class="tabular-numbers" style="text-align: right;">$500.00</td>
+                <td class="tabular-numbers" style="text-align: right; font-weight: 600;">$500.00</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="max-width: 320px; margin-left: auto;">
+            <div class="totals-row">
+              <span>Subtotal:</span>
+              <span class="tabular-numbers">$2,540.00</span>
+            </div>
+            <div class="totals-row">
+              <span>Discount:</span>
+              <span class="tabular-numbers">-$500.00</span>
+            </div>
+            <div class="totals-row">
+              <span>Tax (8.25%):</span>
+              <span class="tabular-numbers">+$168.30</span>
+            </div>
+            <div class="totals-row final">
+              <span>Total Amount:</span>
+              <span class="tabular-numbers">$2,208.30</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mobile Bottom Navigation -->
+      <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <button class="mobile-nav-btn active" data-nav="dashboard" onclick="switchScreen('dashboard')">
+          <span>📊</span>
+          <span>Drafts</span>
+        </button>
+        <button class="mobile-nav-btn" data-nav="composer" onclick="switchScreen('composer')">
+          <span>➕</span>
+          <span>New</span>
+        </button>
+        <button class="mobile-nav-btn" data-nav="login" onclick="switchScreen('login')">
+          <span>🔒</span>
+          <span>Auth</span>
+        </button>
+      </nav>
+
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       MODAL: CREATE PAYPAL SANDBOX DRAFT CONFIRMATION
+       ======================================================================== -->
+  <div id="paypal-confirm-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div style="font-size: 24px; margin-bottom: 8px;">🧪</div>
+      <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 8px;">Create PayPal Sandbox Draft?</h3>
+      <p style="font-size: 13.5px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 16px;">
+        This will communicate with <code>api-m.sandbox.paypal.com</code> to create a remote invoice in <strong>DRAFT</strong> status.
+      </p>
+      <div class="notice-box notice-warning" style="margin-bottom: 20px;">
+        <span>⚠️</span>
+        <span style="font-size: 12px;">
+          The recipient will <strong>NOT</strong> receive an email notification. Drafting is strictly restricted to PayPal Sandbox.
+        </span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-secondary" onclick="closePayPalModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="executePayPalCreate()">Confirm & Create Draft</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       INTERACTIVE PROTOTYPE JAVASCRIPT
+       ======================================================================== -->
+  <script>
+    // State Tracker
+    let currentScreen = 'dashboard';
+    let currentViewport = 'desktop';
+    let currentTheme = 'light';
+    let currentState = 'happy';
+
+    function switchScreen(screenId) {
+      currentScreen = screenId;
+      document.querySelectorAll('.screen-section').forEach(el => el.style.display = 'none');
+      const target = document.getElementById('screen-' + screenId);
+      if (target) target.style.display = 'flex';
+
+      // Update toolbar buttons
+      document.querySelectorAll('.toolbar-btn[data-screen]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-screen') === screenId);
+      });
+
+      // Update nav tabs
+      document.querySelectorAll('.nav-tab[data-nav]').forEach(tab => {
+        tab.classList.toggle('active', tab.getAttribute('data-nav') === screenId);
+      });
+
+      // Update mobile bottom nav
+      document.querySelectorAll('.mobile-nav-btn[data-nav]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-nav') === screenId);
+      });
+    }
+
+    function setViewport(size) {
+      currentViewport = size;
+      const frame = document.getElementById('viewport-frame');
+      frame.setAttribute('data-size', size);
+
+      document.querySelectorAll('.toolbar-btn[data-size]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-size') === size);
+      });
+    }
+
+    function toggleTheme() {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      const frame = document.getElementById('viewport-frame');
+      frame.setAttribute('data-theme', currentTheme);
+      document.getElementById('theme-toggle-btn').innerHTML = currentTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+    }
+
+    function switchState(state) {
+      currentState = state;
+
+      // Reset state overrides
+      document.getElementById('offline-banner').classList.remove('visible');
+      document.getElementById('session-expired-alert').style.display = 'none';
+      document.getElementById('dashboard-empty-state').style.display = 'none';
+      document.getElementById('dashboard-data-table').style.display = 'table';
+      document.getElementById('clarification-box').style.display = 'none';
+      document.getElementById('ai-unavailable-alert').style.display = 'none';
+
+      if (state === 'offline') {
+        document.getElementById('offline-banner').classList.add('visible');
+      } else if (state === 'empty') {
+        document.getElementById('dashboard-empty-state').style.display = 'block';
+        document.getElementById('dashboard-data-table').style.display = 'none';
+        switchScreen('dashboard');
+      } else if (state === 'session-expired') {
+        document.getElementById('session-expired-alert').style.display = 'flex';
+        switchScreen('login');
+      } else if (state === 'clarification') {
+        document.getElementById('clarification-box').style.display = 'block';
+        switchScreen('composer');
+      } else if (state === 'ai-unavailable') {
+        document.getElementById('ai-unavailable-alert').style.display = 'flex';
+        switchScreen('composer');
+      } else if (state === 'paypal-disabled') {
+        switchScreen('detail');
+        const container = document.getElementById('paypal-action-container');
+        container.innerHTML = `
+          <div class="badge badge-warning" style="font-size: 12px; margin-bottom: 4px;">
+            PayPal Drafting Disabled (503)
+          </div>
+          <div style="font-size: 11px; color: var(--color-text-muted);">PAYPAL_DRAFTS_ENABLED=false</div>
+        `;
+      }
+    }
+
+    function loadPromptFixture(type) {
+      const textarea = document.getElementById('composer-textarea');
+      if (type === 'usd') {
+        textarea.value = "Billed Acme Creative Labs for 24 hours of UI/UX design at $85/hr, plus $500 for the brand asset bundle. Payment terms Net 15, reference PO-ACME-409.";
+      } else if (type === 'eur') {
+        textarea.value = "Consulting services for Beispiel Solutions GmbH: 12 hours advisory at €110/hr plus €197.25 verified travel expense. Apply 20% VAT. Due in 30 days.";
+      } else if (type === 'jpy') {
+        textarea.value = "Sakura Creative Studio: 22 hours mobile software engineering at ¥6,500/hr. Tax exempt. Payment due in 15 days, reference PO-SAKURA-88.";
+      }
+    }
+
+    function simulateParseInvoice() {
+      const btn = document.getElementById('parse-btn');
+      btn.innerHTML = '<span>⏳ Parsing with AI...</span>';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = '<span>⚡ Parse with AI</span>';
+        btn.disabled = false;
+        switchScreen('review');
+      }, 700);
+    }
+
+    function simulateSaveDraft() {
+      const btn = document.getElementById('save-draft-btn');
+      btn.innerHTML = '<span>⏳ Saving Draft (with Idempotency)...</span>';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = '<span>💾 Save Local Invoice Draft</span>';
+        btn.disabled = false;
+        switchScreen('detail');
+      }, 600);
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      switchScreen('dashboard');
+    }
+
+    function closePayPalModal() {
+      document.getElementById('paypal-confirm-modal').classList.remove('active');
+    }
+
+    function executePayPalCreate() {
+      closePayPalModal();
+      switchScreen('detail');
+    }
+  </script>
+</body>
+</html>

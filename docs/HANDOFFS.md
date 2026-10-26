@@ -681,4 +681,54 @@ Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`)
 ### Next action
 Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-header`). Await separate product owner merge authorization.
 
+## Handoff: NMI-UI-01A-DESIGN
+
+- **Task / phase:** `tasks/NMI-UI-01A-invoice-interface-design.md`
+- **From:** Implementation agent (Antigravity)
+- **To:** Product owner / Design reviewer
+- **Branch:** `design/nmi-ui-01a-invoice-interface`
+- **Base commit:** `2864761ca902ffd6ed6628c183298bcc6e5c59c1` (`main`)
+- **State:** Interface design complete; awaiting owner visual approval (design-only increment; no production frontend shell or backend logic changes).
+
+### Completed
+- **Design Specifications (`design/screens/NMI-UI-01A-SCREENS.md`):**
+  - Comprehensive screen map, navigation architecture (Desktop top header & sub-nav / Mobile bottom tabs), and user flows.
+  - Detailed layout wireframes, component contracts, and responsive behavior for all 5 screens:
+    1. Operator Login & Authenticated Shell (persistent PayPal Sandbox badge and warning banner).
+    2. Multi-Currency Invoice Dashboard (currency summary cards for USD, EUR, and JPY; local drafts table; AG Studio boundary).
+    3. Natural-Language Invoice Composer (AI textarea, prompt chips, mode switcher to manual entry, clarification panel).
+    4. Structured Review & Edit (recipient, invoice metadata, line items grid, discount, tax, integer minor-unit totals calculation).
+    5. Local Invoice Detail & PayPal Sandbox Draft Status (local draft timeline, isolated PayPal Sandbox staging action with guardrails).
+  - Complete interaction state matrix: Auth (authenticated, unauthenticated, expired), Data (loading, empty, success, error, offline), AI (in-flight, clarification, invalid proposal, unavailable fallback), Form validation & rounding guards, and PayPal Sandbox provider states (503 disabled, 409 lease/reconciling, 502 rejected, 502 unknown, 200/201 created).
+  - Accessibility contract targeting WCAG 2.2 AA (>= 4.5:1 contrast, visible 2px focus indicators, ARIA live regions, keyboard navigation, reduced motion).
+- **Design Tokens (`design/tokens/design-tokens.json`):**
+  - Updated with NudgeMyInvoice semantic palette, including Light and Dark mode tokens, PayPal Sandbox identity tokens, currency tokens, typography, spacing, radii, shadows, and breakpoints.
+- **Synthetic Fixtures (`design/fixtures/invoice-fixtures.json`):**
+  - Realistic multi-currency fixtures for USD ($633.26), EUR (€1,517.25), and JPY (¥143,000, 0 exponent).
+  - Synthetic sample prompts for AI parsing validation.
+  - Strictly synthetic data; zero real customer credentials or PII.
+- **Interactive Browser Mockup (`design/preview/index.html`):**
+  - Standalone, zero-dependency HTML/CSS/JS preview allowing interactive review of all 5 screens.
+  - Reviewer toolbar with screen switcher (1-5), responsive viewport presets (Desktop 1280px, Tablet 768px, Mobile 375px), theme toggle (Light/Dark), and state switcher (Default, Empty, Loading, Clarification, AI Unavailable, Validation Errors, Offline, PayPal Disabled, Session Expired).
+  - Form calculation logic demonstrating minor-unit math and dynamic currency formatting.
+- **Architectural Truthfulness & API Seams:**
+  - Clearly documented that backend provides `GET /api/invoice-drafts/:id` but lacks `GET /api/invoice-drafts` collection listing. Dashboard is explicitly labeled as using synthetic fixtures until collection endpoint is implemented.
+  - Clarified that creating a PayPal Sandbox draft generates a remote invoice in `DRAFT` status and does **NOT** email the recipient or request payment.
+  - Documented accessible native HTML5 table fallback for the dashboard grid, establishing the plug-in seam for `ag-studio-react` upon licensing and trial authorization (active through Dec 15).
+
+### Validation
+- `python3 scripts/validate_project_profile.py`: PASS.
+- `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
+- `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests).
+- Total automated tests: 236 unit + 187 PostgreSQL = 423 passing tests.
+- Zero external provider calls to PayPal Sandbox or OpenAI; single-create test guard budget remains exhausted (1/1).
+
+### Continuation notes
+- **UI Design Gate:** Explicit owner visual approval is required before building the production UI shell or wiring backend endpoints.
+- No modifications made to `apps/web/src` or `apps/api/src`.
+- No new runtime dependencies or package installations.
+
+### Next action
+Open Draft PR and request owner visual approval on `design/preview/index.html` and `design/screens/NMI-UI-01A-SCREENS.md`.
+
 <!-- HANDOFF_ENTRIES_END -->
