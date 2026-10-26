@@ -159,16 +159,22 @@ Rows (`audit_log`) record request id, actor (operator UUID, `anonymous` or `syst
 
 **Real Sandbox evidence, limited to one happy-path create (2026-10-26):** AG's `NMI-P2-I2-SANDBOX-SMOKE-01` reported real OAuth HTTP 200, exactly one draft-create HTTP 201 and one read-only show HTTP 200. The test payload contained **one fictitious USD 5.00 line item, zero tax, and zero discount**. Remote invoice `INV2-U92W-76NX-3P2E-AGUZ` returned `DRAFT`, USD 5.00, matching due date, number and local reference; durable operation `created`, attempts 1. No send, reminder, refund, cancellation or payment requests were made. This is AG operator-run provider evidence, not an independent PayPal-account query. The temporary process-level guarded transport used for the smoke prevented a second create on automatic 401 retry; this **extra local guard is not a general production guarantee**. Its one-create budget is exhausted, and `PAYPAL_DRAFTS_ENABLED=false` has been restored.
 
-**Still NOT verified against genuine PayPal Sandbox responses:** Because the single smoke test exercised only a minimal payload without tax or discount, the following provider shapes and behaviors remain unverified against live PayPal Sandbox and must be treated as assumptions or mock-tested behaviors:
-- **Invoice-level discount placement:** PayPal's accepted location under `amount.breakdown.discount.invoice_discount`.
-- **Tax and discount mappings:** Request and response body mapping for line-item tax and discounts (both percent and fixed amounts), as well as rounding-sensitive totals.
-- **Alternative recipient name formats:** Whether PayPal strictly requires or prefers `name.full_name` versus separated given/surname fields.
-- **Alternative invoicer configurations:** Whether omitting `invoicer` (relying on PayPal to populate merchant details) works across all account types or if explicit merchant configuration is required.
-- **Alternative HTTP 201 response shapes:** Whether PayPal returns a full invoice representation, a link-only body, or respects `Prefer: return=representation`.
-- **Search pagination and indexing lag:** How `search-invoices` handles pagination, query filtering by `invoice_number`, delayed search indexing, and whether PayPal strictly rejects duplicate invoice numbers.
-- **Ambiguous-outcome reconciliation:** Provider timeouts, network errors, 5xx failures, and search-reconciliation recovery flows.
+**Variations specifically covered by deterministic fake HTTP or PostgreSQL tests:** The following error, concurrency, and mapping paths were verified against local fakes and PostgreSQL integration suites, but were **not** exercised against live PayPal Sandbox:
+- **Refusal of rounding-dependent totals:** drafts with fractional minor-unit remainders or multi-line tax/discount combinations that cannot guarantee identical totals under all rounding modes fail closed (`422 mapping_refused`).
+- **Line-item tax and discount mappings:** client generation of line-item tax and percent/fixed discount body fields is covered by deterministic unit/mapping tests.
+- **Fail-closed reconciliation on ambiguous outcomes:** timeouts, simulated network dropouts, 5xx errors, unparsable payloads, and crash-after-create recovery are verified to transition safely via fake-transport and PostgreSQL tests without duplicate creation.
+- **Durable operation fencing and concurrency:** 20 simultaneous claimers, stale-lease takeovers, and midnight-boundary date identity enforcement are verified against real PostgreSQL.
+- **Client transport allowlist & token refresh:** 401 OAuth token refresh, 400 bad request rejection, and blocking of off-allowlist hosts/endpoints are verified via mock transport.
 
-All the above variations were exercised only through deterministic fake transports and PostgreSQL tests, **never against live PayPal Sandbox endpoints**. Real OpenAI Responses parsing is also **NOT TESTED**.
+**Variations that remain unverified PayPal provider assumptions:** Because live Sandbox validation was restricted to the single USD 5.00 happy-path create, the following provider behaviors remain unverified external assumptions rather than tested behaviors:
+- **Invoice-level discount placement:** PayPal's actual handling of discounts placed under `amount.breakdown.discount.invoice_discount`.
+- **Live tax/discount calculation:** whether PayPal computes line-item taxes or invoice-level discounts identically to local schema expectations in live transactions.
+- **Alternative recipient name formats:** whether PayPal accepts or strictly validates `name.full_name` versus separated given/surname fields across different locales.
+- **Alternative invoicer configurations:** whether omitting the `invoicer` object reliably uses account merchant profile defaults across all account configurations.
+- **Alternative HTTP 201 response shapes:** whether live PayPal returns a full invoice representation, a link-only body, or respects `Prefer: return=representation`.
+- **Live search indexing lag & duplicate rejection:** whether live PayPal's search API exhibits indexing delays that hide newly created drafts, and whether PayPal unconditionally rejects duplicate `invoice_number` submissions.
+
+Real OpenAI Responses parsing also remains **NOT TESTED** against the live provider.
 
 **Other limits:** the draft is immutable in this increment (no edit route); a `mismatch` or `unknown` operation needs operator action outside this increment; in-memory parse budget is per process; the draft's customer email is sent to PayPal (sandbox) when the operator requests the PayPal draft.
 

@@ -589,7 +589,7 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 
 ### Continuation notes
 - Update canonical docs truthfully; maintain historical C6 handoff unchanged and keep buyer/merchant contact information, secrets and tokens outside GitHub.
-- Operational limitations: in-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](docs/SECURITY.md#runtime-boundaries).
+- Operational limitations: in-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](SECURITY.md).
 - **Open code remediation (known review finding):** Codex review on PR #4 identified that CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omits `Idempotency-Key` (though invoice save supports that header). It has no effect today because the web app is a placeholder and Vite proxies only `/health`, but it will block cross-origin browser callers sending an idempotency key. This code remediation is deferred from this docs-only PR to a proposed bounded follow-up task before cross-origin browser invoice-save integration:
   1. Add `Idempotency-Key` to CORS `allowedHeaders` in `apps/api/src/app.ts`.
   2. Add browser-style `OPTIONS` preflight regression test in `apps/api/src/app.test.ts`.
