@@ -12,3 +12,9 @@ export const baseEnv = {
   SESSION_SECRET: randomBytes(32).toString("hex"),
   WEB_ORIGIN: "http://localhost:5173",
 };
+
+/** Random per run; never real credentials. */
+export const fakePayPalCredentials = {
+  PAYPAL_CLIENT_ID: `cid-${randomBytes(8).toString("hex")}`,
+  PAYPAL_CLIENT_SECRET: `csec-${randomBytes(12).toString("hex")}`,
+};

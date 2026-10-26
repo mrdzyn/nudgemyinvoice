@@ -111,6 +111,60 @@ describe("config", () => {
     expect(() => loadConfig({ ...baseEnv, SESSION_SECRET: "short" })).toThrow(/32/);
     expect(() => loadConfig({ ...baseEnv, SESSION_SECRET: undefined })).toThrow();
   });
+  it("keeps real PayPal sandbox drafting OFF by default and refuses to enable it without credentials", () => {
+    const off = loadConfig(baseEnv);
+    expect(off.paypalDraftsEnabled).toBe(false);
+    expect(off.paypalCredentials).toBeNull();
+    const credsButOff = loadConfig({
+      ...baseEnv,
+      PAYPAL_CLIENT_ID: "id-1234567890",
+      PAYPAL_CLIENT_SECRET: "secret-1234567890",
+    });
+    expect(credsButOff.paypalDraftsEnabled).toBe(false);
+    expect(credsButOff.paypalCredentials).toBeNull(); // credentials are not even loaded when disabled
+    expect(() => loadConfig({ ...baseEnv, PAYPAL_DRAFTS_ENABLED: "true" })).toThrow(
+      /PAYPAL_CLIENT_ID/,
+    );
+    expect(() =>
+      loadConfig({ ...baseEnv, PAYPAL_DRAFTS_ENABLED: "true", PAYPAL_CLIENT_ID: "only-id" }),
+    ).toThrow();
+    expect(() => loadConfig({ ...baseEnv, PAYPAL_DRAFTS_ENABLED: "yes" })).toThrow();
+    const on = loadConfig({
+      ...baseEnv,
+      PAYPAL_DRAFTS_ENABLED: "true",
+      PAYPAL_CLIENT_ID: "id-1234567890",
+      PAYPAL_CLIENT_SECRET: "secret-1234567890",
+    });
+    expect(on.paypalDraftsEnabled).toBe(true);
+    expect(on.paypalCredentials).toEqual({
+      clientId: "id-1234567890",
+      clientSecret: "secret-1234567890",
+    });
+  });
+  it("never allows a live PayPal host even with drafting enabled", () => {
+    const enabled = {
+      ...baseEnv,
+      PAYPAL_DRAFTS_ENABLED: "true",
+      PAYPAL_CLIENT_ID: "id-1234567890",
+      PAYPAL_CLIENT_SECRET: "secret-1234567890",
+    };
+    expect(() =>
+      loadConfig({ ...enabled, PAYPAL_API_BASE_URL: "https://api-m.paypal.com" }),
+    ).toThrow();
+    expect(() => loadConfig({ ...enabled, PAYPAL_ENV: "live" })).toThrow();
+  });
+  it("loads OpenAI settings only when both key and model are present", () => {
+    expect(loadConfig({ ...baseEnv, OPENAI_API_KEY: "", OPENAI_MODEL: "m" }).openai).toBeNull();
+    expect(
+      loadConfig({ ...baseEnv, OPENAI_API_KEY: "sk-test-secret-value", OPENAI_MODEL: "" }).openai,
+    ).toBeNull();
+    expect(loadConfig(baseEnv).openai).toEqual({
+      apiKey: "sk-test-secret-value",
+      model: "m",
+      maxOutputTokens: 1024,
+    });
+    expect(() => loadConfig({ ...baseEnv, OPENAI_MAX_OUTPUT_TOKENS: "999999" })).toThrow();
+  });
   it("marks cookies Secure for production or https origins and normalizes the web origin", () => {
     expect(loadConfig(baseEnv).cookieSecure).toBe(false);
     expect(loadConfig({ ...baseEnv, NODE_ENV: "production" }).cookieSecure).toBe(true);

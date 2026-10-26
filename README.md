@@ -28,7 +28,7 @@ React + Vite + TypeScript; AG Studio (trial); Fastify/Node; Drizzle; Postgres on
 
 ## Getting started
 
-**Foundation (NMI-P1) only:** the workspace runs, but there is no invoice UI yet. Available today: `GET /health`, operator login/session/logout (`/api/auth/*`), a placeholder web page, and the tested parsing/validation/approval libraries with a PostgreSQL approval store. No PayPal write is wired.
+**Foundation (NMI-P1) only:** the workspace runs, but there is no invoice UI yet. Available today: `GET /health`, operator login/session/logout (`/api/auth/*`), authenticated invoice-draft APIs (`/api/invoice-drafts`: parse, save, read, and an explicit PayPal **sandbox draft** action; nothing is ever sent), a placeholder web page, and the tested parsing/validation/approval libraries with a PostgreSQL approval store. No PayPal write is wired.
 
 Prerequisites: Node 22+, pnpm 10 (`corepack enable`). Optional later: PayPal sandbox app, OpenAI key and model ID (`OPENAI_API_KEY`, `OPENAI_MODEL`), PostgreSQL.
 

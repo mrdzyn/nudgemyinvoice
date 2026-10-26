@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { calculateTotals, sumByCurrency, type InvoiceDraft } from "./invoice.js";
-import { MoneyError, formatMoney, parseMoney } from "./money.js";
+import {
+  MoneyError,
+  formatMoney,
+  formatPercent,
+  formatQuantity,
+  parseMoney,
+  parsePercent,
+  parseQuantity,
+} from "./money.js";
 
 const draft = (over: Partial<InvoiceDraft>): InvoiceDraft => ({
   customerName: "A",
@@ -66,5 +74,25 @@ describe("multi-currency summaries", () => {
         { currency: "USD", total: "0.10" },
       ]),
     ).toEqual({ USD: "500.10", EUR: "287.39" });
+  });
+});
+
+describe("canonical quantity and percent round trip", () => {
+  it.each(["1", "2", "1.5", "0.01", "10.25", "99999.99"])(
+    "quantity %s survives integer storage",
+    (q) => {
+      expect(formatQuantity(parseQuantity(q))).toBe(q);
+    },
+  );
+  it.each([
+    ["1.50", "1.5"],
+    ["2.00", "2"],
+    ["02", "2"],
+  ])("normalizes quantity %s to %s without changing its value", (input, canonical) => {
+    expect(formatQuantity(parseQuantity(input))).toBe(canonical);
+    expect(parseQuantity(canonical)).toBe(parseQuantity(input));
+  });
+  it.each(["0", "19", "8.25", "0.01", "100"])("percent %s survives integer storage", (p) => {
+    expect(formatPercent(parsePercent(p))).toBe(p);
   });
 });

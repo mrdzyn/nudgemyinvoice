@@ -21,6 +21,11 @@ const envSchema = z.object({
   SESSION_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(480),
   SESSION_IDLE_MINUTES: z.coerce.number().int().min(1).max(1440).default(60),
   TRUST_PROXY: z.enum(["true", "false"]).default("false"),
+  OPENAI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(64).max(4096).default(1024),
+  // Real PayPal sandbox calls are OFF unless explicitly enabled, and then credentials are mandatory.
+  PAYPAL_DRAFTS_ENABLED: z.enum(["true", "false"]).default("false"),
+  PAYPAL_CLIENT_ID: z.string().optional(),
+  PAYPAL_CLIENT_SECRET: z.string().optional(),
 });
 
 export interface AppConfig {
@@ -39,6 +44,12 @@ export interface AppConfig {
   /** Cookies are Secure in production or whenever the web origin is https. */
   cookieSecure: boolean;
   trustProxy: boolean;
+  /** Server-only. Null unless both OPENAI_API_KEY and OPENAI_MODEL are set; never logged or returned. */
+  openai: { apiKey: string; model: string; maxOutputTokens: number } | null;
+  /** True only when the owner explicitly enabled real PayPal sandbox draft creation. */
+  paypalDraftsEnabled: boolean;
+  /** Server-only. Present only when drafts are enabled. */
+  paypalCredentials: { clientId: string; clientSecret: string } | null;
 }
 
 /** Fails fast: missing/live PayPal config, missing database or weak session secret refuse to start. */
@@ -46,6 +57,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const e = envSchema.parse(env);
   const paypal = assertSandboxConfig(e);
   const webOrigin = new URL(e.WEB_ORIGIN).origin;
+  const draftsEnabled = e.PAYPAL_DRAFTS_ENABLED === "true";
+  if (draftsEnabled && (!e.PAYPAL_CLIENT_ID || !e.PAYPAL_CLIENT_SECRET)) {
+    // Fail closed: never start in a mode that pretends PayPal drafting works without credentials.
+    throw new Error(
+      "PAYPAL_DRAFTS_ENABLED=true requires PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET",
+    );
+  }
   return {
     nodeEnv: e.NODE_ENV,
     port: e.PORT,
@@ -58,5 +76,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     sessionIdleMinutes: e.SESSION_IDLE_MINUTES,
     cookieSecure: e.NODE_ENV === "production" || webOrigin.startsWith("https://"),
     trustProxy: e.TRUST_PROXY === "true",
+    openai:
+      e.OPENAI_API_KEY && e.OPENAI_MODEL
+        ? {
+            apiKey: e.OPENAI_API_KEY,
+            model: e.OPENAI_MODEL,
+            maxOutputTokens: e.OPENAI_MAX_OUTPUT_TOKENS,
+          }
+        : null,
+    paypalDraftsEnabled: draftsEnabled,
+    paypalCredentials:
+      draftsEnabled && e.PAYPAL_CLIENT_ID && e.PAYPAL_CLIENT_SECRET
+        ? { clientId: e.PAYPAL_CLIENT_ID, clientSecret: e.PAYPAL_CLIENT_SECRET }
+        : null,
   };
 }

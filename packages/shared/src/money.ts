@@ -58,3 +58,18 @@ export function parsePercent(value: string): bigint {
 export function divRoundHalfUp(numerator: bigint, denominator: bigint): bigint {
   return (numerator * 2n + denominator) / (denominator * 2n);
 }
+
+function trimFraction(whole: bigint, fraction: bigint, digits: number): string {
+  const frac = fraction.toString().padStart(digits, "0").replace(/0+$/, "");
+  return frac ? `${whole}.${frac}` : `${whole}`;
+}
+
+/** Canonical decimal for a quantity stored as hundredths: 150n -> "1.5", 200n -> "2". */
+export function formatQuantity(hundredths: bigint): string {
+  return trimFraction(hundredths / 100n, hundredths % 100n, 2);
+}
+
+/** Canonical decimal for a percentage stored as basis points: 825n -> "8.25", 1900n -> "19". */
+export function formatPercent(bps: bigint): string {
+  return trimFraction(bps / 100n, bps % 100n, 2);
+}
