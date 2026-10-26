@@ -6,14 +6,18 @@
 
 ## Product vision and implemented capabilities
 
-The backend currently implements invoice proposal validation, operator-authenticated local draft persistence, and explicitly requested PayPal **Sandbox DRAFT** creation. The items below that involve sending, payment webhooks, reminders, and dashboards are **planned**, not delivered.
+The system differentiates implemented backend capabilities from the planned product roadmap.
 
+### Implemented backend capabilities
+- **Structured invoice draft persistence & validation:** Authenticated operator save, integer minor-unit money arithmetic, supported per-invoice ISO currency, and manual-entry fallback (`POST /api/invoice-drafts`, `GET /api/invoice-drafts/:id`).
+- **OpenAI parser integration (Responses API):** Schema-validated parser integration (`POST /api/invoice-drafts/parse`) producing structured invoice proposals with deterministic fake-model tests; real OpenAI provider verification is **pending / not tested**.
+- **PayPal Sandbox DRAFT creation:** Explicitly triggered DRAFT creation via `@nmi/paypal` (`POST /api/invoice-drafts/:id/paypal-draft`) with durable operation fencing; verified in Sandbox for a single happy-path draft (no sending, reminders, or payments; default-disabled via `PAYPAL_DRAFTS_ENABLED=false`).
 
-1. Parse a plain-language request into a structured invoice draft with clear customer, items, due date, **one currency per invoice**, and calculated totals.
-2. Let a human inspect and approve sending an invoice via the **PayPal Invoicing API (sandbox)**.
-3. Reconcile invoice payment updates from **signature-verified PayPal invoicing webhooks** with deduplication and authoritative status checks.
-4. Flag overdue invoices and draft friendly, context-aware follow-up wording. **Never send reminders without approval.**
-5. Show invoices, statuses, amounts and currency-specific totals in an AG Studio dashboard.
+### Planned capabilities (not delivered)
+- **Human approval screen for sending:** Reviewing and approving invoice sending via PayPal Invoicing API (sandbox) remains planned; no send endpoint is wired.
+- **Webhook payment reconciliation:** Signature-verified PayPal invoicing webhook receipt, event deduplication, and authoritative payment status reconciliation remain planned.
+- **Overdue invoice detection & reminder drafting:** Friendly, context-aware nudge generation remains planned (autonomous reminder sending is strictly forbidden).
+- **Business dashboard & invoice UI:** AG Studio React frontend shell and visual status tracking remain planned (web UI is currently an unapproved placeholder).
 
 **Multi-currency means managing invoices in multiple supported currencies, not foreign-exchange conversion or a mixed-currency grand total.**
 
@@ -21,7 +25,7 @@ The backend currently implements invoice proposal validation, operator-authentic
 
 - **Accepted backend increment:** NMI-P2-I2, independently audited at `4982201918d0030234fdbabbc297375c02c01e5d`; [PR #4](https://github.com/mrdzyn/nudgemyinvoice/pull/4) owner-approved and squash-merged into `main` as `07409bf32068362b9f5b711b64ef0399d588169e` on 2026-10-26.
 - **Real PayPal Sandbox acceptance:** `NMI-P2-I2-SANDBOX-SMOKE-01` **PASS** (AG's local provider evidence): OAuth HTTP 200; one draft-create HTTP 201; read-only invoice GET HTTP 200; `INV2-U92W-76NX-3P2E-AGUZ`, status `DRAFT`, USD 5.00. No sending, reminders, or payments.
-- **Independent CI:** Project Baseline CI and Stack CI passed at audited PR HEAD; AG reports 235 unit + 187 PostgreSQL integration tests passed.
+- **Independent CI:** Project Baseline CI and Stack CI passed on PR #4 at audited implementation HEAD `4982201918d0030234fdbabbc297375c02c01e5d`; AG reports 235 unit + 187 PostgreSQL integration tests passed. PR #5 has its own exact-HEAD CI checks on GitHub.
 - **Not yet verified:** genuine OpenAI API parsing; end-user invoice UI, sends, verified webhooks, hosted demo, and production readiness.
 - Hosted demo: _Pending separate owner-approved deployment and full end-to-end verification._
 - Demo video (under 3 minutes): _Pending._
@@ -95,7 +99,7 @@ For privacy, this public README intentionally **does not publish the Sandbox Bus
 
    **Important:** PayPal Sandbox drafting is implemented on `main` but remains **disabled by default**. Credentials are server-only and never required for deterministic tests. Loading the ignored `.env` is explicit: use the verified launcher in Getting started. No Live PayPal endpoint is permitted.
 4. Keep `PAYPAL_DRAFTS_ENABLED=false` during ordinary development. The already authorized single-create acceptance ran and its one-request budget is exhausted; **do not repeat it without new owner authorization**. The implemented adapter cannot send invoices, remind buyers, initiate payments, or use Live APIs. Do not deploy or release without separate approval.
-5. Report only sanitized acceptance evidence. The real PayPal Sandbox draft acceptance is **PASS based on AG's actual provider execution**; genuine OpenAI parsing remains **NOT TESTED** and mock-provider CI must not be mislabeled as live evidence.
+5. Report only sanitized acceptance evidence. The real PayPal Sandbox draft acceptance is **PASS based on AG's actual provider execution** (`NMI-P2-I2-SANDBOX-SMOKE-01`: one USD 5.00 line item, no tax, no discount, one create, one show); genuine provider search, reconciliation, timeout, and error paths are mock-tested only, not verified against live PayPal Sandbox responses. Genuine OpenAI parsing remains **NOT TESTED** and mock-provider CI must not be mislabeled as live evidence.
 
 References: [PayPal REST authentication](https://developer.paypal.com/api/rest/authentication), [API base URLs](https://developer.paypal.com/api/make-api-requests), [Invoicing v2](https://developer.paypal.com/api/invoicing/v2/).
 
@@ -127,7 +131,7 @@ All company names, invoices, customer details and amounts in the demo are fictit
 
 ## Security and release scope
 
-Sandbox only. The server enforces authenticated access, Origin/CSRF checks, exact monetary validation, durable fenced draft creation and fail-closed reconciliation. The approval store exists, but **no production grant-issuer or send flow is wired; webhook signature processing remains planned**, not implemented. Model outputs are untrusted. The system does not store payment-card credentials or initiate production payments. See [security boundaries](docs/SECURITY.md).
+Sandbox only. The server enforces authenticated access, Origin/CSRF checks, exact monetary validation, durable fenced draft creation and fail-closed reconciliation (reconciliation, search, and error paths are verified with deterministic mock transports and PostgreSQL tests; only single happy-path draft creation and GET verification were exercised against genuine PayPal Sandbox). The approval store exists, but **no production grant-issuer or send flow is wired; webhook signature processing remains planned**, not implemented. Model outputs are untrusted. The system does not store payment-card credentials or initiate production payments. See [security boundaries](docs/SECURITY.md).
 
 ## License
 

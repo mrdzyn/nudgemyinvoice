@@ -579,16 +579,23 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 
 ### Completed
 - Scoped C6 independent audit and hosted CI PASS at exact implementation HEAD; owner accepted and separately approved native GitHub squash merge.
-- Real single-create PayPal Sandbox smoke (AG evidence): OAuth `200`, create `201`, read-only GET `200`; `INV2-U92W-76NX-3P2E-AGUZ`, `DRAFT` USD 5.00; local operation `created`, attempt `1`, reference/date/number match.
+- Real single-create PayPal Sandbox smoke (AG provider evidence): OAuth `200`, create `201`, read-only GET `200` (executed with one fictitious USD 5.00 line item, zero tax, zero discount); `INV2-U92W-76NX-3P2E-AGUZ`, `DRAFT` USD 5.00; local operation `created`, attempt `1`, reference/date/number match.
 - No send, reminder, refund, cancellation, payment, deployment or production operation; Sandbox create feature flag restored to `false`; private exhausted test budget preserved.
 
 ### Validation
-- AG reports `pnpm validate` PASS (235 unit), `TEST_DATABASE_URL=... pnpm test:db` PASS (187 PostgreSQL); GitHub Project Baseline and Stack CI independently confirmed SUCCESS at `4982201`.
-- Genuine OpenAI Responses provider smoke: **NOT TESTED**. Real PayPal remote search/reconciliation/error-path behavior not established by this single happy-path create.
+- AG reports `pnpm validate` PASS (235 unit), `TEST_DATABASE_URL=... pnpm test:db` PASS (187 PostgreSQL); GitHub Project Baseline and Stack CI independently confirmed SUCCESS on PR #4 at `4982201918d0030234fdbabbc297375c02c01e5d`.
+- Genuine OpenAI Responses provider smoke: **NOT TESTED**. Real PayPal remote search/reconciliation/timeout/error-path behavior, alternative recipient/invoicer shapes, and tax/discount mappings are **NOT TESTED** against live PayPal Sandbox (verified with deterministic mock transports and PostgreSQL tests only).
 - PR #5 docs-only changes need their own exact-head checks and independent review; the prior code PR CI does not apply to its new SHA.
 
 ### Continuation notes
 - Update canonical docs truthfully; maintain historical C6 handoff unchanged and keep buyer/merchant contact information, secrets and tokens outside GitHub.
+- Operational limitations: in-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](docs/SECURITY.md#runtime-boundaries).
+- **Open code remediation (known review finding):** Codex review on PR #4 identified that CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omits `Idempotency-Key` (though invoice save supports that header). It has no effect today because the web app is a placeholder and Vite proxies only `/health`, but it will block cross-origin browser callers sending an idempotency key. This code remediation is deferred from this docs-only PR to a proposed bounded follow-up task before cross-origin browser invoice-save integration:
+  1. Add `Idempotency-Key` to CORS `allowedHeaders` in `apps/api/src/app.ts`.
+  2. Add browser-style `OPTIONS` preflight regression test in `apps/api/src/app.test.ts`.
+  3. Verify unapproved origins remain blocked.
+  4. Verify session, Origin, and CSRF checks remain unchanged.
+  5. Independent review before merge.
 - No new PayPal create is authorized; do not reset local one-create guard or enable sending/webhooks.
 - No approved UI design or next implementation phase. This is a docs reconciliation handoff, not release clearance.
 
