@@ -6,11 +6,11 @@
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
 - **Current phase:** NMI-CORS-01 — **ACTIVE BOUNDED REMEDIATION**.
-- **Status:** NMI-P2-I2 completed and squash-merged (PR #4 at `07409bf32068362b9f5b711b64ef0399d588169e`, PR #5 documentation reconciliation squash-merged at `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`). Active bounded remediation NMI-CORS-01 resolves the known `Idempotency-Key` CORS preflight defect before browser invoice-save integration; audited by GPT-6 on Draft PR #6 (`eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`) with verdict PASS WITH MINOR FINDINGS; documentation updated for audit closure.
+- **Status:** NMI-P2-I2 completed and squash-merged (PR #4 at `07409bf32068362b9f5b711b64ef0399d588169e`, PR #5 documentation reconciliation squash-merged at `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`). Active bounded remediation NMI-CORS-01 resolves the known `Idempotency-Key` CORS preflight defect before browser invoice-save integration; implementation complete on Draft PR #6; audited by GPT-6 with minor documentation findings; GOV-1 resolved and awaiting final independent audit verification.
 - **Primary branch:** `main` (merge commit `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`).
 - **Working branch:** `fix/nmi-cors-idempotency-header` (Draft PR #6).
 - **Active task:** `tasks/NMI-CORS-01-idempotency-header.md`.
-- **Active handoff:** NMI-CORS-01-REMEDIATION
+- **Active handoff:** NMI-CORS-01-C2
 
 ## Accepted evidence
 - **Audit and CI:** C6 exact-head independent source/security audit PASS; Project Baseline CI and Stack CI SUCCESS on PR #4 at `4982201918d0030234fdbabbc297375c02c01e5d`. PR #5 documentation reconciliation CI passed and was squash-merged into main at `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`.
@@ -33,16 +33,16 @@
 - Architecture decisions: PostgreSQL-only versus SQLite support, hosting strategy, demo availability through judging.
 - Do **not** reuse the completed one-create Sandbox authorization or reset its exhausted budget. New external writes require new owner approval.
 - **Operational limitations:** In-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](SECURITY.md).
-- **Active code remediation (NMI-CORS-01):** Resolves the known Codex review finding where CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omitted `Idempotency-Key`. Implemented on branch `fix/nmi-cors-idempotency-header` and audited by GPT-6 on Draft PR #6 (PASS WITH MINOR FINDINGS at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`):
+- **Active code remediation (NMI-CORS-01):** Resolves the known Codex review finding where CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omitted `Idempotency-Key`. Implemented on branch `fix/nmi-cors-idempotency-header` at code HEAD `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` and audited by GPT-6 on Draft PR #6 (PASS WITH MINOR FINDINGS; GOV-1 documentation governance remediated):
   1. Added `idempotency-key` to CORS `allowedHeaders` in `apps/api/src/app.ts`.
   2. Added browser-style `OPTIONS` preflight regression tests in `apps/api/src/app.test.ts`.
   3. Verified unapproved origins remain blocked and unlisted headers are not authorized.
   4. Verified session authentication, Origin checks, and CSRF enforcement remain unchanged.
   5. Test counts verified: 236 unit + 187 PostgreSQL = 423 passing tests (historical P2-I2 count of 235 unit / 422 total preserved above).
-  6. Test-stability observation: Stack CI attempt 1 had an intermittent 20-second timeout on `apps/api/src/invoice-drafts.pg.test.ts` concurrency test (186/187 database tests passed); attempt 2 passed completely (187/187) on the exact same commit without code changes. Tracked as a test-stability observation; not caused by CORS changes; concurrency assertions preserved.
-  7. Draft PR #6 documentation updated to resolve MINOR-1, awaiting final independent verification before owner merge authorization.
+  6. Test-stability observation: Stack CI attempt 1 had an intermittent 20-second timeout on `apps/api/src/invoice-drafts.pg.test.ts` concurrency test (186/187 database tests passed); attempt 2 passed completely (187/187) on the exact same commit without code changes. Tracked as a test-stability observation; no causal link to this CORS change was established; concurrency assertions preserved.
+  7. Draft PR #6 documentation updated (NMI-CORS-01-C2 handoff appended, original NMI-CORS-01-REMEDIATION restored), awaiting final independent audit verification before owner merge authorization.
 - **PR #5:** Squash-merged into main at `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`.
 - No deployment, production release or privileged PayPal financial operation authorized.
 
 ## Next action
-Final independent verification of Draft PR #6 documentation updates for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`). Keep unmerged until owner approval.
+Final independent audit verification of Draft PR #6 documentation updates for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`). Keep unmerged until owner merge authorization.

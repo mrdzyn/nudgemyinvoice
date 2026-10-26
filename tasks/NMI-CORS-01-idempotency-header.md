@@ -1,11 +1,11 @@
 # NMI-CORS-01 — CORS Idempotency-Key Preflight Support
 
-- **Status:** Complete (Audited PASS with minor findings resolved)
+- **Status:** Complete (Awaiting final independent audit verification)
 - **Owner/orchestrator:** Product Owner / Antigravity
 - **Implementation agent:** Antigravity
 - **Target branch:** `main`
 - **Working branch:** `fix/nmi-cors-idempotency-header`
-- **Audited HEAD:** `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` (Audit: PASS WITH MINOR FINDINGS)
+- **Code implementation HEAD:** `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`
 
 ## Objective
 
@@ -70,5 +70,5 @@ Codex audit finding F5 on PR #4 identified that `apps/api/src/app.ts:61–65` co
 
 ## Audit and test-stability observations
 
-- **Independent audit (GPT-6):** PR #6 audited at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` with verdict `PASS WITH MINOR FINDINGS` (comment [6419991326](https://github.com/mrdzyn/nudgemyinvoice/pull/6#issuecomment-6419991326)). No blocking defects found. MINOR-1 addressed by updating task acceptance checkboxes and aligning test count to 236 unit + 187 PostgreSQL = 423 total.
-- **Test stability (INFO-2):** On hosted Stack CI attempt 1 (run 40346777251), `apps/api/src/invoice-drafts.pg.test.ts` test `"12 simultaneous requests (double click): the 11 rivals are refused WHILE the winner is inside PayPal, and only one create happens"` hit a 20-second timeout (186/187 database tests passed). Attempt 2 on the exact same commit passed all 187 database tests in 1m6s without code changes. Tracked as a pre-existing test timing observation; not caused by the CORS allowlist modification. The concurrency assertion remains unchanged.
+- **Independent audit (GPT-6):** PR #6 code HEAD audited at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` with verdict `PASS WITH MINOR FINDINGS` (comment [6419991326](https://github.com/mrdzyn/nudgemyinvoice/pull/6#issuecomment-6419991326)); re-audit comment [6420379629](https://github.com/mrdzyn/nudgemyinvoice/pull/6#issuecomment-6420379629) requested GOV-1 handoff governance remediation. MINOR-1 addressed by updating task acceptance checkboxes and aligning test count to 236 unit + 187 PostgreSQL = 423 total. Final independent audit verdict pending.
+- **Test stability (INFO-2):** On hosted Stack CI attempt 1 (run 40346777251), `apps/api/src/invoice-drafts.pg.test.ts` test `"12 simultaneous requests (double click): the 11 rivals are refused WHILE the winner is inside PayPal, and only one create happens"` hit a 20-second timeout (186/187 database tests passed). Attempt 2 on the exact same commit passed all 187 database tests in 1m6s without code changes. Tracked as a pre-existing test timing observation; no causal link to this CORS change was established. The concurrency assertion remains unchanged.

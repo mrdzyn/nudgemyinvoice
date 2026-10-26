@@ -609,8 +609,8 @@ Independently audit Draft PR #5's exact HEAD, documentation diff and applicable 
 - **To:** Independent auditor (Codex) / Product owner
 - **Branch:** `fix/nmi-cors-idempotency-header`
 - **Base commit:** `397c5d0376ef37cfd7f7debb93ac3f8387be5fea` (`main`)
-- **PR:** [#6](https://github.com/mrdzyn/nudgemyinvoice/pull/6) (Draft, NMI-CORS-01)
-- **State:** Audited by GPT-6 (PASS WITH MINOR FINDINGS at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`); minor docs findings resolved; awaiting final verification
+- **PR:** Draft PR (NMI-CORS-01)
+- **State:** Implementation and regression tests complete; awaiting independent audit
 
 ### Completed
 - In `apps/api/src/app.ts`, updated `@fastify/cors` registration: added `"idempotency-key"` to `allowedHeaders: ["content-type", "x-csrf-token", "idempotency-key"]`.
@@ -621,28 +621,64 @@ Independently audit Draft PR #5's exact HEAD, documentation diff and applicable 
   - Foreign origin (e.g. `https://evil.example`) receives no CORS allow headers.
   - Unlisted custom request headers (e.g. `x-unlisted-custom-header`) are not added to `access-control-allow-headers`.
 - Preserved all security invariants: exact `WEB_ORIGIN` equality check, allowed HTTP methods (`GET`, `POST`, `OPTIONS`), mutating request fail-closed Origin validation, session cookie authentication, and CSRF token verification.
-- Documented bounded task in `tasks/NMI-CORS-01-idempotency-header.md` with verified acceptance criteria marked complete.
-- Updated `docs/STATUS.md` confirming PR #5 squash merge (`397c5d0376ef37cfd7f7debb93ac3f8387be5fea`), recording NMI-P2-I2 as complete, tracking NMI-CORS-01, and recording audit closure.
+- Documented bounded task in `tasks/NMI-CORS-01-idempotency-header.md`.
+- Updated `docs/STATUS.md` confirming PR #5 squash merge (`397c5d0376ef37cfd7f7debb93ac3f8387be5fea`), recording NMI-P2-I2 as complete, and activating NMI-CORS-01.
 
 ### Validation
 - `apps/api/src/app.test.ts`: 13/13 tests pass (including new CORS preflight cases).
 - `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
 - `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests, including invoice draft idempotency tests).
-- Total automated tests: 236 unit + 187 PostgreSQL = 423 passing tests (historical P2-I2 count of 235 unit / 422 total preserved).
 - `python3 scripts/validate_project_profile.py`: PASS.
 - Real PayPal Sandbox and OpenAI providers: zero external requests dispatched; 1/1 Sandbox budget guard remains intact and exhausted.
-
-### Test-stability observation
-- Hosted Stack CI attempt 1 had an intermittent 20-second timeout on `apps/api/src/invoice-drafts.pg.test.ts` concurrency test (`"12 simultaneous requests (double click)..."`, 186/187 database tests passed).
-- Attempt 2 passed completely (187/187 database tests) on the exact same commit without code changes.
-- Tracked for separate test-stability investigation; not caused by the CORS header change. Concurrency assertions are preserved without weakening.
 
 ### Continuation notes
 - UI design gate remains Not applicable for this backend/security fix.
 - No schema, database, migration, or dependency changes.
-- Ready for final independent verification and owner merge authorization.
+- Once independently audited and approved, Draft PR can be marked ready for owner review and squash merge into main.
 
 ### Next action
-Independent verification of the updated documentation commit on Draft PR #6 (`fix/nmi-cors-idempotency-header`). Keep unmerged until owner approval.
+Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`) against task contract, security boundaries, and hosted CI.
+
+## Handoff: NMI-CORS-01-C2
+
+- **Task / phase:** `tasks/NMI-CORS-01-idempotency-header.md`
+- **From:** Implementation agent (Antigravity)
+- **To:** Independent auditor (Codex) / Product owner
+- **Branch:** `fix/nmi-cors-idempotency-header`
+- **Base commit:** `397c5d0376ef37cfd7f7debb93ac3f8387be5fea` (`main`)
+- **PR:** [#6](https://github.com/mrdzyn/nudgemyinvoice/pull/6) (Draft, NMI-CORS-01)
+- **Code implementation HEAD:** `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`
+- **Audit reference:** [PR #6 comment 6419991326](https://github.com/mrdzyn/nudgemyinvoice/pull/6#issuecomment-6419991326) (PASS WITH MINOR FINDINGS) and [PR #6 comment 6420379629](https://github.com/mrdzyn/nudgemyinvoice/pull/6#issuecomment-6420379629) (FIX REQUIRED for GOV-1)
+- **State:** Implementation complete; documentation governance GOV-1 resolved; awaiting final independent audit verification
+
+### Completed
+- Restored original `NMI-CORS-01-REMEDIATION` handoff section exactly as published at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` to maintain historical integrity.
+- Appended this new unique handoff `NMI-CORS-01-C2` documenting audit findings, documentation closure, test reconciliation, and stability tracking.
+- Code implementation and tests remain byte-identical to audited `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`:
+  - `apps/api/src/app.ts`: CORS `allowedHeaders` explicitly includes `"idempotency-key"`.
+  - `apps/api/src/app.test.ts`: browser-style preflight regression tests verifying 204 response, credentials, case-insensitivity, and rejection of foreign origins / unlisted headers.
+- Reconciled task test counts in `tasks/NMI-CORS-01-idempotency-header.md` to 236 unit + 187 PostgreSQL = 423 total passing tests and ticked verified acceptance checkboxes.
+- Updated `docs/STATUS.md` pointing `Active handoff` to `NMI-CORS-01-C2` while preserving historical P2-I2 test counts (235/422).
+
+### Validation
+- `apps/api/src/app.test.ts`: 13/13 unit tests pass.
+- `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
+- `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests, including draft idempotency tests).
+- Total automated tests: 236 unit + 187 PostgreSQL = 423 passing tests (historical P2-I2 count was 235 unit / 422 total).
+- `python3 scripts/validate_project_profile.py`: PASS.
+- Zero calls made to external PayPal or OpenAI providers; 1/1 Sandbox budget guard remains intact and exhausted.
+
+### Test-stability observation
+- Hosted Stack CI attempt 1 at code HEAD `eb2b8e3` had an intermittent 20-second timeout on `apps/api/src/invoice-drafts.pg.test.ts` concurrency test (`"12 simultaneous requests (double click)..."`, 186/187 database tests passed).
+- Attempt 2 passed completely (187/187 database tests) on the exact same commit without code changes.
+- Tracked for separate test-stability investigation; no causal link to this CORS change was established. Concurrency assertions are preserved without weakening.
+
+### Continuation notes
+- UI design gate remains Not applicable for this backend/security fix.
+- No schema, database, migration, or dependency changes.
+- The task does not claim a final independent PASS; awaiting final independent verification.
+
+### Next action
+Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-header`). Await separate product owner merge authorization.
 
 <!-- HANDOFF_ENTRIES_END -->
