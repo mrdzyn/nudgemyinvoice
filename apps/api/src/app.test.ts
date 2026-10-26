@@ -81,6 +81,75 @@ describe("api (no database)", () => {
     await pool.end();
   });
 
+  it("answers browser CORS preflight for /api/invoice-drafts including Idempotency-Key", async () => {
+    const { app, pool } = offlineApp();
+
+    // Browser preflight with Content-Type, X-CSRF-Token, and Idempotency-Key from configured web origin
+    const res = await app.inject({
+      method: "OPTIONS",
+      url: "/api/invoice-drafts",
+      headers: {
+        origin: baseEnv.WEB_ORIGIN,
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "content-type, x-csrf-token, idempotency-key",
+      },
+    });
+    expect(res.statusCode).toBe(204);
+    expect(res.headers["access-control-allow-origin"]).toBe(baseEnv.WEB_ORIGIN);
+    expect(res.headers["access-control-allow-credentials"]).toBe("true");
+    const allowHeaders = String(res.headers["access-control-allow-headers"]).toLowerCase();
+    expect(allowHeaders).toContain("content-type");
+    expect(allowHeaders).toContain("x-csrf-token");
+    expect(allowHeaders).toContain("idempotency-key");
+
+    // Case-insensitive request headers (e.g. standard browser Capitalized casing)
+    const mixedCase = await app.inject({
+      method: "OPTIONS",
+      url: "/api/invoice-drafts",
+      headers: {
+        origin: baseEnv.WEB_ORIGIN,
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "Content-Type, X-CSRF-Token, Idempotency-Key",
+      },
+    });
+    expect(mixedCase.statusCode).toBe(204);
+    expect(mixedCase.headers["access-control-allow-origin"]).toBe(baseEnv.WEB_ORIGIN);
+    expect(mixedCase.headers["access-control-allow-credentials"]).toBe("true");
+    expect(String(mixedCase.headers["access-control-allow-headers"]).toLowerCase()).toContain(
+      "idempotency-key",
+    );
+
+    // Disallowed origin does not receive CORS authorization
+    const badOrigin = await app.inject({
+      method: "OPTIONS",
+      url: "/api/invoice-drafts",
+      headers: {
+        origin: "https://evil.example",
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "content-type, x-csrf-token, idempotency-key",
+      },
+    });
+    expect(badOrigin.headers["access-control-allow-origin"]).toBeUndefined();
+    expect(badOrigin.headers["access-control-allow-credentials"]).toBeUndefined();
+
+    // Unknown request headers are not automatically added to the allowlist
+    const unlisted = await app.inject({
+      method: "OPTIONS",
+      url: "/api/invoice-drafts",
+      headers: {
+        origin: baseEnv.WEB_ORIGIN,
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "content-type, x-unlisted-custom-header",
+      },
+    });
+    expect(String(unlisted.headers["access-control-allow-headers"]).toLowerCase()).not.toContain(
+      "x-unlisted-custom-header",
+    );
+
+    await app.close();
+    await pool.end();
+  });
+
   it("unknown audit-looking routes do not exist", async () => {
     const { app, pool } = offlineApp();
     for (const url of ["/api/audit", "/api/audit-log", "/audit", "/api/auth/audit"]) {
