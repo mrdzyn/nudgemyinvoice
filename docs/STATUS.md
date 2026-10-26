@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01A — **DESIGN INCREMENT (Awaiting Owner Visual Approval)**.
-- **Status:** NMI-CORS-01 squash-merged into main (PR #6 at `2864761ca902ffd6ed6628c183298bcc6e5c59c1`). Current phase NMI-UI-01A establishes the visual design, semantic tokens, synthetic multi-currency fixtures, screen specifications, and interactive browser preview (`design/preview/index.html`) for operator visual review and approval. Design-only increment; zero frontend shell or backend logic changes.
+- **Current phase:** NMI-UI-01A — **DESIGN INCREMENT (remediated; ready for independent re-audit; owner visual approval pending)**.
+- **Status:** NMI-CORS-01 squash-merged into main (PR #6 at `2864761ca902ffd6ed6628c183298bcc6e5c59c1`). Draft PR #7 (design only) received an independent audit of `ad69ad8` = **FIX REQUIRED** ([comment](https://github.com/mrdzyn/nudgemyinvoice/pull/7#issuecomment-6422310129)). The remediation rebuilt the interactive preview (every state and handler working with synthetic fixtures), aligned the design to the strict `invoiceDraftSchema` and login contract, enforced the 2,000-character AI limit, replaced the genuine Sandbox invoice id in fixtures, corrected AG Studio and OpenAI privacy statements, and added real-browser evidence. It awaits independent re-audit; the owner design gate is **not** approved. No production code, schema, dependency or provider call changed.
 - **Primary branch:** `main` (merge commit `2864761ca902ffd6ed6628c183298bcc6e5c59c1`).
 - **Working branch:** `design/nmi-ui-01a-invoice-interface`.
 - **Active task:** `tasks/NMI-UI-01A-invoice-interface-design.md`.
-- **Active handoff:** NMI-UI-01A-DESIGN
+- **Active handoff:** NMI-UI-01A-REMEDIATION-1
 
 ## Accepted evidence
 - **Audit and CI:** C6 exact-head independent source/security audit PASS on PR #4 (`4982201918d0030234fdbabbc297375c02c01e5d`). PR #5 documentation reconciliation CI passed and was squash-merged into main at `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`. PR #6 CORS preflight fix (`Idempotency-Key` in `allowedHeaders`) passed Project Baseline CI and Stack CI and was squash-merged into main at `2864761ca902ffd6ed6628c183298bcc6e5c59c1`.
@@ -29,8 +29,9 @@
 - Frontend web application remains a placeholder pending visual design approval (NMI-UI-01A).
 
 ## Deferred / open gates
+- **Manual QA still pending (not covered by automation):** screen reader (VoiceOver/NVDA), real touch devices, Safari and Firefox, 400% browser zoom.
 - **Human Design Approval Gate:** Visual review and explicit approval of `design/screens/NMI-UI-01A-SCREENS.md` and `design/preview/index.html` required prior to UI shell implementation.
-- **AG Studio Integration:** Dashboard uses accessible HTML5 table fallback; AG Studio integration deferred until licensing, trial coverage (active through Dec 15), and sponsor keys are authorized.
+- **AG Studio Integration:** license terms, trial period and keys are **unverified** and need owner confirmation. The dashboard is designed as an accessible native table; AG Studio is not enabled.
 - **Backend API Seam:** Backend supports `GET /api/invoice-drafts/:id` but lacks a general list endpoint (`GET /api/invoice-drafts`); dashboard currently uses clearly marked synthetic fixtures (`design/fixtures/invoice-fixtures.json`).
 - Real OpenAI smoke; PayPal sending/grant issuance, reminder automation, webhook receipt/payment reconciliation, deployment, and production PayPal use.
 - Architecture decisions: PostgreSQL-only versus SQLite support, hosting strategy, demo availability through judging.
@@ -39,4 +40,4 @@
 - No deployment, production release or privileged PayPal financial operation authorized.
 
 ## Next action
-Submit design specification (`design/screens/NMI-UI-01A-SCREENS.md`), semantic tokens (`design/tokens/design-tokens.json`), synthetic fixtures (`design/fixtures/invoice-fixtures.json`), and interactive preview (`design/preview/index.html`) on Draft PR for owner visual review and approval.
+Independently re-audit Draft PR #7 at its exact new HEAD (read `design/evidence/NMI-UI-01A/QA-RESULTS.md`, re-run `design/fixtures/verify-fixtures.mjs` and the browser QA if desired). Only after a PASS may the owner decide on visual approval. Do not start NMI-UI-01B, merge or deploy without owner direction.

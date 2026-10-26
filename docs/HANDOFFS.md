@@ -731,4 +731,35 @@ Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-h
 ### Next action
 Open Draft PR and request owner visual approval on `design/preview/index.html` and `design/screens/NMI-UI-01A-SCREENS.md`.
 
+## Handoff: NMI-UI-01A-REMEDIATION-1
+
+- **Task / phase:** `tasks/NMI-UI-01A-invoice-interface-design.md`
+- **From:** Implementation agent (design remediation)
+- **To:** Independent reviewer of Draft PR #7, then product owner
+- **Branch:** `design/nmi-ui-01a-invoice-interface`
+- **Audited head being remediated:** `ad69ad8d33f15500eed269bb556f9f60eb76e5f5` ([FIX REQUIRED](https://github.com/mrdzyn/nudgemyinvoice/pull/7#issuecomment-6422310129))
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Design-only; owner visual approval not given or predeclared. The earlier `NMI-UI-01A-DESIGN` entry above is preserved unchanged as history; where it conflicts with this entry (for example the AG Studio trial wording and the unsupported fields), this entry and the current task/spec govern.
+
+### Completed
+- **MAJOR-1:** preview rewritten with no inline handlers; every state (loading, validation errors, manual entry, clarification, currency change, line add/remove, PayPal disabled and the other PayPal outcomes, confirmation dialog) is reachable and fixture-only.
+- **MAJOR-2:** login now requires username and password (empty password, no remember-me); AI input limit is 2,000 with counter and error state; review form matches the strict schema (required customer email; invoice number, issue date, PO/reference and fixed tax removed and listed as deferred); no Delete, Updated-at, dispatch time or audit timeline; rounding described honestly with a PayPal refusal preview instead of silent correction; only server-computed totals are labelled as such.
+- **MAJOR-3:** fixtures no longer contain the genuine Sandbox smoke invoice id (fabricated `INV2-DEMO-FAKE-...` ids). Fixtures were also corrected so a "PayPal created" invoice is one the real mapping rules would accept; a fourth GBP fixture demonstrates a refused draft. All fixtures are checked against the real `calculateTotals` and `assertExactMapping`.
+- **MINOR-4:** AG Studio described as unverified and not enabled; OpenAI disclosure says text may be sent when configured and real parsing is NOT TESTED.
+- Tokens v1.1.0: dark primary action colour fixed for contrast, muted text and input borders adjusted.
+- Evidence: `design/evidence/NMI-UI-01A/` (QA-RESULTS.md, 59 screenshots, reproducible `run-browser-qa.mjs`) and `design/fixtures/verify-fixtures.mjs`.
+
+### Validation
+- Real headless Chrome run, 93 of 93 automated checks passed: keyboard-only end-to-end flow with real key events, dialog focus trap and restore, contrast across 5 screens and 23 states in both themes, no horizontal scroll at 390px and 320px, mobile 44px and desktop 24px targets, focus outlines, reduced motion, zero http(s) requests and zero console errors.
+- `verify-fixtures.mjs`: all checks passed. `python3 scripts/validate_project_profile.py` and `pnpm validate` passed locally. Hosted CI at the exact new head is recorded on the PR.
+- **NOT covered:** screen reader testing, real touch devices, Safari/Firefox, 400% zoom (320px reflow checked instead).
+- No PayPal or OpenAI call; the preview runs under a CSP that forbids network access. Real OpenAI parsing and PayPal search/reconciliation error paths remain NOT TESTED against the live providers.
+
+### Continuation notes
+- Open owner decisions are listed in section 8 of `design/screens/NMI-UI-01A-SCREENS.md` (AG Studio license, session-expiry draft retention, list endpoint, draft editing).
+- Do not modify `apps/web` or `apps/api`, start NMI-UI-01B, merge or deploy without separate owner direction.
+
+### Next action
+Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on visual approval.
+
+
 <!-- HANDOFF_ENTRIES_END -->

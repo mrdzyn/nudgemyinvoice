@@ -3,7 +3,8 @@
     "project": "NudgeMyInvoice",
     "description": "Semantic design tokens for NudgeMyInvoice SaaS web application. Includes light/dark theme roles, PayPal Sandbox brand tokens, and currency/status roles.",
     "wcagTarget": "WCAG 2.2 AA",
-    "version": "1.0.0"
+    "version": "1.1.0",
+    "changeNote": "NMI-UI-01A remediation: dark action.primary lowered to #2563EB so white button text meets 4.5:1 (it was #3B82F6, about 3.7:1); muted text darkened/lightened to pass on sunken surfaces; added border.input (>= 3:1 against its surface) for form controls; focus ring colours strengthened. Verified by design/evidence/NMI-UI-01A/run-browser-qa.mjs."
   },
   "color": {
     "light": {
@@ -24,7 +25,7 @@
       "text": {
         "primary": "#0F172A",
         "secondary": "#475569",
-        "muted": "#64748B",
+        "muted": "#55657A",
         "inverse": "#FFFFFF",
         "onAction": "#FFFFFF",
         "sandboxBanner": "#92400E",
@@ -34,7 +35,8 @@
       "border": {
         "default": "#E2E8F0",
         "strong": "#CBD5E1",
-        "focus": "#2563EB",
+        "input": "#64748B",
+        "focus": "#1D4ED8",
         "sandbox": "#F59E0B",
         "danger": "#EF4444"
       },
@@ -102,7 +104,7 @@
       "text": {
         "primary": "#F8FAFC",
         "secondary": "#CBD5E1",
-        "muted": "#94A3B8",
+        "muted": "#A3B2C6",
         "inverse": "#0F172A",
         "onAction": "#FFFFFF",
         "sandboxBanner": "#FDE68A",
@@ -112,13 +114,14 @@
       "border": {
         "default": "#1F2937",
         "strong": "#374151",
-        "focus": "#60A5FA",
+        "input": "#8798AD",
+        "focus": "#93C5FD",
         "sandbox": "#D97706",
         "danger": "#EF4444"
       },
       "action": {
-        "primary": "#3B82F6",
-        "primaryHover": "#2563EB",
+        "primary": "#2563EB",
+        "primaryHover": "#3B73F0",
         "secondary": "#1E293B",
         "secondaryHover": "#334155",
         "secondaryText": "#F8FAFC",

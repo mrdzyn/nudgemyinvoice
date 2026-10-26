@@ -1,16 +1,14 @@
 {
   "_meta": {
-    "description": "Synthetic, realistic invoice fixtures for NudgeMyInvoice design review. Zero production secrets or real customer data.",
+    "description": "Synthetic invoice fixtures for NudgeMyInvoice design review (NMI-UI-01A). Every name, email, ID and amount is fabricated. Shapes mirror GET /api/invoice-drafts/:id; totals are recomputed and checked by design/fixtures/verify-fixtures.mjs. No real PayPal or OpenAI response is represented.",
     "currenciesRepresented": [
       "USD",
       "EUR",
+      "GBP",
       "JPY"
     ],
-    "backendAlignment": {
-      "integerMinorUnits": true,
-      "exactArithmeticVerified": true,
-      "currencySeparated": true
-    }
+    "fixtureIdPolicy": "Draft ids and PayPal ids are fabricated. PayPal ids use the INV2-DEMO-FAKE prefix and never equal a real Sandbox id.",
+    "backendShape": "id, draft (strict invoiceDraftSchema), totals (server-computed), paypalInvoiceId, createdAt, paypal{state,paypalInvoiceId,lastErrorCode}"
   },
   "invoices": [
     {
@@ -31,12 +29,9 @@
             "unitPrice": "150.00"
           }
         ],
-        "dueDate": "2026-11-30",
-        "taxPercent": "8.25",
-        "discount": {
-          "kind": "percent",
-          "value": "10.00"
-        }
+        "dueDate": "2026-12-15",
+        "taxPercent": "8",
+        "discount": null
       },
       "totals": {
         "currency": "USD",
@@ -45,16 +40,15 @@
           "150.00"
         ],
         "subtotal": "650.00",
-        "discount": "65.00",
-        "tax": "48.26",
-        "total": "633.26"
+        "discount": "0.00",
+        "tax": "52.00",
+        "total": "702.00"
       },
+      "paypalInvoiceId": "INV2-DEMO-FAKE-0000-0001",
       "paypal": {
         "state": "created",
-        "paypalInvoiceId": "INV2-U92W-76NX-3P2E-AGUZ",
-        "remoteStatus": "DRAFT",
-        "lastErrorCode": null,
-        "disclosure": "Remote draft created in PayPal Sandbox. Customer has NOT been emailed. Send approval required."
+        "paypalInvoiceId": "INV2-DEMO-FAKE-0000-0001",
+        "lastErrorCode": null
       },
       "createdAt": "2026-10-26T12:00:00.000Z"
     },
@@ -72,7 +66,7 @@
           }
         ],
         "dueDate": "2026-11-20",
-        "taxPercent": "19.00",
+        "taxPercent": "19",
         "discount": null
       },
       "totals": {
@@ -85,12 +79,11 @@
         "tax": "242.25",
         "total": "1517.25"
       },
+      "paypalInvoiceId": null,
       "paypal": {
         "state": "none",
         "paypalInvoiceId": null,
-        "remoteStatus": null,
-        "lastErrorCode": null,
-        "disclosure": "Saved in local PostgreSQL database only. Not submitted to PayPal Sandbox."
+        "lastErrorCode": null
       },
       "createdAt": "2026-10-26T14:30:00.000Z"
     },
@@ -102,18 +95,13 @@
         "currency": "JPY",
         "lineItems": [
           {
-            "description": "Web performance audit & Core Web Vitals remediation",
-            "quantity": "1",
-            "unitPrice": "85000"
-          },
-          {
             "description": "Technical advisory retainer (hours)",
             "quantity": "4",
             "unitPrice": "12500"
           }
         ],
         "dueDate": "2026-12-05",
-        "taxPercent": "10.00",
+        "taxPercent": "10",
         "discount": {
           "kind": "amount",
           "value": "5000"
@@ -122,53 +110,211 @@
       "totals": {
         "currency": "JPY",
         "lineTotals": [
-          "85000",
           "50000"
         ],
-        "subtotal": "135000",
+        "subtotal": "50000",
         "discount": "5000",
-        "tax": "13000",
-        "total": "143000"
+        "tax": "4500",
+        "total": "49500"
       },
+      "paypalInvoiceId": null,
       "paypal": {
         "state": "creating",
         "paypalInvoiceId": null,
-        "remoteStatus": null,
-        "lastErrorCode": null,
-        "disclosure": "PayPal draft creation in progress; operation fenced with single-claim lease."
+        "lastErrorCode": null
       },
       "createdAt": "2026-10-26T16:45:00.000Z"
+    },
+    {
+      "id": "3c6d1a58-92e4-4b7f-a0d3-5e8b4c7f1a29",
+      "draft": {
+        "customerName": "Northwind Studio Ltd",
+        "customerEmail": "accounts@northwind.example",
+        "currency": "GBP",
+        "lineItems": [
+          {
+            "description": "Design workshop (days)",
+            "quantity": "3",
+            "unitPrice": "275.00"
+          },
+          {
+            "description": "Asset licensing",
+            "quantity": "1",
+            "unitPrice": "150.00"
+          }
+        ],
+        "dueDate": "2026-12-10",
+        "taxPercent": "20",
+        "discount": {
+          "kind": "percent",
+          "value": "10"
+        }
+      },
+      "totals": {
+        "currency": "GBP",
+        "lineTotals": [
+          "825.00",
+          "150.00"
+        ],
+        "subtotal": "975.00",
+        "discount": "97.50",
+        "tax": "175.50",
+        "total": "1053.00"
+      },
+      "paypalInvoiceId": null,
+      "paypal": {
+        "state": "none",
+        "paypalInvoiceId": null,
+        "lastErrorCode": null
+      },
+      "createdAt": "2026-10-27T09:15:00.000Z"
     }
   ],
-  "dashboardSummaries": {
-    "USD": {
+  "parseScenarios": [
+    {
+      "id": "usd-draft",
+      "label": "USD · clear request",
       "currency": "USD",
-      "count": 1,
-      "outstandingTotal": "633.26",
-      "overdueTotal": "0.00",
-      "localDraftCount": 0,
-      "sandboxDraftCount": 1
+      "text": "Invoice Acme Design (billing@acme.example) for 2 brand identity logo concepts at 250 USD each and 1 typography guide at 150 USD. 8% tax, due December 15.",
+      "outcome": {
+        "status": "draft",
+        "draft": {
+          "customerName": "Acme Design LLC",
+          "customerEmail": "billing@acme.example",
+          "currency": "USD",
+          "lineItems": [
+            {
+              "description": "Brand identity & primary logo system",
+              "quantity": "2",
+              "unitPrice": "250.00"
+            },
+            {
+              "description": "Typography and color specification guide",
+              "quantity": "1",
+              "unitPrice": "150.00"
+            }
+          ],
+          "dueDate": "2026-12-15",
+          "taxPercent": "8",
+          "discount": null
+        },
+        "totals": {
+          "currency": "USD",
+          "lineTotals": [
+            "500.00",
+            "150.00"
+          ],
+          "subtotal": "650.00",
+          "discount": "0.00",
+          "tax": "52.00",
+          "total": "702.00"
+        }
+      }
     },
-    "EUR": {
+    {
+      "id": "eur-clarify",
+      "label": "EUR · needs clarification",
       "currency": "EUR",
-      "count": 1,
-      "outstandingTotal": "1517.25",
-      "overdueTotal": "0.00",
-      "localDraftCount": 1,
-      "sandboxDraftCount": 0
+      "text": "Bill Beispiel GmbH for 12 hours of advisory at 110 EUR per hour plus 197.25 EUR travel. VAT applies.",
+      "outcome": {
+        "status": "needs_clarification",
+        "questions": [
+          {
+            "field": "customerEmail",
+            "question": "What billing email address should be used for Beispiel GmbH?"
+          },
+          {
+            "field": "dueDate",
+            "question": "What due date should the invoice use?"
+          }
+        ]
+      },
+      "afterClarification": {
+        "status": "draft",
+        "draft": {
+          "customerName": "Beispiel GmbH",
+          "customerEmail": "rechnung@beispiel.example",
+          "currency": "EUR",
+          "lineItems": [
+            {
+              "description": "Advisory (hours)",
+              "quantity": "12",
+              "unitPrice": "110.00"
+            },
+            {
+              "description": "Travel expense",
+              "quantity": "1",
+              "unitPrice": "197.25"
+            }
+          ],
+          "dueDate": "2026-11-30",
+          "taxPercent": "19",
+          "discount": null
+        },
+        "totals": {
+          "currency": "EUR",
+          "lineTotals": [
+            "1320.00",
+            "197.25"
+          ],
+          "subtotal": "1517.25",
+          "discount": "0.00",
+          "tax": "288.28",
+          "total": "1805.53"
+        }
+      }
     },
-    "JPY": {
+    {
+      "id": "jpy-draft",
+      "label": "JPY · zero-decimal currency",
       "currency": "JPY",
-      "count": 1,
-      "outstandingTotal": "143000",
-      "overdueTotal": "0.00",
-      "localDraftCount": 1,
-      "sandboxDraftCount": 0
+      "text": "Sakura Creative Studio (accounting@sakura.example): 4 advisory hours at 12500 JPY. 5000 JPY discount, 10% tax, due December 5.",
+      "outcome": {
+        "status": "draft",
+        "draft": {
+          "customerName": "Sakura Creative Studio (サクラ・クリエイティブ)",
+          "customerEmail": "accounting@sakura.example",
+          "currency": "JPY",
+          "lineItems": [
+            {
+              "description": "Technical advisory retainer (hours)",
+              "quantity": "4",
+              "unitPrice": "12500"
+            }
+          ],
+          "dueDate": "2026-12-05",
+          "taxPercent": "10",
+          "discount": {
+            "kind": "amount",
+            "value": "5000"
+          }
+        },
+        "totals": {
+          "currency": "JPY",
+          "lineTotals": [
+            "50000"
+          ],
+          "subtotal": "50000",
+          "discount": "5000",
+          "tax": "4500",
+          "total": "49500"
+        }
+      }
+    },
+    {
+      "id": "unparseable",
+      "label": "Unparseable request",
+      "currency": null,
+      "text": "Please send the invoice we talked about last week.",
+      "outcome": {
+        "status": "invalid",
+        "errors": [
+          {
+            "path": "lineItems",
+            "message": "No billable line items could be identified in the text."
+          }
+        ]
+      }
     }
-  },
-  "naturalLanguageSamplePrompts": [
-    "Invoice Acme Design for 2 brand identity logo concepts at 250 USD each, plus 1 typography specification guide at 150 USD. Give them a 10% discount, 8.25% tax, due on November 30.",
-    "Bill Beispiel GmbH (rechnung@beispiel.example) for 15 hours of frontend component architecture at 85 EUR per hour. Standard 19% VAT, due November 20.",
-    "Sakura Creative Studio (accounting@sakura.example) for 1 performance audit at 85000 JPY and 4 advisory hours at 12500 JPY. 5000 JPY discount, 10% tax, due December 5."
   ]
 }

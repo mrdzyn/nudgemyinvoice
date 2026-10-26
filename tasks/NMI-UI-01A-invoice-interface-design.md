@@ -1,6 +1,6 @@
 # NMI-UI-01A — Invoice Interface Design (Design-Only Increment)
 
-- **Status:** In Review (Design Direction Complete, Awaiting Owner Visual Approval)
+- **Status:** Remediation of independent audit [FIX REQUIRED](https://github.com/mrdzyn/nudgemyinvoice/pull/7#issuecomment-6422310129) complete; READY FOR INDEPENDENT RE-AUDIT. Owner visual approval is still pending and is not predeclared.
 - **Owner/orchestrator:** Product Owner / Antigravity
 - **Implementation agent:** Antigravity (Design / UX Agent)
 - **Target branch:** `main`
@@ -33,7 +33,7 @@ This is a **design-only increment**. No production code in `apps/web` or `apps/a
 ## Screen scope
 
 1. **Operator Login & Application Shell:**
-   - Single-operator credentials form (username, password), session persistence indicator, error handling.
+   - Single-operator credentials form (required username and password; no remember-me control), generic 401, throttled 429 and session-expired states.
    - Global application shell with persistent, high-visibility **PayPal SANDBOX** banner and badge.
    - Primary navigation: Dashboard, New Invoice, Settings, Session Logout.
 2. **Invoice Dashboard:**
@@ -45,13 +45,13 @@ This is a **design-only increment**. No production code in `apps/web` or `apps/a
    - Primary action: "Parse with AI"; secondary alternative: "Enter Manually".
    - States: Idle, parsing progress, clarification required (inline questions), parsing errors, and model unavailable fallback.
 4. **Structured Invoice Review & Edit:**
-   - Customer details (name, email), currency selector (USD, EUR, GBP, CAD, AUD, JPY), due date picker.
+   - Customer details (name and required email), currency selector (USD, EUR, GBP, CAD, AUD, JPY), due date picker.
    - Dynamic line items (description, quantity, unit price, line total).
    - Optional tax percentage and discount (percent or fixed amount).
    - Read-only calculated totals (subtotal, discount, tax, total) computed in integer minor units.
    - Actions: "Save Local Draft" (with `Idempotency-Key` duplicate prevention).
 5. **Local Invoice Detail & PayPal Sandbox Status:**
-   - Comprehensive invoice view with metadata, line items, and audit timestamps.
+   - Invoice view limited to what `GET /api/invoice-drafts/:id` returns (id, draft, server totals, created date, PayPal state); no audit timeline or updated-at.
    - Clear visual fencing between **Local Draft** (persisted in PostgreSQL) and **PayPal Sandbox Draft** (remote external draft).
    - Prominent notice: "Creating a PayPal Sandbox draft does NOT send or email the customer."
    - Action: "Create PayPal Sandbox Draft" with state badges (`none`, `creating`, `created`, `reconciliation_pending`, `paypal_outcome_unknown`, `paypal_disabled`).
@@ -83,15 +83,20 @@ This is a **design-only increment**. No production code in `apps/web` or `apps/a
 
 ## AG Studio boundary
 
-- The dashboard layout defines an accessible native table/grid that can seamlessly host or fallback from AG Studio (`ag-studio-react`) once licensing terms, trial coverage through Dec 15, and sponsor API keys are formally approved by the owner.
+- The dashboard is designed as an accessible native table. AG Studio is **not** enabled and its license terms, trial period and keys are **unverified**; they require owner confirmation and approval before any use. The native table remains the fallback.
 
 ## Acceptance criteria
 
 - [x] Design specification written under `design/screens/NMI-UI-01A-SCREENS.md`.
 - [x] Semantic design tokens updated in `design/tokens/design-tokens.json` supporting light and dark themes and PayPal Sandbox identity.
-- [x] Synthetic fixtures for USD, EUR, and JPY provided in `design/fixtures/invoice-fixtures.json`.
-- [x] Interactive browser preview created at `design/preview/index.html` demonstrating all 5 screens, layouts, and states.
+- [x] Synthetic fixtures for USD, EUR, GBP and JPY in `design/fixtures/invoice-fixtures.json`, checked against the real `calculateTotals` and PayPal mapping rules by `design/fixtures/verify-fixtures.mjs`; the genuine Sandbox smoke invoice id is not used.
+- [x] Interactive browser preview rewritten at `design/preview/index.html`: no inline handlers, fixture-only, every state reachable. Evidence: `design/evidence/NMI-UI-01A/QA-RESULTS.md` (all handlers resolved; keyboard-only end-to-end flow executed in Chrome).
 - [x] Missing backend API capabilities (`GET /api/invoice-drafts`) and unbuilt features (sending, webhooks, reminders) explicitly documented.
 - [x] Local draft save visually separated from external PayPal draft creation with clear non-notification disclosures.
-- [x] All interaction states, responsive layouts, and WCAG 2.2 AA requirements specified.
+- [x] All interaction states, responsive layouts and WCAG 2.2 AA requirements specified and exercised in a real browser (contrast, reflow at 390px and 320px, target sizes, focus visibility, reduced motion; 93 checks, see QA-RESULTS.md).
+- [x] Screenshots captured from the actual preview: desktop and mobile in light and dark for all 5 screens, tablet light, and every state (`design/evidence/NMI-UI-01A/screenshots/`).
+- [x] UI matches the strict `invoiceDraftSchema`: required customer email; no invoice number, issue date or PO field; percent tax only; 2,000-character AI input limit enforced with counter and error state.
+- [x] AI privacy disclosure says text may be sent to OpenAI when configured; real provider parsing stated as NOT TESTED.
+- [ ] **Owner visual approval of the design: pending** (not predeclared; independent re-audit comes first).
+- [ ] **Manual QA not covered by automation:** screen reader (VoiceOver/NVDA), real touch devices, Safari and Firefox, 400% browser zoom. Pending.
 - [x] Repository checks (`pnpm validate`, `scripts/validate_project_profile.py`, `pnpm format:check`) pass cleanly.
