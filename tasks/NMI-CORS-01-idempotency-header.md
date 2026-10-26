@@ -1,10 +1,11 @@
 # NMI-CORS-01 — CORS Idempotency-Key Preflight Support
 
-- **Status:** In Progress
+- **Status:** Complete (Audited PASS with minor findings resolved)
 - **Owner/orchestrator:** Product Owner / Antigravity
 - **Implementation agent:** Antigravity
 - **Target branch:** `main`
 - **Working branch:** `fix/nmi-cors-idempotency-header`
+- **Audited HEAD:** `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` (Audit: PASS WITH MINOR FINDINGS)
 
 ## Objective
 
@@ -45,19 +46,19 @@ Codex audit finding F5 on PR #4 identified that `apps/api/src/app.ts:61–65` co
    - Unknown/unlisted headers are not automatically allowed.
    - Mutating request origin rejection and CSRF/session enforcement remain intact.
 3. Validate existing test suites:
-   - `pnpm validate` (lint, format:check, typecheck, 235 unit tests, build, bundle scan).
+   - `pnpm validate` (lint, format:check, typecheck, 236 unit tests, build, bundle scan).
    - `TEST_DATABASE_URL=... pnpm test:db` (187 PostgreSQL tests, including invoice draft idempotency tests).
    - `python3 scripts/validate_project_profile.py`.
 
 ## Acceptance criteria
 
-- [ ] Browser-style preflight `OPTIONS` request with `idempotency-key` succeeds for the configured `WEB_ORIGIN`.
-- [ ] Response headers confirm `idempotency-key` is included in `access-control-allow-headers`.
-- [ ] Credentialed cross-origin responses (`access-control-allow-credentials: true`) are preserved.
-- [ ] Foreign or unauthorized origins continue to receive no CORS allow headers and get 403 on mutating calls.
-- [ ] Arbitrary or unlisted headers are not authorized.
-- [ ] All 422 automated unit and PostgreSQL integration tests pass without regression.
-- [ ] Project profile and diff checks pass cleanly.
+- [x] Browser-style preflight `OPTIONS` request with `idempotency-key` succeeds for the configured `WEB_ORIGIN`.
+- [x] Response headers confirm `idempotency-key` is included in `access-control-allow-headers`.
+- [x] Credentialed cross-origin responses (`access-control-allow-credentials: true`) are preserved.
+- [x] Foreign or unauthorized origins continue to receive no CORS allow headers and get 403 on mutating calls.
+- [x] Arbitrary or unlisted headers are not authorized.
+- [x] All 423 automated tests (236 unit and 187 PostgreSQL integration) pass without regression.
+- [x] Project profile and diff checks pass cleanly.
 
 ## Security boundaries
 
@@ -66,3 +67,8 @@ Codex audit finding F5 on PR #4 identified that `apps/api/src/app.ts:61–65` co
 - Preserve explicit allowlisting of headers: `["content-type", "x-csrf-token", "idempotency-key"]`.
 - Preserve fail-closed `onRequest` hook verifying `Origin === config.webOrigin` on mutating methods.
 - Preserve session cookie authentication and HMAC-derived CSRF token verification.
+
+## Audit and test-stability observations
+
+- **Independent audit (GPT-6):** PR #6 audited at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` with verdict `PASS WITH MINOR FINDINGS` (comment [6419991326](https://github.com/mrdzyn/nudgemyinvoice/pull/6#issuecomment-6419991326)). No blocking defects found. MINOR-1 addressed by updating task acceptance checkboxes and aligning test count to 236 unit + 187 PostgreSQL = 423 total.
+- **Test stability (INFO-2):** On hosted Stack CI attempt 1 (run 40346777251), `apps/api/src/invoice-drafts.pg.test.ts` test `"12 simultaneous requests (double click): the 11 rivals are refused WHILE the winner is inside PayPal, and only one create happens"` hit a 20-second timeout (186/187 database tests passed). Attempt 2 on the exact same commit passed all 187 database tests in 1m6s without code changes. Tracked as a pre-existing test timing observation; not caused by the CORS allowlist modification. The concurrency assertion remains unchanged.
