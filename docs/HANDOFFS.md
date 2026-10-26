@@ -602,4 +602,41 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 ### Next action
 Independently audit Draft PR #5's exact HEAD, documentation diff and applicable CI; request separate owner approval before merging PR #5.
 
+## Handoff: NMI-CORS-01-REMEDIATION
+
+- **Task / phase:** `tasks/NMI-CORS-01-idempotency-header.md`
+- **From:** Implementation agent (Antigravity)
+- **To:** Independent auditor (Codex) / Product owner
+- **Branch:** `fix/nmi-cors-idempotency-header`
+- **Base commit:** `397c5d0376ef37cfd7f7debb93ac3f8387be5fea` (`main`)
+- **PR:** Draft PR (NMI-CORS-01)
+- **State:** Implementation and regression tests complete; awaiting independent audit
+
+### Completed
+- In `apps/api/src/app.ts`, updated `@fastify/cors` registration: added `"idempotency-key"` to `allowedHeaders: ["content-type", "x-csrf-token", "idempotency-key"]`.
+- In `apps/api/src/app.test.ts`, added browser-style preflight test suite verifying:
+  - `OPTIONS /api/invoice-drafts` requesting `POST` with `content-type`, `x-csrf-token`, and `idempotency-key` returns 204 with all three headers in `access-control-allow-headers`.
+  - Permitted preflight includes `access-control-allow-origin: <WEB_ORIGIN>` and `access-control-allow-credentials: true`.
+  - Case-insensitive browser header casing (e.g. `Idempotency-Key`) is matched and accepted.
+  - Foreign origin (e.g. `https://evil.example`) receives no CORS allow headers.
+  - Unlisted custom request headers (e.g. `x-unlisted-custom-header`) are not added to `access-control-allow-headers`.
+- Preserved all security invariants: exact `WEB_ORIGIN` equality check, allowed HTTP methods (`GET`, `POST`, `OPTIONS`), mutating request fail-closed Origin validation, session cookie authentication, and CSRF token verification.
+- Documented bounded task in `tasks/NMI-CORS-01-idempotency-header.md`.
+- Updated `docs/STATUS.md` confirming PR #5 squash merge (`397c5d0376ef37cfd7f7debb93ac3f8387be5fea`), recording NMI-P2-I2 as complete, and activating NMI-CORS-01.
+
+### Validation
+- `apps/api/src/app.test.ts`: 13/13 tests pass (including new CORS preflight cases).
+- `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
+- `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests, including invoice draft idempotency tests).
+- `python3 scripts/validate_project_profile.py`: PASS.
+- Real PayPal Sandbox and OpenAI providers: zero external requests dispatched; 1/1 Sandbox budget guard remains intact and exhausted.
+
+### Continuation notes
+- UI design gate remains Not applicable for this backend/security fix.
+- No schema, database, migration, or dependency changes.
+- Once independently audited and approved, Draft PR can be marked ready for owner review and squash merge into main.
+
+### Next action
+Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`) against task contract, security boundaries, and hosted CI.
+
 <!-- HANDOFF_ENTRIES_END -->

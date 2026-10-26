@@ -62,7 +62,7 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     origin: (origin, cb) => cb(null, origin === config.webOrigin),
     credentials: true,
     methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["content-type", "x-csrf-token"],
+    allowedHeaders: ["content-type", "x-csrf-token", "idempotency-key"],
   });
   void app.register(cookie);
 
