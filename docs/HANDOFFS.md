@@ -946,4 +946,20 @@ Parse-response validation now enforces the money domain with the existing BigInt
 2. No floating point; the gate does not make browser estimates authoritative.
 3. All four outcomes, 401 expiry, manual fallback and cancellation unchanged.
 
+## Handoff: NMI-UI-01C2-R2
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md` (section "Audit remediation: MINOR-3")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Fix SHA:** `c37320c845efe68afeaa4e64d3ea761e05eaea9f` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call or C3 work.
+
+### What changed
+Test-only fake model and browser journey: the clarification answer must produce a draft with the exact answered due date, and the check is strict. No product code changed.
+
+### Re-audit focus
+1. The fake honours the stated date; the journey asserts `2030-02-01` and still asserts the request body carried the answer.
+2. Negative control observed (87/88 when the fake ignores the answer).
+
 <!-- HANDOFF_ENTRIES_END -->

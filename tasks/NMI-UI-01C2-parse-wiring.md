@@ -81,3 +81,12 @@ Independent audit of `8df462bdfce8e38fd473cec4e97b74b7b161a8a1` returned FIX REQ
 - **Tests:** 16 new negative cases (zero quantity, 3-decimal quantity, over-bound quantity, USD 1.005, tax 150% and 8.255%, discount over 100% and over subtotal, five inconsistent-total variants, non-canonical total, fractional JPY, JPY totals with decimals) and a transport-level case proving an inconsistent 200 is `malformed`; positives: half-up rounded proposal (0.33 x 1.5, 8.25% tax -> 0.54), consistent JPY, percent and fixed discounts. One pre-existing fixture with a discount but unchanged totals was inconsistent and was corrected. Mutation controls killed: no total comparison (7 failing), no line-total comparison (1), swallowing the money error (9).
 - **Local results:** lint, format:check, typecheck, build, bundle scan, profile validator clean; `pnpm test` 470 passed, 187 skipped (PostgreSQL-only, unchanged code; run in hosted Stack CI); web suite 234 tests. Real-browser journey rerun against the remediated build: 88/88 (real Fastify totals pass the new gate).
 - **Unchanged:** backend, shared schema, migrations, dependencies, configuration, visual design; no save/list/detail/PayPal wiring; no provider call; C3 not started.
+
+## Audit remediation: MINOR-3 (fix SHA `c37320c845efe68afeaa4e64d3ea761e05eaea9f`)
+
+Re-audit of `7fa6f7b9abc2786e2e2d6b7530c78e84b01bf058` found the clarification due-date check vacuous (`2030-01-15` on both sides of an OR). Evidence-only change; production parsing, authentication, money calculations, API contracts and schemas are untouched.
+
+- `fake-model-server.ts` (test-only): a date stated in the input (the clarification answer) is returned as the draft's exact `dueDate`; `NODUE` still withholds it when none is stated.
+- `run-parse-journey.mjs`: the check now requires Review's due date to equal `2030-02-01`. The request-body assertion (original text plus `2030-02-01` reached `POST /api/invoice-drafts/parse`) is unchanged and still passes.
+- Negative control: with the fake temporarily ignoring the answer, the journey failed this check (87/88, Review showed `2030-01-15`); the fake was restored and the genuine run regenerated the evidence files.
+- Results: journey 88/88 on the fixed harness; lint, format:check, typecheck, build, bundle scan, profile validator clean; `pnpm test` 470 passed, 187 skipped (PostgreSQL-only, unchanged code; hosted Stack CI).

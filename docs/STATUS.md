@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01C2 — authenticated React invoice parsing / manual fallback. **Implemented; audit MEDIUM-1/MINOR-2 remediated; awaiting independent GPT-6 re-audit.**
+- **Current phase:** NMI-UI-01C2 — authenticated React invoice parsing / manual fallback. **Implemented; audit MEDIUM-1/MINOR-2 remediated; MINOR-3 (evidence assertion) remediated; awaiting independent GPT-6 re-audit.**
 - **Status:** NMI-UI-01C1 real browser auth/session/logout passed independent GPT-6 audit at exact PR #9 HEAD `d1a525058e84b041b0799f77b1c0ab4411dfa9fb` and both hosted checks PASS. Owner authorized squash merge, completed 2026-10-27 as `32d9132be419b48a64455fa79c0fca58f9159b89`. Real browser authentication is on `main`. C2 is scoped to client-side wiring of existing authenticated `POST /api/invoice-drafts/parse` and manual fallback; no provider call or invoice persistence is authorized.
 - **Primary branch:** `main` (PR #9 squash merge `32d9132be419b48a64455fa79c0fca58f9159b89`).
-- **Working branch:** `feat/nmi-ui-01c2-parse-wiring` ([Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11), implementation SHA `894758e48bca92c2afcd2dbf0609977f00fa4663`, remediation SHA `8d50b1d0dbe3c301ccd3e0712fea45ff25112c1c`).
+- **Working branch:** `feat/nmi-ui-01c2-parse-wiring` ([Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11), implementation SHA `894758e48bca92c2afcd2dbf0609977f00fa4663`, remediation SHAs `8d50b1d0dbe3c301ccd3e0712fea45ff25112c1c` and `c37320c845efe68afeaa4e64d3ea761e05eaea9f` (MINOR-3)).
 - **Active task:** `tasks/NMI-UI-01C2-parse-wiring.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-UI-01C2-R1
+- **Active handoff:** NMI-UI-01C2-R2
 - **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
