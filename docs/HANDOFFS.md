@@ -817,4 +817,76 @@ Visuals, D1-D4, fixture-only data, strict CSP and no browser storage are unchang
 ### Next action
 Independently re-audit PR #8 at its exact head.
 
+## Handoff: NMI-UI-01C1-START
+
+- **Task / phase:** `tasks/NMI-UI-01C1-auth-session.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** GPT-6 orchestration / owner authorization to start NMI-UI-01C
+- **To:** Claude implementation agent, then GPT-6 independent exact-HEAD audit
+- **Starting main:** `a4520440c748ff8712a10e9f65b389e8cde5db9c` (owner squash-merged PR #8)
+- **Branch:** `feat/nmi-ui-01c1-auth-session`
+- **State:** Task contract and branch prepared. **No application code changed yet**; C1 real auth integration is NOT IMPLEMENTED. Stop at Draft PR independent audit; separate owner merge approval required.
+
+### Work boundary and decisions
+- Real browser operator login, GET session restore, protected navigation, POST logout, local same-origin `/api` transport, strict CSP and safe memory cleanup only. All invoice features remain synthetic/fixture-only for this slice and visibly labelled.
+- Preserve owner D1–D4, use no real customer data and do not store credentials/CSRF/unsaved invoices in browser storage or URLs. Hard deny unauthenticated navigation/hash/demo-state bypass in real mode.
+- Backend cookie/Origin/CSRF, auditing, rate limits and PostgreSQL auth remain authoritative. No API auth-policy weakening or schema change.
+- Previously authorized PayPal Sandbox one-create budget is exhausted. No PayPal writes, OpenAI inference, deployments, merges, reminders or NMI-UI-01C2 in this slice.
+
+### Evidence required
+- Targeted auth/browser navigation and security regression tests, at least one authenticated local browser → API → disposable PostgreSQL run, CSP/no-storage checks, required hosted CI at exact implementation HEAD, browser screenshots and handoff.
+- Previous task status on `main` was stale after PR #8 squash merge; this branch's STATUS reconciles it.
+
+### Next action
+Claude implements the active contract on this same branch and Draft PR, posts exact SHA and evidence for GPT-6 independent audit. No auto-merge, no deployment.
+
+## Handoff: NMI-UI-01C1-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C1-auth-session.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit; then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c1-auth-session`, Draft PR #9. **Implementation SHA:** `e7ee3e33aefc17f68d76d1fdc458e5ab22d66f17` (a later docs-only commit records this handoff; audit the code at the implementation SHA and confirm the later commits touch only docs).
+- **State:** READY FOR INDEPENDENT AUDIT. Real browser login, session restore, protected navigation and honest logout are implemented; invoice features are still synthetic fixtures. Not self-certified, not merged, not deployed.
+
+### What changed
+- New `apps/web/src/auth/*`, `RealApp.tsx`, `features/login/RealLoginScreen.tsx`, `screens.tsx`; `main.tsx` mounts the real app; the synthetic preview is dev-only behind `VITE_NMI_SYNTHETIC_PREVIEW=1` and absent from production bundles; production CSP `connect-src 'self'`; `/api` proxy for dev and preview; docs in `docs/ARCHITECTURE.md` and `docs/SECURITY.md`.
+- Unchanged: `apps/api`, `packages/*`, migrations, auth policy, Origin/CSRF/cookie rules. No OpenAI or PayPal configuration or call exists in any run.
+
+### Evidence
+- Local at `e7ee3e3`: lint, format, typecheck, build, bundle scan, profile validation pass; 364 tests pass, 187 PostgreSQL-only tests skipped locally (unchanged code; run in hosted Stack CI).
+- Real browser -> Vite preview (strict CSP) -> Fastify -> disposable PostgreSQL 16.15: 105/105 checks (`design/evidence/NMI-UI-01C1/QA-RESULTS.md`, re-run with `pnpm --filter @nmi/web build && node design/evidence/NMI-UI-01C1/run-auth-journey.mjs`; needs Chrome and Homebrew PostgreSQL 16; API on port 3101 by default).
+- Hosted CI at `e7ee3e3`: Project baseline / Common validation PASS (run 40458040856); Stack validation PASS (run 40458040859).
+
+### Audit focus and known limits
+- Review the four deliberate behaviours listed in the task's implementation record (generic 403 on login; transient errors on periodic re-check keep the workspace; unconfirmed logout wording; Retry-After shown but button not disabled).
+- Not verified: `__Host-` Secure cookie in a browser (HTTPS), screen readers, real touch, Safari/Firefox, 400% zoom, hosted reverse-proxy deployment. Throttling remains in-memory per process.
+- The 01B browser QA harness is superseded for the production page (it assumed the synthetic shell as the default page).
+
+### Next action
+Audit exact head, then owner decides on merge. C2 needs separate authorization.
+
+## Handoff: NMI-UI-01C1-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C1-auth-session.md` (section "Audit remediation: MEDIUM-1")
+- **From:** Claude implementation agent (remediation of the GPT-6 audit of `ad756b0`: FIX REQUIRED, one MEDIUM)
+- **To:** GPT-6 independent exact-head re-audit; then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c1-auth-session`, Draft PR #9. **Remediation code SHA:** `f2f7fd8f8e9b02890cb04d0220b8e2c5c89326df`; the PR head is a later docs-only commit (task, STATUS, this handoff). Confirm the commits after the code SHA touch only docs.
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Not self-certified, merged or deployed. Scope was only the pending-logout exposure.
+
+### What changed
+- Sign-out enters a `signing-out` auth state synchronously, so `RealView` unmounts the workspace and all in-memory drafts at the click; a polite "Signing out…" status shows. Revocation continues via the existing CSRF-protected `POST /api/auth/logout`, bounded to 10 s; confirmed only on 204; 401 -> session ended; 403/503/offline/timeout -> "unconfirmed"; duplicate clicks and stale results ignored; the old workspace never returns; re-authentication gets a fresh epoch. Files: `auth/logout.ts` (new), `auth/authState.ts`, `auth/useAuthController.ts`, `RealApp.tsx`, small `AppShell`/`AppContext` cleanup, tests, browser journey.
+- Unchanged: `apps/api`, `packages/*`, migrations, cookie/CSRF/Origin, CSP, fixture-only boundary.
+
+### Evidence
+- Local at `f2f7fd8`: lint, format, typecheck, build, bundle scan, profile validator pass; 390 tests pass (187 PostgreSQL-only skipped locally, unchanged code, run in Stack CI); mutation controls fail the new tests as described in the task.
+- Real browser journey 116/116 (`design/evidence/NMI-UI-01C1/QA-RESULTS.md`; rerun: `pnpm --filter @nmi/web build && node design/evidence/NMI-UI-01C1/run-auth-journey.mjs`, needs Chrome and Homebrew PostgreSQL 16). The pending/failed/timed-out logout cases are SIMULATED by request interception and labelled so; the real 204 logout case is unchanged.
+- Hosted CI at `f2f7fd8`: Project baseline / Common validation PASS (run 40464075823); Stack validation PASS (run 40464075624).
+
+### Audit focus and limits
+- Check that nothing protected renders in `signing-out`, that duplicate/stale/timeout paths cannot re-enter `authenticated`, and that "signed-out" is only ever produced by a 204.
+- Deliberate: the sign-in form is not offered while revocation is pending (at most 10 s). After a timeout the request may still have reached the server; the notice says the server session may remain valid.
+- Not verified: `__Host-` cookie over HTTPS, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. Throttling stays in-memory per process.
+
+### Next action
+Re-audit exact head; owner decides on merge. C2 needs separate authorization.
+
 <!-- HANDOFF_ENTRIES_END -->

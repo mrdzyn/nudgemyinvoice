@@ -2,40 +2,17 @@ import { useEffect, useReducer } from "react";
 import { AppShell } from "./components/AppShell.js";
 import { AppProvider } from "./demo/AppContext.js";
 import { DemoControls } from "./demo/DemoControls.js";
-import { reducer, type Screen } from "./demo/appState.js";
+import { reducer } from "./demo/appState.js";
 import { hashFor, parseHash, stateFromHash } from "./demo/hash.js";
-import { ComposerScreen } from "./features/composer/ComposerScreen.js";
-import { DashboardScreen } from "./features/dashboard/DashboardScreen.js";
-import { DetailScreen } from "./features/detail/DetailScreen.js";
 import { LoginScreen } from "./features/login/LoginScreen.js";
-import { ReviewScreen } from "./features/review/ReviewScreen.js";
-
-const TITLES: Record<Screen, string> = {
-  login: "Operator sign in",
-  dashboard: "Invoice drafts",
-  composer: "New invoice",
-  review: "Review invoice",
-  detail: "Invoice draft",
-};
-
-function CurrentScreen({ screen }: { screen: Screen }) {
-  switch (screen) {
-    case "login":
-      return <LoginScreen />;
-    case "dashboard":
-      return <DashboardScreen />;
-    case "composer":
-      return <ComposerScreen />;
-    case "review":
-      return <ReviewScreen />;
-    case "detail":
-      return <DetailScreen />;
-  }
-}
+import { CurrentScreen, SkipLink, TITLES } from "./screens.js";
 
 /**
- * NMI-UI-01B shell. All data is synthetic and every "server" result is simulated in memory: this
- * component tree never performs a network request and never touches browser storage.
+ * SYNTHETIC PREVIEW (NMI-UI-01B shell), development-only: reached only through the explicit
+ * `VITE_NMI_SYNTHETIC_PREVIEW=1` dev toggle in main.tsx, never in a production build and never as
+ * a fallback for the real sign-in. Its "sign-in" is a simulation and is NOT authentication. All
+ * data is synthetic and every "server" result is simulated in memory: this component tree never
+ * performs a network request and never touches browser storage.
  * `initialHash` exists so tests can render a specific screen/state without a browser.
  */
 export function App({ initialHash }: { initialHash?: string }) {
@@ -86,19 +63,10 @@ export function App({ initialHash }: { initialHash?: string }) {
 
   return (
     <AppProvider state={state} dispatch={dispatch}>
-      <a
-        className="skip-link"
-        href="#main-content"
-        onClick={(e) => {
-          e.preventDefault();
-          document.getElementById("main-content")?.focus();
-        }}
-      >
-        Skip to main content
-      </a>
+      <SkipLink />
       <DemoControls />
       <AppShell>
-        <CurrentScreen screen={state.screen} />
+        {state.screen === "login" ? <LoginScreen /> : <CurrentScreen screen={state.screen} />}
       </AppShell>
     </AppProvider>
   );

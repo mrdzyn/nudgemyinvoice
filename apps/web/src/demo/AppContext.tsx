@@ -10,8 +10,15 @@ import {
 } from "react";
 import type { Action, AppState } from "./appState.js";
 
+/** Present only in real (server-authenticated) mode. */
+export interface SessionInfo {
+  username: string;
+  signOut: () => void;
+}
+
 interface AppContextValue {
   state: AppState;
+  session: SessionInfo | null;
   dispatch: Dispatch<Action>;
   /** Politely announce a status change to assistive technology. */
   announce: (message: string) => void;
@@ -22,10 +29,12 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({
   state,
   dispatch,
+  session = null,
   children,
 }: {
   state: AppState;
   dispatch: Dispatch<Action>;
+  session?: SessionInfo | null;
   children: ReactNode;
 }) {
   const [message, setMessage] = useState("");
@@ -42,7 +51,7 @@ export function AppProvider({
     [],
   );
   return (
-    <AppContext.Provider value={{ state, dispatch, announce }}>
+    <AppContext.Provider value={{ state, session, dispatch, announce }}>
       {children}
       <div className="sr-only" role="status" aria-live="polite" data-testid="live-region">
         {message}

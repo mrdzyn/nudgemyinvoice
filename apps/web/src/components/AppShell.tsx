@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useApp } from "../demo/AppContext.js";
+import { Notice } from "./Notice.js";
 import type { Screen } from "../demo/appState.js";
 
 function NavButton({
@@ -28,7 +29,8 @@ function NavButton({
 
 /** Persistent PayPal Sandbox identity, header, navigation and the main landmark. */
 export function AppShell({ children }: { children: ReactNode }) {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, session } = useApp();
+  const signOut = () => (session ? session.signOut() : dispatch({ type: "sign-out" }));
   const shell = state.screen !== "login";
   const onDashboard = state.screen === "dashboard" || state.screen === "detail";
   const onComposer = state.screen === "composer" || state.screen === "review";
@@ -48,27 +50,37 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       ) : null}
       <header className="app-header">
-        <button
-          type="button"
-          className="brand brand-button"
-          onClick={() => {
-            if (state.authed) dispatch({ type: "navigate", screen: "dashboard" });
-          }}
-        >
-          <span className="brand-mark" aria-hidden="true">
-            N
-          </span>
-          <span>NudgeMyInvoice</span>
-        </button>
+        {shell ? (
+          <button
+            type="button"
+            className="brand brand-button"
+            onClick={() => {
+              if (state.authed) dispatch({ type: "navigate", screen: "dashboard" });
+            }}
+          >
+            <span className="brand-mark" aria-hidden="true">
+              N
+            </span>
+            <span>NudgeMyInvoice</span>
+          </button>
+        ) : (
+          // Nothing to navigate to before sign-in, so no focusable control.
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              N
+            </span>
+            <span>NudgeMyInvoice</span>
+          </div>
+        )}
         <div className="header-controls">
           <span className="sandbox-pill">PayPal Sandbox</span>
-          {shell ? <span className="cell-sub">Signed in as operator (demo)</span> : null}
           {shell ? (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => dispatch({ type: "sign-out" })}
-            >
+            <span className="cell-sub">
+              {session ? `Signed in as ${session.username}` : "Signed in as operator (demo)"}
+            </span>
+          ) : null}
+          {shell ? (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={signOut}>
               Sign out
             </button>
           ) : null}
@@ -81,6 +93,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
       ) : null}
       <main id="main-content" tabIndex={-1}>
+        {session ? (
+          <Notice kind="info" role="note" icon="ℹ" className="notice-compact">
+            <strong>You are signed in to the server.</strong> Invoice data on these screens is still
+            synthetic fixture data: parsing, saving and PayPal are not connected in this build.
+          </Notice>
+        ) : null}
         {children}
       </main>
       {shell ? (
@@ -99,7 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             New invoice
           </button>
-          <button type="button" onClick={() => dispatch({ type: "sign-out" })}>
+          <button type="button" onClick={signOut}>
             Sign out
           </button>
         </nav>
