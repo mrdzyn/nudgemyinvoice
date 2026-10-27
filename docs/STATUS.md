@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01C2 — authenticated React invoice parsing / manual fallback. **Docs-only task initialized; implementation not started.**
+- **Current phase:** NMI-UI-01C2 — authenticated React invoice parsing / manual fallback. **Implemented; awaiting independent GPT-6 exact-head audit.**
 - **Status:** NMI-UI-01C1 real browser auth/session/logout passed independent GPT-6 audit at exact PR #9 HEAD `d1a525058e84b041b0799f77b1c0ab4411dfa9fb` and both hosted checks PASS. Owner authorized squash merge, completed 2026-10-27 as `32d9132be419b48a64455fa79c0fca58f9159b89`. Real browser authentication is on `main`. C2 is scoped to client-side wiring of existing authenticated `POST /api/invoice-drafts/parse` and manual fallback; no provider call or invoice persistence is authorized.
 - **Primary branch:** `main` (PR #9 squash merge `32d9132be419b48a64455fa79c0fca58f9159b89`).
-- **Working branch:** `feat/nmi-ui-01c2-parse-wiring` ([Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11), task contract/handoff only; no implementation).
+- **Working branch:** `feat/nmi-ui-01c2-parse-wiring` ([Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11), implementation SHA `894758e48bca92c2afcd2dbf0609977f00fa4663`).
 - **Active task:** `tasks/NMI-UI-01C2-parse-wiring.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-UI-01C2-START
+- **Active handoff:** NMI-UI-01C2-IMPL
 - **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
@@ -31,7 +31,7 @@
 - Frontend `apps/web`: owner-approved NMI-UI-01B fixture-backed screens and **NMI-UI-01C1 real browser operator authentication** are merged; invoice parsing, saving, list, detail and PayPal UI remain synthetic fixtures pending their bounded integration slices.
 
 ## Deferred / open gates
-- **NMI-UI-01C2:** task contract opened from merged PR #9 baseline; **implementation, exact-head validation, independent audit and owner merge approval NOT YET DONE**. No real invoice parse wiring delivered on `main`.
+- **NMI-UI-01C2:** implemented on Draft PR #11 (`894758e48bca92c2afcd2dbf0609977f00fa4663`); local validation and 88/88 real-browser checks are recorded in the task. **Independent audit and owner merge approval NOT YET DONE**; parse wiring is not on `main`.
 - **Manual QA still pending:** VoiceOver/NVDA, real touch, Safari/Firefox, 400% browser zoom, HTTPS `__Host-` cookie and hosted reverse proxy; no full WCAG 2.2 AA or deployment claim.
 - **AG Studio (D1):** license/trial/keys unverified; deferred. Native table remains.
 - **Provider boundary:** real OpenAI Responses inference **NOT TESTED**, and no new provider call authorized; prior PayPal draft-only Sandbox one-create smoke budget is exhausted. No new PayPal write authorized, and `PAYPAL_DRAFTS_ENABLED=false` remains default.
@@ -41,4 +41,4 @@
 - **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, or start C3 without separate approval.
 
 ## Next action
-Claude implements `tasks/NMI-UI-01C2-parse-wiring.md` on existing `feat/nmi-ui-01c2-parse-wiring` Draft PR. Require typed same-origin authenticated parse transport, runtime outcome validation, real-mode only composer wiring, clarification loop, honest manual fallback and session-expiry safety. Validate with targeted automated tests and a local browser-to-Fastify/PostgreSQL journey using provider-unconfigured and test-only fake-model paths. Report exact SHA/CI and stop for independent GPT-6 audit. No live OpenAI/PayPal calls, deployment, or merge.
+GPT-6 independent exact-head audit of Draft PR #11, then the owner's merge decision. No live OpenAI/PayPal calls, deployment, merge or C3 (saved draft wiring) without separate authorization.

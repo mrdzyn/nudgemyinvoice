@@ -907,4 +907,26 @@ Re-audit exact head; owner decides on merge. C2 needs separate authorization.
 ### Next action
 Claude implements the active C2 contract on this existing Draft PR #11, validates targeted boundaries and a local real browser/auth/parse path with disposable PostgreSQL and no external provider calls, appends `NMI-UI-01C2-IMPL`, updates STATUS/task/PR and stops for independent exact-head GPT-6 audit.
 
+## Handoff: NMI-UI-01C2-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md`
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Implementation SHA:** `894758e48bca92c2afcd2dbf0609977f00fa4663` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call or C3 work.
+
+### What changed
+Real authenticated composer -> `POST /api/invoice-drafts/parse` with strict response validation, a single-flight cancellable runner, clarification re-parse, failure/manual-fallback notices and 401 session invalidation. Web only; backend, packages and migrations unchanged.
+
+### Audit focus
+1. `parse/api.ts` validation is at least as strict as `invoiceDraftSchema`/`calculateTotals` shapes and fails closed.
+2. No path from a hash, scenario or reducer action reaches a real parse success; the preview never gets `parse`.
+3. Abort, stale and duplicate handling in `parse/runner.ts`; 401 -> `expire(epoch)`; sign-out lock still immediate.
+4. The fake model exists only in `design/evidence/NMI-UI-01C2/fake-model-server.ts` (never imported by production).
+5. Saving, list and PayPal remain visibly synthetic.
+
+### Not verified
+Live OpenAI, PayPal, HTTPS `__Host-` cookie, screen readers, touch, Safari/Firefox, 400% zoom, hosted proxy.
+
 <!-- HANDOFF_ENTRIES_END -->

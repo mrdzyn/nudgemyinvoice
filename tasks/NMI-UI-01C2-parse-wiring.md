@@ -1,6 +1,6 @@
 # NMI-UI-01C2 — Authenticated invoice parsing and manual fallback
 
-- **State:** AUTHORIZED TO IMPLEMENT, not implemented by this docs-only checkpoint. Stop at independent exact-head audit.
+- **State:** IMPLEMENTED at `894758e48bca92c2afcd2dbf0609977f00fa4663`; READY FOR INDEPENDENT GPT-6 AUDIT. Not self-certified, not merged.
 - **Base:** `main` at `32d9132be419b48a64455fa79c0fca58f9159b89` (owner-approved squash merge PR #9).
 - **Branch:** `feat/nmi-ui-01c2-parse-wiring`. Draft PR; Claude implements; GPT-6 audits; owner decides merge.
 - **Phase plan:** `tasks/NMI-UI-01C-integration-plan.md`; owner-approved design `design/screens/NMI-UI-01A-SCREENS.md`. No new design direction is authorized.
@@ -55,3 +55,19 @@ No live OpenAI inference or API key use, no PayPal Sandbox create/notify/send/re
 ## Delivery
 
 Implement on the **existing branch** and update the **existing Draft PR**, not a parallel PR. Reconcile stale C1 status on the working branch, append unique `NMI-UI-01C2-IMPL` handoff at completion, report implementation SHA and docs-only head if applicable, test evidence, and request exact-head independent GPT-6 audit. Do **not** self-certify, merge, deploy or start C3.
+
+## Implementation record (implementation SHA `894758e48bca92c2afcd2dbf0609977f00fa4663`)
+
+**Source (apps/web only; `apps/api`, `packages/*` and migrations untouched):**
+- `parse/api.ts`: typed same-origin transport for `POST /api/invoice-drafts/parse` (relative URL, `{text}` body, `Content-Type`, `X-CSRF-Token` from memory, `credentials:"same-origin"`, `cache:"no-store"`, `redirect:"error"`, abort). Hand-written strict validation of all four 200 outcomes: exact keys, supported currency, decimal-string quantity/price/tax/discount, real calendar date, e-mail shape, 1-50 lines, totals whose currency equals the draft's and whose `lineTotals` length matches, bounded question/error arrays, control characters refused. Anything else is `malformed`. Results: `outcome | rejected(400) | unauthorized | forbidden | throttled(Retry-After) | unavailable | malformed | offline | aborted`.
+- `parse/runner.ts`: single-flight runner (duplicate starts ignored; a result is delivered only if its request is still current and not aborted) and a pure `effectOf` mapper (401 -> expire session; validated draft -> editable Review; everything else stays in the composer).
+- `ComposerScreen`: real mode (only when the session provides `parse`) uses the runner; clarification answers are appended to the original text and the same endpoint is called again; fixture example prompts and the "Simulated: ... is not called" caption are hidden; new `failed` notices (429 with delay and no auto-retry, generic 403, bounded 400 messages, 503, offline, malformed) keep the typed text and offer manual entry; `unavailable` distinguishes `ai_not_configured` ("not sent to any AI provider") from other reasons. Leaving the composer aborts the request.
+- `useAuthController.expire(epoch)`: a 401 ends the session only if that epoch is still live; the workspace (keyed by epoch) and every draft are discarded. The immediate sign-out lock is preserved and a pending parse is cancelled by sign-out.
+- Review note and shell notice say parsing came from the server, nothing is saved, and saving/list/PayPal stay synthetic. The synthetic preview (`App.tsx`) never receives `parse` and is unchanged.
+- `boundaries.test.ts`: network allowlist is exactly `auth/api.ts` and `parse/api.ts`, four routes; asserts no save/list/detail/PayPal/OpenAI URL exists in web sources.
+
+**Automated evidence (local, actually run):** lint, format:check, typecheck, build, bundle scan and the profile validator are clean. `pnpm test`: 451 passed, 187 skipped (PostgreSQL-only suites for unchanged code; run in hosted Stack CI). New web tests: `parse/api.test.ts`, `parse/runner.test.ts`, `ComposerScreen.render.test.tsx` plus boundary updates (web suite 215 tests). Mutation controls, all killed: removing the duplicate guard (1 failing test), removing the stale-response guard (2), making 401 not expire the session (1).
+
+**Browser evidence:** `design/evidence/NMI-UI-01C2/run-parse-journey.mjs`: 88/88 checks in headless Chrome 156 against the production bundle (strict CSP), Vite-preview proxy, real Fastify and disposable PostgreSQL 16.15. REAL: logged-out protection, parse -> Review, clarification + re-parse, invalid/unavailable outcomes, duplicate clicks, abort on navigation and on sign-out, offline manual fallback (zero parse requests), CSRF/Origin/session boundary (no cookie 401, missing or wrong token 403, foreign Origin 403, 2,001 characters 400), a real 401 from a revoked session, provider-unconfigured `unavailable`, and a real 429. SIMULATED (interception, labelled): 429 with Retry-After, 400, 403, 503, malformed 200s, network failure, markup in server text. Draft/clarification/invalid paths use a TEST-ONLY deterministic fake model (`fake-model-server.ts`) behind the real routes; it is not OpenAI. Zero foreign requests, empty storage, no console errors, no invoice or approval rows created, parse audit rows contain no customer text.
+
+**Known limits:** real OpenAI inference, PayPal, the `__Host-` Secure cookie over HTTPS, screen readers, real touch, Safari/Firefox, 400% zoom and a hosted reverse proxy are NOT tested. Throttling is in-memory per process. Server totals in the validated response are checked but not displayed; Review shows browser estimates labelled as such.
