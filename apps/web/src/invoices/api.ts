@@ -15,6 +15,7 @@ import {
   text,
   type ServerInvoice,
 } from "../domain/serverInvoice.js";
+import { parseListPage, type ListPage } from "../domain/serverList.js";
 import type { InvoiceDraft } from "../domain/types.js";
 import { IDEMPOTENCY_KEY } from "./idempotency.js";
 
@@ -29,6 +30,24 @@ export type SaveResult =
   | { kind: "forbidden" } // 403
   /** The request may or may not have been committed. NOT proof of failure. */
   | { kind: "uncertain"; cause: "network" | "server" | "malformed" | "timeout" }
+  | { kind: "aborted" };
+
+export interface ListQuery {
+  limit: number;
+  cursor: string | null;
+  currency: string | null;
+  status: string | null;
+  q: string | null;
+}
+
+export type ListResult =
+  | { kind: "ok"; page: ListPage }
+  | { kind: "unauthorized" }
+  | { kind: "forbidden" }
+  | { kind: "rejected" } // 400: the server refused the query (a client bug, not the operator's fault)
+  | { kind: "unavailable" }
+  | { kind: "malformed" }
+  | { kind: "offline" }
   | { kind: "aborted" };
 
 export type GetResult =
@@ -79,6 +98,7 @@ export interface InvoiceApi {
     signal: AbortSignal,
   ): Promise<SaveResult>;
   get(id: string, signal: AbortSignal): Promise<GetResult>;
+  list(query: ListQuery, signal: AbortSignal): Promise<ListResult>;
 }
 
 export function createInvoiceApi(
@@ -142,6 +162,42 @@ export function createInvoiceApi(
           return res.status >= 500
             ? { kind: "uncertain", cause: "server" }
             : { kind: "rejected", messages: [] };
+      }
+    },
+    async list(query, signal) {
+      const params = new URLSearchParams();
+      params.set("limit", String(query.limit));
+      if (query.cursor) params.set("cursor", query.cursor);
+      if (query.currency) params.set("currency", query.currency);
+      if (query.status) params.set("status", query.status);
+      if (query.q) params.set("q", query.q);
+      let res: Response;
+      try {
+        res = await doFetch(`/api/invoice-drafts?${params.toString()}`, {
+          ...base,
+          method: "GET",
+          headers: { "cache-control": "no-store" },
+          signal,
+        });
+      } catch {
+        return signal.aborted ? { kind: "aborted" } : { kind: "offline" };
+      }
+      switch (res.status) {
+        case 200:
+          try {
+            const page = parseListPage(await res.json(), query.limit, query.cursor);
+            return page ? { kind: "ok", page } : { kind: "malformed" };
+          } catch {
+            return signal.aborted ? { kind: "aborted" } : { kind: "malformed" };
+          }
+        case 400:
+          return { kind: "rejected" };
+        case 401:
+          return { kind: "unauthorized" };
+        case 403:
+          return { kind: "forbidden" };
+        default:
+          return { kind: "unavailable" };
       }
     },
     async get(id, signal) {

@@ -95,9 +95,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main id="main-content" tabIndex={-1}>
         {session ? (
           <Notice kind="info" role="note" icon="ℹ" className="notice-compact">
-            <strong>You are signed in to the server.</strong> Parsing a description, saving a draft
-            and its saved-invoice page use the server and PostgreSQL. The invoice list and PayPal
-            are not connected in this build: the rows on the dashboard are synthetic samples.
+            <strong>You are signed in to the server.</strong> Parsing, saving, the invoice list and
+            the saved-invoice pages use the server and PostgreSQL. PayPal is not connected in this
+            build: nothing is created in PayPal and no customer is notified.
           </Notice>
         ) : null}
         {children}

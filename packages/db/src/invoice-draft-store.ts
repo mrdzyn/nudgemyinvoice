@@ -128,6 +128,20 @@ export class PostgresInvoiceDraftStore {
     });
   }
 
+  /**
+   * Operator-scoped read for authenticated detail retrieval: an id that does not exist, belongs to
+   * another operator or has no owner is indistinguishable (null), so existence is never disclosed.
+   */
+  async getOwned(id: string, operatorId: string): Promise<SavedDraft | null> {
+    if (!UUID.test(id)) return null;
+    const owned = await this.db
+      .select({ id: invoices.id })
+      .from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.createdBy, operatorId)))
+      .limit(1);
+    return owned.length ? loadDraft(this.db, id) : null;
+  }
+
   async get(id: string): Promise<SavedDraft | null> {
     if (!UUID.test(id)) return null;
     const exists = await this.db

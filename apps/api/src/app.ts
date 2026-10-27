@@ -37,6 +37,19 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     logger: {
       level: config.nodeEnv === "test" && !deps.logStream ? "silent" : "info",
       ...(deps.logStream ? { stream: deps.logStream } : {}),
+      // Request logs keep the PATH only. Query strings can carry the operator's invoice search text
+      // (customer names or e-mail addresses), which must never reach the logs.
+      serializers: {
+        req(req) {
+          return {
+            method: req.method,
+            url: (req.url ?? "").split("?")[0] ?? "",
+            host: req.host,
+            remoteAddress: req.ip,
+            ...(req.socket?.remotePort === undefined ? {} : { remotePort: req.socket.remotePort }),
+          };
+        },
+      },
       redact: {
         paths: [
           "req.headers.authorization",

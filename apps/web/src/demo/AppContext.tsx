@@ -10,7 +10,7 @@ import {
 } from "react";
 import type { Action, AppState } from "./appState.js";
 import type { SaveGuard } from "../invoices/leaveGuard.js";
-import type { GetResult, SaveResult } from "../invoices/api.js";
+import type { GetResult, ListQuery, ListResult, SaveResult } from "../invoices/api.js";
 import type { InvoiceDraft } from "../domain/types.js";
 import type { ParseResult } from "../parse/api.js";
 
@@ -25,6 +25,8 @@ export interface SessionInfo {
   parse?: (description: string, signal: AbortSignal) => Promise<ParseResult>;
   /** Real save (`POST /api/invoice-drafts`), bound to this session's CSRF token in memory. */
   save?: (draft: InvoiceDraft, idempotencyKey: string, signal: AbortSignal) => Promise<SaveResult>;
+  /** Real read-only, owner-scoped list (`GET /api/invoice-drafts`). Present only in real mode. */
+  listInvoices?: (query: ListQuery, signal: AbortSignal) => Promise<ListResult>;
   /** Real read-only detail (`GET /api/invoice-drafts/:id`). */
   getInvoice?: (id: string, signal: AbortSignal) => Promise<GetResult>;
   /** Review reports whether a save is unresolved so leaving the screen can ask first. */

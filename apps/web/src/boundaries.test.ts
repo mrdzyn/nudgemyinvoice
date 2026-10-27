@@ -69,20 +69,43 @@ describe("UI shell boundaries", () => {
     );
     expect(new Set(routes("parse/api.ts"))).toEqual(new Set(["/api/invoice-drafts/parse"]));
     expect(new Set(routes("invoices/api.ts"))).toEqual(
-      new Set(["/api/invoice-drafts", "/api/invoice-drafts/${id}"]),
+      new Set([
+        "/api/invoice-drafts",
+        "/api/invoice-drafts?${params.toString()}",
+        "/api/invoice-drafts/${id}",
+      ]),
     );
   });
 
-  it("C3 wires no invoice list, PayPal or provider route (list stays synthetic until C4, PayPal until C5)", () => {
+  it("C4 wires only the read-only list in addition to save/detail; no PayPal-draft or provider route", () => {
     const all = files.map(read).join("\n");
     const apiPaths = [...all.matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1] ?? "");
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/\$\{id\})?)$/.test(p),
+          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/\$\{id\}|\?\$\{params\.toString\(\)\})?)$/.test(
+            p,
+          ),
       ),
     ).toEqual([]);
     expect(all).not.toMatch(/paypal-draft|paypal\.com|openai\.com|api\.openai/i);
+  });
+
+  it("the list request is a GET (its q parameter is part of the HTTP request URL) and the real dashboard never writes search text to the browser navigation URL or storage", () => {
+    const api = read(join(root, "invoices/api.ts"));
+    const listBlock = api.slice(api.indexOf("async list("), api.indexOf("async get("));
+    expect(listBlock).toMatch(/method: "GET"/);
+    expect(listBlock).not.toMatch(/method: "(POST|PUT|PATCH|DELETE)"|body:/);
+    const dash = [
+      "features/dashboard/RealDashboard.tsx",
+      "features/dashboard/useDashboard.ts",
+      "features/dashboard/dashboardState.ts",
+    ]
+      .map((f) => read(join(root, f)))
+      .join("\n");
+    expect(dash).not.toMatch(
+      /location\.|history\.|localStorage|sessionStorage|indexedDB|document\.cookie/,
+    );
   });
 
   it("the saved-invoice transport sends only the save body, never totals, ids or status", () => {
@@ -103,6 +126,10 @@ describe("UI shell boundaries", () => {
       "invoices/saveRunner.ts",
       "invoices/useRealSave.ts",
       "features/saved/SavedDetailScreen.tsx",
+      "features/dashboard/RealDashboard.tsx",
+      "features/dashboard/useDashboard.ts",
+      "features/dashboard/dashboardState.ts",
+      "domain/serverList.ts",
     ]) {
       expect(read(join(root, f)), f).not.toMatch(
         /DemoControls|demo\/hash|from "\.\/App\.js"|location\.hash/,

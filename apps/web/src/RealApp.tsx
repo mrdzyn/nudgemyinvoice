@@ -6,7 +6,7 @@ import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/Spinner.js";
 import { LEAVE_COPY, mustConfirmLeave, type SaveGuard } from "./invoices/leaveGuard.js";
 import { Dialog } from "./components/Dialog.js";
-import { createInvoiceApi, type InvoiceApi } from "./invoices/api.js";
+import { createInvoiceApi, type InvoiceApi, type ListQuery } from "./invoices/api.js";
 import { createParseApi, type ParseApi } from "./parse/api.js";
 import { AppProvider } from "./demo/AppContext.js";
 import { initialState, reducer, type Action, type Screen, type Theme } from "./demo/appState.js";
@@ -45,9 +45,8 @@ export function isBlockedInRealMode(a: Action): boolean {
   );
 }
 
-/** Only the dashboard shows fixture rows; Review, the composer and the saved page are real. */
-export const realTitle = (screen: Screen) =>
-  `${TITLES[screen]} · NudgeMyInvoice${screen === "dashboard" ? " (sample rows)" : ""}`;
+/** Every real-mode screen is server-backed (the dashboard list included); nothing is labelled fixture data. */
+export const realTitle = (screen: Screen) => `${TITLES[screen]} · NudgeMyInvoice`;
 
 function Workspace({
   session,
@@ -71,6 +70,10 @@ function Workspace({
     (draft: InvoiceDraft, key: string, signal: AbortSignal) =>
       invoiceApi.save(draft, key, csrfToken, signal),
     [invoiceApi, csrfToken],
+  );
+  const listInvoices = useCallback(
+    (query: ListQuery, signal: AbortSignal) => invoiceApi.list(query, signal),
+    [invoiceApi],
   );
   const getInvoice = useCallback(
     (id: string, signal: AbortSignal) => invoiceApi.get(id, signal),
@@ -137,6 +140,7 @@ function Workspace({
         parse,
         save,
         getInvoice,
+        listInvoices,
         sessionExpired: expire,
         setSaveGuard,
       }}

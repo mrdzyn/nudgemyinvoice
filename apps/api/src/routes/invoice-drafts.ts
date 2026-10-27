@@ -2,13 +2,20 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import {
   createAuditSink,
+  decodeCursor,
+  encodeCursor,
+  LIST_DEFAULT_LIMIT,
+  LIST_MAX_LIMIT,
+  LIST_MAX_SEARCH,
+  PAYPAL_STATUS_GROUPS,
   PostgresInvoiceDraftStore,
+  PostgresInvoiceListStore,
   PostgresPayPalOperationStore,
   type AuditSink,
   type Db,
 } from "@nmi/db";
 import { parseInvoiceRequest, type InvoiceModelClient } from "@nmi/ai";
-import { MoneyError, invoiceDraftSchema } from "@nmi/shared";
+import { CURRENCY_CODES, MoneyError, invoiceDraftSchema, type CurrencyCode } from "@nmi/shared";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import type { AppConfig } from "../config.js";
 import { BoundedWorkGate } from "../auth/work-gate.js";
@@ -19,6 +26,19 @@ export const MAX_PARSE_CHARS = 2000;
 
 const parseBody = z.strictObject({ text: z.string().trim().min(1).max(MAX_PARSE_CHARS) });
 const idParams = z.strictObject({ id: z.uuid() });
+// Strict: unknown or repeated query parameters are rejected, never ignored.
+const listQuery = z.strictObject({
+  limit: z
+    .string()
+    .regex(/^\d{1,2}$/)
+    .transform(Number)
+    .pipe(z.number().int().min(1).max(LIST_MAX_LIMIT))
+    .optional(),
+  cursor: z.string().min(1).max(120).optional(),
+  currency: z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]]).optional(),
+  status: z.enum(PAYPAL_STATUS_GROUPS).optional(),
+  q: z.string().trim().min(1).max(LIST_MAX_SEARCH).optional(),
+});
 const idempotencyHeader = z.string().regex(/^[A-Za-z0-9_-]{8,128}$/);
 
 export interface InvoiceDraftRouteDeps {
@@ -50,6 +70,7 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
   const { config, audit } = deps;
   const clock = (req?: FastifyRequest) => (deps.clock ? deps.clock(req) : new Date());
   const drafts = new PostgresInvoiceDraftStore(deps.db);
+  const list = new PostgresInvoiceListStore(deps.db);
   const defaultOps = new PostgresPayPalOperationStore(deps.db);
   const resolveOps = (req: FastifyRequest) =>
     typeof deps.seams?.ops === "function" ? deps.seams.ops(req) : (deps.seams?.ops ?? defaultOps);
@@ -151,12 +172,49 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
       .send(present(result.saved, result.outcome === "replayed"));
   });
 
+  // ------------------------------------------------------------------- list
+  // Read-only, owner-scoped (the operator comes from the server session, never from the client),
+  // keyset-paginated, bounded. No provider call, no mutation, no audit row (nothing to record).
+  app.get("/api/invoice-drafts", { preHandler: app.requireOperator }, async (req, reply) => {
+    noStore(reply);
+    const query = listQuery.safeParse(req.query);
+    if (!query.success)
+      return reply.code(400).send({ error: "invalid_query", issues: issues(query.error) });
+    let cursor;
+    if (query.data.cursor !== undefined) {
+      cursor = decodeCursor(query.data.cursor);
+      if (!cursor) return reply.code(400).send({ error: "invalid_cursor" });
+    }
+    const page = await list.list({
+      operatorId: operatorId(req),
+      limit: query.data.limit ?? LIST_DEFAULT_LIMIT,
+      cursor,
+      currency: query.data.currency,
+      status: query.data.status,
+      search: query.data.q,
+    });
+    return reply.send({
+      items: page.items.map((i) => ({
+        id: i.id,
+        customerName: i.customerName,
+        customerEmail: i.customerEmail,
+        currency: i.currency,
+        dueDate: i.dueDate,
+        total: i.total,
+        createdAt: i.createdAt.toISOString(),
+        paypal: { state: i.paypalState },
+      })),
+      nextCursor: page.nextCursor ? encodeCursor(page.nextCursor) : null,
+    });
+  });
+
   // ------------------------------------------------------------------- read
   app.get("/api/invoice-drafts/:id", { preHandler: app.requireOperator }, async (req, reply) => {
     noStore(reply);
     const params = idParams.safeParse(req.params);
     if (!params.success) return reply.code(404).send({ error: "not_found" });
-    const saved = await drafts.get(params.data.id);
+    // Operator-scoped: another operator's id and an unknown id are both a plain 404.
+    const saved = await drafts.getOwned(params.data.id, operatorId(req));
     if (!saved) return reply.code(404).send({ error: "not_found" });
     const op = await resolveOps(req).get(saved.id);
     return reply.send({
