@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { createAuthApi, type AuthApi, type Session } from "./auth/api.js";
+import { createAuthApi, type AuthApi, type AuthResult, type Session } from "./auth/api.js";
+import type { AuthState } from "./auth/authState.js";
 import { useAuthController } from "./auth/useAuthController.js";
 import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/Spinner.js";
@@ -34,13 +35,11 @@ function Workspace({
   session,
   fresh,
   signOut,
-  signingOut,
   theme,
 }: {
   session: Session;
   fresh: boolean;
   signOut: () => void;
-  signingOut: boolean;
   theme: Theme;
 }) {
   const [state, rawDispatch] = useReducer(reducer, theme, (t) => ({
@@ -71,7 +70,7 @@ function Workspace({
     <AppProvider
       state={state}
       dispatch={dispatch}
-      session={{ username: session.operator.username, signOut, signingOut }}
+      session={{ username: session.operator.username, signOut }}
     >
       <SkipLink />
       <AppShell>
@@ -82,6 +81,64 @@ function Workspace({
 }
 
 const noopDispatch = () => undefined;
+
+export interface RealViewProps {
+  state: AuthState;
+  theme: Theme;
+  login: (username: string, password: string, signal: AbortSignal) => Promise<AuthResult>;
+  logout: () => void;
+}
+
+function StatusCard({ id, children }: { id: string; children: string }) {
+  return (
+    <section aria-labelledby={id}>
+      <div className="login-wrap">
+        <div className="card login-card" role="status" aria-live="polite">
+          <h1 className="screen-title" id={id}>
+            <Spinner /> {children}
+          </h1>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Pure view of the auth state. The protected workspace exists ONLY while `authenticated`: while a
+ * sign-out is pending (`signing-out`) it is already gone, with every in-memory draft.
+ */
+export function RealView({ state, theme, login, logout }: RealViewProps) {
+  if (state.status === "authenticated") {
+    return (
+      <Workspace
+        key={state.epoch}
+        session={state.session}
+        fresh={state.fresh}
+        signOut={logout}
+        theme={theme}
+      />
+    );
+  }
+  return (
+    <AppProvider state={initialState(theme)} dispatch={noopDispatch}>
+      <SkipLink />
+      <AppShell>
+        {state.status === "checking" ? (
+          <StatusCard id="checking-title">Checking your session…</StatusCard>
+        ) : state.status === "signing-out" ? (
+          <StatusCard id="signing-out-title">Signing out…</StatusCard>
+        ) : (
+          <RealLoginScreen
+            key={state.epoch}
+            notice={state.notice}
+            retryAfter={state.retryAfter}
+            login={login}
+          />
+        )}
+      </AppShell>
+    </AppProvider>
+  );
+}
 
 /**
  * Real application root. Nothing protected renders until the SERVER has confirmed a session; the URL
@@ -97,45 +154,14 @@ export function RealApp({ api = defaultApi }: { api?: AuthApi }) {
   }, [theme]);
   useEffect(() => {
     if (state.status !== "authenticated")
-      document.title = `${state.status === "checking" ? "Checking session" : "Operator sign in"} · NudgeMyInvoice`;
+      document.title = `${
+        state.status === "checking"
+          ? "Checking session"
+          : state.status === "signing-out"
+            ? "Signing out"
+            : "Operator sign in"
+      } · NudgeMyInvoice`;
   }, [state.status]);
 
-  if (state.status === "authenticated") {
-    return (
-      <Workspace
-        key={state.epoch}
-        session={state.session}
-        fresh={state.fresh}
-        signOut={auth.logout}
-        signingOut={auth.signingOut}
-        theme={theme}
-      />
-    );
-  }
-
-  return (
-    <AppProvider state={initialState(theme)} dispatch={noopDispatch}>
-      <SkipLink />
-      <AppShell>
-        {state.status === "checking" ? (
-          <section aria-labelledby="checking-title">
-            <div className="login-wrap">
-              <div className="card login-card" role="status" aria-live="polite">
-                <h1 className="screen-title" id="checking-title">
-                  <Spinner /> Checking your session…
-                </h1>
-              </div>
-            </div>
-          </section>
-        ) : (
-          <RealLoginScreen
-            key={state.epoch}
-            notice={state.notice}
-            retryAfter={state.retryAfter}
-            login={auth.login}
-          />
-        )}
-      </AppShell>
-    </AppProvider>
-  );
+  return <RealView state={state} theme={theme} login={auth.login} logout={auth.logout} />;
 }

@@ -14,7 +14,6 @@ import type { Action, AppState } from "./appState.js";
 export interface SessionInfo {
   username: string;
   signOut: () => void;
-  signingOut: boolean;
 }
 
 interface AppContextValue {

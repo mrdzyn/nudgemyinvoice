@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { AuthApi, AuthResult } from "./api.js";
 import { authReducer, initialAuthState, type AuthState } from "./authState.js";
+import { createLogoutRunner } from "./logout.js";
 
 const MAX_TIMER_MS = 2 ** 31 - 1;
 
@@ -9,7 +10,6 @@ export interface AuthController {
   /** Resolves with the server outcome; on success the controller itself moves to `authenticated`. */
   login: (username: string, password: string, signal: AbortSignal) => Promise<AuthResult>;
   logout: () => void;
-  signingOut: boolean;
 }
 
 /**
@@ -20,9 +20,8 @@ export interface AuthController {
  */
 export function useAuthController(api: AuthApi, now: () => number = Date.now): AuthController {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
-  const [signingOut, setSigningOut] = useState(false);
   const stateRef = useRef(state);
-  const logoutAbort = useRef<AbortController | null>(null);
+  const runner = useMemo(() => createLogoutRunner(api, dispatch), [api]);
 
   useEffect(() => {
     stateRef.current = state;
@@ -78,7 +77,7 @@ export function useAuthController(api: AuthApi, now: () => number = Date.now): A
     };
   }, [api, authedEpoch, now]);
 
-  useEffect(() => () => logoutAbort.current?.abort(), []);
+  useEffect(() => () => runner.abort(), [runner]);
 
   const login = useCallback(
     async (username: string, password: string, signal: AbortSignal) => {
@@ -89,29 +88,11 @@ export function useAuthController(api: AuthApi, now: () => number = Date.now): A
     [api],
   );
 
+  // Locks the UI synchronously (see createLogoutRunner); the network request follows.
   const logout = useCallback(() => {
     const s = stateRef.current;
-    if (s.status !== "authenticated" || logoutAbort.current) return;
-    const ac = new AbortController();
-    logoutAbort.current = ac;
-    setSigningOut(true);
-    void api.logout(s.session.csrfToken, ac.signal).then((r) => {
-      if (ac.signal.aborted) return;
-      logoutAbort.current = null;
-      setSigningOut(false);
-      // Whatever the outcome, this browser stops showing protected content. Only a 204 proves the
-      // server revoked the session; anything else must not be reported as a completed sign-out.
-      dispatch({
-        type: "ended",
-        notice:
-          r.kind === "ok"
-            ? "signed-out"
-            : r.kind === "unauthorized"
-              ? "session-expired"
-              : "logout-unconfirmed",
-      });
-    });
-  }, [api]);
+    runner.start(s.status === "authenticated" ? s.session : null);
+  }, [runner]);
 
-  return { state, login, logout, signingOut };
+  return { state, login, logout };
 }

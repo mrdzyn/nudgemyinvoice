@@ -43,4 +43,30 @@ describe("auth state", () => {
     const b = authReducer(gone, { type: "signed-in", session });
     expect(new Set([a.epoch, gone.epoch, b.epoch]).size).toBe(3);
   });
+
+  it("sign-out-started leaves `authenticated` at once, keeps the session privately and bumps the epoch", () => {
+    const a = authReducer(initialAuthState, { type: "signed-in", session });
+    const locked = authReducer(a, { type: "sign-out-started" });
+    expect(locked.status).toBe("signing-out");
+    expect(locked.session).toBe(session); // only so the revocation can send its CSRF token
+    expect(locked.epoch).toBeGreaterThan(a.epoch);
+  });
+
+  it("sign-out-started is ignored unless authenticated (no lock without a session)", () => {
+    expect(authReducer(initialAuthState, { type: "sign-out-started" })).toBe(initialAuthState);
+    const anon = authReducer(initialAuthState, { type: "no-session", notice: null });
+    expect(authReducer(anon, { type: "sign-out-started" })).toBe(anon);
+  });
+
+  it("a locked state never returns to authenticated except through a fresh sign-in", () => {
+    const a = authReducer(initialAuthState, { type: "signed-in", session });
+    const locked = authReducer(a, { type: "sign-out-started" });
+    expect(authReducer(locked, { type: "sign-out-started" })).toBe(locked);
+    const ended = authReducer(locked, { type: "ended", notice: "logout-unconfirmed" });
+    expect(ended).toMatchObject({
+      status: "anonymous",
+      session: null,
+      notice: "logout-unconfirmed",
+    });
+  });
 });

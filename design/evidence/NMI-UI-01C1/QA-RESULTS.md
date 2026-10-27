@@ -4,7 +4,7 @@ Chrome: Chrome/156.0.8078.48 (headless). PostgreSQL: postgres (PostgreSQL) 16.15
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
 Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment.
 
-**105/105 checks passed.**
+**116/116 checks passed.**
 
 | Result | Group | Check | Detail |
 | --- | --- | --- | --- |
@@ -79,9 +79,20 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL Origin/CSRF enforcement | POST logout with no Origin -> 403 |  |
 | PASS | REAL Origin/CSRF enforcement | the session survived every rejected logout |  |
 | PASS | REAL Origin/CSRF enforcement | no credentialed CORS grant for a foreign origin |  |
-| PASS | SIMULATED logout failure | 403 on logout drops protected UI and warns the server session may remain valid |  |
-| PASS | SIMULATED logout failure | the UI did NOT claim a completed sign-out |  |
-| PASS | SIMULATED logout failure | the database confirms the session really is still active (the warning is truthful) |  |
+| PASS | SIMULATED pending logout | after click, request held: protected UI, navigation, composer and draft are gone while the request is pending |  |
+| PASS | SIMULATED pending logout | after click, request held: a polite 'Signing out' status is shown, not a sign-in form |  |
+| PASS | SIMULATED pending logout | three rapid clicks sent exactly one logout request |  |
+| PASS | SIMULATED pending logout | the server session is still active while the request is pending (lock is local, revocation continues) |  |
+| PASS | SIMULATED pending logout | 403 afterwards -> 'could not be confirmed', never the old workspace |  |
+| PASS | SIMULATED pending logout | the UI did NOT claim a completed sign-out |  |
+| PASS | SIMULATED pending logout | the database confirms the session really is still active (the warning is truthful) |  |
+| PASS | SIMULATED pending logout | the draft text is nowhere in the page after the failure |  |
+| PASS | SIMULATED pending logout | transport never answers: protected UI, navigation, composer and draft are gone while the request is pending |  |
+| PASS | SIMULATED pending logout | transport never answers: a polite 'Signing out' status is shown, not a sign-in form |  |
+| PASS | SIMULATED pending logout | a never-answered logout is bounded: reported unconfirmed after ~10 s |  |
+| PASS | SIMULATED pending logout | after the timeout the browser shows sign-in, not the old workspace |  |
+| PASS | SIMULATED pending logout | the session is still active server-side (the request never completed) |  |
+| PASS | SIMULATED pending logout | a late 204 after the timeout is ignored (notice unchanged) |  |
 | PASS | REAL logout | the still-valid cookie restores the session on reload (as the warning said) |  |
 | PASS | REAL logout | workspace replaced by sign-in with 'signed out' status |  |
 | PASS | REAL logout | POST /api/auth/logout -> 204 with CSRF + Origin accepted by the real server |  |
@@ -114,6 +125,6 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | GLOBAL audits | PayPal drafts remained disabled (no PayPal rows or operations) |  |
 | PASS | GLOBAL audits | no invoices were written (fixture-only invoice features) |  |
 
-Screenshots (synthetic data only, no credentials): 01-logged-out-deep-link.jpg, 02-before-bad-login.jpg, 03-bad-credentials.jpg, 04-signing-in-pending.jpg, 05-signed-in-dashboard.jpg, 06-mobile-composer.jpg, 07-dark-dashboard.jpg, 08-logout-unconfirmed.jpg, 09-signed-out.jpg, 10-session-ended.jpg, 11-throttled.jpg
+Screenshots (synthetic data only, no credentials): 01-logged-out-deep-link.jpg, 02-before-bad-login.jpg, 03-bad-credentials.jpg, 04-signing-in-pending.jpg, 05-signed-in-dashboard.jpg, 06-mobile-composer.jpg, 07-dark-dashboard.jpg, 08a-signing-out-locked.jpg, 08-logout-unconfirmed.jpg, 09-signed-out.jpg, 10-session-ended.jpg, 11-throttled.jpg
 
 Not covered: screen readers (VoiceOver/NVDA), real touch devices, Safari/Firefox, 400% zoom, a hosted/TLS (`__Host-` cookie) deployment.

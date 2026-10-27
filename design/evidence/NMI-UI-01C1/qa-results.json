@@ -1,6 +1,6 @@
 {
   "chrome": "Chrome/156.0.8078.48",
-  "passed": 105,
+  "passed": 116,
   "failed": 0,
   "results": [
     {
@@ -430,20 +430,86 @@
       "detail": ""
     },
     {
-      "group": "SIMULATED logout failure",
-      "name": "403 on logout drops protected UI and warns the server session may remain valid",
+      "group": "SIMULATED pending logout",
+      "name": "after click, request held: protected UI, navigation, composer and draft are gone while the request is pending",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "SIMULATED logout failure",
+      "group": "SIMULATED pending logout",
+      "name": "after click, request held: a polite 'Signing out' status is shown, not a sign-in form",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "three rapid clicks sent exactly one logout request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "the server session is still active while the request is pending (lock is local, revocation continues)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "403 afterwards -> 'could not be confirmed', never the old workspace",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
       "name": "the UI did NOT claim a completed sign-out",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "SIMULATED logout failure",
+      "group": "SIMULATED pending logout",
       "name": "the database confirms the session really is still active (the warning is truthful)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "the draft text is nowhere in the page after the failure",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "transport never answers: protected UI, navigation, composer and draft are gone while the request is pending",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "transport never answers: a polite 'Signing out' status is shown, not a sign-in form",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "a never-answered logout is bounded: reported unconfirmed after ~10 s",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "after the timeout the browser shows sign-in, not the old workspace",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "the session is still active server-side (the request never completed)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED pending logout",
+      "name": "a late 204 after the timeout is ignored (notice unchanged)",
       "pass": true,
       "detail": ""
     },

@@ -21,6 +21,18 @@ export type AuthState =
       retryAfter: number | null;
     }
   | {
+      /**
+       * Sign-out requested, server revocation pending. The workspace is NOT rendered (so no
+       * protected content or draft survives); the session is kept only so the revocation request
+       * can still carry its CSRF token.
+       */
+      status: "signing-out";
+      session: Session;
+      notice: null;
+      epoch: number;
+      retryAfter: null;
+    }
+  | {
       status: "authenticated";
       session: Session;
       notice: null;
@@ -31,6 +43,7 @@ export type AuthState =
     };
 
 export type AuthAction =
+  | { type: "sign-out-started" }
   | { type: "session-restored"; session: Session }
   | { type: "no-session"; notice: AuthNotice | null; retryAfter?: number | null }
   | { type: "signed-in"; session: Session }
@@ -52,6 +65,10 @@ export const initialAuthState: AuthState = {
 export function authReducer(state: AuthState, action: AuthAction): AuthState {
   const epoch = state.epoch + 1;
   switch (action.type) {
+    case "sign-out-started":
+      return state.status === "authenticated"
+        ? { status: "signing-out", session: state.session, notice: null, epoch, retryAfter: null }
+        : state;
     case "session-restored":
     case "signed-in":
       return {

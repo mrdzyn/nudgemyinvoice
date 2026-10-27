@@ -112,6 +112,7 @@ const consoleMsgs = [];
 const foreign = [];
 const netLog = []; // { method, path, status }
 let rule = null; // SIMULATED outcome for paused /api requests
+const held = []; // request ids deliberately left pending ("hold")
 ws.onmessage = (m) => {
   const msg = JSON.parse(m.data);
   if (msg.id && pending.has(msg.id)) {
@@ -137,7 +138,7 @@ ws.onmessage = (m) => {
     const id = p.requestId;
     if (act === "continue" || !act) send("Fetch.continueRequest", { requestId: id }).catch(() => {});
     else if (act === "fail") send("Fetch.failRequest", { requestId: id, errorReason: "InternetDisconnected" }).catch(() => {});
-    else if (act === "hold") { /* left paused until rule changes */ }
+    else if (act === "hold") held.push(id);
     else send("Fetch.fulfillRequest", { requestId: id, responseCode: act.status, responseHeaders: [{ name: "content-type", value: "application/json" }, ...(act.headers || [])], body: Buffer.from(JSON.stringify(act.body ?? {})).toString("base64") }).catch(() => {});
   }
 };
@@ -145,6 +146,12 @@ const send = (method, params = {}) =>
   new Promise((res, rej) => { const id = nextId++; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params })); });
 for (const d of ["Page", "Runtime", "Log", "Network"]) await send(d + ".enable");
 const simulate = async (r) => { rule = r; await send("Fetch.enable", { patterns: [{ urlPattern: "*/api/auth/*" }] }); };
+const releaseHeld = async (act) => {
+  for (const id of held.splice(0)) {
+    if (act === "fail") await send("Fetch.failRequest", { requestId: id, errorReason: "Aborted" }).catch(() => {});
+    else await send("Fetch.fulfillRequest", { requestId: id, responseCode: act.status, responseHeaders: [{ name: "content-type", value: "application/json" }], body: Buffer.from(JSON.stringify(act.body ?? {})).toString("base64") }).catch(() => {});
+  }
+};
 const stopSimulating = async () => { rule = null; await send("Fetch.disable"); };
 
 const ev = async (expression) => {
@@ -433,18 +440,58 @@ try {
     check(g, "no credentialed CORS grant for a foreign origin", cors.headers.get("access-control-allow-origin") === null);
   }
 
-  /* ======================= SIMULATED logout failure, then REAL logout ======================= */
+  /* ======================= SIMULATED pending / failed / timed-out logout (audit MEDIUM-1) ======================= */
   {
-    const g = "SIMULATED logout failure";
-    await load();
-    await waitFor("!!document.querySelector('.app-nav')");
+    const g = "SIMULATED pending logout";
+    const signOutBtn = "[...document.querySelectorAll('.app-header button')].find(b => b.textContent.trim() === 'Sign out')";
+    const openComposerWithDraft = async () => {
+      await load();
+      await waitFor("!!document.querySelector('.app-nav')");
+      await ev("document.querySelector('.app-nav .nav-link:nth-child(2)').click()");
+      await waitFor("!!document.getElementById('comp-text')");
+      await focusId("comp-text");
+      await typeText("PENDING-LOGOUT-DRAFT-MARKER");
+    };
+    const lockedCheck = async (label) => {
+      const t = await bodyText();
+      const gone = !(await ev("!!document.querySelector('.app-nav, .mobile-nav, #comp-text, table')")) && !/PENDING-LOGOUT-DRAFT-MARKER|Invoice drafts|New invoice|Signed in as|Sign out|Acme/.test(t);
+      check(g, `${label}: protected UI, navigation, composer and draft are gone while the request is pending`, gone, t.slice(0, 200));
+      check(g, `${label}: a polite 'Signing out' status is shown, not a sign-in form`, /Signing out/.test(t) && (await ev("!!document.querySelector('[role=status]')")) && !(await ev("!!document.getElementById('login-password')")));
+    };
+
+    // pending -> 403
+    await openComposerWithDraft();
     const before = activeSessions();
-    await simulate((p) => (p.request.url.endsWith("/api/auth/logout") ? { status: 403, body: { error: "csrf_rejected" } } : "continue"));
-    await ev("[...document.querySelectorAll('.app-header button')].find(b => b.textContent.trim() === 'Sign out').click()");
-    check(g, "403 on logout drops protected UI and warns the server session may remain valid", (await waitFor("[...document.querySelectorAll('[role=alert]')].some(e => /Sign-out could not be confirmed.*may remain valid/.test(e.textContent))")) && (await onLogin()));
+    const m1 = mark();
+    await simulate((p) => (p.request.url.endsWith("/api/auth/logout") ? "hold" : "continue"));
+    await ev(`(() => { const b = ${signOutBtn}; b.click(); b.click(); b.click(); })()`);
+    await sleep(300);
+    await lockedCheck("after click, request held");
+    check(g, "three rapid clicks sent exactly one logout request", apiCalls(m1).filter((c) => c.path === "/api/auth/logout").length === 1, JSON.stringify(apiCalls(m1)));
+    check(g, "the server session is still active while the request is pending (lock is local, revocation continues)", activeSessions() === before);
+    await shot("08a-signing-out-locked.jpg");
+    await releaseHeld({ status: 403, body: { error: "csrf_rejected" } });
+    check(g, "403 afterwards -> 'could not be confirmed', never the old workspace", (await waitFor("[...document.querySelectorAll('[role=alert]')].some(e => /Sign-out could not be confirmed.*may remain valid/.test(e.textContent))")) && (await onLogin()));
     check(g, "the UI did NOT claim a completed sign-out", !/You have been signed out/.test(await bodyText()));
     check(g, "the database confirms the session really is still active (the warning is truthful)", activeSessions() === before);
+    check(g, "the draft text is nowhere in the page after the failure", !(await bodyText()).includes("PENDING-LOGOUT-DRAFT-MARKER"));
     await shot("08-logout-unconfirmed.jpg");
+    await stopSimulating();
+
+    // pending forever -> timeout
+    await openComposerWithDraft();
+    await simulate((p) => (p.request.url.endsWith("/api/auth/logout") ? "hold" : "continue"));
+    await ev(`${signOutBtn}.click()`);
+    await sleep(400);
+    await lockedCheck("transport never answers");
+    const t0 = Date.now();
+    const timedOut = await waitFor("[...document.querySelectorAll('[role=alert]')].some(e => /Sign-out could not be confirmed/.test(e.textContent))", 14000);
+    check(g, "a never-answered logout is bounded: reported unconfirmed after ~10 s", timedOut && Date.now() - t0 < 13000, `${Date.now() - t0} ms`);
+    check(g, "after the timeout the browser shows sign-in, not the old workspace", await onLogin());
+    check(g, "the session is still active server-side (the request never completed)", activeSessions() === before);
+    await releaseHeld({ status: 204 }); // a very late 204 must change nothing
+    await sleep(300);
+    check(g, "a late 204 after the timeout is ignored (notice unchanged)", /Sign-out could not be confirmed/.test(await bodyText()) && !/You have been signed out/.test(await bodyText()));
     await stopSimulating();
   }
   {

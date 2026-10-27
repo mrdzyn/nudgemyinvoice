@@ -80,13 +80,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
           ) : null}
           {shell ? (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              disabled={session?.signingOut === true}
-              onClick={signOut}
-            >
-              {session?.signingOut ? "Signing out…" : "Sign out"}
+            <button type="button" className="btn btn-secondary btn-sm" onClick={signOut}>
+              Sign out
             </button>
           ) : null}
         </div>
@@ -122,7 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             New invoice
           </button>
-          <button type="button" disabled={session?.signingOut === true} onClick={signOut}>
+          <button type="button" onClick={signOut}>
             Sign out
           </button>
         </nav>
