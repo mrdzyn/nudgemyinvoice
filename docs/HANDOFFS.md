@@ -1040,4 +1040,24 @@ New read-only `GET /api/invoice-drafts` (owner-scoped keyset list with filters/s
 ### Not verified
 Live OpenAI/PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. The C2/C3 journeys were not rerun (earlier wording).
 
+## Handoff: NMI-UI-01C4-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C4-real-dashboard.md` (sections "Privacy boundaries for search text" and "Audit remediation: MINOR-1")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c4-real-dashboard`, [Draft PR #13](https://github.com/mrdzyn/nudgemyinvoice/pull/13)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation and evidence wording only; no production code, merge, deploy, provider call or C5 work.
+
+### What changed
+Privacy wording corrected: the browser navigation URL and browser storage hold no customer data and Fastify logs strip query strings, but the HTTP GET request URL carries the search term in `q`. Deployment prerequisite recorded (proxy/ingress/CDN/access logs must redact the query; untested). The journey's assertion descriptions and the boundary-test title were corrected, one explicit check recording `q` in the request URL was added, and the evidence was regenerated.
+
+### Owner decision available
+Absolute "no customer PII in HTTP request URLs" conflicts with the approved GET contract; a POST-based search would change the API contract and was NOT implemented.
+
+### Re-audit focus
+1. No statement left claims search text is absent from every URL.
+2. The four surfaces are distinguished consistently across task, STATUS, SECURITY.md, ARCHITECTURE.md, PR body and QA.
+3. Existing meaningful checks are unweakened; `git diff` against the audited head shows no change under `apps/*/src` other than a test title.
+4. The open finding stands: `createPayPalDraft` still needs operator scope before C5 or a second operator.
+
 <!-- HANDOFF_ENTRIES_END -->

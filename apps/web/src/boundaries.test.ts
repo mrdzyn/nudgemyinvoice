@@ -91,7 +91,7 @@ describe("UI shell boundaries", () => {
     expect(all).not.toMatch(/paypal-draft|paypal\.com|openai\.com|api\.openai/i);
   });
 
-  it("the list request is a GET and the real dashboard never writes search text to the URL or storage", () => {
+  it("the list request is a GET (its q parameter is part of the HTTP request URL) and the real dashboard never writes search text to the browser navigation URL or storage", () => {
     const api = read(join(root, "invoices/api.ts"));
     const listBlock = api.slice(api.indexOf("async list("), api.indexOf("async get("));
     expect(listBlock).toMatch(/method: "GET"/);

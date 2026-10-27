@@ -1,6 +1,6 @@
 {
   "chrome": "Chrome/156.0.8078.48",
-  "passed": 78,
+  "passed": 79,
   "failed": 0,
   "results": [
     {
@@ -179,7 +179,13 @@
     },
     {
       "group": "REAL filters and search (server-side over the whole account)",
-      "name": "the search text is never written to the browser URL or storage",
+      "name": "the search text never appears in the browser NAVIGATION URL (location.href) and is not kept in localStorage (the HTTP GET request URL does carry it in q; see the next check)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "DOCUMENTED, not hidden: the HTTP GET request URL carries the search term in `q` (customer data); proxy/ingress/CDN access logs must redact it (deployment prerequisite, untested here)",
       "pass": true,
       "detail": ""
     },
@@ -431,7 +437,7 @@
     },
     {
       "group": "Global invariants",
-      "name": "no script-readable cookie; the browser URL carries no customer data, search text or id",
+      "name": "no script-readable cookie; the browser NAVIGATION URL (location.href) carries no customer data, search text or id",
       "pass": true,
       "detail": ""
     },
@@ -461,7 +467,7 @@
     },
     {
       "group": "Global invariants",
-      "name": "API log holds no search text, customer name, CSRF token or cookie value",
+      "name": "the Fastify request log (query strings stripped) holds no search text, customer name, CSRF token or cookie value",
       "pass": true,
       "detail": ""
     },

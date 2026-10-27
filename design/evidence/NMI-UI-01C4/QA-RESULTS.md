@@ -2,9 +2,9 @@
 
 Chrome: Chrome/156.0.8078.48 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
-Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey. Two operator accounts exist ONLY in this disposable database (production allows exactly one; `add-second-operator.ts` drops that index in the throw-away database to exercise owner isolation). Invoices are created through the real save route.
+Privacy scope of the checks below: they prove the browser NAVIGATION URL and browser storage hold no customer data and that the Fastify request log has query strings stripped. They do NOT claim the HTTP GET request URL is free of customer data (the search term travels in `q`), and no reverse proxy, ingress, CDN or access log was exercised (untested). Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey. Two operator accounts exist ONLY in this disposable database (production allows exactly one; `add-second-operator.ts` drops that index in the throw-away database to exercise owner isolation). Invoices are created through the real save route.
 
-**78/78 checks passed.**
+**79/79 checks passed.**
 
 | Result | Group | Check | Detail |
 | --- | --- | --- | --- |
@@ -37,7 +37,8 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL filters and search (server-side over the whole account) | the EUR pill asks the SERVER for currency=EUR and shows only the EUR invoice |  |
 | PASS | REAL filters and search (server-side over the whole account) | changing a filter after paging drops the old cursor and resets the rows |  |
 | PASS | REAL filters and search (server-side over the whole account) | search matches the oldest invoice, which is not on the first page (server-side, not page-local) |  |
-| PASS | REAL filters and search (server-side over the whole account) | the search text is never written to the browser URL or storage |  |
+| PASS | REAL filters and search (server-side over the whole account) | the search text never appears in the browser NAVIGATION URL (location.href) and is not kept in localStorage (the HTTP GET request URL does carry it in q; see the next check) |  |
+| PASS | REAL filters and search (server-side over the whole account) | DOCUMENTED, not hidden: the HTTP GET request URL carries the search term in `q` (customer data); proxy/ingress/CDN access logs must redact it (deployment prerequisite, untested here) |  |
 | PASS | REAL filters and search (server-side over the whole account) | an invoice-id prefix finds exactly that invoice |  |
 | PASS | REAL filters and search (server-side over the whole account) | another operator's customers cannot be found by search |  |
 | PASS | REAL filters and search (server-side over the whole account) | Clear filters restores the full first page |  |
@@ -79,12 +80,12 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL 390px mobile and dark theme | list text contrast >= WCAG AA (light, desktop) |  |
 | PASS | REAL 390px mobile and dark theme | no horizontal overflow on desktop |  |
 | PASS | Global invariants | no localStorage/sessionStorage/IndexedDB/Cache entries |  |
-| PASS | Global invariants | no script-readable cookie; the browser URL carries no customer data, search text or id |  |
+| PASS | Global invariants | no script-readable cookie; the browser NAVIGATION URL (location.href) carries no customer data, search text or id |  |
 | PASS | Global invariants | no request left the app origin (no PayPal/OpenAI/foreign host) |  |
 | PASS | Global invariants | the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts and GET /api/invoice-drafts/:id |  |
 | PASS | Global invariants | no PayPal operations, approvals or model calls exist |  |
 | PASS | Global invariants | every list request in the journey was a GET (the list never mutates) |  |
-| PASS | Global invariants | API log holds no search text, customer name, CSRF token or cookie value |  |
+| PASS | Global invariants | the Fastify request log (query strings stripped) holds no search text, customer name, CSRF token or cookie value |  |
 | PASS | Global invariants | no console errors or uncaught exceptions in the browser |  |
 
 Screenshots (synthetic data only, no credentials): 01-real-empty.jpg, 02-operator-b.jpg, 03-first-page.jpg, 04-all-loaded.jpg, 05-no-match.jpg, 06-opened-detail.jpg, 07-list-error.jpg, 08-mobile-dark-list.jpg, 09-mobile-dark-error.jpg, 10-mobile-dark-opened.jpg

@@ -481,7 +481,8 @@ try {
     await waitFor("document.querySelectorAll('tbody tr').length === 1 && document.querySelector('tbody tr td[data-label=Customer] div').textContent === 'Bulk 01'", 6000);
     const sq = LIST(m).at(-1);
     check(g, "search matches the oldest invoice, which is not on the first page (server-side, not page-local)", q(m, sq).get("q") === "Bulk 01" && !q(m, sq).has("cursor"), q(m, sq).toString());
-    check(g, "the search text is never written to the browser URL or storage", !/Bulk/.test(await ev("location.href")) && (await ev(STORAGE)).local === 0);
+    check(g, "the search text never appears in the browser NAVIGATION URL (location.href) and is not kept in localStorage (the HTTP GET request URL does carry it in q; see the next check)", !/Bulk/.test(await ev("location.href")) && (await ev(STORAGE)).local === 0);
+    check(g, "DOCUMENTED, not hidden: the HTTP GET request URL carries the search term in `q` (customer data); proxy/ingress/CDN access logs must redact it (deployment prerequisite, untested here)", /(^|&)q=Bulk(\+|%20)01(&|$)/.test(q(m, sq).toString()) && sq.path.includes("q="), sq.path);
     check(g, "an invoice-id prefix finds exactly that invoice", await (async () => {
       const id = sql(`SELECT id FROM invoices WHERE customer_name='Bulk 01'`);
       await fillText("dash-search", id.slice(0, 8));
@@ -664,14 +665,14 @@ try {
     const g = "Global invariants";
     const s = await ev(STORAGE);
     check(g, "no localStorage/sessionStorage/IndexedDB/Cache entries", s.local === 0 && s.session === 0 && s.idb === 0 && s.caches === 0, JSON.stringify(s));
-    check(g, "no script-readable cookie; the browser URL carries no customer data, search text or id", s.cookie === "" && !/Quill|Bulk|Vienna|B%20Private|@/.test(s.href) && !/[0-9a-f]{8}-[0-9a-f]{4}-/.test(s.href), s.href);
+    check(g, "no script-readable cookie; the browser NAVIGATION URL (location.href) carries no customer data, search text or id", s.cookie === "" && !/Quill|Bulk|Vienna|B%20Private|@/.test(s.href) && !/[0-9a-f]{8}-[0-9a-f]{4}-/.test(s.href), s.href);
     check(g, "no request left the app origin (no PayPal/OpenAI/foreign host)", foreign.length === 0, JSON.stringify(foreign));
     const paths = new Set(netLog.filter((n) => n.path.startsWith("/api/")).map((n) => n.path.replace(/[0-9a-f-]{36}/, ":id").replace(/\?.*$/, "")));
     check(g, "the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts and GET /api/invoice-drafts/:id", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/:id)?)$/.test(p)), [...paths].join(","));
     check(g, "no PayPal operations, approvals or model calls exist", Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && Number(sql("SELECT count(*) FROM approvals")) === 0 && modelCalls() === 0);
     check(g, "every list request in the journey was a GET (the list never mutates)", netLog.filter((n) => /^\/api\/invoice-drafts\?/.test(n.path)).every((n) => n.method === "GET") && netLog.some((n) => /^\/api\/invoice-drafts\?/.test(n.path)));
     const log = readFileSync(apiLog, "utf8");
-    check(g, "API log holds no search text, customer name, CSRF token or cookie value", !/Bulk 01|B Private|Vienna|Quill|q=|csrf-token\"?:\s*\"[A-Za-z0-9]/.test(log));
+    check(g, "the Fastify request log (query strings stripped) holds no search text, customer name, CSRF token or cookie value", !/Bulk 01|B Private|Vienna|Quill|q=|csrf-token\"?:\s*\"[A-Za-z0-9]/.test(log));
     check(g, "no console errors or uncaught exceptions in the browser", consoleMsgs.filter((x) => !/Failed to load resource|net::ERR|status of (4|5)\d\d/.test(x)).length === 0, consoleMsgs.slice(0, 5).join(" / "));
   }
 } catch (e) {
@@ -684,7 +685,7 @@ try {
     "",
     `Chrome: ${version?.Browser ?? "unknown"} (headless). PostgreSQL: ${run(join(PG_BIN, "postgres"), ["--version"]).trim()} (disposable cluster, destroyed after the run).`,
     "Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.",
-    "Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey. Two operator accounts exist ONLY in this disposable database (production allows exactly one; `add-second-operator.ts` drops that index in the throw-away database to exercise owner isolation). Invoices are created through the real save route.",
+    "Privacy scope of the checks below: they prove the browser NAVIGATION URL and browser storage hold no customer data and that the Fastify request log has query strings stripped. They do NOT claim the HTTP GET request URL is free of customer data (the search term travels in `q`), and no reverse proxy, ingress, CDN or access log was exercised (untested). Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey. Two operator accounts exist ONLY in this disposable database (production allows exactly one; `add-second-operator.ts` drops that index in the throw-away database to exercise owner isolation). Invoices are created through the real save route.",
     "",
     `**${passed}/${results.length} checks passed${failed ? `, ${failed} FAILED` : ""}.**`,
     "",
