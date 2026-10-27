@@ -12,9 +12,11 @@ export type LoginNotice = "signed-out" | "session-expired" | "login-error" | "lo
 export type DetailNotice = "created" | "replayed" | null;
 export type SaveMode = "normal" | "conflict";
 /** Real mode only: the persisted record the Saved screen loads from the server by id. */
+/** created/replayed: just after a save (C3). opened: reopened from the dashboard, a neutral read. */
+export type SavedNotice = "created" | "replayed" | "opened";
 export interface SavedRef {
   id: string;
-  notice: "created" | "replayed";
+  notice: SavedNotice;
 }
 
 export type ParseState =
@@ -123,7 +125,7 @@ export type Action =
   | { type: "composer"; patch: Partial<ComposerState> }
   | { type: "start-review"; form: FormState; source: "ai" | "manual" }
   | { type: "discard-review" }
-  | { type: "open-saved"; id: string; notice: "created" | "replayed" }
+  | { type: "open-saved"; id: string; notice: SavedNotice }
   | { type: "save-invoice"; key: string; draft: InvoiceDraft; totals: Totals }
   | { type: "paypal-created"; id: string }
   | { type: "paypal-override"; override: PayPalOverride | null };

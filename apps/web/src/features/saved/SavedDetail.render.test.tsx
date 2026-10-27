@@ -5,7 +5,6 @@ import { initialState, reducer } from "../../demo/appState.js";
 import { FIXTURE_INVOICES } from "../../demo/fixtures.js";
 import type { ServerInvoice } from "../../domain/serverInvoice.js";
 import { isBlockedInRealMode } from "../../RealApp.js";
-import { DashboardScreen } from "../dashboard/DashboardScreen.js";
 import { NO_SAVE, RealSaveNotices } from "../review/ReviewScreen.js";
 import { SavedDetailScreen, SavedDetailView, type SavedLoad } from "./SavedDetailScreen.js";
 
@@ -38,7 +37,7 @@ const inv: ServerInvoice = {
   createdAt: "2026-10-27T10:00:00.000Z",
   paypal: { state: "none", paypalInvoiceId: null, lastErrorCode: null },
 };
-const view = (load: SavedLoad, notice: "created" | "replayed" = "created") =>
+const view = (load: SavedLoad, notice: "created" | "replayed" | "opened" = "created") =>
   renderToString(
     <SavedDetailView
       savedRef={{ id: inv.id, notice }}
@@ -87,6 +86,20 @@ describe("SavedDetailView", () => {
     const html = view({ status: "ok", invoice: inv }, "replayed");
     expect(html).toContain("HTTP 200, replayed");
     expect(html).toContain("No second draft was created");
+  });
+  it("opened from the dashboard shows a neutral read-only notice: never 'saved just now' or a replay", () => {
+    const html = view({ status: "ok", invoice: inv }, "opened");
+    expect(html).toContain("opened from your list");
+    expect(html).toContain("read-only view");
+    expect(html).not.toMatch(
+      /replayed|HTTP 200|just now|Saved in PostgreSQL\.|No second draft|was not created/,
+    );
+    expect(html).toContain("Zeta Studio");
+    expect(html).toContain("€324.75");
+  });
+  it("created and replayed notices are unchanged for C3 saves", () => {
+    expect(view({ status: "ok", invoice: inv }, "created")).toContain("Saved in PostgreSQL.");
+    expect(view({ status: "ok", invoice: inv }, "replayed")).toContain("HTTP 200, replayed");
   });
   it("loading shows no invoice data", () => {
     const html = view({ status: "loading" });
@@ -173,19 +186,10 @@ describe("real mode cannot reach fixtures or simulated PayPal", () => {
     expect(s.review).toBeNull();
     expect(s.composer.text).toBe("");
   });
-  it("the real dashboard keeps its sample rows labelled and unopenable", () => {
-    const html = renderToString(
-      <AppProvider
-        state={{ ...initialState("light"), screen: "dashboard" }}
-        dispatch={() => undefined}
-        session={{ username: "op", signOut: () => undefined }}
-      >
-        <DashboardScreen />
-      </AppProvider>,
-    ).replace(/<!-- -->/g, "");
-    expect(html).toContain("DEMO / SYNTHETIC");
-    expect(html).toContain("cannot be opened");
-    expect(html).not.toMatch(/aria-label="View draft/);
+  it("opened is allowed; the dashboard row action dispatches it", () => {
+    expect(isBlockedInRealMode({ type: "open-saved", id: inv.id, notice: "opened" } as never)).toBe(
+      false,
+    );
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInvoiceApi, saveBody } from "./api.js";
+import { createInvoiceApi, saveBody, type ListQuery } from "./api.js";
 import { IDEMPOTENCY_KEY, newIdempotencyKey } from "./idempotency.js";
 import type { InvoiceDraft } from "../domain/types.js";
 
@@ -322,6 +322,164 @@ describe("detail request and results", () => {
     expect(r).toMatchObject({
       kind: "ok",
       invoice: { paypal: { state: "created", paypalInvoiceId: "INV2-AAAA-BBBB" } },
+    });
+  });
+});
+
+describe("list request and results", () => {
+  const row = (n: number, over: Record<string, unknown> = {}) => ({
+    id: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
+    customerName: `Customer ${n}`,
+    customerEmail: `c${n}@example.test`,
+    currency: "USD",
+    dueDate: "2030-01-15",
+    total: "500.00",
+    createdAt: `2026-10-27T10:00:0${9 - n}.000Z`,
+    paypal: { state: "none" },
+    ...over,
+  });
+  const page = (items: unknown[], nextCursor: string | null = null) => ({ items, nextCursor });
+  const q: ListQuery = { limit: 3, cursor: null, currency: null, status: null, q: null };
+  const list = (res: () => Response | Promise<Response>, query = q, signal = sig()) =>
+    createInvoiceApi(async () => res()).list(query, signal);
+
+  it("is a credentialed, no-store GET with only the query string and no body or CSRF header", async () => {
+    let seen: { url: string; init: RequestInit } | undefined;
+    const r = await createInvoiceApi(
+      async (url, init) => ((seen = { url, init }), reply(200, page([row(1)]))),
+    ).list(
+      { limit: 20, cursor: "abc_DEF-1", currency: "EUR", status: "created", q: "Zeta & Co/100%" },
+      sig(),
+    );
+    expect(r.kind).toBe("ok");
+    const u = new URL(seen!.url, "http://x");
+    expect(u.pathname).toBe("/api/invoice-drafts");
+    expect(Object.fromEntries(u.searchParams)).toEqual({
+      limit: "20",
+      cursor: "abc_DEF-1",
+      currency: "EUR",
+      status: "created",
+      q: "Zeta & Co/100%",
+    });
+    expect([
+      seen?.init.method,
+      seen?.init.credentials,
+      seen?.init.cache,
+      seen?.init.redirect,
+    ]).toEqual(["GET", "same-origin", "no-store", "error"]);
+    expect(seen?.init.body).toBeUndefined();
+    expect(JSON.stringify(seen?.init.headers)).not.toMatch(/csrf|idempotency/i);
+  });
+  it("omits parameters that are not set", async () => {
+    let url = "";
+    await createInvoiceApi(async (u) => ((url = u), reply(200, page([])))).list(q, sig());
+    expect(url).toBe("/api/invoice-drafts?limit=3");
+  });
+  it("returns the validated page, newest first, and a cursor only after a full page", async () => {
+    const r = await list(() => reply(200, page([row(1), row(2), row(3)], "next_cursor_1")));
+    expect(r).toMatchObject({ kind: "ok", page: { nextCursor: "next_cursor_1" } });
+    if (r.kind === "ok")
+      expect(r.page.items.map((i) => i.customerName)).toEqual([
+        "Customer 1",
+        "Customer 2",
+        "Customer 3",
+      ]);
+    expect(await list(() => reply(200, page([])))).toMatchObject({
+      kind: "ok",
+      page: { items: [], nextCursor: null },
+    });
+  });
+  it("accepts JPY without decimals and equal millisecond timestamps", async () => {
+    const r = await list(() =>
+      reply(
+        200,
+        page([
+          row(1, { currency: "JPY", total: "2200" }),
+          row(2, { currency: "JPY", total: "0", createdAt: "2026-10-27T10:00:08.000Z" }),
+        ]),
+      ),
+    );
+    expect(r.kind).toBe("ok");
+  });
+  it("maps the documented statuses", async () => {
+    expect(await list(() => reply(401))).toEqual({ kind: "unauthorized" });
+    expect(await list(() => reply(403, { secret: "LEAK" }))).toEqual({ kind: "forbidden" });
+    expect(await list(() => reply(400, { error: "invalid_query" }))).toEqual({ kind: "rejected" });
+    expect(await list(() => reply(500))).toEqual({ kind: "unavailable" });
+    expect(await list(() => reply(503))).toEqual({ kind: "unavailable" });
+    expect(await createInvoiceApi(() => Promise.reject(new TypeError("x"))).list(q, sig())).toEqual(
+      { kind: "offline" },
+    );
+    const ac = new AbortController();
+    ac.abort();
+    expect(
+      await createInvoiceApi(() => Promise.reject(new DOMException("a", "AbortError"))).list(
+        q,
+        ac.signal,
+      ),
+    ).toEqual({ kind: "aborted" });
+  });
+  const dup = row(1);
+  it.each<[string, unknown]>([
+    ["extra top-level key", { ...page([row(1)]), total: 5 }],
+    ["missing nextCursor", { items: [row(1)] }],
+    ["items not an array", { items: {}, nextCursor: null }],
+    ["more items than requested", page([row(1), row(2), row(3), row(4)])],
+    ["extra item key (digest)", page([{ ...row(1), draftDigest: "x" }])],
+    [
+      "missing item key",
+      page([
+        (() => {
+          const r = row(1) as Record<string, unknown>;
+          delete r["dueDate"];
+          return r;
+        })(),
+      ]),
+    ],
+    ["bad uuid", page([row(1, { id: "nope" })])],
+    ["empty customer name", page([row(1, { customerName: "" })])],
+    ["bad email", page([row(1, { customerEmail: "nope" })])],
+    ["unsupported currency", page([row(1, { currency: "XYZ" })])],
+    ["impossible due date", page([row(1, { dueDate: "2030-02-31" })])],
+    ["USD total with 3 decimals", page([row(1, { total: "1.005" })])],
+    ["USD total without decimals", page([row(1, { total: "500" })])],
+    ["JPY total with decimals", page([row(1, { currency: "JPY", total: "500.00" })])],
+    ["leading zeros", page([row(1, { total: "05.00" })])],
+    ["numeric total", page([row(1, { total: 500 })])],
+    ["negative total", page([row(1, { total: "-5.00" })])],
+    ["impossible createdAt", page([row(1, { createdAt: "2026-02-31T10:00:00.000Z" })])],
+    ["24:00 createdAt", page([row(1, { createdAt: "2026-10-27T24:00:00.000Z" })])],
+    ["unknown PayPal state", page([row(1, { paypal: { state: "sent" } })])],
+    [
+      "PayPal object with extra key",
+      page([row(1, { paypal: { state: "none", paypalInvoiceId: "INV2-X" } })]),
+    ],
+    ["duplicate id in a page", page([dup, { ...dup }])],
+    [
+      "not newest first",
+      page([
+        row(8, { createdAt: "2026-10-27T10:00:01.000Z" }),
+        row(9, { createdAt: "2026-10-27T10:00:05.000Z" }),
+      ]),
+    ],
+    ["cursor on a short page", page([row(1)], "next_cursor_1")],
+    ["cursor with illegal characters", page([row(1), row(2), row(3)], "bad cursor!")],
+    ["oversized cursor", page([row(1), row(2), row(3)], "A".repeat(121))],
+    ["non-string cursor", page([row(1), row(2), row(3)], 7 as never)],
+  ])("fails closed on %s", async (_n, body) => {
+    expect(await list(() => reply(200, body))).toEqual({ kind: "malformed" });
+  });
+  it("rejects a cursor that does not move (would loop on the same page)", async () => {
+    expect(
+      await list(() => reply(200, page([row(1), row(2), row(3)], "same_cursor")), {
+        ...q,
+        cursor: "same_cursor",
+      }),
+    ).toEqual({ kind: "malformed" });
+  });
+  it("non-JSON 200 is malformed", async () => {
+    expect(await list(() => new Response("<html>", { status: 200 }))).toEqual({
+      kind: "malformed",
     });
   });
 });

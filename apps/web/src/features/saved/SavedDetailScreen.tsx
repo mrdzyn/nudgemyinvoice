@@ -65,11 +65,16 @@ export function SavedDetailView({
           <strong>Saved in PostgreSQL.</strong> This is a local draft record only. It was not
           created in PayPal, nothing was sent to PayPal, and the customer was not notified.
         </Notice>
-      ) : (
+      ) : savedRef.notice === "replayed" ? (
         <Notice kind="info" role="status" icon="ℹ" id="saved-notice">
           <strong>Already saved (HTTP 200, replayed).</strong> The same request had been saved
           before, so the existing record is shown. No second draft was created. Nothing was sent to
           PayPal and the customer was not notified.
+        </Notice>
+      ) : (
+        <Notice kind="info" role="note" icon="ℹ" id="saved-notice">
+          <strong>Saved invoice, opened from your list.</strong> This is a read-only view of the
+          record stored in PostgreSQL. Opening it changes nothing, and it is not a PayPal invoice.
         </Notice>
       )}
       {load.status === "loading" ? (

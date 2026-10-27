@@ -55,11 +55,11 @@ describe("real parse proposal -> Review -> real save copy", () => {
 });
 
 describe("real tab title", () => {
-  it("labels only the dashboard as sample rows; Review, composer and Saved are not fixture data", () => {
-    expect(realTitle("dashboard")).toContain("(sample rows)");
-    for (const s of ["review", "composer", "saved"] as const) {
+  it("never labels a real screen as fixture or sample data (the dashboard list is server-backed)", () => {
+    for (const s of ["dashboard", "review", "composer", "saved"] as const) {
       expect(realTitle(s)).not.toMatch(/fixture|sample/i);
     }
+    expect(realTitle("dashboard")).toBe("Invoice drafts · NudgeMyInvoice");
     expect(realTitle("saved")).toBe("Saved invoice · NudgeMyInvoice");
   });
 });
