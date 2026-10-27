@@ -581,7 +581,7 @@
     },
     {
       "group": "REAL leaving an unresolved save (server commits, response lost)",
-      "name": "nothing was written by the held (never sent) requests",
+      "name": "the held (never sent) and cancelled saves inserted no invoice: the count is exactly what it was before them",
       "pass": true,
       "detail": ""
     },

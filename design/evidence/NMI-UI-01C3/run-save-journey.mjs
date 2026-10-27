@@ -722,7 +722,7 @@ try {
     check(g, "pending: explicit 'Leave and forget this save' leaves and cancels the browser request", (await waitFor("!!document.getElementById('dash-title')", 3000)) && saveCalls(m5)[0]?.failed === "canceled", JSON.stringify(saveCalls(m5)));
     await releaseHeld("fail");
     await stopSimulating();
-    check(g, "nothing was written by the held (never sent) requests", invCount() === b3 + 0 || invCount() >= b3);
+    check(g, "the held (never sent) and cancelled saves inserted no invoice: the count is exactly what it was before them", invCount() === b3, `before=${b3} after=${invCount()}`);
 
     // sign-out stays immediate while uncertain
     await nav("New invoice");

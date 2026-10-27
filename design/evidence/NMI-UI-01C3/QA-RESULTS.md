@@ -104,7 +104,7 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL leaving an unresolved save (server commits, response lost) | pending: 'Stay and wait' keeps the pending save |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | pending -> uncertain while the dialog is open: the wording follows the new state |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | pending: explicit 'Leave and forget this save' leaves and cancels the browser request |  |
-| PASS | REAL leaving an unresolved save (server commits, response lost) | nothing was written by the held (never sent) requests |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | the held (never sent) and cancelled saves inserted no invoice: the count is exactly what it was before them |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | Sign out is NOT gated: the workspace locks at once with no dialog, and no invoice text remains |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | after sign-out nothing of the unresolved invoice is in the page |  |
 | PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | a parsed server draft opens Review |  |
