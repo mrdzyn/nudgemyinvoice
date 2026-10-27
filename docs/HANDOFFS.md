@@ -839,4 +839,29 @@ Independently re-audit PR #8 at its exact head.
 ### Next action
 Claude implements the active contract on this same branch and Draft PR, posts exact SHA and evidence for GPT-6 independent audit. No auto-merge, no deployment.
 
+## Handoff: NMI-UI-01C1-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C1-auth-session.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit; then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c1-auth-session`, Draft PR #9. **Implementation SHA:** `e7ee3e33aefc17f68d76d1fdc458e5ab22d66f17` (a later docs-only commit records this handoff; audit the code at the implementation SHA and confirm the later commits touch only docs).
+- **State:** READY FOR INDEPENDENT AUDIT. Real browser login, session restore, protected navigation and honest logout are implemented; invoice features are still synthetic fixtures. Not self-certified, not merged, not deployed.
+
+### What changed
+- New `apps/web/src/auth/*`, `RealApp.tsx`, `features/login/RealLoginScreen.tsx`, `screens.tsx`; `main.tsx` mounts the real app; the synthetic preview is dev-only behind `VITE_NMI_SYNTHETIC_PREVIEW=1` and absent from production bundles; production CSP `connect-src 'self'`; `/api` proxy for dev and preview; docs in `docs/ARCHITECTURE.md` and `docs/SECURITY.md`.
+- Unchanged: `apps/api`, `packages/*`, migrations, auth policy, Origin/CSRF/cookie rules. No OpenAI or PayPal configuration or call exists in any run.
+
+### Evidence
+- Local at `e7ee3e3`: lint, format, typecheck, build, bundle scan, profile validation pass; 364 tests pass, 187 PostgreSQL-only tests skipped locally (unchanged code; run in hosted Stack CI).
+- Real browser -> Vite preview (strict CSP) -> Fastify -> disposable PostgreSQL 16.15: 105/105 checks (`design/evidence/NMI-UI-01C1/QA-RESULTS.md`, re-run with `pnpm --filter @nmi/web build && node design/evidence/NMI-UI-01C1/run-auth-journey.mjs`; needs Chrome and Homebrew PostgreSQL 16; API on port 3101 by default).
+- Hosted CI at `e7ee3e3`: Project baseline / Common validation PASS (run 40458040856); Stack validation PASS (run 40458040859).
+
+### Audit focus and known limits
+- Review the four deliberate behaviours listed in the task's implementation record (generic 403 on login; transient errors on periodic re-check keep the workspace; unconfirmed logout wording; Retry-After shown but button not disabled).
+- Not verified: `__Host-` Secure cookie in a browser (HTTPS), screen readers, real touch, Safari/Firefox, 400% zoom, hosted reverse-proxy deployment. Throttling remains in-memory per process.
+- The 01B browser QA harness is superseded for the production page (it assumed the synthetic shell as the default page).
+
+### Next action
+Audit exact head, then owner decides on merge. C2 needs separate authorization.
+
 <!-- HANDOFF_ENTRIES_END -->
