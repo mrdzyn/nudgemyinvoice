@@ -1,0 +1,533 @@
+[
+  {
+    "rel": "desktop/dark/1-login.jpg",
+    "mad": 5.4,
+    "same": 94.6,
+    "hA": 900,
+    "hB": 900,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/dark/2-dashboard.jpg",
+    "mad": 4.2,
+    "same": 94.6,
+    "hA": 1079,
+    "hB": 1080,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/dark/3-composer.jpg",
+    "mad": 5.1,
+    "same": 92.7,
+    "hA": 1218,
+    "hB": 1219,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/dark/4-review.jpg",
+    "mad": 3.8,
+    "same": 96.1,
+    "hA": 1194,
+    "hB": 1195,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/dark/5-detail.jpg",
+    "mad": 6,
+    "same": 95.3,
+    "hA": 1248,
+    "hB": 1267,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/light/1-login.jpg",
+    "mad": 7.3,
+    "same": 94.5,
+    "hA": 900,
+    "hB": 900,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/light/2-dashboard.jpg",
+    "mad": 3.8,
+    "same": 95.5,
+    "hA": 1079,
+    "hB": 1080,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/light/3-composer.jpg",
+    "mad": 4.9,
+    "same": 93.3,
+    "hA": 1218,
+    "hB": 1219,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/light/4-review.jpg",
+    "mad": 3.6,
+    "same": 96.2,
+    "hA": 1194,
+    "hB": 1195,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "desktop/light/5-detail.jpg",
+    "mad": 5.3,
+    "same": 95.3,
+    "hA": 1248,
+    "hB": 1267,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "mobile/dark/1-login.jpg",
+    "mad": 14.1,
+    "same": 85.5,
+    "hA": 844,
+    "hB": 900,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/dark/2-dashboard.jpg",
+    "mad": 5.1,
+    "same": 95.2,
+    "hA": 2808,
+    "hB": 2807,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/dark/3-composer.jpg",
+    "mad": 3.2,
+    "same": 98.1,
+    "hA": 1731,
+    "hB": 1749,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/dark/4-review.jpg",
+    "mad": 2.6,
+    "same": 97.6,
+    "hA": 2642,
+    "hB": 2661,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/dark/5-detail.jpg",
+    "mad": 20.5,
+    "same": 83.9,
+    "hA": 1855,
+    "hB": 1853,
+    "wA": 436,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/light/1-login.jpg",
+    "mad": 19.2,
+    "same": 85.8,
+    "hA": 844,
+    "hB": 900,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/light/2-dashboard.jpg",
+    "mad": 4.6,
+    "same": 95.5,
+    "hA": 2808,
+    "hB": 2807,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/light/3-composer.jpg",
+    "mad": 2.8,
+    "same": 98.4,
+    "hA": 1731,
+    "hB": 1749,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/light/4-review.jpg",
+    "mad": 2.5,
+    "same": 97.5,
+    "hA": 2642,
+    "hB": 2661,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "mobile/light/5-detail.jpg",
+    "mad": 18.4,
+    "same": 85.1,
+    "hA": 1855,
+    "hB": 1853,
+    "wA": 436,
+    "wB": 390
+  },
+  {
+    "rel": "states/desktop-dark/ai-clarification.jpg",
+    "mad": 3.3,
+    "same": 96.3,
+    "hA": 1502,
+    "hB": 1503,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-dark/loading.jpg",
+    "mad": 2.7,
+    "same": 98.3,
+    "hA": 900,
+    "hB": 900,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-dark/paypal-unknown.jpg",
+    "mad": 2.4,
+    "same": 97.6,
+    "hA": 1163,
+    "hB": 1164,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-dark/validation-errors.jpg",
+    "mad": 4.6,
+    "same": 93.8,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/ai-clarification.jpg",
+    "mad": 3.1,
+    "same": 96.8,
+    "hA": 1502,
+    "hB": 1503,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/ai-invalid.jpg",
+    "mad": 2.9,
+    "same": 97.3,
+    "hA": 1502,
+    "hB": 1503,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/ai-unavailable.jpg",
+    "mad": 4.8,
+    "same": 95.1,
+    "hA": 1502,
+    "hB": 1503,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/empty.jpg",
+    "mad": 2,
+    "same": 98.4,
+    "hA": 900,
+    "hB": 928,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/list-error.jpg",
+    "mad": 2.5,
+    "same": 97.9,
+    "hA": 900,
+    "hB": 928,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/loading.jpg",
+    "mad": 2.2,
+    "same": 98.4,
+    "hA": 900,
+    "hB": 928,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/login-error.jpg",
+    "mad": 7.4,
+    "same": 94.4,
+    "hA": 900,
+    "hB": 928,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/login-throttled.jpg",
+    "mad": 7.1,
+    "same": 94.6,
+    "hA": 900,
+    "hB": 928,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/offline.jpg",
+    "mad": 5.9,
+    "same": 93.5,
+    "hA": 1117,
+    "hB": 1118,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/over-limit.jpg",
+    "mad": 3.7,
+    "same": 95.3,
+    "hA": 1243,
+    "hB": 1244,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-created.jpg",
+    "mad": 5,
+    "same": 95.1,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-creating.jpg",
+    "mad": 2.9,
+    "same": 96.5,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-disabled.jpg",
+    "mad": 3.5,
+    "same": 95.5,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-mismatch.jpg",
+    "mad": 3.1,
+    "same": 96.3,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-reconciling.jpg",
+    "mad": 3,
+    "same": 96.5,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-refused.jpg",
+    "mad": 3.1,
+    "same": 96.2,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-rejected.jpg",
+    "mad": 2.9,
+    "same": 96.6,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/paypal-unknown.jpg",
+    "mad": 3.1,
+    "same": 96.3,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/rounding.jpg",
+    "mad": 4.6,
+    "same": 94.4,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/save-conflict.jpg",
+    "mad": 4.2,
+    "same": 95.1,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/save-replay.jpg",
+    "mad": 4.2,
+    "same": 95.1,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/session-expired.jpg",
+    "mad": 6.6,
+    "same": 95.2,
+    "hA": 900,
+    "hB": 928,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/desktop-light/validation-errors.jpg",
+    "mad": 5.2,
+    "same": 93.8,
+    "hA": 1544,
+    "hB": 1545,
+    "wA": 1280,
+    "wB": 1280
+  },
+  {
+    "rel": "states/mobile-light/ai-clarification.jpg",
+    "mad": 3.7,
+    "same": 96,
+    "hA": 2097,
+    "hB": 2116,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "states/mobile-light/offline.jpg",
+    "mad": 4.1,
+    "same": 95.7,
+    "hA": 2867,
+    "hB": 2866,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "states/mobile-light/over-limit.jpg",
+    "mad": 4.4,
+    "same": 95.1,
+    "hA": 1796,
+    "hB": 1815,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "states/mobile-light/paypal-disabled.jpg",
+    "mad": 20.8,
+    "same": 81.8,
+    "hA": 1844,
+    "hB": 1783,
+    "wA": 436,
+    "wB": 390
+  },
+  {
+    "rel": "states/mobile-light/paypal-refused.jpg",
+    "mad": 19.1,
+    "same": 84.7,
+    "hA": 2065,
+    "hB": 1985,
+    "wA": 436,
+    "wB": 390
+  },
+  {
+    "rel": "states/mobile-light/paypal-unknown.jpg",
+    "mad": 21.3,
+    "same": 82.9,
+    "hA": 1727,
+    "hB": 1666,
+    "wA": 436,
+    "wB": 390
+  },
+  {
+    "rel": "states/mobile-light/validation-errors.jpg",
+    "mad": 1.8,
+    "same": 99.6,
+    "hA": 2679,
+    "hB": 2697,
+    "wA": 390,
+    "wB": 390
+  },
+  {
+    "rel": "tablet/light/1-login.jpg",
+    "mad": 14.6,
+    "same": 88.1,
+    "hA": 1100,
+    "hB": 1100,
+    "wA": 820,
+    "wB": 820
+  },
+  {
+    "rel": "tablet/light/2-dashboard.jpg",
+    "mad": 17.9,
+    "same": 81.3,
+    "hA": 1518,
+    "hB": 1556,
+    "wA": 820,
+    "wB": 820
+  },
+  {
+    "rel": "tablet/light/3-composer.jpg",
+    "mad": 14.1,
+    "same": 84.3,
+    "hA": 1518,
+    "hB": 1556,
+    "wA": 820,
+    "wB": 820
+  },
+  {
+    "rel": "tablet/light/4-review.jpg",
+    "mad": 17.3,
+    "same": 82.6,
+    "hA": 1778,
+    "hB": 1799,
+    "wA": 820,
+    "wB": 820
+  },
+  {
+    "rel": "tablet/light/5-detail.jpg",
+    "mad": 12.4,
+    "same": 88.7,
+    "hA": 1778,
+    "hB": 1799,
+    "wA": 820,
+    "wB": 820
+  }
+]

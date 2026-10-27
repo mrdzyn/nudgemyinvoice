@@ -762,4 +762,34 @@ Open Draft PR and request owner visual approval on `design/preview/index.html` a
 Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on visual approval.
 
 
+## Handoff: NMI-UI-01B-C1
+
+- **Task / phase:** `tasks/NMI-UI-01B-react-shell.md`
+- **From:** Implementation agent (Claude)
+- **To:** Independent reviewer (GPT-6), then product owner
+- **Branch:** `feat/nmi-ui-01b-react-shell`
+- **Implementation head:** the PR head is authoritative (a docs commit cannot name its own SHA); the exact SHA is recorded in the PR description and its audit-request comment
+- **PR:** new Draft PR against `main` (base `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`)
+- **State:** READY FOR INDEPENDENT AUDIT. Not merged; owner approval for merge not given.
+
+### Completed
+- Owner approval of NMI-UI-01A (design HEAD `76549b3`, merged as `b9962a2`) and decisions D1-D4 recorded in the task and STATUS.
+- Implemented the five approved screens in `apps/web` (React 19, TypeScript, existing Vite): `domain/` (pure money and form logic), `demo/` (fixtures, scenarios, in-memory reducer), `components/`, `features/{login,dashboard,composer,review,detail}`, tokens as CSS variables. No new runtime dependency; AG Studio, router, state manager, icon/font/CDN packages not used.
+- Fixture-only: every result is simulated and labelled; fabricated PayPal ids only; no storage, cookies, IndexedDB, query-string data, analytics or logging; production CSP with `connect-src 'none'`.
+- Added `vitest` include for `apps/web` (config only) and 71 web tests, plus a real-Chrome QA harness and evidence under `design/evidence/NMI-UI-01B/`.
+
+### Validation
+- Local: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` (307 passed, 187 PostgreSQL tests skipped locally because no disposable database was provisioned; hosted Stack CI runs them), `pnpm build`, `pnpm check:bundle`, `scripts/validate_project_profile.py`.
+- Real headless Chrome QA: all checks pass (see `design/evidence/NMI-UI-01B/QA-RESULTS.md`): keyboard journeys, dialog focus, contrast in both themes, no overflow at 320/390/768/1280, targets, focus outlines, reduced motion, zero foreign requests, empty storage, URL free of invoice content.
+- Screenshots compared to the approved PR #7 evidence; one deliberate deviation: the approved mobile detail captures overflowed (436px in a 390px viewport) and the React shell fixes that.
+- **NOT covered:** screen readers, real touch devices, Safari/Firefox, 400% zoom; full WCAG 2.2 AA not claimed. Real OpenAI and PayPal provider behaviour not exercised (and not callable from this shell).
+
+### Continuation notes
+- Do not wire any real API, change server configuration, enable `PAYPAL_DRAFTS_ENABLED`, merge, deploy or start NMI-UI-01C without separate owner authorization.
+- The design-review control bar is kept from the approved preview and labelled "not part of the product UI"; remove or gate it when real APIs are wired.
+- Prior handoffs are preserved unchanged.
+
+### Next action
+Independently audit the Draft PR at its exact head; the owner then decides on merge.
+
 <!-- HANDOFF_ENTRIES_END -->

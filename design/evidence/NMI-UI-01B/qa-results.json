@@ -1,0 +1,647 @@
+{
+  "browser": "Chrome/156.0.8078.48",
+  "results": [
+    {
+      "group": "Evidence",
+      "name": "captured 59 screenshots from the rendered React app",
+      "pass": true,
+      "detail": "see screenshots/"
+    },
+    {
+      "group": "Design comparison",
+      "name": "59 rendered screenshots compared against the approved PR #7 evidence",
+      "pass": true,
+      "detail": "54 captures have identical widths. DEVIATION (defect fix): 5 approved mobile captures are 436px wide in a 390px viewport, i.e. the approved preview's mobile line-item table overflowed horizontally; the React shell fits (mobile/dark/5-detail.jpg, mobile/light/5-detail.jpg, states/mobile-light/paypal-disabled.jpg, states/mobile-light/paypal-refused.jpg, states/mobile-light/paypal-unknown.jpg)"
+    },
+    {
+      "group": "Design comparison",
+      "name": "mean grey-level difference of the top 1,400px stays small",
+      "pass": true,
+      "detail": "mean abs diff 6.8/255; 93.6% of pixels within 24 grey levels; largest: states/mobile-light/paypal-unknown.jpg (MAD 21.3), states/mobile-light/paypal-disabled.jpg (MAD 20.8), mobile/dark/5-detail.jpg (MAD 20.5), mobile/light/1-login.jpg (MAD 19.2), states/mobile-light/paypal-refused.jpg (MAD 19.1), mobile/light/5-detail.jpg (MAD 18.4)"
+    },
+    {
+      "group": "Design comparison",
+      "name": "page heights stay within 0.7×–1.4× of the approved design (layout parity)",
+      "pass": true,
+      "detail": "0 of 59 outside; see comparison/ side-by-sides (left approved, right React)"
+    },
+    {
+      "group": "Contrast",
+      "name": "light theme: text contrast across 5 screens and 23 states",
+      "pass": true,
+      "detail": "no text below WCAG AA (4.5:1, or 3:1 for large text)"
+    },
+    {
+      "group": "Contrast",
+      "name": "dark theme: text contrast across 5 screens and 23 states",
+      "pass": true,
+      "detail": "no text below WCAG AA (4.5:1, or 3:1 for large text)"
+    },
+    {
+      "group": "Responsive",
+      "name": "no horizontal page overflow at 390px",
+      "pass": true,
+      "detail": "all screens and sampled states fit"
+    },
+    {
+      "group": "Responsive",
+      "name": "no horizontal page overflow at 320px (WCAG 1.4.10 reflow)",
+      "pass": true,
+      "detail": "all screens and sampled states fit"
+    },
+    {
+      "group": "Responsive",
+      "name": "no horizontal page overflow at 768px",
+      "pass": true,
+      "detail": "all screens and sampled states fit"
+    },
+    {
+      "group": "Responsive",
+      "name": "no horizontal page overflow at 1280px",
+      "pass": true,
+      "detail": "all screens and sampled states fit"
+    },
+    {
+      "group": "Responsive",
+      "name": "mobile (390px) interactive targets are at least 44×44 CSS px",
+      "pass": true,
+      "detail": "all targets ≥ 44px"
+    },
+    {
+      "group": "Responsive",
+      "name": "desktop targets meet WCAG 2.2 AA 2.5.8 minimum (24×24 CSS px)",
+      "pass": true,
+      "detail": "all targets ≥ 24px"
+    },
+    {
+      "group": "Responsive",
+      "name": "desktop shows top navigation; mobile shows bottom bar and stacks table rows as cards",
+      "pass": true,
+      "detail": "{\"d\":{\"nav\":\"flex\",\"mob\":\"none\"},\"m\":{\"nav\":\"none\",\"mob\":\"flex\",\"head\":\"absolute\"}}"
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "first Tab stop is the 'Skip to main content' link",
+      "pass": true,
+      "detail": "{\"tag\":\"a\",\"id\":\"\",\"name\":\"Skip to main content\"}"
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "activating the skip link moves focus to <main>",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches Username",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Username is followed by an EMPTY Password; no remember-me control exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "login discloses simulated authentication",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "empty submit marks fields invalid, shows messages and focuses the first",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "valid username + password continue to the dashboard (simulated)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "focus lands on the dashboard heading after navigation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "password is not kept in the DOM after submit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches 'New invoice' in the page header",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Enter opens the composer",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "ArrowRight on the tablist selects Manual and swaps panels",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Home returns to the AI tab",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches the first synthetic example prompt",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Space loads the example into the textarea and the counter updates",
+      "pass": true,
+      "detail": "153 / 2,000"
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches 'Parse with AI'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "parsing shows a loading state (aria-busy textarea, progress label)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "parse opens review with focus on its heading",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "review is filled from the fixture and labelled an AI proposal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "totals are labelled 'Estimated' and never 'verified'",
+      "pass": true,
+      "detail": "Subtotal$650.00Tax (8%)+$52.00Estimated total (USD)$702.00"
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches the first line's unit price",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "editing a price recalculates the estimate live ($810.00)",
+      "pass": true,
+      "detail": "Subtotal$750.00Tax (8%)+$60.00Estimated total (USD)$810.00"
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches 'Save local draft'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "save shows a busy state and disables the inputs",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "after save the detail screen opens with focus on the customer heading",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "detail says the save was simulated and nothing was sent to PayPal",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "detail totals are labelled server-computed (simulated) and recomputed ($810.00)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "duplicate-save prevention: two rapid activations created exactly one draft",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab reaches 'Create PayPal Sandbox draft…'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "confirmation dialog opens modally with initial focus on Cancel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "focus is trapped inside the dialog over 5 Tab presses",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Shift+Tab also stays inside the dialog",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Escape closes the dialog and restores focus to the opener",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "Tab moves from Cancel to the confirm button",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "confirming shows an in-progress state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "result is labelled simulated, with a fabricated id and a 'customer not emailed' notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "no send, pay, remind or refund control exists anywhere on the detail screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard journey",
+      "name": "focus returns to the screen heading after the simulated create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Privacy",
+      "name": "after the full journey: localStorage, sessionStorage, cookies, IndexedDB, caches and service workers are all empty",
+      "pass": true,
+      "detail": "{\"ls\":0,\"ss\":0,\"cookie\":\"\",\"idb\":0,\"caches\":0,\"sw\":0}"
+    },
+    {
+      "group": "Privacy",
+      "name": "URL contains only screen, demo state and theme (no invoice content typed during the journey)",
+      "pass": true,
+      "detail": "http://127.0.0.1:4173/#screen=detail&theme=light"
+    },
+    {
+      "group": "Interactions",
+      "name": "over-limit: counter shows 2,100 / 2,000 and the overage",
+      "pass": true,
+      "detail": "2,100 / 2,000 · 100 over the limit"
+    },
+    {
+      "group": "Interactions",
+      "name": "over-limit: textarea aria-invalid, visible alert, Parse aria-disabled",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "over-limit: activating Parse does not start parsing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "exactly 2,000 characters is accepted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "empty text: Parse shows a required message and focuses the textarea",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "unrecognised text returns the 'could not read' outcome with a manual-entry escape",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "ambiguous request shows two clarification questions",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "blank clarification answers show an alert and flag the first field",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "answered clarification re-parses into review with the rounding warning and PayPal refusal preview",
+      "pass": true,
+      "detail": "Subtotal€1,517.25Tax (19%)+€288.28Estimated total (EUR)€1,805.53Rounding applied. A figure was rounded half up to the smallest currency unit. The server computes the final amounts; PayPal Sandbox drafting refuses totals that depend on rounding."
+    },
+    {
+      "group": "Interactions",
+      "name": "EUR rounding example totals match the server calculation (€1,805.53)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "manual entry opens a blank form with only schema-backed fields (required email present)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "saving a blank form lists errors, focuses the summary and flags fields",
+      "pass": true,
+      "detail": "5 errors"
+    },
+    {
+      "group": "Interactions",
+      "name": "error text is associated with its field (aria-describedby → visible message)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "an error-summary link moves focus to its field",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "fixing a field clears its error live",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "JPY: unit-price placeholder has no decimals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "JPY amount with decimals is rejected live with an explanation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "JPY totals format with no decimals and a yen symbol (¥50,000)",
+      "pass": true,
+      "detail": "Subtotal¥50,000Estimated total (JPY)¥50,000"
+    },
+    {
+      "group": "Interactions",
+      "name": "GBP uses £ with two decimals (£79.96)",
+      "pass": true,
+      "detail": "Subtotal£79.96Estimated total (GBP)£79.96"
+    },
+    {
+      "group": "Interactions",
+      "name": "Add line item adds a row and moves focus to its description",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "Remove line deletes the row; the last remaining row cannot be removed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "percent discount above 100 is rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "tax with more than 2 decimals is rejected; fixed tax amount is not offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "Discard opens a confirmation dialog; Escape keeps the form",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "duplicate save (replayed): the existing draft is shown with a simulated-replay notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "idempotency conflict (409): alert with 'use a new key'; retrying then succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "dashboard: one card per currency, no mixed total, labelled DEMO / SYNTHETIC with the missing list endpoint named",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "dashboard: AG Studio described as unconfirmed / not enabled; no Delete or Updated-at",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "currency filter narrows the table to JPY",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "no-match search shows a recoverable empty message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "Clear filters restores all four drafts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "status filter shows only PayPal-created drafts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "PayPal disabled (503): create button disabled and described by the explanation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "mapping refusal (422) explains the rule, says PayPal was not contacted, offers a way forward",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "an ineligible draft warns in advance ('Expected to be refused'), and a real attempt then refuses without creating",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "unknown outcome (502): retry reconciles first; never claims a draft exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "reconciliation (409) explains no blind recreate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "in progress (409) offers only 'Check status'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "rejected (502) offers Try again; mismatch offers no retry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "offline: alert banner shown and creating actions are unavailable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "privacy note: text may be sent to OpenAI; review required; real provider parsing NOT TESTED; no 'secure' claim",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "persistent PayPal Sandbox banner present on all 5 screens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "login failure (401) shows a generic alert; throttle (429) and expiry states present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "login 401 demo: submit shows the error again and returns focus to the password",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "prefers-reduced-motion removes the skeleton animation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "theme toggle switches to dark, updates aria-pressed and the URL hash",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "with no explicit theme the system dark preference is honoured",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Focus visibility",
+      "name": "light dashboard: every sampled Tab stop shows a ≥2px focus outline",
+      "pass": true,
+      "detail": "39 stops checked"
+    },
+    {
+      "group": "Focus visibility",
+      "name": "light review: every sampled Tab stop shows a ≥2px focus outline",
+      "pass": true,
+      "detail": "39 stops checked"
+    },
+    {
+      "group": "Focus visibility",
+      "name": "dark dashboard: every sampled Tab stop shows a ≥2px focus outline",
+      "pass": true,
+      "detail": "39 stops checked"
+    },
+    {
+      "group": "Focus visibility",
+      "name": "dark review: every sampled Tab stop shows a ≥2px focus outline",
+      "pass": true,
+      "detail": "39 stops checked"
+    },
+    {
+      "group": "Safety",
+      "name": "no request left http://127.0.0.1:4173 (only the app's own 633 same-origin asset/page loads occurred)",
+      "pass": true,
+      "detail": "0 foreign requests"
+    },
+    {
+      "group": "Safety",
+      "name": "no JavaScript exceptions, CSP violations or console errors during the run",
+      "pass": true,
+      "detail": "0 errors"
+    },
+    {
+      "group": "Safety",
+      "name": "served page carries a CSP with connect-src 'none' and no inline-style or inline-script allowance",
+      "pass": true,
+      "detail": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'"
+    }
+  ]
+}
