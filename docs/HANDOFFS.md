@@ -817,4 +817,26 @@ Visuals, D1-D4, fixture-only data, strict CSP and no browser storage are unchang
 ### Next action
 Independently re-audit PR #8 at its exact head.
 
+## Handoff: NMI-UI-01C1-START
+
+- **Task / phase:** `tasks/NMI-UI-01C1-auth-session.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** GPT-6 orchestration / owner authorization to start NMI-UI-01C
+- **To:** Claude implementation agent, then GPT-6 independent exact-HEAD audit
+- **Starting main:** `a4520440c748ff8712a10e9f65b389e8cde5db9c` (owner squash-merged PR #8)
+- **Branch:** `feat/nmi-ui-01c1-auth-session`
+- **State:** Task contract and branch prepared. **No application code changed yet**; C1 real auth integration is NOT IMPLEMENTED. Stop at Draft PR independent audit; separate owner merge approval required.
+
+### Work boundary and decisions
+- Real browser operator login, GET session restore, protected navigation, POST logout, local same-origin `/api` transport, strict CSP and safe memory cleanup only. All invoice features remain synthetic/fixture-only for this slice and visibly labelled.
+- Preserve owner D1–D4, use no real customer data and do not store credentials/CSRF/unsaved invoices in browser storage or URLs. Hard deny unauthenticated navigation/hash/demo-state bypass in real mode.
+- Backend cookie/Origin/CSRF, auditing, rate limits and PostgreSQL auth remain authoritative. No API auth-policy weakening or schema change.
+- Previously authorized PayPal Sandbox one-create budget is exhausted. No PayPal writes, OpenAI inference, deployments, merges, reminders or NMI-UI-01C2 in this slice.
+
+### Evidence required
+- Targeted auth/browser navigation and security regression tests, at least one authenticated local browser → API → disposable PostgreSQL run, CSP/no-storage checks, required hosted CI at exact implementation HEAD, browser screenshots and handoff.
+- Previous task status on `main` was stale after PR #8 squash merge; this branch's STATUS reconciles it.
+
+### Next action
+Claude implements the active contract on this same branch and Draft PR, posts exact SHA and evidence for GPT-6 independent audit. No auto-merge, no deployment.
+
 <!-- HANDOFF_ENTRIES_END -->
