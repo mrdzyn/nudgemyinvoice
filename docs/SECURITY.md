@@ -190,3 +190,11 @@ Read-only tools and draft creation are allowlisted. Every privileged PayPal call
 
 ### Tests / non-goals
 Require negative tests for forged signature, replay, duplicate delivery, privilege bypass, changed approved payload, stale approval, double click, wrong target invoice, live-host configuration, multiple currencies incorrectly summed, and refunds never enabled in MVP.
+
+#### Invoice list and operator-scoped reads (NMI-UI-01C4)
+- `GET /api/invoice-drafts` is authenticated, read-only and owner-scoped in SQL (`created_by = <session operator>`; rows with a NULL owner never match). The operator is never accepted from the client (`operatorId` is a 400). Query parameters and the opaque cursor are strictly validated (page size <= 50, search <= 100 characters, `LIKE` wildcards escaped, everything parameterized); results are `no-store`, bounded, and contain no line items, digests, idempotency keys or audit data.
+- `GET /api/invoice-drafts/:id` is operator-scoped: another operator's id, an ownerless id and an unknown id are indistinguishable (`404`), so existence is not disclosed.
+- Request logs record the URL path only; the query string (which can hold the operator's search text, i.e. customer names or e-mail addresses) is dropped by the Fastify `req` serializer. List reads write no audit row.
+- **Open finding (not changed in C4):** `POST /api/invoice-drafts/:id/paypal-draft` loads the invoice by id without an operator scope (`createPayPalDraft` -> `drafts.get`). It is not exploitable while exactly one operator exists (enforced by `operators_single_row_uq`), but it must be owner-scoped before C5 or before a second operator is ever introduced.
+- Tests create a second operator only in disposable databases by dropping `operators_single_row_uq` (test-only DDL); the committed migrations are unchanged.
+

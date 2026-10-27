@@ -1018,4 +1018,26 @@ One browser-journey assertion made exact (`invCount() === b3`) with a demonstrat
 1. The assertion cannot pass when an extra invoice row exists (negative control recorded in the task).
 2. `git diff` of the fix touches only `design/evidence/NMI-UI-01C3/`.
 
+## Handoff: NMI-UI-01C4-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C4-real-dashboard.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c4-real-dashboard`, Draft PR against `main` (starting main `988a8f9f22876f8f19d7424a31ff6b1f62ebf8c9`)
+- **Implementation SHA:** `4309c7f63ee0dc1dc60cad8a079c277aa5a1d399` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call or C5 work.
+
+### What changed
+New read-only `GET /api/invoice-drafts` (owner-scoped keyset list with filters/search), operator-scoped `GET /api/invoice-drafts/:id`, path-only request logging, a real React dashboard (server-side filters, load-more, page-labelled per-currency cards, honest states, stale protection) and a neutral `opened` saved-invoice state. No migration; payment path untouched; preview unchanged.
+
+### Audit focus
+1. `packages/db/src/invoice-list-store.ts`: owner filter on every query, cursor strictness, keyset predicate, escaping, no N+1; `getOwned` and the route.
+2. `apps/web/src/domain/serverList.ts` and `features/dashboard/*`: fail-closed validation, generation-tagged stale protection, no fixture fallback, per-currency exact sums labelled as page summaries.
+3. Real-mode isolation from the preview; `opened` never claims a save or a replay.
+4. The documented open finding: `createPayPalDraft` still uses unscoped `drafts.get` (not changed on purpose; must be fixed before C5 or a second operator).
+5. Two-operator evidence uses a test-only index drop in disposable databases; the committed schema still allows exactly one operator.
+
+### Not verified
+Live OpenAI/PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. The C2/C3 journeys were not rerun (earlier wording).
+
 <!-- HANDOFF_ENTRIES_END -->
