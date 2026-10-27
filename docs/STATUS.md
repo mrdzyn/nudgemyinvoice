@@ -5,15 +5,16 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01B — **React UI shell (fixture-only), audit MAJOR-1 remediated; ready for independent GPT-6 re-audit; not merged.**
-- **Status:** NMI-UI-01A was owner-approved at exact design HEAD `76549b3f6ffa656943d3650f89cda60f249b0adf` and squash-merged (PR #7) into `main` as `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`. Owner visual approval is **granted**. NMI-UI-01B implements the five approved screens in `apps/web` with React 19 against synthetic fixtures and simulated, labelled transitions. It makes no backend or provider call and stores nothing in the browser. Real API integrations remain deferred. Independent audit of `7677569` was FIX REQUIRED on the simulated idempotency replay (it inserted a second draft); fixed so a replay returns the existing draft with no insert and no count change.
-- **Primary branch:** `main` (merge commit `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`).
-- **Working branch:** `feat/nmi-ui-01b-react-shell` (new Draft PR).
-- **Active task:** `tasks/NMI-UI-01B-react-shell.md`.
-- **Active handoff:** NMI-UI-01B-R1
+- **Current phase:** NMI-UI-01C1 — **Auth/session API wiring authorized and task contract initialized on a new feature branch. Implementation NOT YET STARTED; no deployment.**
+- **Status:** NMI-UI-01B owner-approved and squash-merged on PR #8 into `main` at `a4520440c748ff8712a10e9f65b389e8cde5db9c`, after exact-head GPT-6 audit PASS and both required CI workflows PASS. The five-screen React UI shell is complete but still fixture-only; its demo login is NOT real authentication, and no invoice API is connected. Owner has authorized starting NMI-UI-01C. First bounded increment is real browser login/session/logout (C1) without provider calls or invoice writes; subsequent slices are described in `tasks/NMI-UI-01C-integration-plan.md`.
+- **Primary branch:** `main` (PR #8 squash commit `a4520440c748ff8712a10e9f65b389e8cde5db9c`).
+- **Working branch:** `feat/nmi-ui-01c1-auth-session` (task-contract checkpoint; implementation pending).
+- **Active task:** `tasks/NMI-UI-01C1-auth-session.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
+- **Active handoff:** NMI-UI-01C1-START
 - **Owner decisions (from the NMI-UI-01A approval):** **D1** defer AG Studio until licensing is independently confirmed; **D2** do not persist unsaved customer data in browser storage by default; **D3** schedule a separate bounded read-only `GET /api/invoice-drafts` during API integration; **D4** defer editing existing saved drafts.
 
 ## Accepted evidence
+- **React UI shell:** PR #8 accepted at exact audited HEAD `2c9db4e01dd83511aafc49e817398029f5557d1c`; owner squash-merged at `a4520440c748ff8712a10e9f65b389e8cde5db9c`. Browser fixture shell only; no API/client-provider integration yet.
 - **Audit and CI:** C6 exact-head independent source/security audit PASS on PR #4 (`4982201918d0030234fdbabbc297375c02c01e5d`). PR #5 documentation reconciliation CI passed and was squash-merged into main at `397c5d0376ef37cfd7f7debb93ac3f8387be5fea`. PR #6 CORS preflight fix (`Idempotency-Key` in `allowedHeaders`) passed Project Baseline CI and Stack CI and was squash-merged into main at `2864761ca902ffd6ed6628c183298bcc6e5c59c1`.
 - **AG automated validation:** 236/236 unit and 187/187 PostgreSQL 16 integration tests passed (423 total); lint, formatting, typecheck, build, bundle scan and migrations verified.
 - **Real PayPal Sandbox (AG local provider evidence):** `NMI-P2-I2-SANDBOX-SMOKE-01` on 2026-10-26: real OAuth `200`, exactly one invoice-create `201`, and read-only show `200` (exercised with one fictitious USD 5.00 line item, no tax, no discount); invoice `INV2-U92W-76NX-3P2E-AGUZ` status `DRAFT`, USD 5.00, due 2026-11-30, exact invoice-number/reference and durable PostgreSQL link. No send/reminder/cancel/refund/payment operations. Local default restored: `PAYPAL_DRAFTS_ENABLED=false`. Persistent one-create test guard budget `1/1` exhausted (private local evidence).
@@ -27,18 +28,18 @@
 - PostgreSQL transactions, audited invoice draft persistence, seven committed migrations (`0000`–`0006`).
 - PayPal Sandbox-only draft-create adapter, explicit authenticated trigger, durable operation fencing, exact remote verification, and fail-closed reconciliation without blind recreates.
 - Browser CORS preflight explicitly authorizing `Idempotency-Key` on authenticated invoice draft routes.
-- Frontend `apps/web`: the fixture-only React shell (NMI-UI-01B) is on the Draft PR, not yet on `main`; `main` still has the placeholder UI.
+- Frontend `apps/web`: owner-approved NMI-UI-01B five-screen fixture-only React shell is merged; real login and API integration remain pending.
 
 ## Deferred / open gates
-- **Independent re-audit and owner merge approval for NMI-UI-01B** (Draft PR). Required CI applies to the PR's own exact head.
+- **NMI-UI-01C1 implementation, exact-HEAD CI, independent audit and separate owner merge approval**; no auth wiring is delivered by the current planning-only checkpoint.
 - **Manual QA still pending (not covered by automation):** screen reader (VoiceOver/NVDA), real touch devices, Safari and Firefox, 400% browser zoom. Full WCAG 2.2 AA conformance is not claimed.
 - **AG Studio (D1):** license terms, trial period and keys are **unverified**; deferred. The dashboard is an accessible native table.
-- **Real API wiring (not authorized):** login/session, parse, save, read, PayPal draft creation, and the read-only `GET /api/invoice-drafts` list (D3). The dashboard is DEMO / SYNTHETIC until then. Editing saved drafts is deferred (D4).
+- **Real API wiring:** C1 login/session/logout **authorized to implement but not yet delivered**. Later parse, save/read, read-only list (D3), and controlled PayPal Sandbox draft UI require separate bounded increments, independent reviews and owner merge approval. Editing saved drafts remains deferred (D4).
 - Real OpenAI smoke; PayPal sending/grant issuance, reminder automation, webhook receipt/payment reconciliation, deployment, and production PayPal use.
 - Architecture decisions: PostgreSQL-only versus SQLite support, hosting strategy, demo availability through judging.
 - Do **not** reuse the completed one-create Sandbox authorization or reset its exhausted budget. New external writes require new owner approval.
 - **Operational limitations:** In-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](SECURITY.md).
-- No deployment, production release or privileged PayPal financial operation authorized. NMI-UI-01C is not started.
+- No deployment, production release, new PayPal Sandbox write, or real OpenAI provider inference authorized. NMI-UI-01C1 contract initialized; implementation pending.
 
 ## Next action
-Independently re-audit the Draft PR for NMI-UI-01B at its exact new head (read `tasks/NMI-UI-01B-react-shell.md` and `design/evidence/NMI-UI-01B/QA-RESULTS.md`). Do not merge, deploy or start NMI-UI-01C without separate owner direction.
+Claude implements `tasks/NMI-UI-01C1-auth-session.md` on `feat/nmi-ui-01c1-auth-session` and updates the Draft PR with actual source, targeted local auth tests, a real disposable local PostgreSQL browser auth journey and hosted CI. Keep backend origin/CSRF and cookie protection intact. Stop for independent exact-HEAD GPT-6 audit. Do not merge, deploy, call PayPal/OpenAI, or start C2.
