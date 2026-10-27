@@ -962,4 +962,26 @@ Test-only fake model and browser journey: the clarification answer must produce 
 1. The fake honours the stated date; the journey asserts `2030-02-01` and still asserts the request body carried the answer.
 2. Negative control observed (87/88 when the fake ignores the answer).
 
+## Handoff: NMI-UI-01C3-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C3-save-detail.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c3-save-detail`, Draft PR against `main` (starting main `ddffc11471306e3b2c4cd7ea4a6a80303593e674`)
+- **Implementation SHA:** `1530c63003947e26ba2ffb9a11fe36c1601f57cd` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call, C4 or C5 work.
+
+### What changed
+Real Review -> `POST /api/invoice-drafts` (CSPRNG key bound to the exact body, single flight, timeout = uncertain, same-key retry, explicit new key on 409, 401 expiry) and a real saved-invoice page via `GET /api/invoice-drafts/:id` with strict validation and no fixture fallback. Web only; backend, packages and migrations unchanged.
+
+### Audit focus
+1. Key lifecycle: a changed body never inherits a key; an uncertain attempt is only retried with the identical body or abandoned explicitly; 409 needs an explicit new key.
+2. `domain/serverInvoice.ts` + `invoices/api.ts` fail closed (201/200/replayed consistency, exact PayPal object, requested-id match, BigInt totals).
+3. Real mode cannot reach fixtures, simulated saves or simulated PayPal; preview untouched; dashboard samples labelled and unopenable.
+4. The browser journey found and fixed a real defect (retry buttons inside a disabled fieldset); confirm the notices now sit outside it.
+5. No customer data in URL/storage/logs; a page reload loses the in-memory record id by design.
+
+### Not verified
+Live OpenAI and PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. The C2 journey was not rerun against this build (its simulated-save wording is superseded).
+
 <!-- HANDOFF_ENTRIES_END -->
