@@ -762,4 +762,59 @@ Open Draft PR and request owner visual approval on `design/preview/index.html` a
 Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on visual approval.
 
 
+## Handoff: NMI-UI-01B-C1
+
+- **Task / phase:** `tasks/NMI-UI-01B-react-shell.md`
+- **From:** Implementation agent (Claude)
+- **To:** Independent reviewer (GPT-6), then product owner
+- **Branch:** `feat/nmi-ui-01b-react-shell`
+- **Implementation head:** the PR head is authoritative (a docs commit cannot name its own SHA); the exact SHA is recorded in the PR description and its audit-request comment
+- **PR:** new Draft PR against `main` (base `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`)
+- **State:** READY FOR INDEPENDENT AUDIT. Not merged; owner approval for merge not given.
+
+### Completed
+- Owner approval of NMI-UI-01A (design HEAD `76549b3`, merged as `b9962a2`) and decisions D1-D4 recorded in the task and STATUS.
+- Implemented the five approved screens in `apps/web` (React 19, TypeScript, existing Vite): `domain/` (pure money and form logic), `demo/` (fixtures, scenarios, in-memory reducer), `components/`, `features/{login,dashboard,composer,review,detail}`, tokens as CSS variables. No new runtime dependency; AG Studio, router, state manager, icon/font/CDN packages not used.
+- Fixture-only: every result is simulated and labelled; fabricated PayPal ids only; no storage, cookies, IndexedDB, query-string data, analytics or logging; production CSP with `connect-src 'none'`.
+- Added `vitest` include for `apps/web` (config only) and 71 web tests, plus a real-Chrome QA harness and evidence under `design/evidence/NMI-UI-01B/`.
+
+### Validation
+- Local: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` (307 passed, 187 PostgreSQL tests skipped locally because no disposable database was provisioned; hosted Stack CI runs them), `pnpm build`, `pnpm check:bundle`, `scripts/validate_project_profile.py`.
+- Real headless Chrome QA: all checks pass (see `design/evidence/NMI-UI-01B/QA-RESULTS.md`): keyboard journeys, dialog focus, contrast in both themes, no overflow at 320/390/768/1280, targets, focus outlines, reduced motion, zero foreign requests, empty storage, URL free of invoice content.
+- Screenshots compared to the approved PR #7 evidence; one deliberate deviation: the approved mobile detail captures overflowed (436px in a 390px viewport) and the React shell fixes that.
+- **NOT covered:** screen readers, real touch devices, Safari/Firefox, 400% zoom; full WCAG 2.2 AA not claimed. Real OpenAI and PayPal provider behaviour not exercised (and not callable from this shell).
+
+### Continuation notes
+- Do not wire any real API, change server configuration, enable `PAYPAL_DRAFTS_ENABLED`, merge, deploy or start NMI-UI-01C without separate owner authorization.
+- The design-review control bar is kept from the approved preview and labelled "not part of the product UI"; remove or gate it when real APIs are wired.
+- Prior handoffs are preserved unchanged.
+
+### Next action
+Independently audit the Draft PR at its exact head; the owner then decides on merge.
+
+## Handoff: NMI-UI-01B-R1
+
+- **Task / phase:** `tasks/NMI-UI-01B-react-shell.md`
+- **From:** Implementation agent (Claude)
+- **To:** Independent reviewer (GPT-6), then product owner
+- **Branch:** `feat/nmi-ui-01b-react-shell`
+- **Audited head being remediated:** `7677569f35ba789a2d9d49214295a82a5cec1874` ([FIX REQUIRED](https://github.com/mrdzyn/nudgemyinvoice/pull/8#issuecomment-6432385788)); the new exact head is the PR head and is recorded in the PR comment
+- **PR:** #8 (Draft)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Not merged; no merge authorization.
+
+### Completed
+- **MAJOR-1:** simulated idempotency replay now returns the existing draft (same id and record) with no insert and no saved-count change; new keys still create normally; rapid double-submit protection and the simulated 409 conflict path unchanged. Reducer holds a simulated key table; keys are deterministic per form.
+- Minor: line-description `maxLength` aligned to the backend's 200.
+- Tests: 4 new reducer regression tests (75 web tests; 311 repo tests pass, 187 PostgreSQL tests skipped locally and run in hosted Stack CI); mutation check proves they fail if replay is disabled. Chrome QA extended to prove replay (existing id/record, unchanged dashboard rows and currency cards, later new save gets the first fresh id): 112 of 112 checks pass.
+- Task and STATUS updated. Earlier handoffs untouched. The PR description records the earlier exact-head CI (Project Baseline 40439032672 PASS, Stack 40439032658 PASS at `7677569`).
+
+### Validation
+Local `pnpm validate` and the profile validator pass; hosted CI at the new exact head is recorded on the PR. Not covered: screen readers, real touch, Safari/Firefox, 400% zoom (no full WCAG 2.2 AA claim).
+
+### Continuation notes
+Visuals, D1-D4, fixture-only data, strict CSP and no browser storage are unchanged. No real API wiring, new dependency, provider call, merge, deployment or NMI-UI-01C.
+
+### Next action
+Independently re-audit PR #8 at its exact head.
+
 <!-- HANDOFF_ENTRIES_END -->
