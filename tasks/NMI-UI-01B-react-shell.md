@@ -1,6 +1,6 @@
 # NMI-UI-01B — React UI Shell (Fixture-Only)
 
-- **Status:** Implemented on Draft PR; READY FOR INDEPENDENT AUDIT (GPT-6). Not merged.
+- **Status:** Independent audit of `7677569` = FIX REQUIRED ([comment](https://github.com/mrdzyn/nudgemyinvoice/pull/8#issuecomment-6432385788), MAJOR-1). Remediated; READY FOR INDEPENDENT RE-AUDIT (GPT-6). Not merged.
 - **Owner/orchestrator:** Product owner
 - **Implementation agent:** Claude
 - **Review agent:** GPT-6, independently
@@ -54,9 +54,17 @@ Automated, in the repository CI (`pnpm test`, no new dependency):
 - [x] `domain/money.test.ts`: the browser estimate equals `calculateTotals` and the PayPal refusal preview equals `assertExactMapping` over 1,500 pseudo-random drafts each (USD, EUR, GBP, CAD, AUD, JPY, rounding cases); exact currency formatting without floating point; JPY zero-decimal behaviour.
 - [x] `domain/invoiceForm.test.ts`: the form accepts and rejects the same drafts as the strict `invoiceDraftSchema`; required email, JPY decimals, discount bounds, 50-line limit, 2,000-character limit, submitted keys are schema keys only.
 - [x] `demo/fixtures.test.ts`: fixtures pass the strict schema, match server totals and the real mapping rules, use only fabricated PayPal ids (never the genuine Sandbox smoke id) and `.example` emails.
-- [x] `demo/appState.test.ts`: every demo state resolves; flow transitions; the hash never contains invoice content.
+- [x] `demo/appState.test.ts`: every demo state resolves; flow transitions; the hash never contains invoice content; **idempotency replay** (see audit remediation).
 - [x] `App.render.test.tsx`: every screen and all 23 demo states render with approved copy, the persistent Sandbox identity, and no send/pay controls.
 - [x] `boundaries.test.ts`: source never uses storage, cookies, IndexedDB, `fetch`, XHR, WebSocket, beacons, console, inline styles, raw HTML or external URLs; only `react` and `react-dom` are dependencies; the CSP forbids connections and inline styles.
+
+## Audit remediation (MAJOR-1): idempotency replay
+
+Finding: the simulated replay inserted a second draft and incremented the saved count while claiming the existing draft was returned. Fix: the reducer keeps a simulated Idempotency-Key table (`idempotency`, key to draft id). `save-invoice` now carries `{ key, draft, totals }`: a key that already created a draft **replays** it (same id and stored record, no insert, saved count unchanged, notice "replayed"); only a new key creates a draft (HTTP 201 equivalent). The `save-replay` demo state seeds the USD fixture draft under the form's key. Keys are deterministic per form (`demo-key-NNNNNN`) so the reducer stays pure. Double-submit prevention and the simulated 409 conflict path are unchanged.
+
+- [x] Reducer regression tests (4): replay preserves invoice count, saved count, id and record; a repeated real key replays; a later new key gets the first fresh id; keys are distinct per form. A mutation check (disabling the replay branch) makes 3 of them fail.
+- [x] Chrome QA proves the behaviour, not just the notice: existing draft (name, id, $702.00, PayPal id) shown; dashboard row count and every currency card unchanged; a later new save gets `…0001` and adds exactly one row.
+- [x] Minor polish: line-description `maxLength` is 200 (backend limit); asserted in render and browser tests.
 
 Real-browser evidence (Chrome over the DevTools Protocol, real key events; `design/evidence/NMI-UI-01B/`):
 

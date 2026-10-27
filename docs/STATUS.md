@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01B — **React UI shell (fixture-only), implemented on Draft PR; ready for independent GPT-6 audit; not merged.**
-- **Status:** NMI-UI-01A was owner-approved at exact design HEAD `76549b3f6ffa656943d3650f89cda60f249b0adf` and squash-merged (PR #7) into `main` as `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`. Owner visual approval is **granted**. NMI-UI-01B implements the five approved screens in `apps/web` with React 19 against synthetic fixtures and simulated, labelled transitions. It makes no backend or provider call and stores nothing in the browser. Real API integrations remain deferred.
+- **Current phase:** NMI-UI-01B — **React UI shell (fixture-only), audit MAJOR-1 remediated; ready for independent GPT-6 re-audit; not merged.**
+- **Status:** NMI-UI-01A was owner-approved at exact design HEAD `76549b3f6ffa656943d3650f89cda60f249b0adf` and squash-merged (PR #7) into `main` as `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`. Owner visual approval is **granted**. NMI-UI-01B implements the five approved screens in `apps/web` with React 19 against synthetic fixtures and simulated, labelled transitions. It makes no backend or provider call and stores nothing in the browser. Real API integrations remain deferred. Independent audit of `7677569` was FIX REQUIRED on the simulated idempotency replay (it inserted a second draft); fixed so a replay returns the existing draft with no insert and no count change.
 - **Primary branch:** `main` (merge commit `b9962a2614af0e69fb565cbe4a0e7d6a64506b4d`).
 - **Working branch:** `feat/nmi-ui-01b-react-shell` (new Draft PR).
 - **Active task:** `tasks/NMI-UI-01B-react-shell.md`.
-- **Active handoff:** NMI-UI-01B-C1
+- **Active handoff:** NMI-UI-01B-R1
 - **Owner decisions (from the NMI-UI-01A approval):** **D1** defer AG Studio until licensing is independently confirmed; **D2** do not persist unsaved customer data in browser storage by default; **D3** schedule a separate bounded read-only `GET /api/invoice-drafts` during API integration; **D4** defer editing existing saved drafts.
 
 ## Accepted evidence
@@ -30,7 +30,7 @@
 - Frontend `apps/web`: the fixture-only React shell (NMI-UI-01B) is on the Draft PR, not yet on `main`; `main` still has the placeholder UI.
 
 ## Deferred / open gates
-- **Independent audit and owner merge approval for NMI-UI-01B** (Draft PR). Required CI applies to the PR's own exact head.
+- **Independent re-audit and owner merge approval for NMI-UI-01B** (Draft PR). Required CI applies to the PR's own exact head.
 - **Manual QA still pending (not covered by automation):** screen reader (VoiceOver/NVDA), real touch devices, Safari and Firefox, 400% browser zoom. Full WCAG 2.2 AA conformance is not claimed.
 - **AG Studio (D1):** license terms, trial period and keys are **unverified**; deferred. The dashboard is an accessible native table.
 - **Real API wiring (not authorized):** login/session, parse, save, read, PayPal draft creation, and the read-only `GET /api/invoice-drafts` list (D3). The dashboard is DEMO / SYNTHETIC until then. Editing saved drafts is deferred (D4).
@@ -41,4 +41,4 @@
 - No deployment, production release or privileged PayPal financial operation authorized. NMI-UI-01C is not started.
 
 ## Next action
-Independently audit the Draft PR for NMI-UI-01B at its exact head (read `tasks/NMI-UI-01B-react-shell.md` and `design/evidence/NMI-UI-01B/QA-RESULTS.md`). Do not merge, deploy or start NMI-UI-01C without separate owner direction.
+Independently re-audit the Draft PR for NMI-UI-01B at its exact new head (read `tasks/NMI-UI-01B-react-shell.md` and `design/evidence/NMI-UI-01B/QA-RESULTS.md`). Do not merge, deploy or start NMI-UI-01C without separate owner direction.

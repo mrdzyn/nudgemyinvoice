@@ -1,6 +1,6 @@
 import { formFromDraft, type FormState } from "../domain/invoiceForm.js";
 import { paypalRefusal } from "../domain/money.js";
-import type { PayPalViewState, SavedInvoice } from "../domain/types.js";
+import type { InvoiceDraft, PayPalViewState, SavedInvoice, Totals } from "../domain/types.js";
 import { draftOf, FIXTURE_IDS, FIXTURE_INVOICES, scenarioById } from "./fixtures.js";
 import type { ScenarioId } from "./scenarios.js";
 
@@ -10,7 +10,7 @@ export type ComposerTab = "ai" | "manual";
 export type DashMode = "normal" | "empty" | "loading" | "error";
 export type LoginNotice = "signed-out" | "session-expired" | "login-error" | "login-throttled";
 export type DetailNotice = "created" | "replayed" | null;
-export type SaveMode = "normal" | "replay" | "conflict";
+export type SaveMode = "normal" | "conflict";
 
 export type ParseState =
   | { status: "idle" }
@@ -31,6 +31,8 @@ export interface ReviewSeed {
   source: "ai" | "manual";
   showErrors: boolean;
   saveMode: SaveMode;
+  /** The Idempotency-Key this form submits with (deterministic per seed; no randomness in the reducer). */
+  saveKey: string;
 }
 
 export interface PayPalOverride {
@@ -58,8 +60,13 @@ export interface AppState {
   /** False until the first in-app navigation, so initial page load does not steal focus. */
   navigated: boolean;
   savedCount: number;
+  /** Idempotency-Key -> id of the draft that key already created (simulated server-side replay table). */
+  idempotency: Record<string, string>;
   ppCount: number;
 }
+
+/** Deterministic per-form key so the reducer stays pure. */
+export const keyFor = (seedKey: number) => `demo-key-${String(seedKey).padStart(6, "0")}`;
 
 export const idleComposer = (): ComposerState => ({
   text: "",
@@ -86,6 +93,7 @@ export function initialState(theme: Theme): AppState {
     ppDisabled: false,
     navigated: false,
     savedCount: 0,
+    idempotency: {},
     ppCount: 1,
   };
 }
@@ -101,7 +109,7 @@ export type Action =
   | { type: "composer"; patch: Partial<ComposerState> }
   | { type: "start-review"; form: FormState; source: "ai" | "manual" }
   | { type: "discard-review" }
-  | { type: "save-invoice"; invoice: SavedInvoice; notice: DetailNotice }
+  | { type: "save-invoice"; key: string; draft: InvoiceDraft; totals: Totals }
   | { type: "paypal-created"; id: string }
   | { type: "paypal-override"; override: PayPalOverride | null };
 
@@ -157,7 +165,7 @@ function withScenario(base: AppState, id: ScenarioId): AppState {
   ) => ({
     ...s,
     screen: "review" as const,
-    review: { form, source, showErrors, saveMode },
+    review: { form, source, showErrors, saveMode, saveKey: keyFor(s.seedKey) },
   });
   switch (id) {
     case "login-error":
@@ -243,13 +251,20 @@ function withScenario(base: AppState, id: ScenarioId): AppState {
         authed: true,
       };
     case "save-replay":
+      // The same Idempotency-Key already created the USD fixture draft (identical body), so a
+      // submit REPLAYS that existing record instead of creating another one.
+      return {
+        ...seedReview(formFromDraft(draftOf(scenarioById("usd-draft").outcome)), "ai"),
+        authed: true,
+        idempotency: { ...s.idempotency, [keyFor(s.seedKey)]: FIXTURE_IDS.usdCreated },
+      };
     case "save-conflict":
       return {
         ...seedReview(
           formFromDraft(draftOf(scenarioById("usd-draft").outcome)),
           "ai",
           false,
-          id === "save-replay" ? "replay" : "conflict",
+          "conflict",
         ),
         authed: true,
       };
@@ -291,7 +306,10 @@ export function reducer(state: AppState, action: Action): AppState {
         navigated: true,
         detailNotice: action.screen === "dashboard" ? null : state.detailNotice,
         composer: resetComposer ? idleComposer() : state.composer,
-        seedKey: resetComposer ? state.seedKey + 1 : state.seedKey,
+        seedKey:
+          resetComposer || (action.screen === "review" && !state.review)
+            ? state.seedKey + 1
+            : state.seedKey,
         review:
           action.screen === "review" && !state.review
             ? {
@@ -299,6 +317,7 @@ export function reducer(state: AppState, action: Action): AppState {
                 source: "ai",
                 showErrors: false,
                 saveMode: "normal",
+                saveKey: keyFor(state.seedKey + 1),
               }
             : state.review,
       };
@@ -345,24 +364,55 @@ export function reducer(state: AppState, action: Action): AppState {
           source: action.source,
           showErrors: false,
           saveMode: state.review?.saveMode ?? "normal",
+          saveKey: keyFor(state.seedKey + 1),
         },
         composer: { ...state.composer, parse: { status: "idle" } },
       };
     case "discard-review":
       return { ...state, review: null, screen: "dashboard", navigated: true };
-    case "save-invoice":
+    case "save-invoice": {
+      // Simulated POST /api/invoice-drafts: a key that already created a draft REPLAYS it (HTTP 200,
+      // replayed: true). Nothing is inserted, the saved count is unchanged and the stored record is
+      // returned exactly as it was. Only a new key creates a draft (HTTP 201).
+      const existingId = state.idempotency[action.key];
+      const existing =
+        existingId === undefined ? undefined : state.invoices.find((i) => i.id === existingId);
+      if (existing) {
+        return {
+          ...state,
+          detailId: existing.id,
+          detailNotice: "replayed",
+          ppOverride: null,
+          review: null,
+          screen: "detail",
+          navigated: true,
+          seedKey: state.seedKey + 1,
+        };
+      }
+      const n = state.savedCount + 1;
+      const invoice: SavedInvoice = {
+        id: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
+        draft: action.draft,
+        totals: action.totals,
+        paypalInvoiceId: null,
+        paypal: { state: "none", paypalInvoiceId: null, lastErrorCode: null },
+        createdAt: "2026-10-27T10:00:00.000Z",
+        simulated: true,
+      };
       return {
         ...state,
-        invoices: [action.invoice, ...state.invoices],
-        savedCount: state.savedCount + 1,
-        detailId: action.invoice.id,
-        detailNotice: action.notice,
+        invoices: [invoice, ...state.invoices],
+        savedCount: n,
+        idempotency: { ...state.idempotency, [action.key]: invoice.id },
+        detailId: invoice.id,
+        detailNotice: "created",
         ppOverride: null,
         review: null,
         screen: "detail",
         navigated: true,
         seedKey: state.seedKey + 1,
       };
+    }
     case "paypal-created": {
       const n = state.ppCount + 1;
       const paypalId = `INV2-DEMO-FAKE-0000-${String(n).padStart(4, "0")}`;

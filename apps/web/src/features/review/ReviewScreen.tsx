@@ -4,14 +4,10 @@ import { Notice } from "../../components/Notice.js";
 import { useFocusOnMount, useScheduler } from "../../components/hooks.js";
 import { useApp } from "../../demo/AppContext.js";
 import type { ReviewSeed } from "../../demo/appState.js";
-import {
-  CURRENCY_CODES,
-  type CurrencyCode,
-  type InvoiceDraft,
-  type SavedInvoice,
-} from "../../domain/types.js";
+import { CURRENCY_CODES, type CurrencyCode, type InvoiceDraft } from "../../domain/types.js";
 import {
   MAX_LINE_ITEMS,
+  MAX_TEXT,
   controlId,
   toDraft,
   validateForm,
@@ -30,8 +26,6 @@ import {
   parseQuantity,
   type EstimatedTotals,
 } from "../../domain/money.js";
-
-const newKey = () => `demo-${Math.random().toString(16).slice(2, 14).padEnd(12, "0")}`;
 
 function tryEstimate(draft: InvoiceDraft): { totals: EstimatedTotals } | { error: string } {
   try {
@@ -79,7 +73,7 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
   const [saving, setSaving] = useState(false);
   const [conflict, setConflict] = useState(false);
   const [keyRenewed, setKeyRenewed] = useState(false);
-  const [idemKey, setIdemKey] = useState(newKey);
+  const [idemKey, setIdemKey] = useState(seed.saveKey);
   const [focusTarget, setFocusTarget] = useState<string | null>(null);
   const [summaryTick, setSummaryTick] = useState(0);
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -139,27 +133,14 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
       const est = tryEstimate(draft);
       if (!("totals" in est)) return;
       const { currency, lineTotals, subtotal, discount, tax, total } = est.totals;
-      const totals = { currency, lineTotals, subtotal, discount, tax, total };
-      const n = state.savedCount + 1;
-      const invoice: SavedInvoice = {
-        id: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
-        draft,
-        totals,
-        paypalInvoiceId: null,
-        paypal: { state: "none", paypalInvoiceId: null, lastErrorCode: null },
-        createdAt: "2026-10-27T10:00:00.000Z",
-        simulated: true,
-      };
+      const replay = state.idempotency[idemKey] !== undefined;
       dispatch({
         type: "save-invoice",
-        invoice,
-        notice: seed.saveMode === "replay" ? "replayed" : "created",
+        key: idemKey,
+        draft,
+        totals: { currency, lineTotals, subtotal, discount, tax, total },
       });
-      announce(
-        seed.saveMode === "replay"
-          ? "Duplicate save: existing draft returned"
-          : "Local draft saved",
-      );
+      announce(replay ? "Duplicate save: existing draft returned" : "Local draft saved");
     }, 800);
   };
 
@@ -380,7 +361,7 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
                             id={`f-line-${i}-description`}
                             aria-label={`Description, line ${i + 1}`}
                             value={l.description}
-                            maxLength={400}
+                            maxLength={MAX_TEXT}
                             autoComplete="off"
                             onChange={(e) => setLine(i, "description", e.target.value)}
                             aria-invalid={invalid(`line-${i}-description`)}
@@ -614,7 +595,7 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
                         type="button"
                         className="btn btn-secondary btn-sm"
                         onClick={() => {
-                          setIdemKey(newKey());
+                          setIdemKey(`${seed.saveKey}-b`);
                           setConflict(false);
                           setKeyRenewed(true);
                           announce("New idempotency key generated");

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { initialState, overLimitText, reducer, type AppState } from "./appState.js";
-import { FIXTURE_IDS, FIXTURE_INVOICES } from "./fixtures.js";
+import { blankForm } from "../domain/invoiceForm.js";
+import type { ParseOutcome, Totals } from "../domain/types.js";
+import { draftOf, FIXTURE_IDS, FIXTURE_INVOICES, scenarioById } from "./fixtures.js";
 import { ALL_SCENARIOS } from "./scenarios.js";
 import { parseHash, hashFor, stateFromHash } from "./hash.js";
 import { MAX_PARSE_CHARS } from "../domain/invoiceForm.js";
@@ -8,6 +10,10 @@ import { MAX_PARSE_CHARS } from "../domain/invoiceForm.js";
 /** Objective: the simulated state transitions behave as specified and never leak invoice data into the URL. */
 
 const start = (): AppState => initialState("light");
+function totalsOf(o: ParseOutcome | undefined): Totals {
+  if (!o || o.status !== "draft") throw new Error("not a draft outcome");
+  return o.totals;
+}
 
 describe("scenario seeds", () => {
   it("every demo state resolves to a screen without throwing", () => {
@@ -57,22 +63,26 @@ describe("flow transitions", () => {
     expect(s.loginNotice).toBe("signed-out");
   });
 
-  it("saving adds a simulated draft, opens its detail with a notice, and never mutates fixtures", () => {
+  it("a new key creates one simulated draft, opens its detail, and never mutates fixtures", () => {
     const before = start();
-    const invoice = {
-      ...FIXTURE_INVOICES[1]!,
-      id: "00000000-0000-4000-8000-000000000001",
-      simulated: true,
-    };
-    const after = reducer(before, { type: "save-invoice", invoice, notice: "created" });
+    const after = reducer(before, {
+      type: "save-invoice",
+      key: "demo-key-new-1",
+      draft: draftOf(scenarioById("eur-clarify").afterClarification),
+      totals: totalsOf(scenarioById("eur-clarify").afterClarification),
+    });
     expect(after.invoices).toHaveLength(FIXTURE_INVOICES.length + 1);
     expect(after.invoices[0]?.simulated).toBe(true);
+    expect(after.invoices[0]?.id).toBe("00000000-0000-4000-8000-000000000001");
+    expect(after.savedCount).toBe(1);
+    expect(after.idempotency["demo-key-new-1"]).toBe(after.invoices[0]?.id);
     expect(after.screen).toBe("detail");
+    expect(after.detailId).toBe(after.invoices[0]?.id);
     expect(after.detailNotice).toBe("created");
     expect(FIXTURE_INVOICES).toHaveLength(4);
     expect(before.invoices).toHaveLength(4);
+    expect(before.savedCount).toBe(0);
   });
-
   it("simulated PayPal creation yields a clearly fabricated id", () => {
     const s = reducer(start(), { type: "paypal-created", id: FIXTURE_IDS.eurNone });
     const inv = s.invoices.find((i) => i.id === FIXTURE_IDS.eurNone);
@@ -112,5 +122,68 @@ describe("URL hash carries no invoice content", () => {
     });
     expect(stateFromHash("#state=over-limit", false).screen).toBe("composer");
     expect(stateFromHash("", true).theme).toBe("dark");
+  });
+});
+
+describe("idempotency replay (simulated POST /api/invoice-drafts)", () => {
+  const draft = draftOf(scenarioById("usd-draft").outcome);
+  const totals = totalsOf(scenarioById("usd-draft").outcome);
+
+  it("the save-replay state replays the EXISTING draft: same id and record, no insert, no count change", () => {
+    const seeded = reducer(start(), { type: "scenario", id: "save-replay" });
+    const key = seeded.review?.saveKey ?? "";
+    expect(seeded.idempotency[key]).toBe(FIXTURE_IDS.usdCreated);
+    const snapshot = structuredClone(seeded.invoices);
+    const after = reducer(seeded, { type: "save-invoice", key, draft, totals });
+    expect(after.invoices).toHaveLength(seeded.invoices.length);
+    expect(after.savedCount).toBe(seeded.savedCount);
+    expect(after.detailId).toBe(FIXTURE_IDS.usdCreated);
+    expect(after.detailNotice).toBe("replayed");
+    expect(after.screen).toBe("detail");
+    expect(after.review).toBeNull();
+    expect(after.invoices).toEqual(snapshot); // the stored record is untouched
+    expect(after.invoices.find((i) => i.id === FIXTURE_IDS.usdCreated)).toEqual(
+      FIXTURE_INVOICES[0],
+    );
+    expect(after.invoices.some((i) => i.id.startsWith("00000000-"))).toBe(false);
+  });
+
+  it("resubmitting the same key after a real create replays it instead of creating a second draft", () => {
+    const first = reducer(start(), { type: "save-invoice", key: "demo-key-x", draft, totals });
+    const createdId = first.detailId;
+    const second = reducer(first, { type: "save-invoice", key: "demo-key-x", draft, totals });
+    expect(second.invoices).toHaveLength(first.invoices.length);
+    expect(second.savedCount).toBe(1);
+    expect(second.detailId).toBe(createdId);
+    expect(second.detailNotice).toBe("replayed");
+    expect(second.invoices).toEqual(first.invoices);
+  });
+
+  it("a different key is a new draft and the id sequence is not advanced by an earlier replay", () => {
+    const seeded = reducer(start(), { type: "scenario", id: "save-replay" });
+    const replayed = reducer(seeded, {
+      type: "save-invoice",
+      key: seeded.review?.saveKey ?? "",
+      draft,
+      totals,
+    });
+    const fresh = reducer(replayed, { type: "save-invoice", key: "another-key", draft, totals });
+    expect(fresh.invoices).toHaveLength(seeded.invoices.length + 1);
+    expect(fresh.savedCount).toBe(1);
+    expect(fresh.detailId).toBe("00000000-0000-4000-8000-000000000001");
+    expect(fresh.detailNotice).toBe("created");
+  });
+
+  it("every review form gets a distinct deterministic key; ordinary states have no pre-existing key mapping", () => {
+    const a = reducer(start(), { type: "scenario", id: "validation-errors" });
+    const b = reducer(a, {
+      type: "start-review",
+      form: a.review?.form ?? blankForm(),
+      source: "manual",
+    });
+    expect(a.review?.saveKey).toBeTruthy();
+    expect(b.review?.saveKey).not.toBe(a.review?.saveKey);
+    expect(a.idempotency).toEqual({});
+    expect(reducer(start(), { type: "scenario", id: "save-conflict" }).idempotency).toEqual({});
   });
 });

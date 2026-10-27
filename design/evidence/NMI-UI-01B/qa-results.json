@@ -387,6 +387,12 @@
     },
     {
       "group": "Interactions",
+      "name": "line description is limited to the backend's 200 characters (maxlength 200; 250 typed characters are truncated)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
       "name": "saving a blank form lists errors, focuses the summary and flags fields",
       "pass": true,
       "detail": "5 errors"
@@ -465,7 +471,31 @@
     },
     {
       "group": "Interactions",
-      "name": "duplicate save (replayed): the existing draft is shown with a simulated-replay notice",
+      "name": "replay: submit shows the existing draft (Acme Design LLC, id 9b1deb4d-…) with the replayed notice and no 'saved' notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "replay: the returned record is the unchanged stored one ($702.00, PayPal draft created INV2-DEMO-FAKE-0000-0001)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "replay: no draft was inserted (row count and every currency card unchanged; no new 00000000-… draft)",
+      "pass": true,
+      "detail": "rows 4 -> 4"
+    },
+    {
+      "group": "Interactions",
+      "name": "replay: a later NEW save is created normally with the first fresh id (saved count was not advanced by the replay)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Interactions",
+      "name": "replay: after the new save the dashboard has exactly one more draft than the baseline",
       "pass": true,
       "detail": ""
     },
@@ -627,7 +657,7 @@
     },
     {
       "group": "Safety",
-      "name": "no request left http://127.0.0.1:4173 (only the app's own 633 same-origin asset/page loads occurred)",
+      "name": "no request left http://127.0.0.1:4173 (only the app's own 636 same-origin asset/page loads occurred)",
       "pass": true,
       "detail": "0 foreign requests"
     },

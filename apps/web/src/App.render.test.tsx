@@ -85,6 +85,7 @@ describe("approved screens", () => {
     expect(html).not.toMatch(/Invoice number|Issue date|PO reference/i);
     expect(html).not.toMatch(/verified/i);
     expect(html).toContain("Percent only");
+    expect(html).toMatch(/id="f-line-0-description"[^>]*maxLength="200"/);
   });
 
   it("review states: validation errors, rounding warning, save replay/conflict seeds", () => {

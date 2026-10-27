@@ -792,4 +792,29 @@ Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on 
 ### Next action
 Independently audit the Draft PR at its exact head; the owner then decides on merge.
 
+## Handoff: NMI-UI-01B-R1
+
+- **Task / phase:** `tasks/NMI-UI-01B-react-shell.md`
+- **From:** Implementation agent (Claude)
+- **To:** Independent reviewer (GPT-6), then product owner
+- **Branch:** `feat/nmi-ui-01b-react-shell`
+- **Audited head being remediated:** `7677569f35ba789a2d9d49214295a82a5cec1874` ([FIX REQUIRED](https://github.com/mrdzyn/nudgemyinvoice/pull/8#issuecomment-6432385788)); the new exact head is the PR head and is recorded in the PR comment
+- **PR:** #8 (Draft)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Not merged; no merge authorization.
+
+### Completed
+- **MAJOR-1:** simulated idempotency replay now returns the existing draft (same id and record) with no insert and no saved-count change; new keys still create normally; rapid double-submit protection and the simulated 409 conflict path unchanged. Reducer holds a simulated key table; keys are deterministic per form.
+- Minor: line-description `maxLength` aligned to the backend's 200.
+- Tests: 4 new reducer regression tests (75 web tests; 311 repo tests pass, 187 PostgreSQL tests skipped locally and run in hosted Stack CI); mutation check proves they fail if replay is disabled. Chrome QA extended to prove replay (existing id/record, unchanged dashboard rows and currency cards, later new save gets the first fresh id): 112 of 112 checks pass.
+- Task and STATUS updated. Earlier handoffs untouched. The PR description records the earlier exact-head CI (Project Baseline 40439032672 PASS, Stack 40439032658 PASS at `7677569`).
+
+### Validation
+Local `pnpm validate` and the profile validator pass; hosted CI at the new exact head is recorded on the PR. Not covered: screen readers, real touch, Safari/Firefox, 400% zoom (no full WCAG 2.2 AA claim).
+
+### Continuation notes
+Visuals, D1-D4, fixture-only data, strict CSP and no browser storage are unchanged. No real API wiring, new dependency, provider call, merge, deployment or NMI-UI-01C.
+
+### Next action
+Independently re-audit PR #8 at its exact head.
+
 <!-- HANDOFF_ENTRIES_END -->

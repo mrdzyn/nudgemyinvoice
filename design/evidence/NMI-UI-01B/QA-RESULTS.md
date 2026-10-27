@@ -2,8 +2,8 @@
 
 - **App under test:** the built React shell (`apps/web/dist`) served by `vite preview` at http://127.0.0.1:4173, with its production CSP.
 - **Browser:** Chrome/156.0.8078.48 (headless), driven over the DevTools Protocol by `run-browser-qa.mjs` with real keyboard events.
-- **Result:** 107 of 107 checks passed.
-- **Screenshots:** 59 JPEG files (6515 KB) in `screenshots/`; side-by-side comparisons against the approved PR #7 evidence in `comparison/` (left = approved design preview, right = React shell); metrics in `comparison-metrics.json`.
+- **Result:** 112 of 112 checks passed.
+- **Screenshots:** 59 JPEG files (6514 KB) in `screenshots/`; side-by-side comparisons against the approved PR #7 evidence in `comparison/` (left = approved design preview, right = React shell); metrics in `comparison-metrics.json`.
 - **Not covered:** screen-reader testing (VoiceOver/NVDA), real touch hardware, Safari/Firefox, 400% browser zoom (320px reflow is checked instead). Full WCAG 2.2 AA conformance is **not** claimed.
 
 ## Evidence
@@ -104,6 +104,7 @@
 | PASS | answered clarification re-parses into review with the rounding warning and PayPal refusal preview | Subtotal€1,517.25Tax (19%)+€288.28Estimated total (EUR)€1,805.53Rounding applied. A figure was rounded half up to the smallest currency unit. The server computes the final amounts; PayPal Sandbox drafting refuses totals that depend on rounding. |
 | PASS | EUR rounding example totals match the server calculation (€1,805.53) |  |
 | PASS | manual entry opens a blank form with only schema-backed fields (required email present) |  |
+| PASS | line description is limited to the backend's 200 characters (maxlength 200; 250 typed characters are truncated) |  |
 | PASS | saving a blank form lists errors, focuses the summary and flags fields | 5 errors |
 | PASS | error text is associated with its field (aria-describedby → visible message) |  |
 | PASS | an error-summary link moves focus to its field |  |
@@ -117,7 +118,11 @@
 | PASS | percent discount above 100 is rejected |  |
 | PASS | tax with more than 2 decimals is rejected; fixed tax amount is not offered |  |
 | PASS | Discard opens a confirmation dialog; Escape keeps the form |  |
-| PASS | duplicate save (replayed): the existing draft is shown with a simulated-replay notice |  |
+| PASS | replay: submit shows the existing draft (Acme Design LLC, id 9b1deb4d-…) with the replayed notice and no 'saved' notice |  |
+| PASS | replay: the returned record is the unchanged stored one ($702.00, PayPal draft created INV2-DEMO-FAKE-0000-0001) |  |
+| PASS | replay: no draft was inserted (row count and every currency card unchanged; no new 00000000-… draft) | rows 4 -> 4 |
+| PASS | replay: a later NEW save is created normally with the first fresh id (saved count was not advanced by the replay) |  |
+| PASS | replay: after the new save the dashboard has exactly one more draft than the baseline |  |
 | PASS | idempotency conflict (409): alert with 'use a new key'; retrying then succeeds |  |
 | PASS | dashboard: one card per currency, no mixed total, labelled DEMO / SYNTHETIC with the missing list endpoint named |  |
 | PASS | dashboard: AG Studio described as unconfirmed / not enabled; no Delete or Updated-at |  |
@@ -154,7 +159,7 @@
 
 | Result | Check | Detail |
 | --- | --- | --- |
-| PASS | no request left http://127.0.0.1:4173 (only the app's own 633 same-origin asset/page loads occurred) | 0 foreign requests |
+| PASS | no request left http://127.0.0.1:4173 (only the app's own 636 same-origin asset/page loads occurred) | 0 foreign requests |
 | PASS | no JavaScript exceptions, CSP violations or console errors during the run | 0 errors |
 | PASS | served page carries a CSP with connect-src 'none' and no inline-style or inline-script allowance | default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none' |
 
