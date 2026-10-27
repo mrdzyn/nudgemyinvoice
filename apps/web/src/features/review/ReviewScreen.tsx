@@ -64,7 +64,7 @@ export function ReviewScreen() {
 }
 
 function ReviewForm({ seed }: { seed: ReviewSeed }) {
-  const { state, dispatch, announce } = useApp();
+  const { state, dispatch, announce, session } = useApp();
   const schedule = useScheduler();
   const headingRef = useFocusOnMount<HTMLHeadingElement>(state.navigated);
   const summaryRef = useRef<HTMLDivElement>(null);
@@ -167,6 +167,13 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
         <Notice kind="ai" role="note" icon="✦">
           <strong>Proposed by the AI parser.</strong> It can be wrong. Check the customer, email,
           currency, due date and every amount, then save. Nothing is sent to PayPal.
+          {session?.parse ? (
+            <>
+              {" "}
+              This proposal came from the server&apos;s parser and is not saved anywhere. Saving is
+              still simulated in this build.
+            </>
+          ) : null}
         </Notice>
       ) : (
         <Notice kind="info" role="note" icon="✎">

@@ -1,0 +1,535 @@
+{
+  "chrome": "Chrome/156.0.8078.48",
+  "passed": 88,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafts disabled; OPENAI_API_KEY/OPENAI_MODEL empty (no provider can be reached)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "a composer deep link shows only the sign-in screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no parse request is possible or made while logged out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL composer opens with no request",
+      "name": "opening the composer makes no parse request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL composer opens with no request",
+      "name": "real composer has no fixture example prompts and no 'preview only' wording",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL composer opens with no request",
+      "name": "real composer says parsing calls the server and saving is simulated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL composer opens with no request",
+      "name": "privacy disclosure and 'live provider not verified' note present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL composer opens with no request",
+      "name": "shell labels fixture data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "a validated server draft opens the editable Review screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "exactly one POST /api/invoice-drafts/parse -> 200 with the CSRF header",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "request body is exactly { text } (trimmed)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "the fake model was called once (no provider exists)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "fields come from the server draft",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "Review says it is a server proposal, not saved, and saving is simulated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "totals are labelled estimates",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "nothing was written to invoices/approvals by parsing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
+      "name": "no horizontal overflow on Review (desktop)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL clarification and re-parse (FAKE model)",
+      "name": "needs_clarification renders the server question",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL clarification and re-parse (FAKE model)",
+      "name": "answers are appended and the SAME real endpoint is called again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL clarification and re-parse (FAKE model)",
+      "name": "second request is a real POST with the original text plus the answer",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL clarification and re-parse (FAKE model)",
+      "name": "resulting review carries the answered due date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL error outcomes from the server (FAKE model)",
+      "name": "unsupported currency -> invalid message, no review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL error outcomes from the server (FAKE model)",
+      "name": "BADCURRENCY: manual entry is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL error outcomes from the server (FAKE model)",
+      "name": "malformed model output -> invalid, no review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL error outcomes from the server (FAKE model)",
+      "name": "BADSHAPE: manual entry is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL error outcomes from the server (FAKE model)",
+      "name": "model outage -> unavailable (not 'not configured')",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL error outcomes from the server (FAKE model)",
+      "name": "MODELDOWN: manual entry is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "429 with Retry-After 42 reports the delay and does not retry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "429 produced exactly one request (no automatic retry)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (429 with Ret)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "400 shows bounded server messages",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (400 shows bo)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "403 shows a generic message with no security detail",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (403 shows a )",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "503 -> service unavailable notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (503 -> servi)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "200 with an unknown outcome is rejected, never reviewed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (200 with an )",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "200 draft with extra field is rejected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (200 draft wi)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "network failure -> offline notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "   text kept and manual entry offered (network fail)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED request failures (interception; server not reached)",
+      "name": "server-authored text is rendered as text, never as markup",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "while pending the field is disabled and progress is announced",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "extra clicks while pending send no further request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "navigating away aborts the browser request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "the late server answer does not open Review or change the screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "returning to the composer is not stuck in a loading state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "Sign out locks the workspace immediately (composer and text gone)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "the pending parse request was cancelled by sign-out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "the late parse answer cannot resurrect the workspace",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "typed text is not left anywhere in the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL pending request handling (FAKE model, 4 s delay)",
+      "name": "server session was revoked by the real logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL offline manual fallback",
+      "name": "offline: a local message is shown and NO parse request is made",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL offline manual fallback",
+      "name": "manual entry still opens offline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL CSRF, Origin and session boundary on the parse route",
+      "name": "no cookie -> 401",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL CSRF, Origin and session boundary on the parse route",
+      "name": "cookie, right Origin, missing CSRF token -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL CSRF, Origin and session boundary on the parse route",
+      "name": "cookie, right Origin, wrong CSRF token -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL CSRF, Origin and session boundary on the parse route",
+      "name": "valid CSRF token but foreign Origin -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL CSRF, Origin and session boundary on the parse route",
+      "name": "none of the rejected requests reached the model",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL CSRF, Origin and session boundary on the parse route",
+      "name": "2,001 characters -> 400 from the server as well",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session invalidation on HTTP 401",
+      "name": "a real 401 from the server ends the session and shows sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session invalidation on HTTP 401",
+      "name": "the parse request really returned 401",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session invalidation on HTTP 401",
+      "name": "session-expired notice shown, composer text and review wiped",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session invalidation on HTTP 401",
+      "name": "after signing in again the composer is empty (fresh epoch)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard, 390px mobile and dark theme",
+      "name": "keyboard Enter on 'Parse with AI' runs the real parse",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard, 390px mobile and dark theme",
+      "name": "clarification state text contrast >= WCAG AA (light)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard, 390px mobile and dark theme",
+      "name": "no horizontal overflow at 390px (clarification)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard, 390px mobile and dark theme",
+      "name": "failure state text contrast >= WCAG AA (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard, 390px mobile and dark theme",
+      "name": "no horizontal overflow at 390px (failure, dark)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard, 390px mobile and dark theme",
+      "name": "the failure alert is an announced alert region",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider-unconfigured server and real 429 (no model client at all)",
+      "name": "genuine ai_not_configured -> unavailable notice saying nothing reached a provider",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider-unconfigured server and real 429 (no model client at all)",
+      "name": "manual entry is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider-unconfigured server and real 429 (no model client at all)",
+      "name": "the third request is a REAL 429 and the UI reports the wait",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider-unconfigured server and real 429 (no model client at all)",
+      "name": "429 carries a Retry-After and the browser did not retry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider-unconfigured server and real 429 (no model client at all)",
+      "name": "all three were real server responses: 200, 200, 429",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider-unconfigured server and real 429 (no model client at all)",
+      "name": "no model client existed, so no model was invoked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no localStorage/sessionStorage/IndexedDB/Cache entries",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no cookie readable from script (HttpOnly) and no invoice text in the URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no request left the app origin (no OpenAI/PayPal/foreign host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the only /api routes the browser used are the 3 auth routes and the parse route",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no invoice save/list/detail/PayPal request was made",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no invoices or approvals rows were created by this journey",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "parse attempts are audited without customer text",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "API log contains no CSRF token, cookie value or invoice text",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no console errors or uncaught exceptions in the browser",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

@@ -10,6 +10,8 @@ export interface AuthController {
   /** Resolves with the server outcome; on success the controller itself moves to `authenticated`. */
   login: (username: string, password: string, signal: AbortSignal) => Promise<AuthResult>;
   logout: () => void;
+  /** A protected route answered 401: end the session if `epoch` is still the live one. */
+  expire: (epoch: number) => void;
 }
 
 /**
@@ -94,5 +96,11 @@ export function useAuthController(api: AuthApi, now: () => number = Date.now): A
     runner.start(s.status === "authenticated" ? s.session : null);
   }, [runner]);
 
-  return { state, login, logout };
+  const expire = useCallback((epoch: number) => {
+    const s = stateRef.current;
+    if (s.status === "authenticated" && s.epoch === epoch)
+      dispatch({ type: "ended", notice: "session-expired" });
+  }, []);
+
+  return { state, login, logout, expire };
 }

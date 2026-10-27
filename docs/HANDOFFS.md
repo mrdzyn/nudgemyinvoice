@@ -889,4 +889,77 @@ Audit exact head, then owner decides on merge. C2 needs separate authorization.
 ### Next action
 Re-audit exact head; owner decides on merge. C2 needs separate authorization.
 
+## Handoff: NMI-UI-01C2-START
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** GPT-6 / owner continuation after PR #9 squash merge
+- **To:** Claude implementation agent; then independent GPT-6 exact-head audit
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Starting main:** `32d9132be419b48a64455fa79c0fca58f9159b89` (PR #9 independently audited PASS, owner squash merged)
+- **State:** TASK CONTRACT ONLY; implementation NOT STARTED. Current branch changes only task/STATUS/handoff. No provider call, merge or deployment.
+
+### Continuation notes
+- Use already-implemented `POST /api/invoice-drafts/parse`, backed by Fastify/PostgreSQL operator auth and server-side optional model adapter. Real provider-unconfigured response is `unavailable`; test-only model fakes are simulations, never genuine OpenAI acceptance.
+- Wire only React parse + clarification/manual fallback, typed validated response, in-memory CSRF, cancellation and definitive 401 logout/clear. Keep all other invoice operations synthetic and labelled; preserve C1 immediate sign-out lock and hash/preview isolation.
+- Owner decisions D1–D4 unchanged. PayPal draft smoke authorization exhausted, no new OpenAI/PayPal call authorized; no C3 save/detail wiring.
+- Initial repository handoff is **docs-only**. No validation or CI at the implementation SHA exists yet; Claude must report actual checks once code is added.
+
+### Next action
+Claude implements the active C2 contract on this existing Draft PR #11, validates targeted boundaries and a local real browser/auth/parse path with disposable PostgreSQL and no external provider calls, appends `NMI-UI-01C2-IMPL`, updates STATUS/task/PR and stops for independent exact-head GPT-6 audit.
+
+## Handoff: NMI-UI-01C2-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md`
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Implementation SHA:** `894758e48bca92c2afcd2dbf0609977f00fa4663` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call or C3 work.
+
+### What changed
+Real authenticated composer -> `POST /api/invoice-drafts/parse` with strict response validation, a single-flight cancellable runner, clarification re-parse, failure/manual-fallback notices and 401 session invalidation. Web only; backend, packages and migrations unchanged.
+
+### Audit focus
+1. `parse/api.ts` validation is at least as strict as `invoiceDraftSchema`/`calculateTotals` shapes and fails closed.
+2. No path from a hash, scenario or reducer action reaches a real parse success; the preview never gets `parse`.
+3. Abort, stale and duplicate handling in `parse/runner.ts`; 401 -> `expire(epoch)`; sign-out lock still immediate.
+4. The fake model exists only in `design/evidence/NMI-UI-01C2/fake-model-server.ts` (never imported by production).
+5. Saving, list and PayPal remain visibly synthetic.
+
+### Not verified
+Live OpenAI, PayPal, HTTPS `__Host-` cookie, screen readers, touch, Safari/Firefox, 400% zoom, hosted proxy.
+
+## Handoff: NMI-UI-01C2-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md` (section "Audit remediation: MEDIUM-1 and MINOR-2")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Fix SHA:** `8d50b1d0dbe3c301ccd3e0712fea45ff25112c1c` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call or C3 work.
+
+### What changed
+Parse-response validation now enforces the money domain with the existing BigInt utilities and requires exact canonical totals; the harness health assertion is real. Web validator, tests, evidence harness and docs only.
+
+### Re-audit focus
+1. `parseTotals` rejects every case in the audit (zero quantity, USD three decimals, tax over 100%, inconsistent totals, fractional JPY) and accepts legitimate half-up rounding.
+2. No floating point; the gate does not make browser estimates authoritative.
+3. All four outcomes, 401 expiry, manual fallback and cancellation unchanged.
+
+## Handoff: NMI-UI-01C2-R2
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md` (section "Audit remediation: MINOR-3")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Fix SHA:** `c37320c845efe68afeaa4e64d3ea761e05eaea9f` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call or C3 work.
+
+### What changed
+Test-only fake model and browser journey: the clarification answer must produce a draft with the exact answered due date, and the check is strict. No product code changed.
+
+### Re-audit focus
+1. The fake honours the stated date; the journey asserts `2030-02-01` and still asserts the request body carried the answer.
+2. Negative control observed (87/88 when the fake ignores the answer).
+
 <!-- HANDOFF_ENTRIES_END -->

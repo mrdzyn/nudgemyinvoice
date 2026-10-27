@@ -5,13 +5,13 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01C1 — real browser operator login/session/logout on Draft PR #9; MEDIUM-1 (pending-logout exposure) remediated; awaiting independent re-audit. No deployment.
-- **Status:** NMI-UI-01B owner-approved and squash-merged on PR #8 into `main` at `a4520440c748ff8712a10e9f65b389e8cde5db9c`, after exact-head GPT-6 audit PASS and both required CI workflows PASS. The five-screen React UI shell is complete but still fixture-only; its demo login is NOT real authentication, and no invoice API is connected. Owner has authorized starting NMI-UI-01C. First bounded increment is real browser login/session/logout (C1) without provider calls or invoice writes; subsequent slices are described in `tasks/NMI-UI-01C-integration-plan.md`.
-- **Primary branch:** `main` (PR #8 squash commit `a4520440c748ff8712a10e9f65b389e8cde5db9c`).
-- **Working branch:** `feat/nmi-ui-01c1-auth-session` (remediation code SHA `f2f7fd8f8e9b02890cb04d0220b8e2c5c89326df`).
-- **Active task:** `tasks/NMI-UI-01C1-auth-session.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-UI-01C1-R1
-- **Owner decisions (from the NMI-UI-01A approval):** **D1** defer AG Studio until licensing is independently confirmed; **D2** do not persist unsaved customer data in browser storage by default; **D3** schedule a separate bounded read-only `GET /api/invoice-drafts` during API integration; **D4** defer editing existing saved drafts.
+- **Current phase:** NMI-UI-01C2 — authenticated React invoice parsing / manual fallback. **Implemented; audit MEDIUM-1/MINOR-2 remediated; MINOR-3 (evidence assertion) remediated; awaiting independent GPT-6 re-audit.**
+- **Status:** NMI-UI-01C1 real browser auth/session/logout passed independent GPT-6 audit at exact PR #9 HEAD `d1a525058e84b041b0799f77b1c0ab4411dfa9fb` and both hosted checks PASS. Owner authorized squash merge, completed 2026-10-27 as `32d9132be419b48a64455fa79c0fca58f9159b89`. Real browser authentication is on `main`. C2 is scoped to client-side wiring of existing authenticated `POST /api/invoice-drafts/parse` and manual fallback; no provider call or invoice persistence is authorized.
+- **Primary branch:** `main` (PR #9 squash merge `32d9132be419b48a64455fa79c0fca58f9159b89`).
+- **Working branch:** `feat/nmi-ui-01c2-parse-wiring` ([Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11), implementation SHA `894758e48bca92c2afcd2dbf0609977f00fa4663`, remediation SHAs `8d50b1d0dbe3c301ccd3e0712fea45ff25112c1c` and `c37320c845efe68afeaa4e64d3ea761e05eaea9f` (MINOR-3)).
+- **Active task:** `tasks/NMI-UI-01C2-parse-wiring.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
+- **Active handoff:** NMI-UI-01C2-R2
+- **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
 - **React UI shell:** PR #8 accepted at exact audited HEAD `2c9db4e01dd83511aafc49e817398029f5557d1c`; owner squash-merged at `a4520440c748ff8712a10e9f65b389e8cde5db9c`. Browser fixture shell only; no API/client-provider integration yet.
@@ -28,18 +28,17 @@
 - PostgreSQL transactions, audited invoice draft persistence, seven committed migrations (`0000`–`0006`).
 - PayPal Sandbox-only draft-create adapter, explicit authenticated trigger, durable operation fencing, exact remote verification, and fail-closed reconciliation without blind recreates.
 - Browser CORS preflight explicitly authorizing `Idempotency-Key` on authenticated invoice draft routes.
-- Frontend `apps/web`: owner-approved NMI-UI-01B five-screen fixture-only React shell is merged; real login and API integration remain pending.
+- Frontend `apps/web`: owner-approved NMI-UI-01B fixture-backed screens and **NMI-UI-01C1 real browser operator authentication** are merged; invoice parsing, saving, list, detail and PayPal UI remain synthetic fixtures pending their bounded integration slices.
 
 ## Deferred / open gates
-- **NMI-UI-01C1 independent re-audit and separate owner merge approval.** Audit of `ad756b0` was FIX REQUIRED (MEDIUM-1: workspace stayed usable during a pending logout); remediated at `f2f7fd8f8e9b02890cb04d0220b8e2c5c89326df` (workspace unmounts synchronously, 10 s bound, 204-only confirmation). Local: 390 tests + 116/116 real browser-to-PostgreSQL checks; hosted Baseline run 40464075823 PASS, Stack run 40464075624 PASS. Not merged: `main` still has fixture-only login.
-- **Manual QA still pending (not covered by automation):** screen reader (VoiceOver/NVDA), real touch devices, Safari and Firefox, 400% browser zoom. Full WCAG 2.2 AA conformance is not claimed.
-- **AG Studio (D1):** license terms, trial period and keys are **unverified**; deferred. The dashboard is an accessible native table.
-- **Real API wiring:** C1 login/session/logout **implemented on PR #9, unmerged**. Later parse, save/read, read-only list (D3), and controlled PayPal Sandbox draft UI require separate bounded increments, independent reviews and owner merge approval. Editing saved drafts remains deferred (D4).
-- Real OpenAI smoke; PayPal sending/grant issuance, reminder automation, webhook receipt/payment reconciliation, deployment, and production PayPal use.
-- Architecture decisions: PostgreSQL-only versus SQLite support, hosting strategy, demo availability through judging.
-- Do **not** reuse the completed one-create Sandbox authorization or reset its exhausted budget. New external writes require new owner approval.
-- **Operational limitations:** In-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](SECURITY.md).
-- No deployment, production release, new PayPal Sandbox write, or real OpenAI provider inference authorized. NMI-UI-01C1 implementation awaits audit.
+- **NMI-UI-01C2:** implemented on Draft PR #11 (`894758e48bca92c2afcd2dbf0609977f00fa4663`); local validation and 88/88 real-browser checks are recorded in the task. **Audit of `8df462b` returned FIX REQUIRED (MEDIUM-1 totals validation, MINOR-2 harness); both remediated at the SHA above. Independent re-audit and owner merge approval NOT YET DONE**; parse wiring is not on `main`.
+- **Manual QA still pending:** VoiceOver/NVDA, real touch, Safari/Firefox, 400% browser zoom, HTTPS `__Host-` cookie and hosted reverse proxy; no full WCAG 2.2 AA or deployment claim.
+- **AG Studio (D1):** license/trial/keys unverified; deferred. Native table remains.
+- **Provider boundary:** real OpenAI Responses inference **NOT TESTED**, and no new provider call authorized; prior PayPal draft-only Sandbox one-create smoke budget is exhausted. No new PayPal write authorized, and `PAYPAL_DRAFTS_ENABLED=false` remains default.
+- **Later integration:** C3 persisted draft save/detail; C4 read-only draft list; C5 controlled Sandbox draft UI; NMI-DEMO. No current provider-enabled demo or hosted release.
+- **Other deferred:** PayPal send/grant issuance/reminder automation/webhooks/payment reconciliation; SQLite-versus-Postgres decision, hosting strategy and judge access; editing existing saved drafts.
+- **Operational limitations:** in-memory per-process auth throttling; approval consumption and audit logging separate statements; DB least-privilege grants a deployment prerequisite.
+- **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, or start C3 without separate approval.
 
 ## Next action
-GPT-6 independently re-audits PR #9 at the exact head named in the `NMI-UI-01C1-R1` handoff. After a PASS and separate owner approval the owner may merge; C2 (invoice parse wiring) is a separate authorization. Do not merge, deploy, call PayPal/OpenAI, or start C2 without it.
+GPT-6 independent exact-head re-audit of Draft PR #11, then the owner's merge decision. No live OpenAI/PayPal calls, deployment, merge or C3 (saved draft wiring) without separate authorization.

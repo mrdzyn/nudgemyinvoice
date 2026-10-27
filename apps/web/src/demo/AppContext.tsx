@@ -9,11 +9,19 @@ import {
   type ReactNode,
 } from "react";
 import type { Action, AppState } from "./appState.js";
+import type { ParseResult } from "../parse/api.js";
 
 /** Present only in real (server-authenticated) mode. */
 export interface SessionInfo {
   username: string;
   signOut: () => void;
+  /**
+   * Real server parse (`POST /api/invoice-drafts/parse`), bound to this session's CSRF token in
+   * memory. Absent in the synthetic preview, which never reaches the network.
+   */
+  parse?: (description: string, signal: AbortSignal) => Promise<ParseResult>;
+  /** The server said 401: end the whole session (and discard every in-memory draft). */
+  sessionExpired?: () => void;
 }
 
 interface AppContextValue {

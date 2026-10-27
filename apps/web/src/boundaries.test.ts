@@ -21,13 +21,13 @@ function sources(dir: string): string[] {
 const files = sources(root);
 const read = (p: string) => readFileSync(p, "utf8");
 
-/** [name, pattern, the single file (relative to apps/web) allowed to match]. */
-const FORBIDDEN: [string, RegExp, string?][] = [
+/** [name, pattern, the files (relative to apps/web) allowed to match]. */
+const FORBIDDEN: [string, RegExp, string[]?][] = [
   ["localStorage", /\blocalStorage\b/],
   ["sessionStorage", /\bsessionStorage\b/],
   ["IndexedDB", /\bindexedDB\b|\bIDBFactory\b/i],
   ["cookies", /document\.cookie/],
-  ["fetch outside the auth transport", /\bfetch\s*\(/, "src/auth/api.ts"],
+  ["fetch outside the auth transport", /\bfetch\s*\(/, ["src/auth/api.ts", "src/parse/api.ts"]],
   ["XMLHttpRequest", /XMLHttpRequest/],
   ["WebSocket/EventSource", /\bWebSocket\b|\bEventSource\b/],
   ["sendBeacon", /sendBeacon/],
@@ -51,19 +51,28 @@ describe("UI shell boundaries", () => {
     const hits = files
       .filter((f) => pattern.test(read(f)))
       .map((f) => relative(webRoot, f))
-      .filter((f) => f !== allowed);
+      .filter((f) => !allowed?.includes(f));
     expect(hits).toEqual([]);
   });
 
-  it("only the auth transport calls the network, and only the three relative /api/auth routes", () => {
+  it("only the auth and parse transports call the network, and only their four relative /api routes", () => {
     const hits = files.filter((f) => /\bfetch\s*\(/.test(read(f))).map((f) => relative(webRoot, f));
-    expect(hits).toEqual(["src/auth/api.ts"]);
-    const paths = [...read(join(root, "auth/api.ts")).matchAll(/"(\/api\/[^"]*)"/g)].map(
-      (m) => m[1],
-    );
-    expect(new Set(paths)).toEqual(
+    expect(hits.sort()).toEqual(["src/auth/api.ts", "src/parse/api.ts"]);
+    const routes = (f: string) =>
+      [...read(join(root, f)).matchAll(/"(\/api\/[^"]*)"/g)].map((m) => m[1]);
+    expect(new Set(routes("auth/api.ts"))).toEqual(
       new Set(["/api/auth/session", "/api/auth/login", "/api/auth/logout"]),
     );
+    expect(new Set(routes("parse/api.ts"))).toEqual(new Set(["/api/invoice-drafts/parse"]));
+  });
+
+  it("C2 wires no invoice save, list, detail or PayPal route (those stay synthetic)", () => {
+    const all = files.map(read).join("\n");
+    const apiPaths = [...all.matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1]);
+    expect(
+      apiPaths.filter((p) => !/^\/api\/(auth\/|invoice-drafts\/parse$)/.test(p ?? "")),
+    ).toEqual([]);
+    expect(all).not.toMatch(/paypal\.com|openai\.com|api\.openai/i);
   });
 
   it("the real app never imports the synthetic preview, demo controls or hash routing", () => {
@@ -72,6 +81,8 @@ describe("UI shell boundaries", () => {
       "auth/useAuthController.ts",
       "auth/api.ts",
       "auth/authState.ts",
+      "parse/api.ts",
+      "parse/runner.ts",
     ]) {
       expect(read(join(root, f)), f).not.toMatch(
         /DemoControls|demo\/hash|from "\.\/App\.js"|location\.hash/,
