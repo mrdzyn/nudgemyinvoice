@@ -889,4 +889,22 @@ Audit exact head, then owner decides on merge. C2 needs separate authorization.
 ### Next action
 Re-audit exact head; owner decides on merge. C2 needs separate authorization.
 
+## Handoff: NMI-UI-01C2-START
+
+- **Task:** `tasks/NMI-UI-01C2-parse-manual-fallback.md` (phase `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** GPT-6 orchestration after owner requested next increment on 2026-10-27
+- **To:** Claude implementation agent; then GPT-6 independent exact-head audit
+- **Base:** `main` `32d9132be419b48a64455fa79c0fca58f9159b89` (owner-merged PR #9, real session auth)
+- **Branch:** `feat/nmi-ui-01c2-parse-manual`
+- **State:** docs-only bounded task checkpoint. C2 application code **NOT IMPLEMENTED**; real OpenAI inference and PayPal writes **NOT AUTHORIZED**.
+
+### Boundary and evidence
+- Wire real, server-authenticated `POST /api/invoice-drafts/parse` into approved React composer, CSRF/Origin guarded. 200 draft / needs_clarification / invalid / unavailable; manual fallback works without AI. Use deterministic fake `InvoiceModelClient` for genuine browser→Fastify→disposable PostgreSQL validation; no actual provider call.
+- Keep review/save/detail/dashboard and PayPal transitions explicitly synthetic until later increments. Preserve no-browser-storage, auth teardown on 401/logout, exact decimal/currency validation, cancellation of stale results, privacy disclosure about possible future provider transmission.
+- No `apps/api`, packages, migrations, new provider secrets, PayPal, deployment, CI bypass or merge. No C3 work.
+- Tests: typed API/CSRF and outcomes; delayed parse interrupted by logout or 401; no stale review; clarification re-post; unauthenticated refuses; 2,000-char boundary; mobile/dark/keyboard QA; hosted Baseline/Stack at exact implementation head. Evidence must distinguish fake-model behavior from genuine OpenAI (still NOT TESTED).
+
+### Next action
+Claude implements the active task on this branch, opens/updates Draft PR, updates STATUS/task/handoff with actual exact-head validation, then stops for independent GPT-6 audit. Separate owner approval required for merge and later live provider calls.
+
 <!-- HANDOFF_ENTRIES_END -->
