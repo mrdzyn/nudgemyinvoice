@@ -17,7 +17,14 @@ export type ParseState =
   | { status: "loading"; clarified: boolean; scenarioId?: string }
   | { status: "clarify"; scenarioId: string; questions: { field: string; question: string }[] }
   | { status: "invalid"; errors: { path: string; message: string }[] }
-  | { status: "unavailable" };
+  | { status: "unavailable"; reason?: string }
+  /** Real mode only: the request itself failed, so nothing was parsed. */
+  | {
+      status: "failed";
+      reason: "throttled" | "forbidden" | "rejected" | "offline" | "service" | "malformed";
+      retryAfterSeconds?: number | null;
+      messages?: string[];
+    };
 
 export interface ComposerState {
   text: string;

@@ -96,7 +96,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         {session ? (
           <Notice kind="info" role="note" icon="ℹ" className="notice-compact">
             <strong>You are signed in to the server.</strong> Invoice data on these screens is still
-            synthetic fixture data: parsing, saving and PayPal are not connected in this build.
+            synthetic fixture data: saving, the invoice list and PayPal are not connected in this
+            build. Only parsing a description talks to the server.
           </Notice>
         ) : null}
         {children}

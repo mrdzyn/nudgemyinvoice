@@ -4,12 +4,14 @@ import type { AuthState } from "./auth/authState.js";
 import { useAuthController } from "./auth/useAuthController.js";
 import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/Spinner.js";
+import { createParseApi, type ParseApi } from "./parse/api.js";
 import { AppProvider } from "./demo/AppContext.js";
 import { initialState, reducer, type Action, type Theme } from "./demo/appState.js";
 import { RealLoginScreen } from "./features/login/RealLoginScreen.js";
 import { CurrentScreen, SkipLink, TITLES } from "./screens.js";
 
 const defaultApi = createAuthApi();
+const defaultParseApi = createParseApi();
 
 function systemTheme(): Theme {
   return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
@@ -35,13 +37,22 @@ function Workspace({
   session,
   fresh,
   signOut,
+  expire,
+  parseApi,
   theme,
 }: {
   session: Session;
   fresh: boolean;
   signOut: () => void;
+  expire: () => void;
+  parseApi: ParseApi;
   theme: Theme;
 }) {
+  const csrfToken = session.csrfToken;
+  const parse = useCallback(
+    (description: string, signal: AbortSignal) => parseApi.parse(description, csrfToken, signal),
+    [parseApi, csrfToken],
+  );
   const [state, rawDispatch] = useReducer(reducer, theme, (t) => ({
     ...reducer(initialState(t), { type: "navigate", screen: "dashboard" }),
     navigated: fresh,
@@ -70,7 +81,12 @@ function Workspace({
     <AppProvider
       state={state}
       dispatch={dispatch}
-      session={{ username: session.operator.username, signOut }}
+      session={{
+        username: session.operator.username,
+        signOut,
+        parse,
+        sessionExpired: expire,
+      }}
     >
       <SkipLink />
       <AppShell>
@@ -87,6 +103,8 @@ export interface RealViewProps {
   theme: Theme;
   login: (username: string, password: string, signal: AbortSignal) => Promise<AuthResult>;
   logout: () => void;
+  expire?: (epoch: number) => void;
+  parseApi?: ParseApi;
 }
 
 function StatusCard({ id, children }: { id: string; children: string }) {
@@ -107,14 +125,24 @@ function StatusCard({ id, children }: { id: string; children: string }) {
  * Pure view of the auth state. The protected workspace exists ONLY while `authenticated`: while a
  * sign-out is pending (`signing-out`) it is already gone, with every in-memory draft.
  */
-export function RealView({ state, theme, login, logout }: RealViewProps) {
+export function RealView({
+  state,
+  theme,
+  login,
+  logout,
+  expire = noopDispatch,
+  parseApi = defaultParseApi,
+}: RealViewProps) {
   if (state.status === "authenticated") {
+    const epoch = state.epoch;
     return (
       <Workspace
-        key={state.epoch}
+        key={epoch}
         session={state.session}
         fresh={state.fresh}
         signOut={logout}
+        expire={() => expire(epoch)}
+        parseApi={parseApi}
         theme={theme}
       />
     );
@@ -144,7 +172,13 @@ export function RealView({ state, theme, login, logout }: RealViewProps) {
  * Real application root. Nothing protected renders until the SERVER has confirmed a session; the URL
  * hash, direct links and demo controls have no influence on that decision.
  */
-export function RealApp({ api = defaultApi }: { api?: AuthApi }) {
+export function RealApp({
+  api = defaultApi,
+  parseApi = defaultParseApi,
+}: {
+  api?: AuthApi;
+  parseApi?: ParseApi;
+}) {
   const auth = useAuthController(api);
   const [theme] = useState(systemTheme);
   const { state } = auth;
@@ -163,5 +197,14 @@ export function RealApp({ api = defaultApi }: { api?: AuthApi }) {
       } · NudgeMyInvoice`;
   }, [state.status]);
 
-  return <RealView state={state} theme={theme} login={auth.login} logout={auth.logout} />;
+  return (
+    <RealView
+      state={state}
+      theme={theme}
+      login={auth.login}
+      logout={auth.logout}
+      expire={auth.expire}
+      parseApi={parseApi}
+    />
+  );
 }

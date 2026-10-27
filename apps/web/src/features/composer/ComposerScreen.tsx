@@ -1,17 +1,44 @@
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Notice } from "../../components/Notice.js";
 import { useFocusOnMount, useScheduler } from "../../components/hooks.js";
 import { useApp } from "../../demo/AppContext.js";
 import { PARSE_SCENARIOS, scenarioById } from "../../demo/fixtures.js";
 import { blankForm, formFromDraft, MAX_PARSE_CHARS } from "../../domain/invoiceForm.js";
 import type { ParseOutcome } from "../../domain/types.js";
-import type { ComposerTab } from "../../demo/appState.js";
+import type { ParseResult } from "../../parse/api.js";
+import { createParseRunner, effectOf } from "../../parse/runner.js";
+import type { ComposerTab, ParseState } from "../../demo/appState.js";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
+function failureText(p: Extract<ParseState, { status: "failed" }>): string {
+  switch (p.reason) {
+    case "throttled":
+      return typeof p.retryAfterSeconds === "number"
+        ? `Too many parse requests. Try again in about ${fmt(p.retryAfterSeconds)} seconds. Nothing was retried automatically.`
+        : "Too many parse requests. Wait a little and try again. Nothing was retried automatically.";
+    case "forbidden":
+      return "The server did not accept this request. Reload the page and try again.";
+    case "rejected":
+      return "The server could not accept this description. Edit the text and try again.";
+    case "offline":
+      return "Could not reach the server, so nothing was parsed. Check your connection.";
+    case "malformed":
+      return "The server's answer was not in the expected format, so it was not used.";
+    case "service":
+      return "The parsing service did not respond successfully, so nothing was parsed.";
+  }
+}
+
 export function ComposerScreen() {
-  const { state, dispatch, announce } = useApp();
+  const { state, dispatch, announce, session } = useApp();
+  const realParse = session?.parse;
   const schedule = useScheduler();
+  const handleResult = useRef<(r: ParseResult) => void>(() => undefined);
+  const runner = useMemo(
+    () => (realParse ? createParseRunner(realParse, (r) => handleResult.current(r)) : null),
+    [realParse],
+  );
   const headingRef = useFocusOnMount<HTMLHeadingElement>(state.navigated);
   const { text, tab, parse } = state.composer;
   const [emptyError, setEmptyError] = useState<string | null>(null);
@@ -27,8 +54,34 @@ export function ComposerScreen() {
   const setTab = (t: ComposerTab) => dispatch({ type: "composer", patch: { tab: t } });
   const patch = (p: Partial<typeof state.composer>) => dispatch({ type: "composer", patch: p });
 
+  handleResult.current = (r) => {
+    const fx = effectOf(r);
+    if (fx.type === "expire-session") {
+      session?.sessionExpired?.();
+    } else if (fx.type === "review") {
+      dispatch({ type: "start-review", form: fx.form, source: "ai" });
+      announce("Proposal ready for review");
+    } else {
+      if (fx.parse.status === "clarify") {
+        setAnswers(fx.parse.questions.map(() => ""));
+        setClarError(null);
+      }
+      patch({ parse: fx.parse });
+      announce(fx.announce);
+    }
+  };
+
+  // Leaving the composer (navigation, sign-out, session end) cancels any in-flight real request and
+  // makes its late answer unreachable.
+  useEffect(
+    () => () => {
+      if (runner?.abort()) dispatch({ type: "composer", patch: { parse: { status: "idle" } } });
+    },
+    [runner, dispatch],
+  );
+
   const run = (clarified: boolean, textNow: string, scenarioId?: string) => {
-    if (loading) return;
+    if (loading || runner?.pending) return;
     if (state.offline) {
       setEmptyError("You are offline. Parsing needs a connection.");
       return;
@@ -44,6 +97,13 @@ export function ComposerScreen() {
       return;
     }
     setEmptyError(null);
+    if (runner) {
+      if (runner.start(t)) {
+        patch({ parse: { status: "loading", clarified } });
+        announce("Analyzing invoice text");
+      }
+      return;
+    }
     patch({
       parse:
         scenarioId === undefined
@@ -176,9 +236,36 @@ export function ComposerScreen() {
           <div id="panel-ai" role="tabpanel" aria-labelledby="tab-ai" hidden={tab !== "ai"}>
             {parse.status === "unavailable" ? (
               <Notice kind="warn" role="alert">
-                <strong>AI parsing is unavailable.</strong> It is not configured on the server, or
-                the provider could not be reached. Nothing was sent. You can enter the invoice
-                manually.
+                <strong>AI parsing is unavailable.</strong>{" "}
+                {realParse
+                  ? parse.reason === "ai_not_configured"
+                    ? "AI parsing is not configured on the server, so your text was not sent to any AI provider."
+                    : "The server could not complete the AI parse. Nothing was parsed."
+                  : "It is not configured on the server, or the provider could not be reached. Nothing was sent."}{" "}
+                You can enter the invoice manually.
+                <div className="mt-12">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() =>
+                      dispatch({ type: "start-review", form: blankForm(), source: "manual" })
+                    }
+                  >
+                    Continue with manual entry
+                  </button>
+                </div>
+              </Notice>
+            ) : null}
+            {parse.status === "failed" ? (
+              <Notice kind="warn" role="alert" id="parse-failed">
+                <strong>Parsing did not complete.</strong> {failureText(parse)}
+                {parse.messages && parse.messages.length > 0 ? (
+                  <ul>
+                    {parse.messages.map((m) => (
+                      <li key={m}>{m}</li>
+                    ))}
+                  </ul>
+                ) : null}
                 <div className="mt-12">
                   <button
                     type="button"
@@ -255,7 +342,11 @@ export function ComposerScreen() {
               enter, including any customer names and email addresses, may be sent to OpenAI to be
               parsed. Do not paste card numbers, passwords or other secrets. The result is a
               proposal: review every field before saving.{" "}
-              <span className="hint">Design note: real provider parsing is NOT TESTED.</span>
+              <span className="hint">
+                {realParse
+                  ? "This build has not verified live provider parsing."
+                  : "Design note: real provider parsing is NOT TESTED."}
+              </span>
             </Notice>
             {parse.status === "clarify" ? (
               <Notice kind="ai" role="region" id="clar-box">
@@ -297,35 +388,46 @@ export function ComposerScreen() {
                 </div>
               </Notice>
             ) : null}
-            <div>
-              <p className="label-strong" id="chips-label">
-                Synthetic example prompts
-              </p>
-              <div className="chip-list" role="group" aria-labelledby="chips-label">
-                {PARSE_SCENARIOS.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="chip"
-                    onClick={() => {
-                      setEmptyError(null);
-                      patch({ text: s.text, parse: { status: "idle" } });
-                      document.getElementById("comp-text")?.focus();
-                      announce("Example prompt loaded");
-                    }}
-                  >
-                    <strong>{s.label}:</strong> {s.text}
-                  </button>
-                ))}
+            {realParse ? null : (
+              <div>
+                <p className="label-strong" id="chips-label">
+                  Synthetic example prompts
+                </p>
+                <div className="chip-list" role="group" aria-labelledby="chips-label">
+                  {PARSE_SCENARIOS.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="chip"
+                      onClick={() => {
+                        setEmptyError(null);
+                        patch({ text: s.text, parse: { status: "idle" } });
+                        document.getElementById("comp-text")?.focus();
+                        announce("Example prompt loaded");
+                      }}
+                    >
+                      <strong>{s.label}:</strong> {s.text}
+                    </button>
+                  ))}
+                </div>
+                <p className="hint mt-8">
+                  In this preview only these four examples are recognized. Any other text returns
+                  the &quot;could not read&quot; outcome so that state can be reviewed.
+                </p>
               </div>
-              <p className="hint mt-8">
-                In this preview only these four examples are recognized. Any other text returns the
-                &quot;could not read&quot; outcome so that state can be reviewed.
-              </p>
-            </div>
+            )}
             <div className="actions">
               <span className="spacer">
-                Simulated: <code>POST /api/invoice-drafts/parse</code> is not called
+                {realParse ? (
+                  <>
+                    Parsing calls the server (<code>POST /api/invoice-drafts/parse</code>). Saving
+                    is simulated.
+                  </>
+                ) : (
+                  <>
+                    Simulated: <code>POST /api/invoice-drafts/parse</code> is not called
+                  </>
+                )}
               </span>
               <button
                 type="button"
