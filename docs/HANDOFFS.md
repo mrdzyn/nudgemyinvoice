@@ -929,4 +929,21 @@ Real authenticated composer -> `POST /api/invoice-drafts/parse` with strict resp
 ### Not verified
 Live OpenAI, PayPal, HTTPS `__Host-` cookie, screen readers, touch, Safari/Firefox, 400% zoom, hosted proxy.
 
+## Handoff: NMI-UI-01C2-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md` (section "Audit remediation: MEDIUM-1 and MINOR-2")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Fix SHA:** `8d50b1d0dbe3c301ccd3e0712fea45ff25112c1c` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call or C3 work.
+
+### What changed
+Parse-response validation now enforces the money domain with the existing BigInt utilities and requires exact canonical totals; the harness health assertion is real. Web validator, tests, evidence harness and docs only.
+
+### Re-audit focus
+1. `parseTotals` rejects every case in the audit (zero quantity, USD three decimals, tax over 100%, inconsistent totals, fractional JPY) and accepts legitimate half-up rounding.
+2. No floating point; the gate does not make browser estimates authoritative.
+3. All four outcomes, 401 expiry, manual fallback and cancellation unchanged.
+
 <!-- HANDOFF_ENTRIES_END -->
