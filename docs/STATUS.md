@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01C3 — real draft save and read-only saved-invoice detail. **Implemented on Draft PR; awaiting independent GPT-6 exact-head audit.**
+- **Current phase:** NMI-UI-01C3 — real draft save and read-only saved-invoice detail. **Implemented; audit MEDIUM-1/MINOR-2/MINOR-3 remediated; awaiting independent GPT-6 re-audit.**
 - **Status:** NMI-UI-01C1 (real browser auth) and NMI-UI-01C2 (authenticated parse wiring) are independently audited and merged: C1 as `32d9132be419b48a64455fa79c0fca58f9159b89`, C2 squash-merged as `ddffc11471306e3b2c4cd7ea4a6a80303593e674` (PR #11). C3 wires the existing `POST /api/invoice-drafts` and `GET /api/invoice-drafts/:id` into the real React Review and a new read-only saved-invoice page; no backend, migration or provider change.
 - **Primary branch:** `main` (C2 squash merge `ddffc11471306e3b2c4cd7ea4a6a80303593e674`).
-- **Working branch:** `feat/nmi-ui-01c3-save-detail` (Draft PR; implementation SHA `1530c63003947e26ba2ffb9a11fe36c1601f57cd`).
+- **Working branch:** `feat/nmi-ui-01c3-save-detail` ([Draft PR #12](https://github.com/mrdzyn/nudgemyinvoice/pull/12); implementation SHA `1530c63003947e26ba2ffb9a11fe36c1601f57cd`, remediation SHA `70a63de4d62cecf345ea92daa0a0c709dc9fa24f`).
 - **Active task:** `tasks/NMI-UI-01C3-save-detail.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-UI-01C3-IMPL
+- **Active handoff:** NMI-UI-01C3-R1
 - **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
@@ -31,7 +31,7 @@
 - Frontend `apps/web`: owner-approved NMI-UI-01B fixture-backed screens and **NMI-UI-01C1 real browser operator authentication** and **NMI-UI-01C2 authenticated parsing** are merged; the invoice list and PayPal UI remain synthetic fixtures pending C4/C5, and C3 (save/detail) is on its Draft PR.
 
 ## Deferred / open gates
-- **NMI-UI-01C3:** implemented on Draft PR (`1530c63003947e26ba2ffb9a11fe36c1601f57cd`); local validation and 88/88 real-browser checks are recorded in the task. **Independent audit and owner merge approval NOT YET DONE.** Real draft save/detail is not on `main`.
+- **NMI-UI-01C3:** implemented on Draft PR #12 (`1530c63003947e26ba2ffb9a11fe36c1601f57cd`); audit of `af7b813` returned FIX REQUIRED (unresolved-save navigation, real Review copy, strict createdAt), remediated at `70a63de4d62cecf345ea92daa0a0c709dc9fa24f` with 116/116 real-browser checks recorded in the task. **Independent re-audit and owner merge approval NOT YET DONE.** Real draft save/detail is not on `main`.
 - **Manual QA still pending:** VoiceOver/NVDA, real touch, Safari/Firefox, 400% browser zoom, HTTPS `__Host-` cookie and hosted reverse proxy; no full WCAG 2.2 AA or deployment claim.
 - **AG Studio (D1):** license/trial/keys unverified; deferred. Native table remains.
 - **Provider boundary:** real OpenAI Responses inference **NOT TESTED**, and no new provider call authorized; prior PayPal draft-only Sandbox one-create smoke budget is exhausted. No new PayPal write authorized, and `PAYPAL_DRAFTS_ENABLED=false` remains default.
@@ -41,4 +41,4 @@
 - **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, or start C4/C5 without separate approval.
 
 ## Next action
-GPT-6 independent exact-head audit of the C3 Draft PR, then the owner's merge decision. No live OpenAI/PayPal calls, deployment, merge, C4 or C5 without separate authorization.
+GPT-6 independent exact-head re-audit of Draft PR #12, then the owner's merge decision. No live OpenAI/PayPal calls, deployment, merge, C4 or C5 without separate authorization.

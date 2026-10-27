@@ -984,4 +984,22 @@ Real Review -> `POST /api/invoice-drafts` (CSPRNG key bound to the exact body, s
 ### Not verified
 Live OpenAI and PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. The C2 journey was not rerun against this build (its simulated-save wording is superseded).
 
+## Handoff: NMI-UI-01C3-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C3-save-detail.md` (section "Audit remediation: MEDIUM-1, MINOR-2, MINOR-3")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c3-save-detail`, [Draft PR #12](https://github.com/mrdzyn/nudgemyinvoice/pull/12)
+- **Fix SHA:** `70a63de4d62cecf345ea92daa0a0c709dc9fa24f` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call, C4 or C5 work.
+
+### What changed
+Leaving a pending or uncertain real save now needs an explicit, duplicate-aware decision; real AI Review copy and tab titles no longer claim fixture/simulated behavior; `createdAt` must be a real UTC instant. Web, tests and evidence only.
+
+### Re-audit focus
+1. `RealApp.tsx` Workspace gate + `invoices/leaveGuard.ts`: every leaving path asks; `open-saved` and sign-out are not blocked; dialog wording differs for pending/uncertain.
+2. The key/body are never silently discarded; the same-key retry still replays after dismissed leave attempts.
+3. `isValidInstant` rejects impossible dates and 24:00 for both 201 and GET.
+4. Real AI Review has no "simulated" wording; preview copy unchanged.
+
 <!-- HANDOFF_ENTRIES_END -->
