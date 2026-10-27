@@ -1002,4 +1002,20 @@ Leaving a pending or uncertain real save now needs an explicit, duplicate-aware 
 3. `isValidInstant` rejects impossible dates and 24:00 for both 201 and GET.
 4. Real AI Review has no "simulated" wording; preview copy unchanged.
 
+## Handoff: NMI-UI-01C3-R2
+
+- **Task / phase:** `tasks/NMI-UI-01C3-save-detail.md` (section "Audit remediation: MINOR-4")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c3-save-detail`, [Draft PR #12](https://github.com/mrdzyn/nudgemyinvoice/pull/12)
+- **Fix SHA:** `604b744f3db992febd2bc31998b8769724b62130` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Evidence-only change; no production code, merge, deploy, provider call, C4 or C5 work.
+
+### What changed
+One browser-journey assertion made exact (`invCount() === b3`) with a demonstrated negative control; evidence regenerated (116/116).
+
+### Re-audit focus
+1. The assertion cannot pass when an extra invoice row exists (negative control recorded in the task).
+2. `git diff` of the fix touches only `design/evidence/NMI-UI-01C3/`.
+
 <!-- HANDOFF_ENTRIES_END -->
