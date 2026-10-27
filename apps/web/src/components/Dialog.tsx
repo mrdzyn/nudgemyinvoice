@@ -10,6 +10,7 @@ export function Dialog({
   children,
   confirmLabel,
   danger,
+  cancelLabel = "Cancel",
   onConfirm,
   onCancel,
 }: {
@@ -18,6 +19,7 @@ export function Dialog({
   children: ReactNode;
   confirmLabel: string;
   danger?: boolean;
+  cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -73,7 +75,7 @@ export function Dialog({
       <div id={bodyId}>{children}</div>
       <div className="actions">
         <button type="button" className="btn btn-secondary" ref={cancelRef} onClick={onCancel}>
-          Cancel
+          {cancelLabel}
         </button>
         <button
           type="button"

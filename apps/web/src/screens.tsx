@@ -2,6 +2,7 @@ import type { Screen } from "./demo/appState.js";
 import { ComposerScreen } from "./features/composer/ComposerScreen.js";
 import { DashboardScreen } from "./features/dashboard/DashboardScreen.js";
 import { DetailScreen } from "./features/detail/DetailScreen.js";
+import { SavedDetailScreen } from "./features/saved/SavedDetailScreen.js";
 import { ReviewScreen } from "./features/review/ReviewScreen.js";
 
 export const TITLES: Record<Screen, string> = {
@@ -10,6 +11,7 @@ export const TITLES: Record<Screen, string> = {
   composer: "New invoice",
   review: "Review invoice",
   detail: "Invoice draft",
+  saved: "Saved invoice",
 };
 
 /** Protected screens only. The sign-in screens live with their owners (real: RealApp, preview: App). */
@@ -23,6 +25,8 @@ export function CurrentScreen({ screen }: { screen: Exclude<Screen, "login"> }) 
       return <ReviewScreen />;
     case "detail":
       return <DetailScreen />;
+    case "saved":
+      return <SavedDetailScreen />;
   }
 }
 

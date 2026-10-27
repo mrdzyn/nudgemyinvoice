@@ -4,13 +4,18 @@ import type { InvoiceDraft, PayPalViewState, SavedInvoice, Totals } from "../dom
 import { draftOf, FIXTURE_IDS, FIXTURE_INVOICES, scenarioById } from "./fixtures.js";
 import type { ScenarioId } from "./scenarios.js";
 
-export type Screen = "login" | "dashboard" | "composer" | "review" | "detail";
+export type Screen = "login" | "dashboard" | "composer" | "review" | "detail" | "saved";
 export type Theme = "light" | "dark";
 export type ComposerTab = "ai" | "manual";
 export type DashMode = "normal" | "empty" | "loading" | "error";
 export type LoginNotice = "signed-out" | "session-expired" | "login-error" | "login-throttled";
 export type DetailNotice = "created" | "replayed" | null;
 export type SaveMode = "normal" | "conflict";
+/** Real mode only: the persisted record the Saved screen loads from the server by id. */
+export interface SavedRef {
+  id: string;
+  notice: "created" | "replayed";
+}
 
 export type ParseState =
   | { status: "idle" }
@@ -60,6 +65,7 @@ export interface AppState {
   loginNotice: LoginNotice | null;
   composer: ComposerState;
   review: ReviewSeed | null;
+  saved: SavedRef | null;
   /** Bumped whenever a screen must re-initialise from its seed. */
   seedKey: number;
   ppOverride: PayPalOverride | null;
@@ -95,6 +101,7 @@ export function initialState(theme: Theme): AppState {
     loginNotice: null,
     composer: idleComposer(),
     review: null,
+    saved: null,
     seedKey: 0,
     ppOverride: null,
     ppDisabled: false,
@@ -116,6 +123,7 @@ export type Action =
   | { type: "composer"; patch: Partial<ComposerState> }
   | { type: "start-review"; form: FormState; source: "ai" | "manual" }
   | { type: "discard-review" }
+  | { type: "open-saved"; id: string; notice: "created" | "replayed" }
   | { type: "save-invoice"; key: string; draft: InvoiceDraft; totals: Totals }
   | { type: "paypal-created"; id: string }
   | { type: "paypal-override"; override: PayPalOverride | null };
@@ -374,6 +382,16 @@ export function reducer(state: AppState, action: Action): AppState {
           saveKey: keyFor(state.seedKey + 1),
         },
         composer: { ...state.composer, parse: { status: "idle" } },
+      };
+    case "open-saved":
+      return {
+        ...state,
+        screen: "saved",
+        saved: { id: action.id, notice: action.notice },
+        review: null,
+        composer: idleComposer(),
+        navigated: true,
+        seedKey: state.seedKey + 1,
       };
     case "discard-review":
       return { ...state, review: null, screen: "dashboard", navigated: true };

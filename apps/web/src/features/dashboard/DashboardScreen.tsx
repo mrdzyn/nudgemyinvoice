@@ -28,7 +28,8 @@ function Skeleton({ h, w }: { h: number; w?: string }) {
 }
 
 export function DashboardScreen() {
-  const { state, dispatch } = useApp();
+  const { state, dispatch, session } = useApp();
+  const real = session !== null;
   const headingRef = useFocusOnMount<HTMLHeadingElement>(state.navigated);
   const [cur, setCur] = useState<CurrencyCode | "ALL">("ALL");
   const [query, setQuery] = useState("");
@@ -60,6 +61,13 @@ export function DashboardScreen() {
         <code>GET /api/invoice-drafts/:id</code> but no list endpoint (
         <code>GET /api/invoice-drafts</code> is not implemented). This dashboard is a design of a
         future list view; every row below is fabricated.
+        {real ? (
+          <>
+            {" "}
+            Signed in, these sample rows cannot be opened and are not your saved invoices. A draft
+            you save is opened from its own saved-invoice page, loaded from PostgreSQL.
+          </>
+        ) : null}
       </Notice>
       <div className="page-head">
         <div>
@@ -272,13 +280,17 @@ export function DashboardScreen() {
                 {rows.map((i) => (
                   <tr key={i.id}>
                     <td data-label="Draft">
-                      <button
-                        type="button"
-                        className="btn-link"
-                        onClick={() => dispatch({ type: "open-detail", id: i.id })}
-                      >
-                        Draft {shortId(i.id)}
-                      </button>
+                      {real ? (
+                        <span>Sample {shortId(i.id)}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-link"
+                          onClick={() => dispatch({ type: "open-detail", id: i.id })}
+                        >
+                          Draft {shortId(i.id)}
+                        </button>
+                      )}
                       <div className="cell-sub">Created {formatDate(i.createdAt)}</div>
                     </td>
                     <td data-label="Customer">
@@ -294,14 +306,16 @@ export function DashboardScreen() {
                       <PayPalStatusBadge state={i.paypal.state} />
                     </td>
                     <td data-label="" className="r">
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        aria-label={`View draft ${shortId(i.id)} for ${i.draft.customerName}`}
-                        onClick={() => dispatch({ type: "open-detail", id: i.id })}
-                      >
-                        View
-                      </button>
+                      {real ? null : (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          aria-label={`View draft ${shortId(i.id)} for ${i.draft.customerName}`}
+                          onClick={() => dispatch({ type: "open-detail", id: i.id })}
+                        >
+                          View
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
