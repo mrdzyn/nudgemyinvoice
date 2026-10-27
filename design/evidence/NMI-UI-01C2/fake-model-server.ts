@@ -32,6 +32,8 @@ const fullOutput = {
   discount: null,
 };
 
+const eurOutput = { ...fullOutput, currency: "EUR", lineItems: [{ description: "Brand audit", quantity: "1.5", unitPrice: "199.99" }] };
+
 /** Deterministic: behaviour is selected only by marker words in the (synthetic) input text. */
 const fakeModel = {
   async generate({ input }: { instructions: string; input: string }): Promise<unknown> {
@@ -40,8 +42,12 @@ const fakeModel = {
     if (input.includes("MODELDOWN")) throw new Error("fake provider outage");
     if (input.includes("BADSHAPE")) return { oops: true };
     if (input.includes("BADCURRENCY")) return { ...fullOutput, currency: "XYZ" };
-    if (input.includes("NODUE") && !input.includes("2030-02-01")) return { ...fullOutput, dueDate: null };
-    if (input.includes("EUR")) return { ...fullOutput, currency: "EUR", lineItems: [{ description: "Brand audit", quantity: "1.5", unitPrice: "199.99" }] };
+    // A date the operator typed (e.g. a clarification answer) is honoured exactly; otherwise NODUE
+    // withholds the due date so the clarification question is raised.
+    const stated = /\b(\d{4}-\d{2}-\d{2})\b/.exec(input)?.[1];
+    if (input.includes("NODUE") && !stated) return { ...fullOutput, dueDate: null };
+    if (stated) return { ...(input.includes("EUR") ? eurOutput : fullOutput), dueDate: stated };
+    if (input.includes("EUR")) return eurOutput;
     return fullOutput;
   },
 };

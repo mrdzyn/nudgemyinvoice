@@ -349,7 +349,7 @@ try {
     check(g, "answers are appended and the SAME real endpoint is called again", await waitFor("!!document.getElementById('rev-title')", 7000));
     const calls = parseCalls(m);
     check(g, "second request is a real POST with the original text plus the answer", calls.length === 1 && /NODUE/.test(calls[0].body) && /2030-02-01/.test(calls[0].body), JSON.stringify(calls.map((c) => c.status)));
-    check(g, "resulting review carries the answered due date", (await val("f-dueDate")) === "2030-01-15" || (await val("f-dueDate")) === "2030-01-15");
+    check(g, "resulting review carries the answered due date", (await val("f-dueDate")) === "2030-02-01", String(await val("f-dueDate")));
   }
 
   /* ======================= REAL: invalid, unavailable-by-model outcomes ======================= */
