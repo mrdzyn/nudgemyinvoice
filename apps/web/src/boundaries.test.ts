@@ -3,8 +3,9 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Objective: statically guarantee the UI shell cannot talk to a backend or provider and cannot
- * persist unsaved invoice data, so the phase boundary (no real API wiring) cannot regress silently.
+ * Objective: statically guarantee the web app can talk ONLY to the three same-origin operator-auth
+ * routes (never a provider, never an invoice route) and cannot persist credentials or unsaved
+ * invoice data, so the C1 phase boundary cannot regress silently.
  * The Chrome QA harness proves the same at runtime (zero requests, empty storage).
  */
 const root = join(import.meta.dirname, ".");
@@ -20,12 +21,13 @@ function sources(dir: string): string[] {
 const files = sources(root);
 const read = (p: string) => readFileSync(p, "utf8");
 
-const FORBIDDEN: [string, RegExp][] = [
+/** [name, pattern, the single file (relative to apps/web) allowed to match]. */
+const FORBIDDEN: [string, RegExp, string?][] = [
   ["localStorage", /\blocalStorage\b/],
   ["sessionStorage", /\bsessionStorage\b/],
   ["IndexedDB", /\bindexedDB\b|\bIDBFactory\b/i],
   ["cookies", /document\.cookie/],
-  ["fetch", /\bfetch\s*\(/],
+  ["fetch outside the auth transport", /\bfetch\s*\(/, "src/auth/api.ts"],
   ["XMLHttpRequest", /XMLHttpRequest/],
   ["WebSocket/EventSource", /\bWebSocket\b|\bEventSource\b/],
   ["sendBeacon", /sendBeacon/],
@@ -45,9 +47,50 @@ describe("UI shell boundaries", () => {
     expect(files.length).toBeGreaterThan(15);
   });
 
-  it.each(FORBIDDEN)("source never uses %s", (_name, pattern) => {
-    const hits = files.filter((f) => pattern.test(read(f))).map((f) => relative(webRoot, f));
+  it.each(FORBIDDEN)("source never uses %s", (_name, pattern, allowed) => {
+    const hits = files
+      .filter((f) => pattern.test(read(f)))
+      .map((f) => relative(webRoot, f))
+      .filter((f) => f !== allowed);
     expect(hits).toEqual([]);
+  });
+
+  it("only the auth transport calls the network, and only the three relative /api/auth routes", () => {
+    const hits = files.filter((f) => /\bfetch\s*\(/.test(read(f))).map((f) => relative(webRoot, f));
+    expect(hits).toEqual(["src/auth/api.ts"]);
+    const paths = [...read(join(root, "auth/api.ts")).matchAll(/"(\/api\/[^"]*)"/g)].map(
+      (m) => m[1],
+    );
+    expect(new Set(paths)).toEqual(
+      new Set(["/api/auth/session", "/api/auth/login", "/api/auth/logout"]),
+    );
+  });
+
+  it("the real app never imports the synthetic preview, demo controls or hash routing", () => {
+    for (const f of [
+      "RealApp.tsx",
+      "auth/useAuthController.ts",
+      "auth/api.ts",
+      "auth/authState.ts",
+    ]) {
+      expect(read(join(root, f)), f).not.toMatch(
+        /DemoControls|demo\/hash|from "\.\/App\.js"|location\.hash/,
+      );
+    }
+  });
+
+  it("the synthetic preview is loaded only behind the dev-server build constant", () => {
+    const main = read(join(root, "main.tsx"));
+    expect(main).toContain("import.meta.env.DEV");
+    expect(main).toContain("VITE_NMI_SYNTHETIC_PREVIEW");
+    expect(main.split('import("./App.js")')).toHaveLength(2);
+    expect(main).not.toMatch(/^import .* from "\.\/App\.js"/m);
+  });
+
+  it("never reads or writes cookies or the CSRF token outside memory", () => {
+    const all = files.map(read).join("\n");
+    expect(all).not.toMatch(/document\.cookie|Set-Cookie/i);
+    expect(all).not.toMatch(/(local|session)Storage\.\w+\([^)]*csrf/i);
   });
 
   it("history API is used only to mirror screen, demo state and theme", () => {
@@ -70,9 +113,12 @@ describe("UI shell boundaries", () => {
     expect(all).not.toMatch(/client[_-]?secret|api[_-]?key|bearer\s+[A-Za-z0-9]/i);
   });
 
-  it("production CSP forbids network connections and inline styles", () => {
+  it("production CSP allows only same-origin connections and no inline styles", () => {
     const vite = readFileSync(join(webRoot, "vite.config.ts"), "utf8");
-    expect(vite).toContain("connect-src 'none'");
+    expect(vite).toContain("connect-src 'self'");
+    const csp = /content:\s*"([^"]*)"/.exec(vite)?.[1] ?? "";
+    expect(csp).toMatch(/connect-src 'self';/);
+    expect(csp).not.toMatch(/\*|https?:|wss?:|unsafe/);
     expect(vite).toContain("default-src 'none'");
     expect(vite).not.toMatch(/style-src[^"]*unsafe-inline/);
     expect(vite).not.toMatch(/script-src[^"]*unsafe/);

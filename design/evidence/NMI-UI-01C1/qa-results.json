@@ -1,0 +1,637 @@
+{
+  "chrome": "Chrome/156.0.8078.48",
+  "passed": 105,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafts disabled, no OpenAI configuration",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "protected hash deep link lands on the sign-in screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "the server was asked first (GET /api/auth/session -> 401) before anything protected could show",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no dashboard, invoice or fixture content is rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no demo controls, scenario picker or simulated-login copy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no signed-in header, nav or Sign out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "changing the hash afterwards cannot reveal a protected screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "hashchange events are ignored in real mode",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "password input is empty on mount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no credential or session request was made while logged out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no horizontal overflow on sign-in (desktop)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "sign-in text contrast >= WCAG AA (light)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "first Tab stop is the skip link",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "second Tab stop is the username field",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "empty submit shows field errors without any request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "focus moves to the first invalid field",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "bad password shows a generic sign-in failure alert",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "exactly one POST /api/auth/login -> 401",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "password field cleared and focused after the failure",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "username kept, no session created in the database",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "failed password is nowhere in the page or URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard sign-in",
+      "name": "error state text contrast >= WCAG AA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "503 -> unavailable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "429 + Retry-After 17 -> throttled message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "400 -> request could not be processed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "403 -> generic failure (no detail leaked)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "200 with malformed body -> unavailable, never signed in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "network failure -> offline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "none of those outcomes created a session",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "while in flight the button is disabled, busy and announced",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "a second submit while pending is ignored",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "session check 503 fails closed to sign-in with an unavailable notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "session check offline fails closed to sign-in with an offline notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED login outcomes (request interception; server not reached)",
+      "name": "the loading state is a polite status announcement",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "workspace appears after the server accepts the credentials",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "POST /api/auth/login -> 200 through the same-origin proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "header names the signed-in operator",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "workspace states invoice data is still synthetic fixture data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "login form and password field are gone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "focus moved to the page heading",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "session cookie is HttpOnly, SameSite=Lax, path /, no Domain widening",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "cookie is not readable from JavaScript",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "database has exactly one active session",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "localStorage, sessionStorage, IndexedDB, Cache and JS cookies are all empty",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "neither the password nor the CSRF token appears in DOM, URL or console",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "URL hash carries no screen/state/credentials in real mode",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "workspace text contrast >= WCAG AA (light)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL successful sign-in",
+      "name": "no horizontal overflow (desktop)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "keyboard activation of 'New invoice' opens the composer",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "no new auth request was needed to navigate",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "composer keeps text only in memory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "typed draft text is not in storage or URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "hash cannot sign the workspace out or switch screens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "no horizontal overflow at 390px (mobile)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "mobile navigation includes Sign out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "session restored after reload while in dark mode",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "dark theme applied from the system preference",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL protected navigation",
+      "name": "workspace text contrast >= WCAG AA (dark)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session restore",
+      "name": "reload shows the checking status first or restores directly, never the sign-in form",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session restore",
+      "name": "restored with GET /api/auth/session -> 200 and NO login request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session restore",
+      "name": "no new database session was created by the restore",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session restore",
+      "name": "in-memory composer text did not survive the reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session restore",
+      "name": "the hash is ignored on restore (lands on the dashboard, not the composer)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL Origin/CSRF enforcement",
+      "name": "POST logout without X-CSRF-Token -> 403 through the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL Origin/CSRF enforcement",
+      "name": "POST logout with a wrong CSRF token -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL Origin/CSRF enforcement",
+      "name": "POST logout with a foreign Origin -> 403 even with a valid CSRF token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL Origin/CSRF enforcement",
+      "name": "POST logout with no Origin -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL Origin/CSRF enforcement",
+      "name": "the session survived every rejected logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL Origin/CSRF enforcement",
+      "name": "no credentialed CORS grant for a foreign origin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED logout failure",
+      "name": "403 on logout drops protected UI and warns the server session may remain valid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED logout failure",
+      "name": "the UI did NOT claim a completed sign-out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED logout failure",
+      "name": "the database confirms the session really is still active (the warning is truthful)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "the still-valid cookie restores the session on reload (as the warning said)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "workspace replaced by sign-in with 'signed out' status",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "POST /api/auth/logout -> 204 with CSRF + Origin accepted by the real server",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "database session is revoked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "session cookie cleared in the browser",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "audit log recorded login and logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "reload after logout stays on sign-in (GET session -> 401)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "re-entering the protected hash after logout does not reveal protected content",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "after a fresh sign-in no draft from the previous session exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "a server-side revoked session is detected when the tab becomes visible and the workspace is dropped",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "the user is told the session ended",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "re-authentication starts with an empty composer",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "password rotation revokes the live session and the workspace is dropped",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "the OLD password no longer signs in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "the NEW password signs in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL expired / revoked / rotated session",
+      "name": "server session TTL is bounded (<= 8h default)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL login throttling",
+      "name": "the server returns 429 after the account budget and the UI shows it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL login throttling",
+      "name": "the real Retry-After header surfaces as a wait time",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL login throttling",
+      "name": "the operator account itself is not locked by guesses at another name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "every request stayed on the page origin (no PayPal, OpenAI or third-party host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "the only API routes touched are the three auth routes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "no invoice, parse, draft or PayPal API route was requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "no console errors or exceptions other than expected HTTP-status resource logs",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "no console message contains a credential",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "the API log never contains the password, session secret or CSRF token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "the built page carries CSP connect-src 'self' with default-src 'none' and no unsafe-inline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "the production bundle contains neither the synthetic preview, its controls nor its simulated sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "the CSP is live in the page under test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "final storage audit: nothing persisted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "PayPal drafts remained disabled (no PayPal rows or operations)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "GLOBAL audits",
+      "name": "no invoices were written (fixture-only invoice features)",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
