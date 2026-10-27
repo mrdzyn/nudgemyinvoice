@@ -5,6 +5,7 @@
  * the review form. The CSRF token is passed per call from volatile React memory and never stored.
  */
 import { isValidIsoDate } from "../domain/invoiceForm.js";
+import { estimateTotals, MoneyError } from "../domain/money.js";
 import {
   CURRENCY_CODES,
   type CurrencyCode,
@@ -39,7 +40,6 @@ const exactKeys = (o: Record<string, unknown>, keys: string[]) =>
   Object.keys(o).length === keys.length && keys.every((k) => k in o);
 
 const DECIMAL = /^\d{1,12}(\.\d+)?$/;
-const MONEY = /^\d{1,15}(\.\d+)?$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const hasControl = (v: string) =>
   Array.from(v).some((c) => c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7f);
@@ -101,6 +101,13 @@ function parseDraft(v: unknown): InvoiceDraft | null {
   };
 }
 
+/**
+ * Consistency gate, not an alternative calculation: the returned figures must equal, as exact
+ * canonical strings, what the existing BigInt money utilities (a mirror of the server's
+ * integer-minor-unit arithmetic) derive from the validated draft. A draft the money rules would
+ * refuse (zero quantity, over-precise amounts, percentages over 100, a discount above the subtotal)
+ * has no consistent totals, so it is rejected here before it can reach Review.
+ */
 function parseTotals(v: unknown, draft: InvoiceDraft): Totals | null {
   if (
     !isRecord(v) ||
@@ -109,18 +116,25 @@ function parseTotals(v: unknown, draft: InvoiceDraft): Totals | null {
     return null;
   // One invoice, one currency: totals must be in the draft's own currency, never converted.
   if (v["currency"] !== draft.currency) return null;
+  let expected: Totals;
+  try {
+    expected = estimateTotals(draft);
+  } catch (e) {
+    if (e instanceof MoneyError) return null;
+    throw e;
+  }
   const lineTotals = v["lineTotals"];
-  if (!Array.isArray(lineTotals) || lineTotals.length !== draft.lineItems.length) return null;
-  if (!lineTotals.every((t) => typeof t === "string" && MONEY.test(t))) return null;
+  if (!Array.isArray(lineTotals) || lineTotals.length !== expected.lineTotals.length) return null;
+  if (!lineTotals.every((t, i) => t === expected.lineTotals[i])) return null;
   for (const k of ["subtotal", "discount", "tax", "total"] as const)
-    if (typeof v[k] !== "string" || !MONEY.test(v[k])) return null;
+    if (v[k] !== expected[k]) return null;
   return {
     currency: draft.currency,
-    lineTotals: lineTotals as string[],
-    subtotal: v["subtotal"] as string,
-    discount: v["discount"] as string,
-    tax: v["tax"] as string,
-    total: v["total"] as string,
+    lineTotals: [...expected.lineTotals],
+    subtotal: expected.subtotal,
+    discount: expected.discount,
+    tax: expected.tax,
+    total: expected.total,
   };
 }
 

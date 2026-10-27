@@ -98,7 +98,7 @@ for (let i = 0; i < 100; i++) {
   try { if ((await fetch(ORIGIN + "/")).ok) break; } catch {}
   await sleep(150);
 }
-check("setup", "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy", (await (await fetch(ORIGIN + "/health")).json()).status === "ok" || true);
+check("setup", "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy", (await (await fetch(ORIGIN + "/health")).json()).status === "ok");
 check("setup", "database is a throw-away nmi_test* cluster in a temp directory", /^nmi_test/.test(DB));
 check("setup", "PayPal drafts disabled; OPENAI_API_KEY/OPENAI_MODEL empty (no provider can be reached)", true);
 

@@ -35,6 +35,7 @@ describe("validateParseOutcome: accepted shapes", () => {
     const d = clone(ok);
     d.draft.taxPercent = null as never;
     (d.draft as { discount: unknown }).discount = { kind: "percent", value: "10" };
+    Object.assign(d.totals, { discount: "50.00", tax: "0.00", total: "450.00" });
     expect(validateParseOutcome(d)?.status).toBe("draft");
   });
   it("accepts clarification, invalid and unavailable", () => {
@@ -104,6 +105,122 @@ describe("validateParseOutcome: fails closed", () => {
 function reply(status: number, body?: unknown, headers: Record<string, string> = {}) {
   return new Response(body === undefined ? null : JSON.stringify(body), { status, headers });
 }
+
+describe("validateParseOutcome: money-domain rules (HTTP 200 must not enter Review)", () => {
+  const withDraft = (patch: Record<string, unknown>, totalsPatch: Record<string, unknown> = {}) => {
+    const o = clone(ok) as { draft: Record<string, unknown>; totals: Record<string, unknown> };
+    Object.assign(o.draft, patch);
+    Object.assign(o.totals, totalsPatch);
+    return { status: "draft", ...o };
+  };
+  const line = (quantity: string, unitPrice: string) => [
+    { description: "Work", quantity, unitPrice },
+  ];
+
+  it.each<[string, unknown]>([
+    [
+      "zero quantity",
+      withDraft(
+        { lineItems: line("0", "250.00") },
+        { lineTotals: ["0.00"], subtotal: "0.00", tax: "0.00", total: "0.00" },
+      ),
+    ],
+    ["quantity with three decimals", withDraft({ lineItems: line("1.005", "250.00") })],
+    ["quantity above the bound", withDraft({ lineItems: line("100001", "1.00") })],
+    [
+      "USD amount with three decimals",
+      withDraft(
+        { lineItems: line("1", "1.005") },
+        { lineTotals: ["1.01"], subtotal: "1.01", tax: "0.08", total: "1.09" },
+      ),
+    ],
+    ["tax above 100%", withDraft({ taxPercent: "150" }, { tax: "750.00", total: "1250.00" })],
+    ["tax with three decimals", withDraft({ taxPercent: "8.255" })],
+    ["percent discount above 100%", withDraft({ discount: { kind: "percent", value: "101" } })],
+    [
+      "fixed discount above the subtotal",
+      withDraft(
+        { discount: { kind: "amount", value: "600.00" } },
+        { discount: "600.00", tax: "0.00", total: "-100.00" },
+      ),
+    ],
+    ["total inconsistent with the invoice fields", withDraft({}, { total: "9999.99" })],
+    ["subtotal inconsistent", withDraft({}, { subtotal: "501.00" })],
+    ["tax inconsistent", withDraft({}, { tax: "41.00" })],
+    ["discount inconsistent", withDraft({}, { discount: "1.00" })],
+    ["line total inconsistent", withDraft({}, { lineTotals: ["499.99"] })],
+    ["non-canonical total (missing minor digits)", withDraft({}, { total: "540" })],
+    [
+      "fractional JPY unit price",
+      withDraft(
+        { currency: "JPY", lineItems: line("1", "100.5") },
+        {
+          currency: "JPY",
+          lineTotals: ["101"],
+          subtotal: "101",
+          discount: "0",
+          tax: "8",
+          total: "109",
+        },
+      ),
+    ],
+    [
+      "JPY totals carrying decimals",
+      withDraft(
+        { currency: "JPY", lineItems: line("2", "1000"), taxPercent: "10" },
+        {
+          currency: "JPY",
+          lineTotals: ["2000.00"],
+          subtotal: "2000.00",
+          discount: "0.00",
+          tax: "200.00",
+          total: "2200.00",
+        },
+      ),
+    ],
+  ])("rejects %s", (_n, body) => {
+    expect(validateParseOutcome(body)).toBeNull();
+  });
+
+  it("accepts a legitimately rounded server proposal (half up on line and tax)", () => {
+    // 0.33 x 1.5 = 0.495 -> 0.50; 8.25% of 0.50 = 0.04125 -> 0.04; total 0.54
+    const body = withDraft(
+      { lineItems: line("1.5", "0.33"), taxPercent: "8.25" },
+      { lineTotals: ["0.50"], subtotal: "0.50", discount: "0.00", tax: "0.04", total: "0.54" },
+    );
+    expect(validateParseOutcome(body)?.status).toBe("draft");
+  });
+  it("accepts a consistent zero-decimal JPY invoice and a percent plus amount discount", () => {
+    const jpy = withDraft(
+      { currency: "JPY", lineItems: line("2", "1000"), taxPercent: "10" },
+      {
+        currency: "JPY",
+        lineTotals: ["2000"],
+        subtotal: "2000",
+        discount: "0",
+        tax: "200",
+        total: "2200",
+      },
+    );
+    expect(validateParseOutcome(jpy)?.status).toBe("draft");
+    const disc = withDraft(
+      { taxPercent: null, discount: { kind: "percent", value: "10" } },
+      { discount: "50.00", tax: "0.00", total: "450.00" },
+    );
+    expect(validateParseOutcome(disc)?.status).toBe("draft");
+    const amt = withDraft(
+      { taxPercent: null, discount: { kind: "amount", value: "100.00" } },
+      { discount: "100.00", tax: "0.00", total: "400.00" },
+    );
+    expect(validateParseOutcome(amt)?.status).toBe("draft");
+  });
+  it("through the transport, an inconsistent 200 is malformed and never an outcome", async () => {
+    const r = await createParseApi(async () =>
+      reply(200, withDraft({}, { total: "9999.99" })),
+    ).parse("t", "c", new AbortController().signal);
+    expect(r).toEqual({ kind: "malformed" });
+  });
+});
 
 describe("createParseApi: request contract", () => {
   it("sends exactly the documented request", async () => {
