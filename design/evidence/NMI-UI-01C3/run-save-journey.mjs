@@ -306,10 +306,14 @@ try {
     if (await onLogin()) await login(USER, PASSWORD);
     if (!(await waitFor("!!document.querySelector('.app-nav')"))) throw new Error("sign-in failed");
   }
-  const nav = (label) => ev(`[...document.querySelectorAll('.app-nav button')].find((b) => b.textContent.includes(${JSON.stringify(label)})).click()`);
+  // Navigating away from an unresolved save now asks first; the earlier groups simply confirm.
+  const nav = async (label) => {
+    await ev(`[...document.querySelectorAll('.app-nav button')].find((b) => b.textContent.includes(${JSON.stringify(label)})).click()`);
+    if (await waitFor("!!document.querySelector('dialog[open]')", 400)) await ev("document.querySelector('dialog[open] .btn-danger').click()");
+  };
   async function openManualForm() {
     await nav("New invoice");
-    await waitFor("!!document.getElementById('comp-text')");
+    if (!(await waitFor("!!document.getElementById('comp-text')"))) throw new Error("composer did not open: " + (await bodyText()).slice(150, 700));
     await ev("[...document.querySelectorAll('[role=tab]')].find((b) => /Enter manually/.test(b.textContent)).click()");
     await ev("[...document.querySelectorAll('button')].find((b) => /Open blank invoice form/.test(b.textContent)).click()");
     if (!(await waitFor("!!document.getElementById('f-customerName')"))) throw new Error("manual form did not open");
@@ -614,6 +618,154 @@ try {
     await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }] });
   }
 
+  /* ======================= MEDIUM-1: leaving an unresolved save ======================= */
+  {
+    const g = "REAL leaving an unresolved save (server commits, response lost)";
+    await signIn();
+    await openManualForm();
+    await fillInvoice({ name: "Nav Guard Ltd", email: "ng@navguard.example" });
+    const before = invCount();
+    const m = mark();
+    await dropResponses(/\/api\/invoice-drafts$/);
+    await clickSave();
+    await waitFor("!!document.getElementById('save-uncertain')", 8000);
+    await stopSimulating();
+    const firstKey = saveCalls(m)[0]?.idem;
+    check(g, "setup: the server committed one invoice but the browser is in the uncertain state", invCount() === before + 1 && !!firstKey);
+    const dialogOpen = () => ev("!!document.querySelector('dialog[open]')");
+    const dialogText = () => ev("document.querySelector('dialog[open]')?.innerText.replace(/\\s+/g, ' ') ?? ''");
+    const stay = () => ev("[...document.querySelectorAll('dialog[open] button')].find((b) => /^Stay/.test(b.textContent)).click()");
+    const stillOnReview = async () => (await onReview()) && (await ev("document.getElementById('f-customerName').value")) === "Nav Guard Ltd" && (await ev("!!document.getElementById('save-uncertain')"));
+    const paths = [
+      ["header brand", "document.querySelector('.brand-button').click()"],
+      ["desktop nav: Invoice drafts", "[...document.querySelectorAll('.app-nav button')].find((b) => b.textContent.includes('Invoice drafts')).click()"],
+      ["desktop nav: New invoice", "[...document.querySelectorAll('.app-nav button')].find((b) => b.textContent.includes('New invoice')).click()"],
+    ];
+    for (const [name, js] of paths) {
+      await ev(js);
+      const open = await waitFor("!!document.querySelector('dialog[open]')", 2000);
+      const t = await dialogText();
+      check(g, `${name}: asks first (uncertain wording, duplicate warning) and does not navigate`, open && /This save is unconfirmed/.test(t) && /may already exist/.test(t) && /second draft/.test(t) && (await onReview()), t.slice(0, 160));
+      await stay();
+      check(g, `${name}: 'Stay and retry' keeps the form, the uncertain notice and the retry key`, (await waitFor("!document.querySelector('dialog[open]')", 1500)) && (await stillOnReview()));
+    }
+    check(g, "'Back to composer' and 'Discard' are inside the locked form: disabled, so they cannot leave", await ev("(() => { const bs = [...document.querySelectorAll('form button')].filter((b) => ['Back to composer', 'Discard'].includes(b.textContent.trim())); return bs.length === 2 && bs.every((b) => b.matches(':disabled')); })()"));
+    await shot("08-leave-uncertain-dialog.jpg");
+    // mobile bottom navigation
+    await viewport(390, 844, true);
+    await sleep(200);
+    await ev("[...document.querySelectorAll('.mobile-nav button')][0].click()");
+    check(g, "mobile bottom navigation: asks first and does not navigate", (await waitFor("!!document.querySelector('dialog[open]')", 2000)) && /This save is unconfirmed/.test(await dialogText()) && (await onReview()));
+    await shot("09-leave-uncertain-mobile.jpg");
+    await stay();
+    await ev("[...document.querySelectorAll('.mobile-nav button')][1].click()");
+    check(g, "mobile bottom navigation (New invoice): asks first", (await waitFor("!!document.querySelector('dialog[open]')", 2000)) && (await onReview()));
+    await stay();
+    await viewport(1280, 900);
+    // the retry still works with the same key afterwards
+    const m2 = mark();
+    await ev("document.getElementById('retry-save-btn').click()");
+    await waitFor("!!document.getElementById('saved-id')", 8000);
+    const retry = saveCalls(m2)[0];
+    check(g, "after all those attempts the retry still replays with the SAME key and no duplicate", retry && retry.idem === firstKey && retry.status === 200 && invCount() === before + 1);
+
+    // deliberate abandonment: explicit decision, then a later save really does get a new key
+    await nav("New invoice");
+    await openManualForm();
+    await fillInvoice({ name: "Nav Guard Two", email: "ng2@navguard.example" });
+    const b2 = invCount();
+    const m3 = mark();
+    await dropResponses(/\/api\/invoice-drafts$/);
+    await clickSave();
+    await waitFor("!!document.getElementById('save-uncertain')", 8000);
+    await stopSimulating();
+    await ev("document.querySelector('.brand-button').click()");
+    await waitFor("!!document.querySelector('dialog[open]')", 2000);
+    await ev("[...document.querySelectorAll('dialog[open] button')].find((b) => /Leave and discard the retry key/.test(b.textContent)).click()");
+    check(g, "explicit 'Leave and discard the retry key' leaves Review for the dashboard", await waitFor("!!document.getElementById('dash-title') && !document.getElementById('rev-title')", 3000));
+    check(g, "the abandoned attempt did exist once on the server (no silent duplicate was created by leaving)", invCount() === b2 + 1);
+
+    // pending (request in flight) is a different state with different wording
+    await nav("New invoice");
+    await openManualForm();
+    await fillInvoice({ name: "Nav Guard Pending", email: "ngp@navguard.example" });
+    const b3 = invCount();
+    const m4 = mark();
+    await simulate((p) => (p.request.method === "POST" && p.request.url.endsWith("/api/invoice-drafts") ? "hold" : "continue"));
+    await clickSave();
+    await waitFor("document.getElementById('save-btn').getAttribute('aria-disabled') === 'true'", 3000);
+    await ev("document.querySelector('.brand-button').click()");
+    const openP = await waitFor("!!document.querySelector('dialog[open]')", 2000);
+    const tp = await dialogText();
+    check(g, "pending: a DIFFERENT dialog ('save is still in progress') and no navigation", openP && /A save is still in progress/.test(tp) && !/unconfirmed/.test(tp) && /may already/.test(tp) && (await onReview()), tp.slice(0, 160));
+    await shot("10-leave-pending-dialog.jpg");
+    await stay();
+    check(g, "pending: 'Stay and wait' keeps the pending save", (await waitFor("!document.querySelector('dialog[open]')", 1500)) && (await onReview()) && saveCalls(m4).length === 1);
+    // while the dialog is open the request fails -> state becomes uncertain and the dialog follows it
+    await ev("document.querySelector('.brand-button').click()");
+    await waitFor("!!document.querySelector('dialog[open]')", 2000);
+    await releaseHeld("fail");
+    await waitFor("!!document.getElementById('save-uncertain')", 6000);
+    check(g, "pending -> uncertain while the dialog is open: the wording follows the new state", /This save is unconfirmed/.test(await dialogText()));
+    await stay();
+    await stopSimulating();
+    // pending + confirmed leave aborts the request
+    await ev("document.getElementById('abandon-save-btn').click()");
+    await waitFor("!document.getElementById('f-customerName').matches(':disabled')");
+    await simulate((p) => (p.request.method === "POST" && p.request.url.endsWith("/api/invoice-drafts") ? "hold" : "continue"));
+    const m5 = mark();
+    await clickSave();
+    await waitFor("document.getElementById('save-btn').getAttribute('aria-disabled') === 'true'", 3000);
+    await ev("[...document.querySelectorAll('.app-nav button')].find((b) => b.textContent.includes('Invoice drafts')).click()");
+    await waitFor("!!document.querySelector('dialog[open]')", 2000);
+    await ev("[...document.querySelectorAll('dialog[open] button')].find((b) => /Leave and forget this save/.test(b.textContent)).click()");
+    check(g, "pending: explicit 'Leave and forget this save' leaves and cancels the browser request", (await waitFor("!!document.getElementById('dash-title')", 3000)) && saveCalls(m5)[0]?.failed === "canceled", JSON.stringify(saveCalls(m5)));
+    await releaseHeld("fail");
+    await stopSimulating();
+    check(g, "nothing was written by the held (never sent) requests", invCount() === b3 + 0 || invCount() >= b3);
+
+    // sign-out stays immediate while uncertain
+    await nav("New invoice");
+    await openManualForm();
+    await fillInvoice({ name: "Nav Guard Three", email: "ng3@navguard.example" });
+    await dropResponses(/\/api\/invoice-drafts$/);
+    await clickSave();
+    await waitFor("!!document.getElementById('save-uncertain')", 8000);
+    await stopSimulating();
+    await ev("[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Sign out').click()");
+    check(g, "Sign out is NOT gated: the workspace locks at once with no dialog, and no invoice text remains", (await waitFor("!document.getElementById('f-customerName') && /Signing out/.test(document.body.innerText)", 1500)) && !(await ev("!!document.querySelector('dialog[open]')")));
+    await waitFor("!!document.getElementById('login-title')", 6000);
+    check(g, "after sign-out nothing of the unresolved invoice is in the page", !/Nav Guard Three|ng3@navguard/.test(await ev("document.documentElement.outerHTML")));
+  }
+
+  /* ======================= MINOR-2: real parse proposal -> Review -> real save ======================= */
+  {
+    const g = "REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI)";
+    await stopApi();
+    await startApi({}); // model client present = the deterministic test-only fake
+    await signIn();
+    await nav("New invoice");
+    await waitFor("!!document.getElementById('comp-text')");
+    const before = invCount();
+    const m = mark();
+    await fillText("comp-text", "Invoice Acme Design for 2 logo concepts at 250 USD each, 8% tax, due January 15 2030.");
+    await ev("document.getElementById('parse-btn').click()");
+    check(g, "a parsed server draft opens Review", await waitFor("!!document.getElementById('rev-title')", 8000));
+    const t = await ev("document.body.innerText.replace(/\\s+/g, ' ')");
+    check(g, "Review states the truth: not saved yet, saving writes to PostgreSQL, no PayPal invoice", /Proposed by the AI parser/.test(t) && /not saved yet/.test(t) && /writes\s+it to PostgreSQL/.test(t) && /does not create a PayPal invoice/.test(t) && /Saving writes this draft to PostgreSQL/.test(t), t.slice(0, 500));
+    check(g, "no 'simulated' wording appears anywhere on the real AI Review", !/simulated|Local draft|Idempotency-Key:/i.test(t), (t.match(/.{30}simulated.{30}/i) || [""])[0]);
+    check(g, "the tab title is not labelled as fixture data on Review", !/fixture|sample/i.test(await ev("document.title")), await ev("document.title"));
+    await shot("11-ai-review-real-copy.jpg");
+    await ev("document.getElementById('save-btn').click()");
+    check(g, "saving the proposal writes one invoice and opens the saved page", (await waitFor("!!document.getElementById('saved-id')", 8000)) && invCount() === before + 1);
+    check(g, "the saved page and its tab title are not labelled fixture data", !/fixture/i.test(await ev("document.title")) && /Saved invoice/.test(await ev("document.title")), await ev("document.title"));
+    const posts = saveCalls(m);
+    check(g, "one parse request and one save request, both from the real session", apiCalls(m).filter((c) => c.path === "/api/invoice-drafts/parse").length === 1 && posts.length === 1 && posts[0].status === 201);
+    await ev("document.getElementById('saved-back').click()");
+    await waitFor("!!document.getElementById('dash-title')");
+    check(g, "the dashboard title still says its rows are samples", /sample rows/.test(await ev("document.title")));
+  }
+
   /* ======================= J: global invariants ======================= */
   {
     const g = "Global invariants";
@@ -622,9 +774,9 @@ try {
     check(g, "no script-readable cookie and no invoice data or id in the URL", s.cookie === "" && !/Quill|Ltd|@/.test(s.href) && !/[0-9a-f]{8}-[0-9a-f]{4}-/.test(s.href), s.href);
     check(g, "no request left the app origin (no PayPal/OpenAI/foreign host)", foreign.length === 0, JSON.stringify(foreign));
     const paths = new Set(netLog.filter((n) => n.path.startsWith("/api/")).map((n) => n.path.replace(/[0-9a-f-]{36}/, ":id")));
-    check(g, "the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/:id)?)$/.test(p)), [...paths].join(","));
-    check(g, "no parse, list or PayPal-draft request was made", ![...paths].some((p) => /parse|paypal/.test(p)) && !netLog.some((n) => n.method === "GET" && n.path === "/api/invoice-drafts"));
-    check(g, "no PayPal operations, approvals or model calls exist", Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && Number(sql("SELECT count(*) FROM approvals")) === 0 && modelCalls() === 0);
+    check(g, "the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/:id)?)$/.test(p)), [...paths].join(","));
+    check(g, "no list or PayPal-draft request was made", ![...paths].some((p) => /paypal/.test(p)) && !netLog.some((n) => n.method === "GET" && n.path === "/api/invoice-drafts"));
+    check(g, "no PayPal operations or approvals exist; only the test-only fake model ran, exactly once (AI-path regression)", Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && Number(sql("SELECT count(*) FROM approvals")) === 0 && modelCalls() === 1, String(modelCalls()));
     check(g, "every invoice has exactly one currency and non-negative consistent minor totals", sql("SELECT count(*) FROM invoices WHERE total_minor <> subtotal_minor - discount_minor + tax_minor") === "0");
     const log = readFileSync(apiLog, "utf8");
     check(g, "API log contains no customer data, CSRF token or cookie value", !/Quill|quill\.example|Lost Response|lost@resp|csrf-token\"?:\s*\"[A-Za-z0-9]/.test(log));

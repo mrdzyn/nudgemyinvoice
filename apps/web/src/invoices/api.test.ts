@@ -55,6 +55,53 @@ describe("idempotency keys", () => {
   });
 });
 
+describe("createdAt must be a real UTC instant", () => {
+  const BAD = [
+    "2026-02-31T10:00:00.000Z",
+    "2027-02-29T10:00:00.000Z", // not a leap year
+    "2100-02-29T10:00:00.000Z", // century, not a leap year
+    "2026-13-01T10:00:00.000Z",
+    "2026-00-10T10:00:00.000Z",
+    "2026-04-31T10:00:00.000Z",
+    "2026-10-27T24:00:00.000Z", // Date.parse normalises this to the next day
+    "2026-10-27T23:60:00.000Z",
+    "2026-10-27T23:59:60.000Z",
+    "2026-10-27T10:00:00.1234Z", // more than millisecond precision
+    "2026-10-27T10:00:00+00:00", // not UTC "Z"
+    "2026-10-27 10:00:00.000Z",
+    "2026-10-27T10:00:00.000z",
+    "2026-10-27",
+    "",
+  ];
+  const GOOD = [
+    "2026-10-27T10:00:00.000Z",
+    "2028-02-29T00:00:00.000Z", // leap year
+    "2000-02-29T23:59:59.999Z", // 400-year leap
+    "2026-10-27T10:00:00Z", // no fraction
+    "2026-10-27T10:00:00.1Z",
+    "2026-12-31T23:59:59.999Z",
+  ];
+  it.each(BAD)("rejects %j in a 201 save response (uncertain/malformed)", async (t) => {
+    expect(await save(() => reply(201, record({ createdAt: t })))).toEqual({
+      kind: "uncertain",
+      cause: "malformed",
+    });
+  });
+  it.each(BAD)("rejects %j in a GET detail response (malformed)", async (t) => {
+    expect(await get(() => reply(200, detail({ createdAt: t })))).toEqual({ kind: "malformed" });
+  });
+  it.each(GOOD)("accepts %j in both responses", async (t) => {
+    expect((await save(() => reply(201, record({ createdAt: t })))).kind).toBe("saved");
+    expect((await get(() => reply(200, detail({ createdAt: t })))).kind).toBe("ok");
+  });
+  it("rejects a non-string createdAt", async () => {
+    expect(await save(() => reply(201, record({ createdAt: 1730000000000 })))).toEqual({
+      kind: "uncertain",
+      cause: "malformed",
+    });
+  });
+});
+
 describe("save request contract", () => {
   it("sends exactly the strict draft with credentials, no-store, key and CSRF header", async () => {
     let seen: { url: string; init: RequestInit & { headers: Record<string, string> } } | undefined;

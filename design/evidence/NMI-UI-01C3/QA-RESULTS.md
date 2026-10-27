@@ -4,7 +4,7 @@ Chrome: Chrome/156.0.8078.48 (headless). PostgreSQL: postgres (PostgreSQL) 16.15
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
 Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey (parsing is not used); the invoices are created by manual entry.
 
-**88/88 checks passed.**
+**116/116 checks passed.**
 
 | Result | Group | Check | Detail |
 | --- | --- | --- | --- |
@@ -87,16 +87,44 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL 390px mobile and dark theme | the uncertain alert is an announced alert region |  |
 | PASS | REAL 390px mobile and dark theme | no horizontal overflow at 390px (saved page) |  |
 | PASS | REAL 390px mobile and dark theme | saved-page contrast >= WCAG AA (dark, 390px) |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | setup: the server committed one invoice but the browser is in the uncertain state |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | header brand: asks first (uncertain wording, duplicate warning) and does not navigate |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | header brand: 'Stay and retry' keeps the form, the uncertain notice and the retry key |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | desktop nav: Invoice drafts: asks first (uncertain wording, duplicate warning) and does not navigate |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | desktop nav: Invoice drafts: 'Stay and retry' keeps the form, the uncertain notice and the retry key |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | desktop nav: New invoice: asks first (uncertain wording, duplicate warning) and does not navigate |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | desktop nav: New invoice: 'Stay and retry' keeps the form, the uncertain notice and the retry key |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | 'Back to composer' and 'Discard' are inside the locked form: disabled, so they cannot leave |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | mobile bottom navigation: asks first and does not navigate |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | mobile bottom navigation (New invoice): asks first |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | after all those attempts the retry still replays with the SAME key and no duplicate |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | explicit 'Leave and discard the retry key' leaves Review for the dashboard |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | the abandoned attempt did exist once on the server (no silent duplicate was created by leaving) |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | pending: a DIFFERENT dialog ('save is still in progress') and no navigation |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | pending: 'Stay and wait' keeps the pending save |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | pending -> uncertain while the dialog is open: the wording follows the new state |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | pending: explicit 'Leave and forget this save' leaves and cancels the browser request |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | nothing was written by the held (never sent) requests |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | Sign out is NOT gated: the workspace locks at once with no dialog, and no invoice text remains |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | after sign-out nothing of the unresolved invoice is in the page |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | a parsed server draft opens Review |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | Review states the truth: not saved yet, saving writes to PostgreSQL, no PayPal invoice |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | no 'simulated' wording appears anywhere on the real AI Review |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | the tab title is not labelled as fixture data on Review |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | saving the proposal writes one invoice and opens the saved page |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | the saved page and its tab title are not labelled fixture data |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | one parse request and one save request, both from the real session |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | the dashboard title still says its rows are samples |  |
 | PASS | Global invariants | no localStorage/sessionStorage/IndexedDB/Cache entries |  |
 | PASS | Global invariants | no script-readable cookie and no invoice data or id in the URL |  |
 | PASS | Global invariants | no request left the app origin (no PayPal/OpenAI/foreign host) |  |
 | PASS | Global invariants | the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id |  |
-| PASS | Global invariants | no parse, list or PayPal-draft request was made |  |
-| PASS | Global invariants | no PayPal operations, approvals or model calls exist |  |
+| PASS | Global invariants | no list or PayPal-draft request was made |  |
+| PASS | Global invariants | no PayPal operations or approvals exist; only the test-only fake model ran, exactly once (AI-path regression) |  |
 | PASS | Global invariants | every invoice has exactly one currency and non-negative consistent minor totals |  |
 | PASS | Global invariants | API log contains no customer data, CSRF token or cookie value |  |
 | PASS | Global invariants | no console errors or uncaught exceptions in the browser |  |
 
-Screenshots (synthetic data only, no credentials): 01-review-real-save.jpg, 02-saved-detail.jpg, 03-uncertain-locked.jpg, 04-conflict-409.jpg, 05-get-failed-then-loaded.jpg, 06-mobile-dark-uncertain.jpg, 07-mobile-dark-saved.jpg
+Screenshots (synthetic data only, no credentials): 01-review-real-save.jpg, 02-saved-detail.jpg, 03-uncertain-locked.jpg, 04-conflict-409.jpg, 05-get-failed-then-loaded.jpg, 06-mobile-dark-uncertain.jpg, 07-mobile-dark-saved.jpg, 08-leave-uncertain-dialog.jpg, 09-leave-uncertain-mobile.jpg, 10-leave-pending-dialog.jpg, 11-ai-review-real-copy.jpg
 
 Not covered: screen readers (VoiceOver/NVDA), real touch devices, Safari/Firefox, 400% zoom, a hosted/TLS (`__Host-` cookie) deployment.

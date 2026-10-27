@@ -86,6 +86,21 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
   });
   const saving = real ? rs.ui.status === "saving" : demoSaving;
   const uncertain = real && rs.ui.status === "uncertain";
+
+  // Tell the workspace whether leaving would abandon an unresolved save (and its idempotency key).
+  const setSaveGuard = session?.setSaveGuard;
+  const guardNow = !real
+    ? "none"
+    : rs.ui.status === "saving"
+      ? "pending"
+      : uncertain
+        ? "uncertain"
+        : "none";
+  useEffect(() => {
+    setSaveGuard?.(guardNow);
+  }, [setSaveGuard, guardNow]);
+  // Only unmounting clears it; a pending -> uncertain change must not close an open leave dialog.
+  useEffect(() => () => setSaveGuard?.("none"), [setSaveGuard]);
   const [conflict, setConflict] = useState(false);
   const [keyRenewed, setKeyRenewed] = useState(false);
   const [idemKey, setIdemKey] = useState(seed.saveKey);
@@ -197,8 +212,8 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
           {session?.parse ? (
             <>
               {" "}
-              This proposal came from the server&apos;s parser and is not saved anywhere. Saving is
-              still simulated in this build.
+              This proposal came from the server&apos;s parser and is not saved yet. Saving writes
+              it to PostgreSQL; it does not create a PayPal invoice or notify the customer.
             </>
           ) : null}
         </Notice>

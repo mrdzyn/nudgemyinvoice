@@ -119,10 +119,23 @@ export function parseTotals(v: unknown, draft: InvoiceDraft): Totals | null {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
+const ISO_INSTANT = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?Z$/;
 const PAYPAL_ID = /^[A-Za-z0-9-]{1,64}$/;
 const ERROR_CODE = /^[A-Za-z0-9_.-]{1,80}$/;
 const PAYPAL_STATES = ["none", "pending", "creating", "created", "unknown", "rejected", "mismatch"];
+
+/**
+ * A real UTC instant written as `YYYY-MM-DDTHH:mm:ss[.fff]Z`. The calendar date must survive a UTC
+ * round trip (so 2026-02-31 and a non-leap 02-29 are refused) and the clock must be 00:00:00 to
+ * 23:59:59: `Date.parse` alone would silently normalise both 02-31 and 24:00 into a later instant.
+ */
+export function isValidInstant(v: unknown): v is string {
+  if (typeof v !== "string") return false;
+  const m = ISO_INSTANT.exec(v);
+  if (!m) return false;
+  const [, date, hh, mm, ss] = m;
+  return isValidIsoDate(date ?? "") && Number(hh) <= 23 && Number(mm) <= 59 && Number(ss) <= 59;
+}
 
 export const isUuid = (v: unknown): v is string => typeof v === "string" && UUID.test(v);
 
@@ -183,12 +196,7 @@ export function parseServerInvoice(body: unknown, detail: boolean): ServerInvoic
   if (pid !== null && (typeof pid !== "string" || !PAYPAL_ID.test(pid))) return null;
   if (typeof body["replayed"] !== "boolean") return null;
   const createdAt = body["createdAt"];
-  if (
-    typeof createdAt !== "string" ||
-    !ISO_INSTANT.test(createdAt) ||
-    !Number.isFinite(Date.parse(createdAt))
-  )
-    return null;
+  if (!isValidInstant(createdAt)) return null;
   let paypal: ServerPayPalState | null = null;
   if (detail) {
     paypal = parsePayPal(body["paypal"]);

@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { createAuthApi, type AuthApi, type AuthResult, type Session } from "./auth/api.js";
 import type { AuthState } from "./auth/authState.js";
 import { useAuthController } from "./auth/useAuthController.js";
 import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/Spinner.js";
+import { LEAVE_COPY, mustConfirmLeave, type SaveGuard } from "./invoices/leaveGuard.js";
+import { Dialog } from "./components/Dialog.js";
 import { createInvoiceApi, type InvoiceApi } from "./invoices/api.js";
 import { createParseApi, type ParseApi } from "./parse/api.js";
 import { AppProvider } from "./demo/AppContext.js";
-import { initialState, reducer, type Action, type Theme } from "./demo/appState.js";
+import { initialState, reducer, type Action, type Screen, type Theme } from "./demo/appState.js";
 import type { InvoiceDraft } from "./domain/types.js";
 import { RealLoginScreen } from "./features/login/RealLoginScreen.js";
 import { CurrentScreen, SkipLink, TITLES } from "./screens.js";
@@ -42,6 +44,10 @@ export function isBlockedInRealMode(a: Action): boolean {
     (a.type === "navigate" && a.screen === "login")
   );
 }
+
+/** Only the dashboard shows fixture rows; Review, the composer and the saved page are real. */
+export const realTitle = (screen: Screen) =>
+  `${TITLES[screen]} · NudgeMyInvoice${screen === "dashboard" ? " (sample rows)" : ""}`;
 
 function Workspace({
   session,
@@ -78,12 +84,35 @@ function Workspace({
     ...reducer(initialState(t), { type: "navigate", screen: "dashboard" }),
     navigated: fresh,
   }));
+  // An unresolved save (pending or uncertain) must not be abandoned by an accidental click on the
+  // brand, the desktop or mobile navigation, "Back to composer" or "Discard": ask first.
+  const [guard, setGuardState] = useState<SaveGuard>("none");
+  const guardRef = useRef<SaveGuard>("none");
+  const [leaving, setLeaving] = useState<Action | null>(null);
+  const setSaveGuard = useCallback((g: SaveGuard) => {
+    guardRef.current = g;
+    setGuardState(g);
+    if (g === "none") setLeaving(null);
+  }, []);
   const dispatch = useCallback((a: Action) => {
-    if (!isBlockedInRealMode(a)) rawDispatch(a);
+    if (isBlockedInRealMode(a)) return;
+    if (mustConfirmLeave(guardRef.current, a)) {
+      setLeaving(a);
+      return;
+    }
+    rawDispatch(a);
   }, []);
 
   useEffect(() => {
-    document.title = `${TITLES[state.screen]} · NudgeMyInvoice (fixture data)`;
+    if (guard === "none") return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [guard]);
+
+  // Only the dashboard shows fixture rows; Review, the composer and the saved page are real.
+  useEffect(() => {
+    document.title = realTitle(state.screen);
   }, [state.screen]);
 
   useEffect(() => {
@@ -109,12 +138,30 @@ function Workspace({
         save,
         getInvoice,
         sessionExpired: expire,
+        setSaveGuard,
       }}
     >
       <SkipLink />
       <AppShell>
         <CurrentScreen screen={state.screen === "login" ? "dashboard" : state.screen} />
       </AppShell>
+      {guard !== "none" ? (
+        <Dialog
+          open={leaving !== null}
+          title={LEAVE_COPY[guard].title}
+          confirmLabel={LEAVE_COPY[guard].confirm}
+          cancelLabel={LEAVE_COPY[guard].cancel}
+          danger
+          onCancel={() => setLeaving(null)}
+          onConfirm={() => {
+            const a = leaving;
+            setLeaving(null);
+            if (a) rawDispatch(a);
+          }}
+        >
+          <p id="leave-warning">{LEAVE_COPY[guard].body}</p>
+        </Dialog>
+      ) : null}
     </AppProvider>
   );
 }
