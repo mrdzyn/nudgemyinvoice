@@ -889,4 +889,22 @@ Audit exact head, then owner decides on merge. C2 needs separate authorization.
 ### Next action
 Re-audit exact head; owner decides on merge. C2 needs separate authorization.
 
+## Handoff: NMI-UI-01C2-START
+
+- **Task / phase:** `tasks/NMI-UI-01C2-parse-wiring.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** GPT-6 / owner continuation after PR #9 squash merge
+- **To:** Claude implementation agent; then independent GPT-6 exact-head audit
+- **Branch / PR:** `feat/nmi-ui-01c2-parse-wiring`, [Draft PR #11](https://github.com/mrdzyn/nudgemyinvoice/pull/11)
+- **Starting main:** `32d9132be419b48a64455fa79c0fca58f9159b89` (PR #9 independently audited PASS, owner squash merged)
+- **State:** TASK CONTRACT ONLY; implementation NOT STARTED. Current branch changes only task/STATUS/handoff. No provider call, merge or deployment.
+
+### Continuation notes
+- Use already-implemented `POST /api/invoice-drafts/parse`, backed by Fastify/PostgreSQL operator auth and server-side optional model adapter. Real provider-unconfigured response is `unavailable`; test-only model fakes are simulations, never genuine OpenAI acceptance.
+- Wire only React parse + clarification/manual fallback, typed validated response, in-memory CSRF, cancellation and definitive 401 logout/clear. Keep all other invoice operations synthetic and labelled; preserve C1 immediate sign-out lock and hash/preview isolation.
+- Owner decisions D1–D4 unchanged. PayPal draft smoke authorization exhausted, no new OpenAI/PayPal call authorized; no C3 save/detail wiring.
+- Initial repository handoff is **docs-only**. No validation or CI at the implementation SHA exists yet; Claude must report actual checks once code is added.
+
+### Next action
+Claude implements the active C2 contract on this existing Draft PR #11, validates targeted boundaries and a local real browser/auth/parse path with disposable PostgreSQL and no external provider calls, appends `NMI-UI-01C2-IMPL`, updates STATUS/task/PR and stops for independent exact-head GPT-6 audit.
+
 <!-- HANDOFF_ENTRIES_END -->
