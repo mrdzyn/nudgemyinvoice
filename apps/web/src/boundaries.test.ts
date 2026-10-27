@@ -27,7 +27,11 @@ const FORBIDDEN: [string, RegExp, string[]?][] = [
   ["sessionStorage", /\bsessionStorage\b/],
   ["IndexedDB", /\bindexedDB\b|\bIDBFactory\b/i],
   ["cookies", /document\.cookie/],
-  ["fetch outside the auth transport", /\bfetch\s*\(/, ["src/auth/api.ts", "src/parse/api.ts"]],
+  [
+    "fetch outside the auth transport",
+    /\bfetch\s*\(/,
+    ["src/auth/api.ts", "src/parse/api.ts", "src/invoices/api.ts"],
+  ],
   ["XMLHttpRequest", /XMLHttpRequest/],
   ["WebSocket/EventSource", /\bWebSocket\b|\bEventSource\b/],
   ["sendBeacon", /sendBeacon/],
@@ -55,24 +59,36 @@ describe("UI shell boundaries", () => {
     expect(hits).toEqual([]);
   });
 
-  it("only the auth and parse transports call the network, and only their four relative /api routes", () => {
+  it("only the auth, parse and saved-invoice transports call the network, each on its own routes", () => {
     const hits = files.filter((f) => /\bfetch\s*\(/.test(read(f))).map((f) => relative(webRoot, f));
-    expect(hits.sort()).toEqual(["src/auth/api.ts", "src/parse/api.ts"]);
+    expect(hits.sort()).toEqual(["src/auth/api.ts", "src/invoices/api.ts", "src/parse/api.ts"]);
     const routes = (f: string) =>
-      [...read(join(root, f)).matchAll(/"(\/api\/[^"]*)"/g)].map((m) => m[1]);
+      [...read(join(root, f)).matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1]);
     expect(new Set(routes("auth/api.ts"))).toEqual(
       new Set(["/api/auth/session", "/api/auth/login", "/api/auth/logout"]),
     );
     expect(new Set(routes("parse/api.ts"))).toEqual(new Set(["/api/invoice-drafts/parse"]));
+    expect(new Set(routes("invoices/api.ts"))).toEqual(
+      new Set(["/api/invoice-drafts", "/api/invoice-drafts/${id}"]),
+    );
   });
 
-  it("C2 wires no invoice save, list, detail or PayPal route (those stay synthetic)", () => {
+  it("C3 wires no invoice list, PayPal or provider route (list stays synthetic until C4, PayPal until C5)", () => {
     const all = files.map(read).join("\n");
-    const apiPaths = [...all.matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1]);
+    const apiPaths = [...all.matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1] ?? "");
     expect(
-      apiPaths.filter((p) => !/^\/api\/(auth\/|invoice-drafts\/parse$)/.test(p ?? "")),
+      apiPaths.filter(
+        (p) =>
+          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/\$\{id\})?)$/.test(p),
+      ),
     ).toEqual([]);
-    expect(all).not.toMatch(/paypal\.com|openai\.com|api\.openai/i);
+    expect(all).not.toMatch(/paypal-draft|paypal\.com|openai\.com|api\.openai/i);
+  });
+
+  it("the saved-invoice transport sends only the save body, never totals, ids or status", () => {
+    const src = read(join(root, "invoices/api.ts"));
+    expect(src).toMatch(/body: JSON\.stringify\(saveBody\(draft\)\)/);
+    expect(src).not.toMatch(/localStorage|sessionStorage|document\.cookie/);
   });
 
   it("the real app never imports the synthetic preview, demo controls or hash routing", () => {
@@ -83,6 +99,10 @@ describe("UI shell boundaries", () => {
       "auth/authState.ts",
       "parse/api.ts",
       "parse/runner.ts",
+      "invoices/api.ts",
+      "invoices/saveRunner.ts",
+      "invoices/useRealSave.ts",
+      "features/saved/SavedDetailScreen.tsx",
     ]) {
       expect(read(join(root, f)), f).not.toMatch(
         /DemoControls|demo\/hash|from "\.\/App\.js"|location\.hash/,

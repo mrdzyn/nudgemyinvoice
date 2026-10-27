@@ -1,0 +1,535 @@
+{
+  "chrome": "Chrome/156.0.8078.48",
+  "passed": 88,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafts disabled; OPENAI_API_KEY/OPENAI_MODEL empty (no provider can be reached)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "a saved-invoice deep link shows only sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no invoice request is made while logged out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "real Review shows the real-save wording and no simulated-save claim",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "the shell notice states saving uses the server and the list/PayPal are not connected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "keyboard Enter on 'Save draft' saves and opens the saved-invoice page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "exactly one POST /api/invoice-drafts -> 201 with CSRF and an Idempotency-Key",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "body is exactly the strict draft (no totals, id, status, fixture fields)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "exactly one durable invoice was created",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "the detail page loaded the record with GET /api/invoice-drafts/:id -> 200",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "shows the real UUID, customer, currency, due date and persisted creation date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "server-computed total matches the database exactly (271.71)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "line total, tax and subtotal match the database",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "one consistent currency for the invoice (USD) in the database",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox', customer not notified",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "no PayPal id, fixture name or simulated PayPal control is shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "audit row recorded the save without customer data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "nothing was created in PayPal operations",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "no horizontal overflow on the saved page (desktop)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL manual invoice -> POST 201 -> GET detail",
+      "name": "saved page text contrast >= WCAG AA (light)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "new key + body -> 201, replayed:false",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "same key + identical body -> 200 replayed:true with the SAME id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "same key + different body -> 409",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "exactly one new invoice despite 3 requests (no duplicate)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "409 stored nothing under the new body",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "GET returns the same totals the POST returned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "a total/id/status in the request is rejected by the strict schema (400)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "no cookie -> 401",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "missing CSRF -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "foreign Origin with a valid token -> 403",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "malformed Idempotency-Key -> 400",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "fractional JPY amount refused, nothing stored",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL idempotency through Fastify/PostgreSQL",
+      "name": "GET of an unknown id -> 404",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "UI reports that the outcome could not be confirmed (not a plain failure)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "wording says it may or may not exist and the retry reuses the same key",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "the server DID commit exactly one invoice before the response was lost",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "the form is locked (edits cannot desynchronise the key from the body)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "retrying opens the saved page with the replay notice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "the retry used the SAME Idempotency-Key and the identical body",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "the retry was answered 200 (replay) and NO second invoice exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "the shown record is the one committed by the lost attempt",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL uncertain save -> same-key retry (server commits, browser loses the response)",
+      "name": "replay copy: 'No second draft was created'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL abandon an uncertain attempt explicitly",
+      "name": "before the choice the form is locked and the notice warns a second draft may be created",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL abandon an uncertain attempt explicitly",
+      "name": "the form unlocks only after the explicit choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL abandon an uncertain attempt explicitly",
+      "name": "the edited save used a NEW key (the old key was never reused with a changed body)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "409 -> conflict notice, edits kept",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "   server untouched and typed edits still present (409 -> c)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "400 -> bounded server messages, edits kept",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "   server untouched and typed edits still present (400 -> b)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "422 invalid_draft -> exact totals unavailable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "   server untouched and typed edits still present (422 inva)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "403 -> generic, no detail leaked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "   server untouched and typed edits still present (403 -> g)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "500 -> uncertain (a 5xx may follow a commit)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "   server untouched and typed edits still present (500 -> u)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "201 with an inconsistent total -> uncertain, never a saved record",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "   server untouched and typed edits still present (201 with)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "after a 409 a further Save sends nothing until 'Use a new key' is chosen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED save outcomes (interception; server not reached)",
+      "name": "'Use a new key' keeps the edits and the next save is a real 201 with a different key",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failed GET after a REAL save",
+      "name": "GET 404: error shown, not the record and never a fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failed GET after a REAL save",
+      "name": "GET 500: error shown, not the record and never a fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failed GET after a REAL save",
+      "name": "GET 200 with an unknown shape: error shown, not the record and never a fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failed GET after a REAL save",
+      "name": "GET 200 with inconsistent totals: error shown, not the record and never a fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failed GET after a REAL save",
+      "name": "GET network failure: error shown, not the record and never a fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failed GET after a REAL save",
+      "name": "'Try loading again' then loads the real record",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "Sign out locks immediately and the typed invoice is gone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "no invoice text remains in the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "after signing in again the form is blank",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "a real 401 on save ends the session and shows sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "the POST really returned 401 and stored nothing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "the typed invoice is wiped from the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and 401 clear sensitive UI",
+      "name": "[SIMULATED] a 401 on the detail GET also ends the session",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no horizontal overflow at 390px (uncertain state)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "uncertain-state contrast >= WCAG AA (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "the uncertain alert is an announced alert region",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no horizontal overflow at 390px (saved page)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "saved-page contrast >= WCAG AA (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no localStorage/sessionStorage/IndexedDB/Cache entries",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no script-readable cookie and no invoice data or id in the URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no request left the app origin (no PayPal/OpenAI/foreign host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no parse, list or PayPal-draft request was made",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no PayPal operations, approvals or model calls exist",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "every invoice has exactly one currency and non-negative consistent minor totals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "API log contains no customer data, CSRF token or cookie value",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no console errors or uncaught exceptions in the browser",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

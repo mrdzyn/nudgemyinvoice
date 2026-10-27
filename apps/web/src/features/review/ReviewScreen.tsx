@@ -4,6 +4,8 @@ import { Notice } from "../../components/Notice.js";
 import { useFocusOnMount, useScheduler } from "../../components/hooks.js";
 import { useApp } from "../../demo/AppContext.js";
 import type { ReviewSeed } from "../../demo/appState.js";
+import { saveBody } from "../../invoices/api.js";
+import { useRealSave, type SaveUi } from "../../invoices/useRealSave.js";
 import { CURRENCY_CODES, type CurrencyCode, type InvoiceDraft } from "../../domain/types.js";
 import {
   MAX_LINE_ITEMS,
@@ -63,6 +65,8 @@ export function ReviewScreen() {
   return <ReviewForm key={state.seedKey} seed={state.review} />;
 }
 
+export const NO_SAVE = () => Promise.resolve({ kind: "aborted" as const });
+
 function ReviewForm({ seed }: { seed: ReviewSeed }) {
   const { state, dispatch, announce, session } = useApp();
   const schedule = useScheduler();
@@ -70,7 +74,18 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
   const summaryRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormState>(seed.form);
   const [showErrors, setShowErrors] = useState(seed.showErrors);
-  const [saving, setSaving] = useState(false);
+  const [demoSaving, setSaving] = useState(false);
+  const real = Boolean(session?.save);
+  const rs = useRealSave({
+    save: session?.save ?? NO_SAVE,
+    onSaved: (inv, replayed) => {
+      dispatch({ type: "open-saved", id: inv.id, notice: replayed ? "replayed" : "created" });
+      announce(replayed ? "Existing saved draft returned" : "Draft saved");
+    },
+    onExpired: () => session?.sessionExpired?.(),
+  });
+  const saving = real ? rs.ui.status === "saving" : demoSaving;
+  const uncertain = real && rs.ui.status === "uncertain";
   const [conflict, setConflict] = useState(false);
   const [keyRenewed, setKeyRenewed] = useState(false);
   const [idemKey, setIdemKey] = useState(seed.saveKey);
@@ -108,6 +123,14 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
     setForm((f) => ({ ...f, lines: f.lines.map((l, j) => (j === i ? { ...l, [k]: v } : l)) }));
   const invalid = (id: string) => (msg(id) ? true : undefined);
 
+  const retry = () => {
+    if (state.offline) {
+      announce("You are offline. Saving is unavailable.");
+      return;
+    }
+    if (rs.submit(draft, JSON.stringify(saveBody(draft)))) announce("Retrying the same save");
+  };
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (saving) return;
@@ -119,6 +142,10 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
     if (errors.length > 0) {
       setSummaryTick((t) => t + 1);
       announce(`${errors.length} problems to fix before saving`);
+      return;
+    }
+    if (real) {
+      if (rs.submit(draft, JSON.stringify(saveBody(draft)))) announce("Saving draft");
       return;
     }
     setSaving(true);
@@ -215,7 +242,9 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
         ) : null}
       </div>
       <form onSubmit={submit} noValidate>
-        <fieldset className="plain-fieldset" disabled={saving}>
+        {/* Outside the fieldset: its buttons must stay usable while the form itself is locked. */}
+        {real ? <RealSaveNotices ui={rs.ui} rs={rs} announce={announce} onRetry={retry} /> : null}
+        <fieldset className="plain-fieldset" disabled={saving || uncertain}>
           <div className="review-grid">
             <div>
               <div className="card">
@@ -593,7 +622,7 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
                     )
                   ) : null}
                 </div>
-                {conflict ? (
+                {!real && conflict ? (
                   <Notice kind="err" role="alert" className="mt-12 notice-flush">
                     <strong>Save rejected (HTTP 409).</strong> This Idempotency-Key was already used
                     for a different invoice body, so the server refused it. (Simulated.)
@@ -624,13 +653,15 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
                     type="submit"
                     className="btn btn-primary"
                     id="save-btn"
-                    aria-disabled={saving || state.offline ? true : undefined}
+                    aria-disabled={saving || uncertain || state.offline ? true : undefined}
                   >
                     {saving ? (
                       <>
                         <span className="spinner" aria-hidden="true" />
                         Saving draft…
                       </>
+                    ) : real ? (
+                      "Save draft"
                     ) : (
                       "Save local draft"
                     )}
@@ -650,11 +681,20 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
                     Discard
                   </button>
                 </div>
-                <p className="hint mt-12">
-                  Simulated save: nothing is written anywhere. The real save will call{" "}
-                  <code>POST /api/invoice-drafts</code> with{" "}
-                  <code id="idem-key">Idempotency-Key: {idemKey}</code>. Nothing is sent to PayPal.
-                </p>
+                {real ? (
+                  <p className="hint mt-12" id="save-hint">
+                    Saving writes this draft to PostgreSQL (<code>POST /api/invoice-drafts</code>).
+                    That is not a PayPal invoice: nothing is sent to PayPal and the customer is not
+                    notified.
+                  </p>
+                ) : (
+                  <p className="hint mt-12">
+                    Simulated save: nothing is written anywhere. The real save will call{" "}
+                    <code>POST /api/invoice-drafts</code> with{" "}
+                    <code id="idem-key">Idempotency-Key: {idemKey}</code>. Nothing is sent to
+                    PayPal.
+                  </p>
+                )}
               </div>
             </aside>
           </div>
@@ -675,4 +715,122 @@ function ReviewForm({ seed }: { seed: ReviewSeed }) {
       </Dialog>
     </section>
   );
+}
+
+const CAUSE_TEXT = {
+  timeout: "The server did not answer in time.",
+  network: "The connection was lost before an answer arrived.",
+  server: "The server reported an error.",
+  malformed: "The server's answer could not be read.",
+} as const;
+
+/** Outcomes of a real save. Every message keeps the operator's edits on the page. */
+export function RealSaveNotices({
+  ui,
+  rs,
+  announce,
+  onRetry,
+}: {
+  ui: SaveUi;
+  rs: ReturnType<typeof useRealSave>;
+  announce: (m: string) => void;
+  onRetry: () => void;
+}) {
+  const box = useRef<HTMLDivElement>(null);
+  const attention = ui.status === "conflict" || ui.status === "uncertain" || ui.status === "failed";
+  useEffect(() => {
+    if (attention) box.current?.focus();
+  }, [attention, ui.status]);
+  if (!attention) return null;
+  return (
+    <div ref={box} tabIndex={-1} className="save-outcome">
+      <RealSaveNoticeBody ui={ui} rs={rs} announce={announce} onRetry={onRetry} />
+    </div>
+  );
+}
+
+function RealSaveNoticeBody({
+  ui,
+  rs,
+  announce,
+  onRetry,
+}: {
+  ui: SaveUi;
+  rs: ReturnType<typeof useRealSave>;
+  announce: (m: string) => void;
+  onRetry: () => void;
+}) {
+  if (ui.status === "conflict")
+    return (
+      <Notice kind="err" role="alert" className="mt-12 notice-flush" id="save-conflict">
+        <strong>Save rejected (HTTP 409).</strong> The key for this request was already used for a
+        different invoice body, so the server refused it. Your edits are kept.
+        <div className="mt-8">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            id="new-key-btn"
+            onClick={() => {
+              rs.useNewKey();
+              announce("New idempotency key ready");
+            }}
+          >
+            Use a new key and keep my edits
+          </button>
+        </div>
+      </Notice>
+    );
+  if (ui.status === "uncertain")
+    return (
+      <Notice kind="warn" role="alert" className="mt-12 notice-flush" id="save-uncertain">
+        <strong>We could not confirm whether this draft was saved.</strong> {CAUSE_TEXT[ui.cause]}{" "}
+        It may or may not exist. Retrying sends the identical request with the same key, so it
+        cannot create a duplicate. The form is locked until you decide.
+        <div className="mt-8">
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            id="retry-save-btn"
+            onClick={onRetry}
+          >
+            Retry the same save
+          </button>{" "}
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            id="abandon-save-btn"
+            onClick={() => {
+              rs.abandonUncertain();
+              announce("Form unlocked. Saving again may create a second draft.");
+            }}
+          >
+            Edit details and save as a new draft
+          </button>
+        </div>
+        <p className="hint mt-8">
+          Choosing the second option accepts that the earlier attempt may exist: saving again can
+          create a second draft.
+        </p>
+      </Notice>
+    );
+  if (ui.status === "failed")
+    return (
+      <Notice kind="err" role="alert" className="mt-12 notice-flush" id="save-failed">
+        <strong>The draft was not saved.</strong>{" "}
+        {ui.reason === "forbidden"
+          ? "The server did not accept this request. Reload the page and try again."
+          : ui.reason === "invalid-draft"
+            ? "The server could not compute exact totals for these amounts."
+            : "The server rejected the details."}
+        {ui.messages.length > 0 ? (
+          <ul>
+            {ui.messages.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        ) : null}{" "}
+        Your edits are kept; fix them and save again.
+      </Notice>
+    );
+  return null;
 }

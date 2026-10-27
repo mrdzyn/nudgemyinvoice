@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import type { Action, AppState } from "./appState.js";
+import type { GetResult, SaveResult } from "../invoices/api.js";
+import type { InvoiceDraft } from "../domain/types.js";
 import type { ParseResult } from "../parse/api.js";
 
 /** Present only in real (server-authenticated) mode. */
@@ -20,6 +22,10 @@ export interface SessionInfo {
    * memory. Absent in the synthetic preview, which never reaches the network.
    */
   parse?: (description: string, signal: AbortSignal) => Promise<ParseResult>;
+  /** Real save (`POST /api/invoice-drafts`), bound to this session's CSRF token in memory. */
+  save?: (draft: InvoiceDraft, idempotencyKey: string, signal: AbortSignal) => Promise<SaveResult>;
+  /** Real read-only detail (`GET /api/invoice-drafts/:id`). */
+  getInvoice?: (id: string, signal: AbortSignal) => Promise<GetResult>;
   /** The server said 401: end the whole session (and discard every in-memory draft). */
   sessionExpired?: () => void;
 }

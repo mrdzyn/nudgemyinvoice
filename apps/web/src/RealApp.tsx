@@ -4,14 +4,17 @@ import type { AuthState } from "./auth/authState.js";
 import { useAuthController } from "./auth/useAuthController.js";
 import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/Spinner.js";
+import { createInvoiceApi, type InvoiceApi } from "./invoices/api.js";
 import { createParseApi, type ParseApi } from "./parse/api.js";
 import { AppProvider } from "./demo/AppContext.js";
 import { initialState, reducer, type Action, type Theme } from "./demo/appState.js";
+import type { InvoiceDraft } from "./domain/types.js";
 import { RealLoginScreen } from "./features/login/RealLoginScreen.js";
 import { CurrentScreen, SkipLink, TITLES } from "./screens.js";
 
 const defaultApi = createAuthApi();
 const defaultParseApi = createParseApi();
+const defaultInvoiceApi = createInvoiceApi();
 
 function systemTheme(): Theme {
   return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
@@ -29,6 +32,13 @@ export function isBlockedInRealMode(a: Action): boolean {
     a.type === "sign-in" ||
     a.type === "sign-out" ||
     a.type === "scenario" ||
+    // Fixture records, simulated saves and simulated PayPal creation never exist in real mode.
+    a.type === "open-detail" ||
+    a.type === "save-invoice" ||
+    a.type === "paypal-created" ||
+    a.type === "paypal-override" ||
+    (a.type === "navigate" &&
+      (a.screen === "detail" || a.screen === "saved" || a.screen === "review")) ||
     (a.type === "navigate" && a.screen === "login")
   );
 }
@@ -39,6 +49,7 @@ function Workspace({
   signOut,
   expire,
   parseApi,
+  invoiceApi,
   theme,
 }: {
   session: Session;
@@ -46,9 +57,19 @@ function Workspace({
   signOut: () => void;
   expire: () => void;
   parseApi: ParseApi;
+  invoiceApi: InvoiceApi;
   theme: Theme;
 }) {
   const csrfToken = session.csrfToken;
+  const save = useCallback(
+    (draft: InvoiceDraft, key: string, signal: AbortSignal) =>
+      invoiceApi.save(draft, key, csrfToken, signal),
+    [invoiceApi, csrfToken],
+  );
+  const getInvoice = useCallback(
+    (id: string, signal: AbortSignal) => invoiceApi.get(id, signal),
+    [invoiceApi],
+  );
   const parse = useCallback(
     (description: string, signal: AbortSignal) => parseApi.parse(description, csrfToken, signal),
     [parseApi, csrfToken],
@@ -85,6 +106,8 @@ function Workspace({
         username: session.operator.username,
         signOut,
         parse,
+        save,
+        getInvoice,
         sessionExpired: expire,
       }}
     >
@@ -105,6 +128,7 @@ export interface RealViewProps {
   logout: () => void;
   expire?: (epoch: number) => void;
   parseApi?: ParseApi;
+  invoiceApi?: InvoiceApi;
 }
 
 function StatusCard({ id, children }: { id: string; children: string }) {
@@ -132,6 +156,7 @@ export function RealView({
   logout,
   expire = noopDispatch,
   parseApi = defaultParseApi,
+  invoiceApi = defaultInvoiceApi,
 }: RealViewProps) {
   if (state.status === "authenticated") {
     const epoch = state.epoch;
@@ -143,6 +168,7 @@ export function RealView({
         signOut={logout}
         expire={() => expire(epoch)}
         parseApi={parseApi}
+        invoiceApi={invoiceApi}
         theme={theme}
       />
     );
@@ -175,9 +201,11 @@ export function RealView({
 export function RealApp({
   api = defaultApi,
   parseApi = defaultParseApi,
+  invoiceApi = defaultInvoiceApi,
 }: {
   api?: AuthApi;
   parseApi?: ParseApi;
+  invoiceApi?: InvoiceApi;
 }) {
   const auth = useAuthController(api);
   const [theme] = useState(systemTheme);
@@ -205,6 +233,7 @@ export function RealApp({
       logout={auth.logout}
       expire={auth.expire}
       parseApi={parseApi}
+      invoiceApi={invoiceApi}
     />
   );
 }
