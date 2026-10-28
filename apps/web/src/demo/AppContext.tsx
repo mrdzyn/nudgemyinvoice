@@ -10,7 +10,13 @@ import {
 } from "react";
 import type { Action, AppState } from "./appState.js";
 import type { SaveGuard } from "../invoices/leaveGuard.js";
-import type { GetResult, ListQuery, ListResult, SaveResult } from "../invoices/api.js";
+import type {
+  GetResult,
+  ListQuery,
+  ListResult,
+  PayPalDraftResult,
+  SaveResult,
+} from "../invoices/api.js";
 import type { InvoiceDraft } from "../domain/types.js";
 import type { ParseResult } from "../parse/api.js";
 
@@ -27,6 +33,8 @@ export interface SessionInfo {
   save?: (draft: InvoiceDraft, idempotencyKey: string, signal: AbortSignal) => Promise<SaveResult>;
   /** Real read-only, owner-scoped list (`GET /api/invoice-drafts`). Present only in real mode. */
   listInvoices?: (query: ListQuery, signal: AbortSignal) => Promise<ListResult>;
+  /** Real PayPal Sandbox DRAFT creation (`POST /api/invoice-drafts/:id/paypal-draft`), CSRF bound in memory. Real mode only. */
+  createPayPalDraft?: (id: string, signal: AbortSignal) => Promise<PayPalDraftResult>;
   /** Real read-only detail (`GET /api/invoice-drafts/:id`). */
   getInvoice?: (id: string, signal: AbortSignal) => Promise<GetResult>;
   /** Review reports whether a save is unresolved so leaving the screen can ask first. */

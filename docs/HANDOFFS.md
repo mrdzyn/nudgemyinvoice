@@ -1081,4 +1081,48 @@ One line of behaviour: `createPayPalDraft` loads the invoice via `drafts.getOwne
 ### Not verified
 Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. Production allows exactly one operator, so the gate is defense in depth today.
 
+## Handoff: NMI-UI-01C5-P1-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C5-P1-paypal-draft-ui.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c5-p1-paypal-draft-ui`, Draft PR against `main` (starting main `7e9c1c9b48ed03e3d85d4ad9d401f6803bed0a4c`)
+- **Implementation SHA:** `17c13e0e75de07bda310bbd9745b27a97b6bf7bd` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, real provider call or NMI-DEMO work.
+
+### What changed
+`apps/web` only: typed `createPayPalDraft` transport with strict validation, single-flight runner (timeout = uncertain), a pure panel state machine, `PayPalDraftPanel` on the real saved invoice with an explicit confirmation dialog, durable GET read-back and a read-only Check status, plus copy corrections. A detail-validator bug (error codes containing `:`) found by the journey is fixed. Backend, provider adapter, schema, state machine and configuration are untouched.
+
+### Audit focus
+1. A POST is reachable only from the open dialog's confirm; cancel/Escape/mount/reload/navigation never POST; double confirm = one request.
+2. The success validator (exact shape, `201<->replayed:false`, `200<->replayed:true`, `status:"DRAFT"`) and fail-closed handling of unexpected status/body combinations.
+3. Uncertain outcomes: never failure/success, `unverified` blocks create until a read-only re-read, no blind retry for `mismatch`, no re-probing after `paypal_disabled`.
+4. GET detail is the authority; stale responses, 401, unmount and sign-out cannot update another invoice or session.
+5. Copy: no claim of "sent/paid/emailed", and no leftover "nothing was sent to PayPal" after a draft can exist; preview still simulated.
+6. The journey's PayPal is a test-only fake (`design/evidence/NMI-UI-01C5-P1/test-api-server.ts`), never imported by production.
+
+### Not verified
+Real PayPal Sandbox and OpenAI (never called; a real call needs separate owner authorization and a strict call budget), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction. No deployment or public demo exists.
+
+## Handoff: NMI-UI-01C5-P1-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C5-P1-paypal-draft-ui.md` (section "Audit remediation: MAJOR-1")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c5-p1-paypal-draft-ui`, [Draft PR #15](https://github.com/mrdzyn/nudgemyinvoice/pull/15)
+- **Fix SHA:** `9b367fb73ea420a179ae853bea9c430405d205fe` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Frontend, tests and evidence only; no merge, deploy, real provider call, budget reset or demo phase.
+
+### What changed
+Every PayPal draft POST answer now fails closed until a read-back bound to that confirmation (`seq`) has produced the invoice object being shown; failed, malformed, stale or contradicting reads never unlock creation; `mapping-refused`/`disabled`/`not-found`/`forbidden`/`bad-request` lock creating for the view; eligibility is evaluated against the shown invoice in both the button and the reducer; the post-POST read is always a fresh GET.
+
+### Re-audit focus
+1. `paypalPanel.ts`: `result` always sets `unverified`; `canOfferCreate(invoice, ui)`/`awaitingReadback`; `readback` seq binding and the `created` id cross-check; `open-confirm` re-check.
+2. `PayPalDraftPanel.tsx`/`SavedDetailScreen.tsx`: the read-back captures `seq` at answer time, uses `refresh({fresh:true})`, and returns the exact invoice object.
+3. Tests: one pre-existing reducer test asserted the defect and was replaced by its opposite; everything else was kept or tightened (554 web tests; 22 new regression tests; 4 unit mutation controls and 1 browser-level control killed).
+4. Journey 102/102 including delayed/failed/malformed GET after a valid POST (GET manipulation is simulated; the POSTs are real against the fake provider).
+
+### Not verified
+Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction.
+
 <!-- HANDOFF_ENTRIES_END -->

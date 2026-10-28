@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PayPalStatusBadge } from "../../components/Badge.js";
+import type { PayPalDraftResult } from "../../invoices/api.js";
+import { PayPalDraftPanel, type RefreshOutcome } from "./PayPalDraftPanel.js";
 import { Notice } from "../../components/Notice.js";
 import { Spinner } from "../../components/Spinner.js";
 import { useFocusOnMount } from "../../components/hooks.js";
@@ -8,6 +10,12 @@ import type { SavedRef } from "../../demo/appState.js";
 import { formatCurrency } from "../../domain/money.js";
 import type { ServerInvoice } from "../../domain/serverInvoice.js";
 import { formatDate } from "../dashboard/DashboardScreen.js";
+
+export interface PayPalCapability {
+  create: (signal: AbortSignal) => Promise<PayPalDraftResult>;
+  refresh: (opts?: { fresh?: boolean }) => Promise<RefreshOutcome>;
+  onExpired: () => void;
+}
 
 export type SavedLoad =
   | { status: "loading" }
@@ -33,12 +41,15 @@ export function SavedDetailView({
   onRetry,
   onBack,
   headingRef,
+  paypal,
 }: {
   savedRef: SavedRef;
   load: SavedLoad;
   onRetry: () => void;
   onBack: () => void;
   headingRef?: React.Ref<HTMLHeadingElement>;
+  /** Real PayPal Sandbox draft capability. Absent => the panel is read-only (state shown, no action). */
+  paypal?: PayPalCapability;
 }) {
   const inv = load.status === "ok" ? load.invoice : null;
   return (
@@ -62,19 +73,21 @@ export function SavedDetailView({
       </div>
       {savedRef.notice === "created" ? (
         <Notice kind="ok" role="status" icon="✓" id="saved-notice">
-          <strong>Saved in PostgreSQL.</strong> This is a local draft record only. It was not
-          created in PayPal, nothing was sent to PayPal, and the customer was not notified.
+          <strong>Saved in PostgreSQL.</strong> Saving only stores this invoice locally: it does not
+          create a PayPal invoice and never notifies the customer. The PayPal Sandbox status is
+          shown below.
         </Notice>
       ) : savedRef.notice === "replayed" ? (
         <Notice kind="info" role="status" icon="ℹ" id="saved-notice">
           <strong>Already saved (HTTP 200, replayed).</strong> The same request had been saved
-          before, so the existing record is shown. No second draft was created. Nothing was sent to
-          PayPal and the customer was not notified.
+          before, so the existing record is shown. No second draft was created. Saving never creates
+          a PayPal invoice or notifies the customer; the PayPal Sandbox status is shown below.
         </Notice>
       ) : (
         <Notice kind="info" role="note" icon="ℹ" id="saved-notice">
-          <strong>Saved invoice, opened from your list.</strong> This is a read-only view of the
-          record stored in PostgreSQL. Opening it changes nothing, and it is not a PayPal invoice.
+          <strong>Saved invoice, opened from your list.</strong> This is the record stored in
+          PostgreSQL. Opening it changes nothing. The PayPal Sandbox status below is read from the
+          server.
         </Notice>
       )}
       {load.status === "loading" ? (
@@ -101,51 +114,61 @@ export function SavedDetailView({
           </div>
         </Notice>
       ) : null}
-      {inv ? <SavedBody inv={inv} /> : null}
+      {inv ? <SavedBody inv={inv} paypal={paypal} /> : null}
     </section>
   );
 }
 
-function SavedBody({ inv }: { inv: ServerInvoice }) {
+function SavedBody({ inv, paypal }: { inv: ServerInvoice; paypal: PayPalCapability | undefined }) {
   const d = inv.draft;
   const t = inv.totals;
   const c = d.currency;
   const pp = inv.paypal;
   return (
     <>
-      <section className="paypal-panel" aria-labelledby="pp-title">
-        <span className="sandbox-pill">PayPal Sandbox</span>
-        <h2 className="card-title mt-8 mb-0" id="pp-title">
-          PayPal Sandbox draft (read-only)
-        </h2>
-        <div className="row">
-          <div>
-            {pp ? <PayPalStatusBadge state={pp.state} /> : null}
-            <div className="paypal-status">
-              {pp && pp.state !== "none"
-                ? "PayPal state reported by the server"
-                : "Not created in PayPal Sandbox"}
-            </div>
-            {pp?.paypalInvoiceId ? (
-              <dl className="meta-list mt-8">
-                <div>
-                  <dt>PayPal invoice id (from the server)</dt>
-                  <dd className="mono">{pp.paypalInvoiceId}</dd>
-                </div>
-              </dl>
-            ) : null}
-            {pp?.lastErrorCode ? (
-              <p className="hint">
-                Last error code: <code>{pp.lastErrorCode}</code>
+      {paypal ? (
+        <PayPalDraftPanel
+          key={inv.id}
+          invoice={inv}
+          create={paypal.create}
+          refresh={paypal.refresh}
+          onExpired={paypal.onExpired}
+        />
+      ) : (
+        <section className="paypal-panel" aria-labelledby="pp-title">
+          <span className="sandbox-pill">PayPal Sandbox</span>
+          <h2 className="card-title mt-8 mb-0" id="pp-title">
+            PayPal Sandbox draft (read-only)
+          </h2>
+          <div className="row">
+            <div>
+              {pp ? <PayPalStatusBadge state={pp.state} /> : null}
+              <div className="paypal-status">
+                {pp && pp.state !== "none"
+                  ? "PayPal state reported by the server"
+                  : "Not created in PayPal Sandbox"}
+              </div>
+              {pp?.paypalInvoiceId ? (
+                <dl className="meta-list mt-8">
+                  <div>
+                    <dt>PayPal invoice id (from the server)</dt>
+                    <dd className="mono">{pp.paypalInvoiceId}</dd>
+                  </div>
+                </dl>
+              ) : null}
+              {pp?.lastErrorCode ? (
+                <p className="hint">
+                  Last error code: <code>{pp.lastErrorCode}</code>
+                </p>
+              ) : null}
+              <p className="hint mt-8">
+                Creating a PayPal Sandbox draft is not available in this build; it arrives in a
+                later step. Saving to PostgreSQL does not create a PayPal invoice.
               </p>
-            ) : null}
-            <p className="hint mt-8">
-              Creating a PayPal Sandbox draft is not available in this build; it arrives in a later
-              step. Saving to PostgreSQL does not create a PayPal invoice.
-            </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       <div className="card">
         <h2 className="card-title">Invoice</h2>
         <dl className="meta-list">
@@ -262,6 +285,7 @@ export function SavedDetailScreen() {
   const [load, setLoad] = useState<SavedLoad>({ status: "loading" });
   const [tick, setTick] = useState(0);
   const getInvoice = session?.getInvoice;
+  const createPayPalDraft = session?.createPayPalDraft;
   const expired = session?.sessionExpired;
   const id = savedRef?.id;
 
@@ -278,6 +302,55 @@ export function SavedDetailScreen() {
     return () => ac.abort();
   }, [getInvoice, id, expired, tick]);
 
+  // Silent, read-only re-read of the durable record (the panel stays mounted). Calls in flight are
+  // coalesced, it is aborted with the screen, and it can only ever land on the invoice it asked for.
+  const inflight = useRef<{ id: string; p: Promise<RefreshOutcome>; ac: AbortController } | null>(
+    null,
+  );
+  useEffect(
+    () => () => {
+      inflight.current?.ac.abort();
+      inflight.current = null;
+    },
+    [id],
+  );
+  const refresh = useCallback(
+    (opts?: { fresh?: boolean }): Promise<RefreshOutcome> => {
+      if (!getInvoice || !id) return Promise.resolve({ ok: false });
+      const running = inflight.current;
+      if (running && running.id === id) {
+        // A normal call joins the read in flight. `fresh` (used right after a POST answered) must
+        // not reuse a read that started BEFORE that answer: drop it and start another.
+        if (!opts?.fresh) return running.p;
+        running.ac.abort();
+        inflight.current = null;
+      }
+      const ac = new AbortController();
+      const p: Promise<RefreshOutcome> = getInvoice(id, ac.signal).then((r): RefreshOutcome => {
+        if (inflight.current?.ac === ac) inflight.current = null;
+        if (ac.signal.aborted || r.kind === "aborted") return { ok: false };
+        if (r.kind === "unauthorized") {
+          expired?.();
+          return { ok: false };
+        }
+        if (r.kind !== "ok") return { ok: false };
+        setLoad({ status: "ok", invoice: r.invoice });
+        return { ok: true, invoice: r.invoice };
+      });
+      inflight.current = { id, p, ac };
+      return p;
+    },
+    [getInvoice, id, expired],
+  );
+
+  const create = useCallback(
+    (signal: AbortSignal): Promise<PayPalDraftResult> =>
+      createPayPalDraft && id
+        ? createPayPalDraft(id, signal)
+        : Promise.resolve({ kind: "not-found" }),
+    [createPayPalDraft, id],
+  );
+
   // Only a real, server-authenticated session can show a saved record; the preview never can.
   if (!getInvoice || !savedRef) return null;
   return (
@@ -287,6 +360,7 @@ export function SavedDetailScreen() {
       onRetry={() => setTick((t) => t + 1)}
       onBack={() => dispatch({ type: "navigate", screen: "dashboard" })}
       headingRef={headingRef}
+      {...(createPayPalDraft ? { paypal: { create, refresh, onExpired: () => expired?.() } } : {})}
     />
   );
 }

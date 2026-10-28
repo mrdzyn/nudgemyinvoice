@@ -121,7 +121,8 @@ export function parseTotals(v: unknown, draft: InvoiceDraft): Totals | null {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_INSTANT = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,3})?Z$/;
 const PAYPAL_ID = /^[A-Za-z0-9-]{1,64}$/;
-const ERROR_CODE = /^[A-Za-z0-9_.-]{1,80}$/;
+// Matches the database constraint on paypal_draft_operations.last_error_code (colons occur, e.g. http_422:invalid_parameter_value).
+const ERROR_CODE = /^[A-Za-z0-9_.:-]{1,80}$/;
 const PAYPAL_STATES = ["none", "pending", "creating", "created", "unknown", "rejected", "mismatch"];
 
 /**

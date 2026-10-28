@@ -66,8 +66,10 @@ describe("SavedDetailView", () => {
   it("distinguishes PostgreSQL from PayPal and implies no customer notification", () => {
     const html = view({ status: "ok", invoice: inv });
     expect(html).toContain("Not created in PayPal Sandbox");
-    expect(html).toContain("was not created");
-    expect(html).toContain("customer was not notified");
+    expect(html).toContain("does not");
+    expect(html).toContain("create a PayPal invoice");
+    expect(html).toContain("never notifies the customer");
+    // without the real capability the panel is read-only: no action, no fabricated id
     expect(html).not.toMatch(/INV2-|Create PayPal Sandbox draft|Check status/);
     expect(html).not.toContain('<button type="button" class="btn btn-primary"');
   });
@@ -90,9 +92,9 @@ describe("SavedDetailView", () => {
   it("opened from the dashboard shows a neutral read-only notice: never 'saved just now' or a replay", () => {
     const html = view({ status: "ok", invoice: inv }, "opened");
     expect(html).toContain("opened from your list");
-    expect(html).toContain("read-only view");
+    expect(html).toContain("Opening it changes nothing");
     expect(html).not.toMatch(
-      /replayed|HTTP 200|just now|Saved in PostgreSQL\.|No second draft|was not created/,
+      /replayed|HTTP 200|just now|Saved in PostgreSQL\.|No second draft|was not created|nothing was sent/,
     );
     expect(html).toContain("Zeta Studio");
     expect(html).toContain("€324.75");

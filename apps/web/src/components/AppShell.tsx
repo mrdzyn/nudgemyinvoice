@@ -96,8 +96,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         {session ? (
           <Notice kind="info" role="note" icon="ℹ" className="notice-compact">
             <strong>You are signed in to the server.</strong> Parsing, saving, the invoice list and
-            the saved-invoice pages use the server and PostgreSQL. PayPal is not connected in this
-            build: nothing is created in PayPal and no customer is notified.
+            the saved-invoice pages use the server and PostgreSQL. Saving never creates a PayPal
+            invoice. A PayPal Sandbox DRAFT is created only when you explicitly confirm it on a
+            saved invoice, and only if the server has drafting enabled; the customer is never
+            emailed and no payment is collected.
           </Notice>
         ) : null}
         {children}
