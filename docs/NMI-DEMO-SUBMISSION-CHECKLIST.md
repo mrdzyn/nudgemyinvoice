@@ -1,6 +1,6 @@
 # NudgeMyInvoice — Submission checklist and release-blocker register
 
-> Maintained by NMI-DEMO-R0. **Nothing has been submitted, published, uploaded or deployed.** Deadline (owner brief): **Nov 12, 2026, 12:00 PM PST = Nov 13, 2026, 4:00 AM Asia/Manila.** Official rules: https://paypalaihackathon.devpost.com/rules — **not retrievable by automated access during R0 (HTTP 403)**; the owner must verify every row marked "owner" against the live page.
+> Maintained by NMI-DEMO-R0. **Nothing has been submitted, published, uploaded or deployed.** Deadline (owner brief): **Nov 12, 2026, 12:00 PM PST = Nov 13, 2026, 4:00 AM Asia/Manila.** Official rules: https://paypalaihackathon.devpost.com/rules — **not retrievable by R0's own tooling (HTTP 403); independently retrieved and verified by the independent reviewer** for: setup instructions OR hosted demo is acceptable; a public open-source repository/license and a public YouTube video under 3 minutes are required. All other criteria (dates, eligibility, team, sponsor rules) are **not** independently verified here; the owner confirms every row marked "owner" against the live page.
 
 ## A. Official requirements (per owner brief) — status
 
@@ -10,7 +10,7 @@
 | Working, reproducible application | **Met (simulated + local)** | Clean-clone run of `docs/NMI-DEMO-JUDGE-RUNBOOK.md`; `run-e2e-journey.mjs` 32/32. |
 | Public source repository | Owner to confirm repo visibility | https://github.com/mrdzyn/nudgemyinvoice |
 | Visible open-source license | Met | `LICENSE` (MIT), referenced in the README. Owner to confirm it shows in the GitHub sidebar. |
-| Functional judge access (setup instructions OR hosted deployment) | **Met by setup instructions** (recommended) | `docs/NMI-DEMO-DEPLOYMENT-DECISION.md` (Option A). Owner to confirm "setup instructions" is acceptable. |
+| Functional judge access (setup instructions OR hosted deployment) | **Met by setup instructions** (recommended); independently verified that setup instructions satisfy the rule | `docs/NMI-DEMO-DEPLOYMENT-DECISION.md` (Option A). |
 | Public YouTube demo < 3:00 | **Not done** | Script in `docs/NMI-DEMO-VIDEO-SCRIPT.md`; not recorded or uploaded. |
 | Project description + implementation details | Draft ready | `docs/NMI-DEMO-DEVPOST-DRAFT.md` (not submitted). |
 | Available through judging (to Dec 15, 2026) | Met for Option A (repository stays public) | Keep repo public and dependencies resolvable; no hosting to keep alive. |
@@ -18,7 +18,7 @@
 
 ## B. Owner tasks before submission (none done in R0)
 
-- [ ] Verify the live Devpost rules page (requirements, eligibility, judging dates, testing-instructions field, video rules).
+- [ ] Confirm the rules not independently verified (eligibility, team/account, sponsor rules, judging dates, testing-instructions field) on the live Devpost page; the access, repository/license and video-length rules are already independently verified.
 - [ ] Decide deployment (A only, or A + B) — see the decision doc.
 - [ ] Decide whether to authorize real-provider Gate A (OpenAI) and/or Gate B (one new PayPal Sandbox draft) — see the acceptance plan. Without them the demo is SIMULATED and must be labelled so.
 - [ ] Choose the OpenAI model name for the Devpost text (or state "not verified live").
@@ -61,9 +61,9 @@
 | No unintended provider calls | **Confirmed for R0** | R0 made no OpenAI/PayPal request; simulated launcher never constructs the real clients (unit-tested); `PAYPAL_DRAFTS_ENABLED` defaults to false. |
 | No newly exposed debug/test routes | **Confirmed** | Routes: `/health`, `/api/auth/{login,logout,session}`, `/api/invoice-drafts[/parse|/:id[/paypal-draft]]` only. The fake-provider launcher is a separate file never imported by production (unit-tested: `no-fake-provider-switch.test.ts`). |
 | Browser origin restrictions preserved | **Confirmed** | Origin/CSRF tests and journeys unchanged and passing (runbook: login from the exact `WEB_ORIGIN`). |
-| No customer data in browser persistent storage | **Confirmed** | Every journey asserts empty localStorage/sessionStorage/IndexedDB/Cache and no customer data in the navigation URL. |
+| No customer data in browser persistent storage or the browser navigation URL/history | **Confirmed** | Every journey asserts empty localStorage/sessionStorage/IndexedDB/Cache and no customer data in the navigation URL. **Not claimed:** the dashboard search text IS sent in the `q` parameter of the HTTP GET request URL; Fastify strips query strings from its logs; proxy/ingress/CDN log redaction is unverified (blocker 6). |
 
 ## E. Evidence summary on `main` + R0 (all deterministic fakes; none is real-provider evidence)
 
 - `pnpm test` (no database): see the R0 PR for exact counts; `pnpm test:db` on real PostgreSQL 16.15: 277 passed (+ the R0 tests that need no database run in the main suite).
-- Browser journeys rerun on the merged code in R0: C2 88/88, C3 116/116, C4 79/79 (three stale-copy assertions per journey updated to the approved current copy; behavioural assertions unchanged), C5-P1 102/102, **R0 end-to-end 32/32**.
+- Browser journeys rerun on the merged code in R0: C2 88/88, C3 116/116, C4 79/79 (stale-copy assertions updated to the approved current behaviour: **C2 = 3, C3 = 5, C4 = 2**; behavioural assertions unchanged), C5-P1 102/102, **R0 end-to-end 32/32**.

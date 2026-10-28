@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-DEMO-R0 — hackathon submission readiness and judge runbook (documentation, evidence and test-only tooling; NO product change). **Implemented on Draft PR; awaiting independent GPT-6 exact-head audit.** Nothing is submitted, published, deployed or provider-tested.
+- **Current phase:** NMI-DEMO-R0 — hackathon submission readiness and judge runbook (documentation, evidence and test-only tooling; NO product change). **Implemented; audit (2 MINOR documentation findings: precise privacy wording, executable judge instructions) remediated, documentation only; awaiting independent GPT-6 re-audit.** Nothing is submitted, published, deployed or provider-tested.
 - **Status:** The product integration is complete and merged: C1 `32d9132`, C2 `ddffc11`, C3 `988a8f9`, C4 `568faa0`, C5-P0 `7e9c1c9`, and C5-P1 (real PayPal Sandbox DRAFT UI, PR #15, independently audited, owner-approved squash merge) `146252f7a2157966af403e4df59aa8fa83753054`. R0 reconciles the README (the dashboard is no longer described as a placeholder), adds a clean-clone-tested judge runbook with a clearly labelled SIMULATED evaluation mode, a deployment decision (recommends reproducible local setup), a real-provider acceptance plan (NOT executed), demo materials and a release-blocker register. Real-provider status is unchanged: only the 2026-10-26 backend PayPal one-create smoke was real; OpenAI and any complete real-provider browser journey are NOT verified.
 - **Primary branch:** `main` (C5-P1 squash merge `146252f7a2157966af403e4df59aa8fa83753054`).
 - **Working branch:** `docs/nmi-demo-r0-submission-readiness` (Draft PR; implementation SHA `92da0ddb293edce68c6081317dc3f4629cc8c357`).
 - **Active task:** `tasks/NMI-DEMO-R0-readiness.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-DEMO-R0-IMPL
+- **Active handoff:** NMI-DEMO-R0-R1
 - **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
@@ -35,7 +35,7 @@
 - **Manual QA still pending:** VoiceOver/NVDA, real touch, Safari/Firefox, 400% browser zoom, HTTPS `__Host-` cookie and hosted reverse proxy; no full WCAG 2.2 AA or deployment claim.
 - **AG Studio (D1):** license/trial/keys unverified; deferred. Native table remains.
 - **Provider boundary:** real OpenAI Responses inference **NOT TESTED**, and no new provider call authorized; prior PayPal draft-only Sandbox one-create smoke budget is exhausted. No new PayPal write authorized, and `PAYPAL_DRAFTS_ENABLED=false` remains default.
-- **Later integration (R1, needs owner decisions):** record/upload the video; verify the live Devpost rules (not retrievable in R0, HTTP 403); choose A-only vs A+B hosting; separately authorize real-provider Gates A (OpenAI) and B (one new PayPal Sandbox draft) per `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`; decide on a visible SIMULATED badge. Nothing was submitted.
+- **Later integration (R1, needs owner decisions):** record/upload the video; confirm the Devpost criteria not yet independently verified (eligibility, team, sponsor rules, dates; the access, repository/license and video-length rules were independently verified); choose A-only vs A+B hosting; separately authorize real-provider Gates A (OpenAI) and B (one new PayPal Sandbox draft) per `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`; decide on a visible SIMULATED badge. Nothing was submitted.
 - **Other deferred:** PayPal send/grant issuance/reminder automation/webhooks/payment reconciliation; SQLite-versus-Postgres decision, hosting strategy and judge access; editing existing saved drafts.
 - **Operational limitations:** in-memory per-process auth throttling; approval consumption and audit logging separate statements; DB least-privilege grants a deployment prerequisite.
 - **Do not** merge, deploy, publish, submit to Devpost, upload the video, call PayPal/OpenAI, reset the completed Sandbox test budget or enable PayPal drafting by default without separate owner authorization.

@@ -18,7 +18,7 @@ The status below reflects `main` after NMI-UI-01C5-P1. Evidence is labelled hone
 - **Real invoice dashboard:** owner-scoped, paginated list with server-side filters and search (`GET /api/invoice-drafts`) and read-only saved-invoice pages.
 - **PayPal Sandbox DRAFT UI:** explicit confirmation dialog, single request per confirmation, strict response validation, durable read-back and a read-only *Check status*.
 - **Safe operation reconciliation:** a durable fenced state machine (`pending → creating → created | rejected | unknown | mismatch`); an uncertain outcome is never retried blindly.
-- **Ownership and CSRF protections:** owner-scoped reads/writes (including PayPal draft creation), strict CSP, no customer data in browser storage.
+- **Ownership and CSRF protections:** owner-scoped reads/writes (including PayPal draft creation), strict CSP, no customer data in persistent browser storage or in the browser navigation URL. (Dashboard search text is sent to the server in the `q` query parameter of the HTTP `GET` request; Fastify strips query strings from its logs; proxy/ingress/CDN log redaction is a deployment prerequisite and untested.)
 
 ### VERIFIED AGAINST REAL PROVIDERS
 - **Historical backend PayPal Sandbox one-create smoke only** (`NMI-P2-I2-SANDBOX-SMOKE-01`, 2026-10-26): real OAuth 200, one invoice-create 201, one read-only show 200; fictitious USD 5.00; DRAFT; no send/remind/pay. That one-create budget is exhausted.
@@ -53,7 +53,9 @@ Prerequisites: Node ≥ 22, pnpm 10, PostgreSQL 16, a random `SESSION_SECRET` (�
 git clone https://github.com/mrdzyn/nudgemyinvoice.git && cd nudgemyinvoice
 pnpm install --frozen-lockfile
 # Create a throw-away PostgreSQL database, set DATABASE_URL, then apply the seven migrations in journal order:
-for t in $(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join(" "))'); do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql"; done
+# (this subshell stops at the first failing migration; see docs/NMI-DEMO-JUDGE-RUNBOOK.md section 4)
+( tags="$(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join("\n"))')" || exit 1
+  while IFS= read -r t; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t" >&2; exit 1; }; echo "applied $t"; done <<< "$tags" )
 # Provision the single operator (password from the environment, never printed or committed):
 NMI_OPERATOR_USERNAME=judge NMI_OPERATOR_PASSWORD='<choose one>' pnpm --filter @nmi/api provision-operator
 # Start the API (needs SESSION_SECRET, DATABASE_URL, WEB_ORIGIN=http://localhost:5173) and the web app:

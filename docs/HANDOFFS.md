@@ -1147,4 +1147,24 @@ README reconciled with the implemented product; judge runbook (clean-clone teste
 ### Not verified
 Real OpenAI and PayPal (never called in R0), Docker path of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
+## Handoff: NMI-DEMO-R0-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R0-readiness.md` (section "Audit remediation: two MINOR documentation findings")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner decisions for R1
+- **Branch / PR:** `docs/nmi-demo-r0-submission-readiness`, [Draft PR #16](https://github.com/mrdzyn/nudgemyinvoice/pull/16)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no application, database, provider, security, test-harness or QA-evidence change; no merge, deployment, publication, Devpost submission, provider call or budget reset.
+
+### What changed
+Privacy wording made precise (navigation URL/history and persistent storage: no customer data; search text in the HTTP GET `q` parameter; Fastify strips query strings; proxy/ingress/CDN redaction unverified and a prerequisite) in the Devpost draft, README and checklist; judge runbook scoped honestly (Mode A + local PostgreSQL tested; Mode B and Docker untested), invalid shell placeholders replaced with valid secure instructions, and a fail-fast migration loop that was tested in bash and zsh (a first `set -e` version was found not to stop and was replaced); checklist counts corrected (C2=3, C3=5, C4=2); Devpost rules status updated to the independently verified items only.
+
+### Re-audit focus
+1. No remaining public statement implies no customer data in any URL; the `q` caveat and the proxy-log prerequisite are visible in the Devpost draft, README, checklist and deployment decision.
+2. Runbook code blocks contain no unquoted angle-bracket placeholders or sample secrets; the migration block stops at the first failure, keeps journal order and checks the count of seven.
+3. Rules claims are limited to what was independently verified; nothing else is overstated.
+4. `git diff` against the audited head touches only documentation files.
+
+### Not verified
+Real OpenAI and PayPal (never called), Docker path and Mode B of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
+
 <!-- HANDOFF_ENTRIES_END -->

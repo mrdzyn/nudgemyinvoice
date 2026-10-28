@@ -35,7 +35,14 @@ OpenAI **Responses API** via the official `openai` SDK, structured output valida
 `apps/web` (React/Vite/TypeScript), `apps/api` (Fastify, strict Zod boundaries), `packages/db` (Drizzle + PostgreSQL), `packages/shared` (exact money, schemas), `packages/ai` (parser), `packages/paypal` (allow-listed Sandbox adapter), `packages/domain` (approval gate). Monetary values are decimal strings / integer minor units; no floating-point money.
 
 ## Security and privacy
-Single operator, server-side sessions (HttpOnly cookie), Origin + CSRF checks on every mutation, login throttling, owner-scoped reads and writes, strict CSP (`connect-src 'self'`), no customer data in browser storage or URLs, redacted structured logs, credentials only server-side. Money-moving actions are **never** triggered by AI or background jobs; a draft is created only after an explicit human confirmation. Known limits: sessions throttling is in-memory; an HTTPS deployment (`__Host-` cookie, proxy log redaction of the search query) has **not** been tested.
+Single operator, server-side sessions (HttpOnly cookie), Origin + CSRF checks on every mutation, login throttling, owner-scoped reads and writes, strict CSP (`connect-src 'self'`), redacted structured logs, credentials only server-side. Money-moving actions are **never** triggered by AI or background jobs; a draft is created only after an explicit human confirmation. Known limits: sessions throttling is in-memory; an HTTPS deployment (`__Host-` cookie, proxy log redaction of the search query) has **not** been tested.
+
+**Where customer data can and cannot appear (precise):**
+- **Browser navigation URL and history:** no customer data.
+- **Persistent browser storage** (localStorage, sessionStorage, IndexedDB, cache): no customer data.
+- **HTTP request URL of the dashboard search:** the search text **is** sent to the server in the `q` query parameter of `GET /api/invoice-drafts?...` (it may be a customer name, e-mail address or invoice-id prefix).
+- **Fastify (API) logs:** query strings are stripped; only URL paths are logged.
+- **Reverse-proxy, ingress, CDN/WAF and platform access logs:** **unverified** (no hosted deployment was tested). Redacting or omitting the query string of `/api/invoice-drafts` there is a **deployment prerequisite** before any hosted use.
 
 ## Challenges and lessons
 - Making "unknown" a first-class outcome: an aborted request or timeout does not prove the server stopped, so the UI never retries blindly and re-reads durable state.
@@ -62,4 +69,4 @@ React, Vite, TypeScript, Fastify, Drizzle ORM, PostgreSQL, Zod, Vitest, OpenAI R
 No hosted deployment. Follow `docs/NMI-DEMO-JUDGE-RUNBOOK.md` (clean-clone tested): install Node ≥ 22, pnpm 10 and PostgreSQL 16, then either run the **SIMULATED evaluation mode** (no credentials; OpenAI and PayPal are stand-ins and no provider request is made) or configure **your own** OpenAI key and PayPal **Sandbox** app. The owner's credentials are never shared. A one-command automated check reproduces the full workflow: `node design/evidence/NMI-DEMO-R0/run-e2e-journey.mjs`.
 
 ## Eligibility and compliance (owner to confirm)
-Original work; open-source MIT license; Sandbox only; no real customer data; no unlicensed assets. Eligibility, team and sponsor rules must be checked by the owner against the official Devpost rules (not retrievable during R0).
+Original work; open-source MIT license; Sandbox only; no real customer data; no unlicensed assets. The official rules (https://paypalaihackathon.devpost.com/rules) were independently retrieved and verified by the independent reviewer: repository setup/run instructions **or** a hosted demo satisfy the functional-access requirement, and a public open-source repository/license and a public YouTube video under 3 minutes are required. Eligibility, team/account and sponsor-tool questions, and every other criterion, remain the owner's to confirm; this draft makes no claim about them.

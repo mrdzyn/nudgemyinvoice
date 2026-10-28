@@ -4,7 +4,7 @@
 
 ## Requirement being satisfied
 
-The owner's brief states the official PayPal Hackathon (Devpost) requires **functional judge access through setup instructions OR a hosted deployment**, available through the judging period (to **December 15, 2026**), with a public repository, visible open-source license and a public YouTube demo under 3 minutes. **The Devpost rules page could not be retrieved during R0 (HTTP 403 for automated access); these requirements are taken from the owner's brief and `docs/HACKATHON-PLAN.md` and must be re-verified by the owner on the official page before submission.** Hosting is therefore **not assumed to be mandatory**.
+The owner's brief states the official PayPal Hackathon (Devpost) requires **functional judge access through setup instructions OR a hosted deployment**, available through the judging period (to **December 15, 2026**), with a public repository, visible open-source license and a public YouTube demo under 3 minutes. **The official rules page was not retrievable by R0's own tooling (HTTP 403), but it has since been independently retrieved and verified by the independent reviewer: repository setup/run instructions OR a hosted demo satisfy the functional-access requirement, and a public open-source repository/license and a public YouTube video under 3 minutes are required.** Other criteria (judging dates, eligibility, sponsor rules) come from the owner's brief and `docs/HACKATHON-PLAN.md` and remain for the owner to confirm. Hosting is therefore **not mandatory**.
 
 ## Option A — Reproducible local judge setup (recommended default)
 

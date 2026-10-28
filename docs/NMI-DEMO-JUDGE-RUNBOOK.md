@@ -1,6 +1,6 @@
 # NudgeMyInvoice — Judge runbook
 
-> **Status:** commands below were executed from a **clean clone** of this repository on macOS (Node 24.21.0, pnpm 10.28.0, PostgreSQL 16.15, Chrome headless) during NMI-DEMO-R0 and worked as written. They are repeatable on any machine with the prerequisites. No private credentials, passwords or undisclosed setup are needed.
+> **What was tested.** The **Mode A (simulated) path with a local PostgreSQL** was executed from a **clean clone** on macOS (Node 24.21.0, pnpm 10.28.0, PostgreSQL 16.15, headless Chrome) during NMI-DEMO-R0 and worked. **Not tested:** **Mode B** (your own real OpenAI/PayPal credentials: never run), the **Docker** database option, and any non-macOS platform. Those parts are instructions only. No private credentials, passwords or undisclosed setup are needed.
 
 NudgeMyInvoice is a **PayPal Sandbox-only** hackathon app: a freelancer describes an invoice in plain language, reviews and edits the proposal, saves it to PostgreSQL, sees it on a dashboard, and can *explicitly* confirm creation of a PayPal Sandbox **DRAFT** invoice. It never sends an invoice, collects a payment or contacts the customer.
 
@@ -42,9 +42,10 @@ pg_ctl -D /tmp/nmi-pg -o "-p 54370 -c unix_socket_directories='' -c listen_addre
 createdb -h 127.0.0.1 -p 54370 -U nmi nmi_judge
 export DATABASE_URL=postgres://nmi@127.0.0.1:54370/nmi_judge
 
-# Option 2: Docker (untested in R0)
-# docker run -d --name nmi-pg -e POSTGRES_PASSWORD=<choose-a-throwaway> -e POSTGRES_DB=nmi_judge -p 54370:5432 postgres:16
-# export DATABASE_URL=postgres://postgres:<choose-a-throwaway>@127.0.0.1:54370/nmi_judge
+# Option 2: Docker (UNTESTED in R0; uncomment to use)
+# NMI_DB_PASSWORD="$(openssl rand -hex 16)"
+# docker run -d --name nmi-pg -e POSTGRES_PASSWORD="$NMI_DB_PASSWORD" -e POSTGRES_DB=nmi_judge -p 127.0.0.1:54370:5432 postgres:16
+# export DATABASE_URL="postgres://postgres:$NMI_DB_PASSWORD@127.0.0.1:54370/nmi_judge"
 ```
 
 `--auth=trust` is acceptable only for a local throw-away cluster bound to 127.0.0.1.
@@ -54,12 +55,18 @@ export DATABASE_URL=postgres://nmi@127.0.0.1:54370/nmi_judge
 There is no `db:migrate` script. Apply the seven committed migrations in journal order (they are plain SQL):
 
 ```bash
-for t in $(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join(" "))'); do
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql" && echo "applied $t"
-done
+(
+  tags="$(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join("\n"))')" || exit 1
+  [ "$(printf '%s\n' "$tags" | wc -l)" -eq 7 ] || { echo "expected 7 migrations in the journal" >&2; exit 1; }
+  while IFS= read -r t; do
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t: stopping" >&2; exit 1; }
+    echo "applied $t"
+  done <<< "$tags"
+)
+rc=$?; [ "$rc" -eq 0 ] && echo "all 7 migrations applied" || echo "SETUP INCOMPLETE: drop and recreate the database, fix the error, then start again"
 ```
 
-Expected: `applied 0000_…` through `applied 0006_…`, and 8 tables in the `public` schema.
+Works in bash and zsh. Each `psql` call is checked explicitly (`ON_ERROR_STOP` plus `|| exit 1` inside a subshell, so your terminal is not closed), so the loop stops at the **first** failing migration and a later one never runs on a half-applied schema; if it fails, drop and recreate the database and start again. Migrations run in journal order. Expected: `applied 0000_…` through `applied 0006_…`, then `all 7 migrations applied`, and 8 tables in the `public` schema (`psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public'"`).
 
 ## 5. Provision the single operator
 
@@ -100,13 +107,20 @@ What the simulated parser understands: simple English such as
 
 ### Mode B — your own providers
 
+**UNTESTED by the project** (real providers were never run). Enter your own secrets at silent prompts so they never appear in the command line, your shell history or this repository (bash or zsh):
+
 ```bash
 # Optional: real AI parsing with YOUR OpenAI key and a model YOU choose and have verified.
-export OPENAI_API_KEY=<your key>     OPENAI_MODEL=<a currently supported model you chose>
+printf 'OpenAI API key (hidden): ';  read -rs OPENAI_API_KEY; echo; export OPENAI_API_KEY
+printf 'OpenAI model name you verified: '; read -r OPENAI_MODEL; export OPENAI_MODEL
 # Optional: real PayPal Sandbox DRAFT creation with YOUR Sandbox REST app (Sandbox, never Live).
-export PAYPAL_DRAFTS_ENABLED=true PAYPAL_CLIENT_ID=<your Sandbox client id> PAYPAL_CLIENT_SECRET=<your Sandbox secret>
+printf 'PayPal SANDBOX client id: ';   read -r PAYPAL_CLIENT_ID; export PAYPAL_CLIENT_ID
+printf 'PayPal SANDBOX secret (hidden): '; read -rs PAYPAL_CLIENT_SECRET; echo; export PAYPAL_CLIENT_SECRET
+export PAYPAL_DRAFTS_ENABLED=true
 pnpm --filter @nmi/api start
 ```
+
+Choose the OpenAI model from the models available to your own account (the app has no default and the project did not verify any model); skip the OpenAI lines to keep manual entry. Skip the PayPal lines to keep drafting off.
 
 - Create your own Sandbox REST app at the PayPal Developer dashboard (Sandbox → Apps & Credentials) with the **Invoicing** feature enabled and a Sandbox **Business** (merchant) account. Do not use Live credentials; the server refuses any non-Sandbox PayPal base URL.
 - Keep credentials in your shell or an ignored `.env` file. Never commit them. Without these variables the app still works: parsing falls back to manual entry and PayPal draft creation answers `paypal_disabled`.
@@ -150,7 +164,7 @@ Other checks: `pnpm validate` (lint, format, typecheck, tests, build, bundle sca
 
 ## 10. Changing ports
 
-If port 3001 is busy: set `PORT=<free port>` for the API **and** run the web dev server with `NMI_API_ORIGIN=http://127.0.0.1:<free port>`. If port 5173 is busy, set `WEB_ORIGIN` to the exact new web origin and start Vite with `--port` on it.
+If port 3001 is busy: set `PORT` to a free port (for example `PORT=3002`) for the API **and** run the web dev server with `NMI_API_ORIGIN` pointing at it (for example `NMI_API_ORIGIN=http://127.0.0.1:3002 pnpm --filter @nmi/web dev`). If port 5173 is busy, set `WEB_ORIGIN` to the exact new web origin and start Vite with `--port` on it.
 
 ## 11. Safe teardown and cleanup
 
