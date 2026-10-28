@@ -1125,4 +1125,66 @@ Every PayPal draft POST answer now fails closed until a read-back bound to that 
 ### Not verified
 Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction.
 
+## Handoff: NMI-DEMO-R0-IMPL
+
+- **Task / phase:** `tasks/NMI-DEMO-R0-readiness.md`
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner decisions for R1
+- **Branch / PR:** `docs/nmi-demo-r0-submission-readiness`, [Draft PR #16](https://github.com/mrdzyn/nudgemyinvoice/pull/16) against `main` (starting main `146252f7a2157966af403e4df59aa8fa83753054`)
+- **Implementation SHA:** `92da0ddb293edce68c6081317dc3f4629cc8c357` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. Documentation, evidence and test-only tooling; NO product change, merge, deployment, publication, Devpost submission or real provider call.
+
+### What changed
+README reconciled with the implemented product; judge runbook (clean-clone tested) with SIMULATED and own-credentials modes; deployment decision (recommends local setup); real-provider acceptance plan (NOT executed); video script, Devpost draft, submission checklist and release-blocker register; test-only SIMULATED evaluation launcher and a final end-to-end journey (32/32); a guard test that the fakes cannot reach production; stale-copy assertions in the C2/C3/C4 journeys updated to the approved current behaviour and rerun (88/88, 116/116, 79/79).
+
+### Audit focus
+1. README/STATUS/Devpost wording: implemented vs real-provider-verified vs not implemented; no mock evidence presented as real; no invented metrics, sponsorship or verification.
+2. Runbook commands match the repository (migration loop, provisioning, start commands, origins) and the claim that they were run from a clean clone.
+3. The SIMULATED launcher cannot be reached from production (`no-fake-provider-switch.test.ts`; `server.ts` unchanged) and refuses without opt-in, in production and for non-Sandbox hosts.
+4. Historical journey edits changed only assertions made stale by approved later copy/functionality; behavioural checks unchanged.
+5. The Devpost rules page could not be fetched (HTTP 403); requirements come from the owner's brief and must be verified by the owner.
+
+### Not verified
+Real OpenAI and PayPal (never called in R0), Docker path of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
+
+## Handoff: NMI-DEMO-R0-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R0-readiness.md` (section "Audit remediation: two MINOR documentation findings")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner decisions for R1
+- **Branch / PR:** `docs/nmi-demo-r0-submission-readiness`, [Draft PR #16](https://github.com/mrdzyn/nudgemyinvoice/pull/16)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no application, database, provider, security, test-harness or QA-evidence change; no merge, deployment, publication, Devpost submission, provider call or budget reset.
+
+### What changed
+Privacy wording made precise (navigation URL/history and persistent storage: no customer data; search text in the HTTP GET `q` parameter; Fastify strips query strings; proxy/ingress/CDN redaction unverified and a prerequisite) in the Devpost draft, README and checklist; judge runbook scoped honestly (Mode A + local PostgreSQL tested; Mode B and Docker untested), invalid shell placeholders replaced with valid secure instructions, and a fail-fast migration loop that was tested in bash and zsh (a first `set -e` version was found not to stop and was replaced); checklist counts corrected (C2=3, C3=5, C4=2); Devpost rules status updated to the independently verified items only.
+
+### Re-audit focus
+1. No remaining public statement implies no customer data in any URL; the `q` caveat and the proxy-log prerequisite are visible in the Devpost draft, README, checklist and deployment decision.
+2. Runbook code blocks contain no unquoted angle-bracket placeholders or sample secrets; the migration block stops at the first failure, keeps journal order and checks the count of seven.
+3. Rules claims are limited to what was independently verified; nothing else is overstated.
+4. `git diff` against the audited head touches only documentation files.
+
+### Not verified
+Real OpenAI and PayPal (never called), Docker path and Mode B of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
+
+## Handoff: NMI-DEMO-R0-R2
+
+- **Task / phase:** `tasks/NMI-DEMO-R0-readiness.md` (section "Audit remediation: residual MINOR")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner decisions for R1
+- **Branch / PR:** `docs/nmi-demo-r0-submission-readiness`, [Draft PR #16](https://github.com/mrdzyn/nudgemyinvoice/pull/16)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no executable code, SQL migration, provider, test harness or historical QA-evidence change; no merge, deployment, publication, Devpost submission, provider call or budget reset.
+
+### What changed
+The runbook's migration snippet now exits with the migration result (final `(exit "$rc")`), keeping the journal-order loop and the seven-entry count check; the README quick start chains migrations and operator provisioning with `&&` (a failed migration never reaches provisioning), adds the count check, and replaces the literal operator-password placeholder with a generated credential; a trailing `#` comment that broke interactive zsh was removed.
+
+### Re-audit focus
+1. The final statement of the runbook block preserves a nonzero status and does not close an interactive shell; success still exits 0 with the success message only on success.
+2. README: no pasteable placeholder password; provisioning only after all seven migrations; the start commands are a separate block gated by prose.
+3. Verification claims match what was run: blocks extracted from the documents and executed in bash and zsh, script and interactive, for success, unreachable database and conflicting schema; later migrations never ran after a failure.
+4. `git diff` against the audited head touches only documentation files.
+
+### Not verified
+Real OpenAI and PayPal (never called), the Mode B and Docker parts of the runbook, other operating systems/shells, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
+
 <!-- HANDOFF_ENTRIES_END -->

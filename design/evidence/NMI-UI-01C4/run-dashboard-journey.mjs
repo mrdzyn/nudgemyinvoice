@@ -374,7 +374,7 @@ try {
     check(g, "GET /api/invoice-drafts -> 200 and the empty state is shown", LIST(m)[0]?.status === 200 && (await ev("!!document.getElementById('dash-empty')")) && /No saved invoices yet/.test(t), t.slice(0, 200));
     check(g, "no fixture rows, 'DEMO / SYNTHETIC' banner or sample label appears", !/DEMO \/ SYNTHETIC|fabricated|Acme|Northwind|sample rows/i.test(t) && !/sample/i.test(await ev("document.title")), await ev("document.title"));
     check(g, "the list request is a GET with limit=20 and no cursor/filters", (() => { const p = q(m, LIST(m)[0]); return p.get("limit") === "20" && !p.has("cursor") && !p.has("currency") && !p.has("status") && !p.has("q"); })());
-    check(g, "the shell says the list is server-backed and PayPal is not connected", /invoice list and the\s+saved-invoice pages use the server/.test(t) && /PayPal is not connected/.test(t));
+    check(g, "the shell says the list is server-backed and (current copy since C5-P1) that saving never creates a PayPal invoice", /invoice list and the\s+saved-invoice pages use the server/.test(t) && /Saving never creates a PayPal\s+invoice/.test(t));
     await shot("01-real-empty.jpg");
   }
 
@@ -518,7 +518,7 @@ try {
     const t = await bodyText();
     check(g, "shows the real UUID, customer, EUR currency and the exact server total from PostgreSQL", (await ev("document.getElementById('saved-id').textContent")) === target[0] && /Vienna Cafe/.test(t) && /EUR/.test(t) && new RegExp("€" + (Number(sql(`SELECT total_minor FROM invoices WHERE id='${target[0]}'`)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 }).replace(".", "\\.")).test(t), t.slice(0, 300));
     check(g, "the notice is the neutral 'opened from your list' one, never 'saved just now' or a replay", /opened from your list/.test(t) && !/replayed|HTTP 200|just now|No second draft|Saved in PostgreSQL\./.test(t));
-    check(g, "no edit, delete, PayPal-create or send control exists", !/Edit|Delete|Create PayPal|Send|Remind/i.test(await ev("[...document.querySelectorAll('main button')].map((b) => b.textContent).join('|')")));
+    check(g, "no edit, delete, send or remind control exists; the only PayPal control is the explicit, confirmation-gated create action (since C5-P1)", await ev("(() => { const b = [...document.querySelectorAll('main button')].map((x) => x.textContent.trim()); return !b.some((t) => /Edit|Delete|Send|Remind/i.test(t)) && b.filter((t) => /PayPal/i.test(t)).every((t) => /^Create PayPal Sandbox draft/.test(t)); })()"));
     check(g, "the title is not labelled fixture or sample", !/fixture|sample/i.test(await ev("document.title")));
     await shot("06-opened-detail.jpg");
     const m2 = mark();

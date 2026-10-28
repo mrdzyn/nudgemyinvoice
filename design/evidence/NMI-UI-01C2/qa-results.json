@@ -1,5 +1,5 @@
 {
-  "chrome": "Chrome/156.0.8078.48",
+  "chrome": "Chrome/156.0.8078.74",
   "passed": 88,
   "failed": 0,
   "results": [
@@ -59,7 +59,7 @@
     },
     {
       "group": "REAL composer opens with no request",
-      "name": "shell labels fixture data",
+      "name": "shell states which features use the server and that no customer is ever emailed (current approved copy)",
       "pass": true,
       "detail": ""
     },
@@ -95,7 +95,7 @@
     },
     {
       "group": "REAL parse -> review (deterministic FAKE model, not OpenAI)",
-      "name": "Review says it is a server proposal, not saved, and saving is simulated",
+      "name": "Review says it is a server proposal, not saved yet, and (current copy since C3) that saving writes to PostgreSQL, with no simulated-save claim",
       "pass": true,
       "detail": ""
     },
@@ -497,7 +497,7 @@
     },
     {
       "group": "Global invariants",
-      "name": "the only /api routes the browser used are the 3 auth routes and the parse route",
+      "name": "the only /api routes the browser used are the 3 auth routes, the parse route and (since C4) the read-only dashboard list",
       "pass": true,
       "detail": ""
     },

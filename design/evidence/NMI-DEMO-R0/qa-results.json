@@ -1,0 +1,199 @@
+{
+  "chrome": "Chrome/156.0.8078.74",
+  "passed": 32,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafting ENABLED on the API but backed ONLY by the deterministic fake client; no OpenAI key/model; the real PayPal client is never constructed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL login (disposable operator, random password)",
+      "name": "a protected deep link shows only the sign-in screen and no invoice route is requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL login (disposable operator, random password)",
+      "name": "the real server signs the operator in and the real dashboard loads (empty account, no fixtures)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the composer sends the text to the REAL parse route and the SIMULATED parser's proposal opens the editable Review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "Review is filled from the validated server proposal (customer, e-mail, USD, due date, 8% tax, 2 x 250)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "Review tells the operator it is a proposal to verify, not saved yet, and that saving writes to PostgreSQL (no PayPal)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "human review: nothing is saved until the operator saves (zero invoices so far)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the operator edits one field during review (due date) and saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "exactly one real POST /api/invoice-drafts -> 201; one durable row in PostgreSQL with the OPERATOR'S edit (2030-02-01)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the saved page shows the real id and the server-computed total $540.00 (2 x 250.00 + 8% tax), saved in PostgreSQL only",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the real dashboard lists the saved invoice from PostgreSQL with 'No PayPal draft' and a USD card",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the confirmation dialog names the invoice, customer, $540.00 USD and says no email, no payment, nothing sent",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the SIMULATED provider's DRAFT is verified by the real service and the page shows its id, DRAFT and 'not emailed'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "durable truth agrees: one POST (201), operation 'created', one attempt, id linked on the invoice, ONE fake provider create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "the page re-read the durable state with GET after the POST and shows the same id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL end-to-end: natural-language proposal -> review -> save -> dashboard -> saved invoice -> Sandbox DRAFT -> durable refresh",
+      "name": "back on the dashboard the same invoice now reads 'PayPal draft created' (state from the server)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL second currency (EUR) through the clarification loop",
+      "name": "a request with no due date makes the REAL pipeline ask a clarification question (no guess)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL second currency (EUR) through the clarification loop",
+      "name": "the answer is appended, the same endpoint is called again and Review opens with EUR",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL second currency (EUR) through the clarification loop",
+      "name": "saving stores a EUR invoice with the exact server total 599.97 (3 x 199.99)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL second currency (EUR) through the clarification loop",
+      "name": "the dashboard keeps USD and EUR in separate cards with no combined total",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "only the explicit confirmation created a draft: exactly one fake provider create for two saved invoices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "the SIMULATED parser handled exactly the 3 parse requests (no real OpenAI client exists in this run)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "no browser request left the app origin (no OpenAI, PayPal or other host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "no send, remind, cancel, refund, payment or webhook route was requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "the browser used only the auth, parse, save/list/detail and PayPal-draft routes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "no customer data in localStorage/sessionStorage/IndexedDB/Cache and none in the navigation URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "the API log holds no customer name/e-mail, CSRF token or cookie value",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Boundaries",
+      "name": "no console errors or uncaught exceptions in the browser",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "Sign out locks the workspace at once and the server session is revoked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout",
+      "name": "no customer data remains in the page after sign-out",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
