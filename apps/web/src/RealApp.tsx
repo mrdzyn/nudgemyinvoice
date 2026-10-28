@@ -75,6 +75,10 @@ function Workspace({
     (query: ListQuery, signal: AbortSignal) => invoiceApi.list(query, signal),
     [invoiceApi],
   );
+  const createPayPalDraft = useCallback(
+    (id: string, signal: AbortSignal) => invoiceApi.createPayPalDraft(id, csrfToken, signal),
+    [invoiceApi, csrfToken],
+  );
   const getInvoice = useCallback(
     (id: string, signal: AbortSignal) => invoiceApi.get(id, signal),
     [invoiceApi],
@@ -141,6 +145,7 @@ function Workspace({
         save,
         getInvoice,
         listInvoices,
+        createPayPalDraft,
         sessionExpired: expire,
         setSaveGuard,
       }}

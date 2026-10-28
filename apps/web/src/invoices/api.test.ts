@@ -309,6 +309,35 @@ describe("detail request and results", () => {
   ])("treats %s as malformed", async (_n, body) => {
     expect(await get(() => reply(200, body))).toEqual({ kind: "malformed" });
   });
+  it("accepts the sanitized operation error codes the backend really stores, including colons", async () => {
+    for (const code of [
+      "http_422:invalid_parameter_value",
+      "timeout",
+      "payload_digest_mismatch",
+      "created_not_visible",
+    ]) {
+      const r = await get(() =>
+        reply(
+          200,
+          detail({ paypal: { state: "rejected", paypalInvoiceId: null, lastErrorCode: code } }),
+        ),
+      );
+      expect(r, code).toMatchObject({
+        kind: "ok",
+        invoice: { paypal: { state: "rejected", lastErrorCode: code } },
+      });
+    }
+    for (const bad of ["<b>x</b>", "has space", "a".repeat(81), ""]) {
+      expect(
+        await get(() =>
+          reply(
+            200,
+            detail({ paypal: { state: "rejected", paypalInvoiceId: null, lastErrorCode: bad } }),
+          ),
+        ),
+      ).toEqual({ kind: "malformed" });
+    }
+  });
   it("accepts a created PayPal state with a server-provided id", async () => {
     const r = await get(() =>
       reply(
@@ -481,5 +510,189 @@ describe("list request and results", () => {
     expect(await list(() => new Response("<html>", { status: 200 }))).toEqual({
       kind: "malformed",
     });
+  });
+});
+
+describe("PayPal Sandbox draft transport (POST /api/invoice-drafts/:id/paypal-draft)", () => {
+  const PID = "0b0e7a52-8f73-4b1c-9c64-3a1d2f5a8e11";
+  const ok = { paypalInvoiceId: "INV2-ABCD-1234", status: "DRAFT", replayed: false };
+  const post = (res: () => Response | Promise<Response>, signal = sig()) =>
+    createInvoiceApi(async () => res()).createPayPalDraft(PID, "csrf-9", signal);
+
+  it("is a credentialed, no-store POST of the opaque id with the CSRF header and no body", async () => {
+    let seen: { url: string; init: RequestInit & { headers: Record<string, string> } } | undefined;
+    const r = await createInvoiceApi(async (url, init) => {
+      seen = { url, init: init as never };
+      return reply(201, ok);
+    }).createPayPalDraft(PID, "csrf-9", sig());
+    expect(r).toEqual({ kind: "created", paypalInvoiceId: "INV2-ABCD-1234", replayed: false });
+    expect(seen?.url).toBe(`/api/invoice-drafts/${PID}/paypal-draft`);
+    const i = seen!.init;
+    expect([i.method, i.credentials, i.cache, i.redirect]).toEqual([
+      "POST",
+      "same-origin",
+      "no-store",
+      "error",
+    ]);
+    expect(i.headers).toEqual({ "cache-control": "no-store", "x-csrf-token": "csrf-9" });
+    expect(i.body).toBeUndefined();
+  });
+  it("never requests a non-uuid id (no request at all)", async () => {
+    let called = false;
+    const r = await createInvoiceApi(
+      async () => ((called = true), reply(201, ok)),
+    ).createPayPalDraft("../../auth/logout", "c", sig());
+    expect(r).toEqual({ kind: "not-found" });
+    expect(called).toBe(false);
+  });
+  it("201 is created now and 200 is an existing draft (replayed)", async () => {
+    expect(await post(() => reply(201, ok))).toMatchObject({ kind: "created", replayed: false });
+    expect(await post(() => reply(200, { ...ok, replayed: true }))).toMatchObject({
+      kind: "created",
+      replayed: true,
+    });
+  });
+  it.each<[string, number, unknown]>([
+    ["201 claiming replayed", 201, { ...ok, replayed: true }],
+    ["200 claiming it was just created", 200, { ...ok, replayed: false }],
+    ["extra key", 201, { ...ok, sent: true }],
+    ["missing replayed", 201, { paypalInvoiceId: "INV2-ABCD-1234", status: "DRAFT" }],
+    ["status SENT", 201, { ...ok, status: "SENT" }],
+    ["status lowercase", 201, { ...ok, status: "draft" }],
+    ["empty invoice id", 201, { ...ok, paypalInvoiceId: "" }],
+    ["markup in the invoice id", 201, { ...ok, paypalInvoiceId: "<img src=x>" }],
+    ["numeric invoice id", 201, { ...ok, paypalInvoiceId: 5 }],
+    ["overlong invoice id", 201, { ...ok, paypalInvoiceId: "A".repeat(65) }],
+    ["non-boolean replayed", 201, { ...ok, replayed: "no" }],
+    ["array body", 201, []],
+    ["empty object (an arbitrary 200)", 200, {}],
+    ["the C3 save record shape", 200, { id: PID, replayed: true }],
+  ])("a success status with %s is UNCERTAIN, never a created draft", async (_n, status, body) => {
+    expect(await post(() => reply(status, body))).toEqual({
+      kind: "uncertain",
+      cause: "malformed",
+    });
+  });
+  it("a non-JSON success body is uncertain", async () => {
+    expect(await post(() => new Response("<html>", { status: 201 }))).toEqual({
+      kind: "uncertain",
+      cause: "malformed",
+    });
+    expect(await post(() => new Response(null, { status: 200 }))).toEqual({
+      kind: "uncertain",
+      cause: "malformed",
+    });
+  });
+  it("maps every documented error status and body", async () => {
+    expect(await post(() => reply(409, { error: "in_progress" }))).toEqual({ kind: "in-progress" });
+    expect(await post(() => reply(409, { error: "reconciliation_pending" }))).toEqual({
+      kind: "reconciliation-pending",
+    });
+    expect(
+      await post(() => reply(422, { error: "mapping_refused", reason: "rounding_required_tax" })),
+    ).toEqual({
+      kind: "mapping-refused",
+      reason: "rounding_required_tax",
+    });
+    expect(
+      await post(() => reply(502, { error: "paypal_mismatch", code: "payload_digest_mismatch" })),
+    ).toEqual({
+      kind: "paypal-mismatch",
+      code: "payload_digest_mismatch",
+    });
+    expect(
+      await post(() => reply(502, { error: "paypal_rejected", code: "paypal_validation_error" })),
+    ).toEqual({
+      kind: "paypal-rejected",
+      code: "paypal_validation_error",
+    });
+    expect(
+      await post(() => reply(502, { error: "paypal_outcome_unknown", code: "timeout" })),
+    ).toEqual({
+      kind: "paypal-unknown",
+      code: "timeout",
+    });
+    expect(await post(() => reply(503, { error: "paypal_disabled" }))).toEqual({
+      kind: "disabled",
+    });
+    expect(await post(() => reply(503, { error: "unavailable" }))).toEqual({ kind: "unavailable" });
+    expect(await post(() => reply(404, { error: "not_found" }))).toEqual({ kind: "not-found" });
+    expect(await post(() => reply(401, { error: "unauthorized" }))).toEqual({
+      kind: "unauthorized",
+    });
+    expect(await post(() => reply(403, { error: "csrf_invalid", secret: "LEAK" }))).toEqual({
+      kind: "forbidden",
+    });
+    expect(await post(() => reply(400, { error: "invalid_request" }))).toEqual({
+      kind: "bad-request",
+    });
+  });
+  it("every refusal reason the backend can send is understood; an unknown reason fails closed", async () => {
+    for (const reason of [
+      "rounding_required_line",
+      "rounding_required_tax",
+      "rounding_required_discount",
+      "tax_with_discount_multiline",
+      "due_date_past",
+      "invalid_invoice_date",
+    ])
+      expect(await post(() => reply(422, { error: "mapping_refused", reason }))).toEqual({
+        kind: "mapping-refused",
+        reason,
+      });
+    expect(await post(() => reply(422, { error: "mapping_refused", reason: "<script>" }))).toEqual({
+      kind: "bad-request",
+    });
+    expect(await post(() => reply(422, { error: "other" }))).toEqual({ kind: "bad-request" });
+  });
+  it("diagnostic codes are kept only when short and safe", async () => {
+    expect(await post(() => reply(502, { error: "paypal_rejected", code: "<b>x</b>" }))).toEqual({
+      kind: "paypal-rejected",
+      code: null,
+    });
+    expect(await post(() => reply(502, { error: "paypal_outcome_unknown" }))).toEqual({
+      kind: "paypal-unknown",
+      code: null,
+    });
+    expect(
+      await post(() => reply(502, { error: "paypal_mismatch", code: "A".repeat(65) })),
+    ).toEqual({
+      kind: "paypal-mismatch",
+      code: null,
+    });
+  });
+  it("unexpected status/body combinations never become a success", async () => {
+    expect(await post(() => reply(409, { error: "something_else" }))).toEqual({
+      kind: "bad-request",
+    });
+    expect(await post(() => reply(409, {}))).toEqual({ kind: "bad-request" });
+    expect(await post(() => reply(502, { error: "weird" }))).toEqual({
+      kind: "uncertain",
+      cause: "server",
+    });
+    expect(await post(() => reply(503, { error: "weird" }))).toEqual({
+      kind: "uncertain",
+      cause: "server",
+    });
+    expect(await post(() => reply(500))).toEqual({ kind: "uncertain", cause: "server" });
+    expect(await post(() => reply(504))).toEqual({ kind: "uncertain", cause: "server" });
+    expect(await post(() => reply(418))).toEqual({ kind: "bad-request" });
+    expect(await post(() => reply(202, ok))).toEqual({ kind: "bad-request" });
+  });
+  it("a lost connection is UNCERTAIN; a caller abort is aborted", async () => {
+    expect(
+      await createInvoiceApi(() => Promise.reject(new TypeError("x"))).createPayPalDraft(
+        PID,
+        "c",
+        sig(),
+      ),
+    ).toEqual({ kind: "uncertain", cause: "network" });
+    const ac = new AbortController();
+    ac.abort();
+    expect(
+      await createInvoiceApi(() =>
+        Promise.reject(new DOMException("a", "AbortError")),
+      ).createPayPalDraft(PID, "c", ac.signal),
+    ).toEqual({ kind: "aborted" });
   });
 });

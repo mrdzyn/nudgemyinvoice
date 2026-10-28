@@ -1,0 +1,541 @@
+{
+  "chrome": "Chrome/156.0.8078.74",
+  "passed": 89,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafting ENABLED on the API but backed ONLY by the deterministic fake client; no OpenAI key/model; the real PayPal client is never constructed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "14 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "the real server refuses an unauthenticated PayPal-draft POST (401) and calls nothing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "a session without the CSRF token is refused (403) and nothing is created",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "after a reload the app makes NO PayPal-draft request on its own",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the real saved invoice shows 'Not created in PayPal Sandbox' with an explicit create action",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "customer, currency, server total and due date are shown, plus the PayPal Sandbox identity",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "opening the saved invoice read it with GET and made no PayPal-draft POST",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the confirmation dialog opens, with initial focus on Cancel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the dialog names the exact saved invoice, customer, currency, server total and due date",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the dialog says a Sandbox DRAFT is prepared, the customer is NOT emailed, no payment is collected, nothing is sent",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "Escape closes the dialog, returns focus to the Create button and sends NOTHING",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "Cancel closes the dialog and issues ZERO POST requests (no operation, no provider call)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "exactly one PayPal-draft POST for that confirmation -> 201 with CSRF, no request body",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the panel shows the server-validated PayPal id, DRAFT, and says the customer was NOT emailed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the durable record agrees: operation row 'created', one attempt, id linked on the invoice, ONE fake provider create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "after the POST the page re-read the durable state with GET /api/invoice-drafts/:id (read-only) and shows it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the create button is gone and the page text never claims the invoice was sent, paid or collected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the saved-page notice no longer says 'nothing was sent to PayPal' or 'not created in PayPal'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "no 'Check status' is offered once created (nothing left to resolve)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "back on the REAL dashboard the invoice's PayPal status is read from the server: 'PayPal draft created'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "the server-side 'PayPal draft created' filter lists exactly that invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "no PayPal-draft POST happened on the dashboard",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL main journey (fake provider)",
+      "name": "reloading does not restore a PayPal action and issues no PayPal-draft POST",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL double confirm and in-flight state (fake provider takes 4 s)",
+      "name": "while creating: an accessible progress status is shown and the create control is gone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL double confirm and in-flight state (fake provider takes 4 s)",
+      "name": "three rapid confirm clicks produced exactly ONE POST and one provider create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL double confirm and in-flight state (fake provider takes 4 s)",
+      "name": "the single request completes as created, with one operation attempt",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "502 paypal_outcome_unknown: 'A PayPal draft may or may not exist', neither failure nor success",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "the page re-read the durable state (GET) and shows 'unknown' with the saved code",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "no automatic create: exactly one POST and one provider create so far",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "both Check status and an explicit 'Retry (checks PayPal first)' are offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "Check status is READ-ONLY: it re-reads GET detail and issues no POST and no provider call",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "a retry needs a FRESH confirmation dialog",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "the retry is answered 409 reconciliation_pending and says the server avoids a duplicate, with no new create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL outcome unknown -> reconciliation (fake provider)",
+      "name": "the durable state is still 'unknown' and the provider was only asked to look (find), never to create again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL rejected -> explicit retry (fake provider)",
+      "name": "502 paypal_rejected is shown as a rejection (no draft), with the sanitized code",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL rejected -> explicit retry (fake provider)",
+      "name": "the local invoice is unchanged and an explicit 'Try again' is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL rejected -> explicit retry (fake provider)",
+      "name": "no request is made until the retry is confirmed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL rejected -> explicit retry (fake provider)",
+      "name": "the explicit retry (fresh attempt) then creates the draft",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL mismatch (fake provider returns a different total)",
+      "name": "502 paypal_mismatch: an alert requiring manual investigation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL mismatch (fake provider returns a different total)",
+      "name": "NO retry control is offered and the durable state is 'mismatch'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL mapping refused (rounding)",
+      "name": "422 mapping_refused shows the safe reason and says nothing is rounded silently",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL mapping refused (rounding)",
+      "name": "no operation was created, the provider was never called and the local invoice is unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL EUR and JPY totals in the confirmation",
+      "name": "EUR: the dialog shows €300.00 EUR (server-computed) for that exact invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL EUR and JPY totals in the confirmation",
+      "name": "JPY: the dialog shows ¥5,000 JPY (no decimals)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL lost response (server creates the draft, the browser loses the answer)",
+      "name": "the UI says 'a PayPal draft may or may not exist' (not failure, not success)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL lost response (server creates the draft, the browser loses the answer)",
+      "name": "the automatic READ-ONLY re-read then shows the durable truth: the draft was created",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL lost response (server creates the draft, the browser loses the answer)",
+      "name": "exactly one POST was sent, no automatic retry, and no create button is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "403: fails closed (did not accept this request…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "404: fails closed (could not be found…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "400: fails closed (refused the request…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "200 with an arbitrary body: fails closed (may or may not exist…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "201 with status SENT: fails closed (may or may not exist…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "500: fails closed (may or may not exist…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "503 unavailable: fails closed (not known whether a draft wa…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "network failure: fails closed (may or may not exist…), never a created draft, no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "409 in_progress: says another attempt is in flight and will not repeat; create stays hidden until the state is read",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
+      "name": "(no PayPal-draft request was made by merely opening these invoices)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard operation",
+      "name": "Enter on 'Create PayPal Sandbox draft…' opens the dialog and focus lands on Cancel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard operation",
+      "name": "Tab moves to the confirm button inside the dialog",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard operation",
+      "name": "Tab wraps back to Cancel (focus is trapped in the dialog)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard operation",
+      "name": "Shift+Tab wraps to the confirm button",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard operation",
+      "name": "Escape closes the dialog, restores focus to the Create button, sends nothing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL keyboard operation",
+      "name": "keyboard confirm creates the draft with a single POST",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no horizontal overflow at 390px (saved invoice with the PayPal panel)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "the confirmation dialog fits the 390px viewport and the page does not overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "dialog text contrast >= WCAG AA (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "created panel: no overflow and AA contrast (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "unknown-state panel (warning/alert styling): no overflow and AA contrast (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "light desktop: the unknown-state panel meets AA contrast",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session expiry during a create",
+      "name": "a real 401 ends the session at once: sign-in shows, no dialog, no protected UI",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session expiry during a create",
+      "name": "the POST returned 401, the provider was never called and no operation exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL session expiry during a create",
+      "name": "no customer data remains in the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider disabled on the server (PAYPAL_DRAFTS_ENABLED=false)",
+      "name": "503 paypal_disabled is explained and says nothing was sent anywhere",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider disabled on the server (PAYPAL_DRAFTS_ENABLED=false)",
+      "name": "the create control is disabled so the disabled server is not probed again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider disabled on the server (PAYPAL_DRAFTS_ENABLED=false)",
+      "name": "exactly one POST was sent, a further click sends nothing, and the provider was never called",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL provider disabled on the server (PAYPAL_DRAFTS_ENABLED=false)",
+      "name": "local invoice data stays usable (customer and totals still shown)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no localStorage/sessionStorage/IndexedDB/Cache entries",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no script-readable cookie; the browser navigation URL carries no customer data, ids or PayPal ids",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no request left the app origin (no PayPal, OpenAI or other host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the browser used only the auth, save/list/detail and PayPal-draft routes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no send, remind, cancel, refund, payment or webhook route was ever requested",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the browser never called PayPal-draft with GET and never sent a body or any customer data in it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the fake provider saw only create/get/find (the only operations the app can express); real PayPal was never constructed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no OpenAI/model call was made (no model client configured)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the API log holds no customer name, e-mail, CSRF token or cookie value",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no console errors or uncaught exceptions in the browser",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

@@ -73,27 +73,37 @@ describe("UI shell boundaries", () => {
         "/api/invoice-drafts",
         "/api/invoice-drafts?${params.toString()}",
         "/api/invoice-drafts/${id}",
+        "/api/invoice-drafts/${id}/paypal-draft",
       ]),
     );
   });
 
-  it("C4 wires only the read-only list in addition to save/detail; no PayPal-draft or provider route", () => {
+  it("C5-P1 wires exactly one PayPal route (POST draft creation, in invoices/api.ts); no direct PayPal/OpenAI host or other provider route", () => {
     const all = files.map(read).join("\n");
     const apiPaths = [...all.matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1] ?? "");
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/\$\{id\}|\?\$\{params\.toString\(\)\})?)$/.test(
+          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/\$\{id\}(\/paypal-draft)?|\?\$\{params\.toString\(\)\})?)$/.test(
             p,
           ),
       ),
     ).toEqual([]);
-    expect(all).not.toMatch(/paypal-draft|paypal\.com|openai\.com|api\.openai/i);
+    expect(all).not.toMatch(/paypal\.com|openai\.com|api\.openai/i);
+    // the PayPal route string lives in exactly one file
+    expect(
+      files
+        .filter((f) => /["'`]\/api\/[^"'`]*paypal-draft/.test(read(f)))
+        .map((f) => relative(webRoot, f)),
+    ).toEqual(["src/invoices/api.ts"]);
   });
 
   it("the list request is a GET (its q parameter is part of the HTTP request URL) and the real dashboard never writes search text to the browser navigation URL or storage", () => {
     const api = read(join(root, "invoices/api.ts"));
-    const listBlock = api.slice(api.indexOf("async list("), api.indexOf("async get("));
+    const listBlock = api.slice(
+      api.indexOf("async list("),
+      api.indexOf("async createPayPalDraft("),
+    );
     expect(listBlock).toMatch(/method: "GET"/);
     expect(listBlock).not.toMatch(/method: "(POST|PUT|PATCH|DELETE)"|body:/);
     const dash = [
