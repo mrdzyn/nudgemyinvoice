@@ -1,0 +1,44 @@
+# NMI-AG1 — AG Grid Community invoice dashboard
+
+- **State:** READY FOR IMPLEMENTATION — owner authorized starting NMI-AG1 on 2026-10-28; this contract is **not** an implementation or acceptance report.
+- **Starting `main`:** `f61b653c8131da7446f57ab38db7c118801b8fcd` (NMI-DEMO-R0, PR #16, independently audited and owner squash-merged).
+- **Branch:** `feat/nmi-ag1-ag-grid-dashboard`; implementation to proceed on this branch and its Draft PR. GPT-6 independently audits the exact final head; owner separately authorizes merge.
+- **Design authority:** owner-approved NMI-UI-01A dashboard (currency cards, filter bar, responsive invoice list); `design/screens/NMI-UI-01A-SCREENS.md`, `docs/DESIGN-SYSTEM.md`, `docs/ACCESSIBILITY.md`, relevant design and platform guidance. Replacing only the real list widget is an approved refinement of the existing screen, not permission to redesign it.
+- **Prior D1 reconciliation:** AG **Studio** remains deferred pending license/trial verification. The owner now explicitly wants a **real AG Grid Community** integration for the hackathon; do not conflate AG Grid Community and AG Studio.
+- **Why now:** PayPal AI Hackathon sponsor prize rules list entries that use **any AG Grid tools** as eligible for consideration. The sponsor page emphasizes polish, theming, custom widgets/layout, and richer use beyond a basic grid. A working Community integration supports eligibility, **not a claim of selection or a prize**.
+- **Provider boundary:** NO real OpenAI/PayPal calls; the earlier PayPal Sandbox one-create budget is exhausted. `PAYPAL_DRAFTS_ENABLED=false` remains the default. No deployment, publication, Devpost submission, merge, new payments or reminders in this task.
+
+## Test objective
+
+Prove that the existing authenticated, owner-scoped PostgreSQL invoice list renders through **genuine AG Grid Community** without changing fetch/auth/privacy/money behavior, and that useful grid interactions work on exactly the already-loaded records while the saved-invoice View action and responsive accessibility remain usable.
+
+## Implementation scope
+
+1. **Dependency:** add `ag-grid-react` and `ag-grid-community` Community packages to `apps/web`, versions compatible with existing React 19/Vite, exact versions pinned together and lockfile committed. Verify current official module registration, theming and TypeScript API. AG Grid's current React documentation uses `AgGridProvider` + `AllCommunityModule` (or bounded individual Community modules). **Do not** add `ag-grid-enterprise`, `ag-studio`, Enterprise-only APIs, license keys, trial code, external data access, telemetry or hidden remote calls.
+2. **Replace only the real invoice list table** in `apps/web/src/features/dashboard/RealDashboard.tsx` (or a small extracted `InvoiceGrid.tsx`) with `AgGridReact` and stable `getRowId` from the validated invoice UUID. Preserve `DashboardScreen` synthetic fixture preview isolation; no synthetic rows in authenticated real mode.
+3. **Required columns and cells:** invoice short ID plus saved date, customer/name/e-mail, due date, formatted currency and exact total, PayPal Sandbox durable status, and a focusable **View invoice** action. Use meaningful header text and typed row/cell renderers. Never expose full record metadata, hidden owner IDs, tokens, AI prompts or payment payloads. Preserve the operator-scoped `GET /api/invoice-drafts` contract unchanged.
+4. **Meaningful Community-grid UX:** resizable columns; keyboard-operable sorting on **loaded rows only**; stable row ordering when no client sort is selected (server newest-first); bounded visual polish (coherent theme with existing light/dark design, readable states, intentional alignment and focus). Distinguish grid-local sorting from existing **server-side** currency/status/search filters and keyset pagination; do **not** represent local sorting/filtering as whole-account operations.
+5. **Money:** amounts are canonical decimal strings. For any numeric money comparison use the existing `minorOf`/BigInt or precise per-currency arithmetic; never `Number`/floating-point comparison of money, never sum different currencies, and never imply an FX-converted total. When comparing rows across currencies, use a stable explicitly documented currency-first order rather than treating their amounts as interchangeable.
+6. **States:** retain existing loading, empty, no-match/clear, offline, malformed response, 401 sign-out, 403, load-more (including failed next page), retry, restored filters and search debounce. Keep the search field mounted while requests are in flight; no extra requests from grid row/column interactions. Currency summary cards are still **loaded-rows-only** and remain independent of grid-local sort. Keep `Load more` and its data append behavior.
+7. **Accessibility / mobile:** keyboard navigation through headers, grid and View; correct focus after opening/reopening invoice, 390px mobile layout with no document horizontal overflow, 400% zoom smoke, light/dark contrast, non-mouse usability, readable status/alert text. If the grid cannot meet the approved narrow-layout requirements, retain a proper responsive presentation/fallback (not an inaccessible hidden duplicate). Keep the full-page flow intelligible to assistive technologies.
+8. **Browser security:** no browser persistent storage of customer data; no customer data in navigation URLs/history. Dashboard search `q` remains in **HTTP request URL** by existing contract, while Fastify query-string log redaction stays intact; hosted proxy log-redaction remains unverified. Preserve CSP `connect-src 'self'` and no network outside app origin.
+
+## Allowed files
+
+`apps/web/package.json`, root `pnpm-lock.yaml`, scoped dashboard UI/theme/style modules, relevant web/dashboard tests and browser journeys, `design/evidence/NMI-AG1/` sanitized screenshot/results, and task/status/README/architecture/security/demo/Devpost documentation only where the AG Grid change requires accuracy. Existing broad browser journeys may need selector/assertion updates due to AG Grid DOM replacing native `tbody tr`; preserve behavioral test intent, separately label rerun evidence and do not claim historical runs used AG Grid.
+
+## Forbidden / deferred
+
+No changes to `apps/api`, `packages/db`, SQL migrations, PayPal adapter/service/state machine, OpenAI parser, session/CSRF rules, invoice draft API contract, real provider budgets, operator model, saved invoice editing, sending/reminders/webhooks/payment actions, Enterprise/Studio licensing, infrastructure provisioning or deployment. Any indispensable violation requires a separate owner decision, not a silent expansion.
+
+## Acceptance evidence
+
+- Targeted TypeScript/lint/unit tests covering real AG Grid instantiation and headers/row identity/renderers, correct exact money and cross-currency sort semantics, load-more append with active sort, server-only search/status/currency filtering, keyboard View action, 401/session lock, and no fixture/preview leakage.
+- Real browser QA against the built app/strict CSP, real Fastify/disposable PostgreSQL, **deterministic fake providers**, using synthetic USD/EUR/JPY invoices. Capture desktop, dark, 390px mobile, focus/keyboard, load-more, error/no-match states, and a real user-level View action. Test that sorting and resizing do not issue API requests, while server filters and load more still do. Record bundle-size impact, verify Community-only modules and absence of license warnings/Enterprise imports.
+- Update/re-run the affected C4 and R0 browser journeys and other impacted checks if selectors change; do not weaken original assertions. Require exact-head hosted Project Baseline and Stack CI plus any repo-mandatory gates. Distinguish automated from manual QA and label all fake-provider runs **SIMULATED**.
+- Update README and Devpost draft only **after real integration exists**, with accurate AG Grid Community usage. Sponsor award/eligibility is subject to Devpost rules and judges; do not claim AG Studio was used.
+- Open/keep one Draft PR on this branch; record exact implementation HEAD, change scope, CI IDs, browser evidence, unresolved accessibility issues, and ask GPT-6 independent exact-head audit. **Do not merge, deploy, publish or call real providers.**
+
+## Handoff
+
+**NMI-AG1-START**: coding agent implements the bounded AG Grid Community replacement on the existing branch/PR. First read this task, the **current** `docs/STATUS.md`, matching `docs/HANDOFFS.md` section and relevant UI/testing guidance. Preserve the already completed R0 judge runbook and separate R1 provider approval gates; update demo/judge docs as appropriate after AG Grid changes.
