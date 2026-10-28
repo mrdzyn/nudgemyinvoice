@@ -1167,4 +1167,24 @@ Privacy wording made precise (navigation URL/history and persistent storage: no 
 ### Not verified
 Real OpenAI and PayPal (never called), Docker path and Mode B of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
+## Handoff: NMI-DEMO-R0-R2
+
+- **Task / phase:** `tasks/NMI-DEMO-R0-readiness.md` (section "Audit remediation: residual MINOR")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner decisions for R1
+- **Branch / PR:** `docs/nmi-demo-r0-submission-readiness`, [Draft PR #16](https://github.com/mrdzyn/nudgemyinvoice/pull/16)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no executable code, SQL migration, provider, test harness or historical QA-evidence change; no merge, deployment, publication, Devpost submission, provider call or budget reset.
+
+### What changed
+The runbook's migration snippet now exits with the migration result (final `(exit "$rc")`), keeping the journal-order loop and the seven-entry count check; the README quick start chains migrations and operator provisioning with `&&` (a failed migration never reaches provisioning), adds the count check, and replaces the literal operator-password placeholder with a generated credential; a trailing `#` comment that broke interactive zsh was removed.
+
+### Re-audit focus
+1. The final statement of the runbook block preserves a nonzero status and does not close an interactive shell; success still exits 0 with the success message only on success.
+2. README: no pasteable placeholder password; provisioning only after all seven migrations; the start commands are a separate block gated by prose.
+3. Verification claims match what was run: blocks extracted from the documents and executed in bash and zsh, script and interactive, for success, unreachable database and conflicting schema; later migrations never ran after a failure.
+4. `git diff` against the audited head touches only documentation files.
+
+### Not verified
+Real OpenAI and PayPal (never called), the Mode B and Docker parts of the runbook, other operating systems/shells, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
+
 <!-- HANDOFF_ENTRIES_END -->

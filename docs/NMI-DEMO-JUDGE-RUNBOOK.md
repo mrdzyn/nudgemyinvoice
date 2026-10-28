@@ -15,6 +15,8 @@ Everything in mode A that involves OpenAI or PayPal is **SIMULATED** and is not 
 
 ## 1. Prerequisites
 
+> **Pasting into an interactive zsh:** run `setopt interactive_comments` first so lines starting with `#` in the blocks below are treated as comments (bash does this by default).
+
 - **Node.js ≥ 22** (`node -v`; tested 24.21.0) and **pnpm 10** (`pnpm -v`; tested 10.28.0; `corepack enable` provides it).
 - **PostgreSQL 16** with `psql`, `createdb` and either `initdb`/`pg_ctl` (local install) or a container runtime. Only PostgreSQL is supported (SQLite is not).
 - Ports **3001** (API) and **5173** (web) free, or see "Changing ports".
@@ -63,10 +65,16 @@ There is no `db:migrate` script. Apply the seven committed migrations in journal
     echo "applied $t"
   done <<< "$tags"
 )
-rc=$?; [ "$rc" -eq 0 ] && echo "all 7 migrations applied" || echo "SETUP INCOMPLETE: drop and recreate the database, fix the error, then start again"
+rc=$?
+if [ "$rc" -eq 0 ]; then
+  echo "all 7 migrations applied"
+else
+  echo "SETUP INCOMPLETE: drop and recreate the database, fix the error, then start again" >&2
+fi
+(exit "$rc")
 ```
 
-Works in bash and zsh. Each `psql` call is checked explicitly (`ON_ERROR_STOP` plus `|| exit 1` inside a subshell, so your terminal is not closed), so the loop stops at the **first** failing migration and a later one never runs on a half-applied schema; if it fails, drop and recreate the database and start again. Migrations run in journal order. Expected: `applied 0000_…` through `applied 0006_…`, then `all 7 migrations applied`, and 8 tables in the `public` schema (`psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public'"`).
+Works in bash and zsh (no `#` comments inside the block, so it also pastes cleanly into an interactive zsh). The snippet's exit status is the migration result (0 only if all seven applied; nonzero otherwise): the final `(exit "$rc")` sets `$?` without closing an interactive shell. **Do not continue to step 5 unless it printed `all 7 migrations applied`.** Each `psql` call is checked explicitly (`ON_ERROR_STOP` plus `|| exit 1` inside a subshell, so your terminal is not closed), so the loop stops at the **first** failing migration and a later one never runs on a half-applied schema; if it fails, drop and recreate the database and start again. Migrations run in journal order. Expected: `applied 0000_…` through `applied 0006_…`, then `all 7 migrations applied`, and 8 tables in the `public` schema (`psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public'"`).
 
 ## 5. Provision the single operator
 
