@@ -1187,4 +1187,29 @@ The runbook's migration snippet now exits with the migration result (final `(exi
 ### Not verified
 Real OpenAI and PayPal (never called), the Mode B and Docker parts of the runbook, other operating systems/shells, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
+## Handoff: NMI-AG1-START
+
+- **Task / phase:** `tasks/NMI-AG1-ag-grid-dashboard.md`
+- **From:** GPT-6 orchestrator / product owner authorization to start the bounded Community grid enhancement
+- **To:** Claude/Codex implementation agent; then GPT-6 independent exact-head audit
+- **Branch:** `feat/nmi-ag1-ag-grid-dashboard`
+- **Base:** `main` at `f61b653c8131da7446f57ab38db7c118801b8fcd` (NMI-DEMO-R0 PR #16 owner squash-merge)
+- **State:** READY FOR IMPLEMENTATION. Contract and STATUS reconciliation only; no AG Grid code, tests, real-provider requests, deployment, merge, Devpost submission or provider budget reset.
+
+### Immediate task
+
+Implement the **genuine AG Grid Community** read-only invoice grid in the already approved real dashboard screen. Read `AGENTS.md`, current `docs/STATUS.md`, `config/project-profile.json`, active task, this handoff and relevant UI/design/accessibility/testing/code/test files only. The existing `RealDashboard` is PostgreSQL-backed and uses a native HTML table; retain the cards, filters, pagination, error and empty states, keyboard View action, responsive behavior, and fake-provider/production isolation.
+
+### Non-negotiable boundaries and proof
+
+- Use only current compatible `ag-grid-community` + `ag-grid-react`; **no AG Studio/Enterprise, no license/trial keys**. Current AG Grid React docs demonstrate Community module registration and supported theming; verify exact installed version APIs.
+- Server search/status/currency filters operate over the owner's account; AG Grid local sorting operates **only over rows already loaded**. Keep loaded-rows-only currency cards and exact BigInt money; no FX/mixed-currency totals and no new API calls triggered by sorting.
+- Update UI tests/browser journeys to target real grid semantics instead of native `tbody tr`; preserve behavioral assertions, rerun and attribute new evidence to NMI-AG1. Capture sanitized desktop/mobile/dark/keyboard and strict-CSP browser QA.
+- No app API, payment, provider or database changes, and no real OpenAI/PayPal calls. PayPal one-create smoke budget exhausted; default `PAYPAL_DRAFTS_ENABLED=false`.
+- After implementation, update task/STATUS/docs, record exact HEAD, test/CI results and remaining accessibility limitations, keep the PR **Draft**, request independent GPT-6 exact-head audit. Do not merge/deploy/publish/submit.
+
+### Sponsor positioning
+
+Official Devpost rules allow AG Grid sponsor-prize consideration for use of **any AG Grid tools**, while the sponsor page values polish, custom widgets/theming/layout and richer use. A functioning Community grid is eligible for consideration **not a guarantee of an award**; only claim AG Grid actually used after the implementation passes. AG Studio is still deferred.
+
 <!-- HANDOFF_ENTRIES_END -->
