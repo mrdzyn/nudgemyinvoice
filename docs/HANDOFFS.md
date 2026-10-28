@@ -1235,4 +1235,22 @@ Genuine AG Grid Community 36.2.0 renders the real dashboard's invoice list (new 
 ### Not verified
 Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), real touch devices, Safari/Firefox, a real browser zoom at 400%, HTTPS `__Host-` cookie, hosted proxy/log redaction, production deployment; bundle size grew (JS +709 kB, +203 kB gzip; CSS +279 kB) and is not mitigated.
 
+## Handoff: NMI-AG1-R1
+
+- **Task / phase:** `tasks/NMI-AG1-ag-grid-dashboard.md` (section "Audit remediation NMI-AG1-R1")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ag1-ag-grid-dashboard`, [Draft PR #17](https://github.com/mrdzyn/nudgemyinvoice/pull/17)
+- **Remediation commit:** `f58c4fc27521b25f396ea8a99ac66948a66a5198` (Project Baseline `40670277117`, Stack CI `40670276998` success); a documentation-only commit follows.
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deployment, publication, Devpost submission, real OpenAI/PayPal call or budget reset; no server, API-contract, migration, payment or security change.
+
+### Re-audit focus
+1. MAJOR-1: `InvoiceGrid.tsx` has no `suppressCellFocus`, timer or manual focus code; Tab/Shift+Tab leave the grid via `tabToNextHeader`/`tabToNextCell`; arrow navigation, Enter-sort, and Enter/Space on the Actions cell via `onCellKeyDown`; the journey's arrow-key checks and the negative control (14 failures with `suppressCellFocus`).
+2. MINOR-1: `#dash-sort-note` copy and `aria-describedby`.
+3. MINOR-2: `MAX_LOADED_ROWS = 200`, reducer refusal, `#dash-limit` footer, search reaching older invoices, the 600-invoice evidence; confirm the owner accepts the 200-row UX limit and the reasoning for keeping rows un-virtualised.
+4. Diff touches only `apps/web`, `design/evidence/NMI-AG1` and documentation; C4/C5-P1/R0 assertions unchanged.
+
+### Not verified
+Screen readers, real touch, Safari/Firefox, real 400% zoom, keyboard column resizing, hosted HTTPS/proxy, any real provider; bundle size unmitigated.
+
 <!-- HANDOFF_ENTRIES_END -->
