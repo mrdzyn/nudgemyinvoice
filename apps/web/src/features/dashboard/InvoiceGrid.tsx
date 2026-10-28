@@ -1,7 +1,12 @@
 import { CellStyleModule, ClientSideRowModelModule, ModuleRegistry } from "ag-grid-community";
-import type { ColDef, ICellRendererParams, TabToNextHeaderParams } from "ag-grid-community";
+import type {
+  CellKeyDownEvent,
+  ColDef,
+  FullWidthCellKeyDownEvent,
+  ICellRendererParams,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz-no-font.css";
 import { PayPalStatusBadge } from "../../components/Badge.js";
@@ -61,6 +66,7 @@ export function ViewCell({ data, context }: Params) {
       type="button"
       className="btn btn-secondary btn-sm"
       aria-label={`View invoice ${shortId(data.id)} for ${data.customerName}`}
+      tabIndex={-1}
       onClick={() => context.onOpen(data.id)}
     >
       View
@@ -181,29 +187,38 @@ export function columnsFor(narrow: boolean): ColDef<ListItem>[] {
   });
 }
 
-const TABBABLE =
-  'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+/**
+ * Keyboard model (AG Grid's supported grid navigation, no custom focus code): Tab enters the grid
+ * on the column headers and Tab or Shift+Tab leaves it, so the grid is one tab stop and never a
+ * trap (`tabToNextHeader` / `tabToNextCell` return `false`, which hands Tab back to the browser).
+ * Arrow keys move between headers and cells in every direction, Home/End/PageUp/PageDown work as
+ * in any AG Grid, Enter or Space on a header sorts, and Enter or Space on the Actions cell opens
+ * that invoice. AG Grid scrolls a focused cell into view, including the columns beyond a narrow
+ * screen. The View button is not a separate tab stop: the focused cell is the keyboard target.
+ */
+export const leaveGridOnTab = (): false => false;
 
-/** Moves focus to the first tabbable element that follows `region` in document order. */
-function focusAfter(region: HTMLElement) {
-  const next = Array.from(document.querySelectorAll<HTMLElement>(TABBABLE)).find(
-    (n) =>
-      !region.contains(n) &&
-      region.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING &&
-      n.getClientRects().length > 0,
-  );
-  next?.focus();
+/** Enter or Space on the focused Actions cell opens that row's invoice (once). */
+export function openOnKey(
+  e: CellKeyDownEvent<ListItem, GridContext> | FullWidthCellKeyDownEvent<ListItem, GridContext>,
+): void {
+  const k = e.event as KeyboardEvent | null | undefined;
+  if (!k || (k.key !== "Enter" && k.key !== " ")) return;
+  if (!("column" in e) || e.column.getColId() !== "actions") return;
+  // A real click/Enter on the inner button is handled by the button itself.
+  if ((k.target as Element | null)?.closest?.("button")) return;
+  const id = e.data?.id;
+  if (!id) return;
+  k.preventDefault();
+  e.context.onOpen(id);
 }
 
 /**
  * The saved-invoice table. Sorting applies only to the rows loaded so far; filters and search stay
  * server-side. Rows are identified by the validated invoice UUID so a load-more append keeps the
- * operator's sort, focus and column widths.
- *
- * Keyboard: Tab walks the sortable column headers once (Enter sorts, arrow keys move between
- * headers), then moves to the first row's View button; each View button is one tab stop in reading
- * order and Tab after the last one leaves the grid. Shift+Tab retraces the same path. Cells are not
- * focus targets, so there is no 100-stop cell-by-cell walk and no keyboard trap.
+ * operator's sort, focus and column widths. The number of loaded rows is bounded by the dashboard
+ * (`MAX_LOADED_ROWS`), which is what bounds the DOM: every loaded row stays in the DOM, in reading
+ * order, for assistive technology.
  */
 export function InvoiceGrid({
   items,
@@ -215,60 +230,15 @@ export function InvoiceGrid({
   const context = useMemo<GridContext>(() => ({ onOpen }), [onOpen]);
   const narrow = useNarrow();
   const columns = useMemo(() => columnsFor(narrow), [narrow]);
-  const ids = columns.map((c) => c.colId ?? "");
-  const lastId = ids[ids.length - 1] ?? "";
-  const wrap = useRef<HTMLDivElement>(null);
-  const grid = useRef<AgGridReact<ListItem>>(null);
-  const viewButtons = () =>
-    Array.from(wrap.current?.querySelectorAll<HTMLButtonElement>(".ag-row button") ?? []);
-
-  const tabToNextHeader = (p: TabToNextHeaderParams<ListItem>) => {
-    const col = p.previousHeaderPosition?.column;
-    const at = ids.indexOf(col && "getColId" in col ? col.getColId() : "");
-    if (!p.backwards && at === ids.length - 1) {
-      const first = viewButtons()[0];
-      if (!first) return false;
-      // The grid re-focuses the current header after this callback returns, so hand over afterwards.
-      setTimeout(() => first.focus(), 0);
-      return true;
-    }
-    if (p.backwards && at <= 0) return false;
-    return p.nextHeaderPosition ?? false;
-  };
-
-  // The grid's own Tab handling keeps focus on a button inside a row, so Tab and Shift+Tab are
-  // resolved here, before the grid sees them: the next/previous View button, then the header row
-  // (backwards) or the next focusable element after the grid (forwards).
-  useEffect(() => {
-    const el = wrap.current;
-    if (!el) return;
-    const onTab = (e: KeyboardEvent) => {
-      const t = e.target;
-      if (e.key !== "Tab" || !(t instanceof HTMLButtonElement) || !t.closest(".ag-row")) return;
-      const buttons = viewButtons();
-      const i = buttons.indexOf(t);
-      if (i < 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const next = buttons[e.shiftKey ? i - 1 : i + 1];
-      if (next) next.focus();
-      else if (e.shiftKey) grid.current?.api.setFocusedHeader(lastId);
-      else focusAfter(el);
-    };
-    el.addEventListener("keydown", onTab, true);
-    return () => el.removeEventListener("keydown", onTab, true);
-  }, []);
-
   return (
     <div
-      ref={wrap}
       className="nmi-grid ag-theme-quartz"
       data-testid="invoice-grid"
       role="group"
       aria-label="Saved invoices, newest first"
+      aria-describedby="dash-sort-note"
     >
       <AgGridReact<ListItem>
-        ref={grid}
         theme="legacy"
         rowData={items as ListItem[]}
         columnDefs={columns}
@@ -279,8 +249,9 @@ export function InvoiceGrid({
         domLayout="autoHeight"
         rowHeight={64}
         headerHeight={44}
-        suppressCellFocus
-        tabToNextHeader={tabToNextHeader}
+        tabToNextHeader={leaveGridOnTab}
+        tabToNextCell={leaveGridOnTab}
+        onCellKeyDown={openOnKey}
         suppressMovableColumns
         suppressColumnVirtualisation
         suppressRowVirtualisation

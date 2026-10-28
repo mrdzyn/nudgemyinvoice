@@ -10,6 +10,7 @@ import { CURRENCY_CODES, type CurrencyCode } from "../../domain/types.js";
 import { InvoiceGrid } from "./InvoiceGrid.js";
 import {
   hasFilters,
+  MAX_LOADED_ROWS,
   NO_FILTERS,
   type DashState,
   type FailureKind,
@@ -262,11 +263,22 @@ export function RealDashboardView({
             {items.length} invoice{items.length === 1 ? "" : "s"} loaded
             {state.nextCursor ? ", more available" : ", end of list"}
           </p>
+          <p className="hint grid-note" id="dash-sort-note">
+            Sorting a column reorders only the {items.length} invoice
+            {items.length === 1 ? "" : "s"} loaded so far. Search and the currency and PayPal status
+            filters look through all your saved invoices.
+          </p>
           <InvoiceGrid items={items} onOpen={onOpen} />
           <div className="grid-footer" id="dash-footer">
             {state.status === "loading-more" ? (
               <span role="status">
                 <Spinner /> Loading more invoices…
+              </span>
+            ) : state.nextCursor && items.length >= MAX_LOADED_ROWS ? (
+              <span id="dash-limit">
+                {MAX_LOADED_ROWS} invoices are loaded, the most this list shows at once. To find
+                others, search or use the currency and PayPal status filters: they look through all
+                your saved invoices.
               </span>
             ) : state.nextCursor ? (
               <button

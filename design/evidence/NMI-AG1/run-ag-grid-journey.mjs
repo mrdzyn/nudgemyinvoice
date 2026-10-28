@@ -28,6 +28,7 @@ const DEBUG_PORT = 9339;
 const DB = "nmi_test_ag1_journey";
 const SHOTS = join(here, "screenshots");
 const BUILD = {};
+const PERF = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const USER = "operator-ag1";
 const pw = () => randomBytes(18).toString("base64url");
@@ -192,7 +193,7 @@ async function waitFor(expr, ms = 4000) {
   while (Date.now() < end) { if (await ev(expr)) return true; await sleep(50); }
   return false;
 }
-const KEYS = { Tab: { code: "Tab", vk: 9 }, Enter: { code: "Enter", vk: 13, text: "\r" } };
+const KEYS = { Tab: { code: "Tab", vk: 9 }, Enter: { code: "Enter", vk: 13, text: "\r" }, " ": { code: "Space", vk: 32, text: " " }, ArrowLeft: { code: "ArrowLeft", vk: 37 }, ArrowUp: { code: "ArrowUp", vk: 38 }, ArrowRight: { code: "ArrowRight", vk: 39 }, ArrowDown: { code: "ArrowDown", vk: 40 }, Home: { code: "Home", vk: 36 }, End: { code: "End", vk: 35 } };
 async function press(key, shift = false) {
   const k = KEYS[key];
   const modifiers = shift ? 8 : 0;
@@ -398,6 +399,7 @@ try {
     check(g, "no injected <style> element and no inline <style> in the page (style-src 'self' stays unweakened)", (await ev("document.querySelectorAll('style').length")) === 0);
     check(g, "no AG Grid license watermark or Enterprise/Studio text anywhere", !(await ev("!!document.querySelector('.ag-watermark, [class*=watermark]')")) && !/Enterprise|AG Studio|license key|evaluation/i.test(await bodyText()));
     check(g, "the grid is wrapped in a named group and the list is announced (result count)", (await ev("document.querySelector('.nmi-grid').getAttribute('aria-label')")) === "Saved invoices, newest first" && /20 invoices loaded, more available/.test(await ev("document.querySelector('[data-testid=result-count]').textContent")));
+    check(g, "visible copy says column sorting covers only the loaded invoices and the filters cover all saved invoices, and the grid is described by it", /Sorting a column reorders only the 20 invoices loaded so far\. Search and the currency and PayPal status filters look through all your saved invoices\./.test(await ev("document.getElementById('dash-sort-note').textContent")) && (await ev("document.querySelector('.nmi-grid').getAttribute('aria-describedby')")) === "dash-sort-note" && (await ev("(() => { const r = document.getElementById('dash-sort-note').getBoundingClientRect(); return r.width > 0 && r.height > 0; })()")));
     check(g, "loading the page made only GET list requests (no mutation, no foreign host)", apiCalls(m).every((c) => c.method === "GET") && foreign.length === 0);
     await shot("01-desktop-light.jpg");
   }
@@ -450,41 +452,74 @@ try {
     check(g, "the Actions column is not resizable", (await ev(`(() => { const e = ${hdr("actions")}.querySelector('.ag-header-cell-resize'); return !e || e.classList.contains('ag-hidden') || getComputedStyle(e).display === 'none'; })()`)));
   }
 
-  /* ======================= View: keyboard + real navigation ======================= */
+  /* ======================= keyboard: AG Grid cell navigation ======================= */
   {
-    const g = "View invoice: keyboard and real saved-invoice navigation";
-    const target = (await gridRows())[2];
-    const m = mark();
-    await ev(`document.querySelector('.nmi-grid .ag-row[row-id="${target.id}"] [aria-label^="View invoice"]').focus()`);
-    check(g, "the View action is a focusable native button with the invoice/customer accessible name", /^View invoice [0-9a-f]{8} for /.test(await ev("document.activeElement.getAttribute('aria-label')")) && (await ev("document.activeElement.tagName")) === "BUTTON");
+    const g = "Keyboard: arrow-key grid navigation (supported AG Grid hooks)";
+    const where = () => ev("(() => { const e = document.activeElement; const row = e.closest('.ag-row'); return { id: e.id, col: e.getAttribute('col-id'), kind: e.classList.contains('ag-header-cell') ? 'header' : e.classList.contains('ag-cell') ? 'cell' : e.tagName.toLowerCase(), rowIndex: row ? Number(row.getAttribute('row-index')) : null, rowId: row ? row.getAttribute('row-id') : null, inGrid: !!e.closest('.nmi-grid') }; })()");
+    await ev("document.getElementById('dash-status').focus()");
+    await press("Tab");
+    let w = await where();
+    check(g, "Tab from the filters enters the grid on its first column header (one tab stop)", w.kind === "header" && w.col === "invoice" && w.inGrid, JSON.stringify(w));
+    await press("ArrowRight");
+    check(g, "ArrowRight moves to the next header and ArrowLeft back", (await where()).col === "customer" && (await press("ArrowLeft"), (await where()).col === "invoice"));
+    await press("ArrowRight");
     await press("Enter");
-    check(g, "Enter on View opens THAT invoice from the server (GET /api/invoice-drafts/:id for exactly its UUID)", (await waitFor("!!document.getElementById('saved-id')", 6000)) && (await ev("document.getElementById('saved-id').textContent")) === target.id && DETAIL(m).length === 1 && DETAIL(m)[0].path.endsWith(target.id), JSON.stringify(DETAIL(m)));
-    check(g, "opening read nothing but GET requests", MUTATIONS(m).length === 0);
+    check(g, "Enter on a focused header sorts that column (keyboard sorting)", (await sortOf("customer")) === "ascending");
+    await press("Enter");
+    check(g, "Enter again on the focused header toggles the sort to descending", (await sortOf("customer")) === "descending");
+    await press("ArrowDown");
+    w = await where();
+    check(g, "ArrowDown moves from the header into the first body row of the same column", w.kind === "cell" && w.col === "customer" && w.rowIndex === 0, JSON.stringify(w));
+    await press("ArrowDown"); await press("ArrowDown");
+    check(g, "ArrowDown moves down the rows (row index 2)", (await where()).rowIndex === 2);
+    const cols = [];
+    for (let i = 0; i < 4; i++) { await press("ArrowRight"); cols.push((await where()).col); }
+    check(g, "ArrowRight walks the cells in column order: due, total, status, actions", cols.join() === "due,total,status,actions", cols.join());
+    await press("ArrowRight");
+    check(g, "ArrowRight at the last column stays on it (no wrap, no escape)", (await where()).col === "actions");
+    await press("ArrowUp");
+    check(g, "ArrowUp moves back up the Actions column", (await where()).rowIndex === 1 && (await where()).col === "actions");
+    await press("ArrowDown");
+    const target = await where();
+    const ring = await ev("(() => { const e = document.activeElement; const s = getComputedStyle(e); return { fv: e.matches(':focus-visible'), os: s.outlineStyle, ow: s.outlineWidth, cls: e.className }; })()");
+    check(g, "the focused cell shows a visible focus ring (:focus-visible, >= 2px outline)", ring.fv && ring.os !== "none" && parseFloat(ring.ow) >= 2, JSON.stringify(ring));
+    await shot("11-keyboard-focus.jpg");
+    const m = mark();
+    await press("Enter");
+    check(g, "Enter on the focused Actions cell opens THAT invoice (GET /api/invoice-drafts/:id for exactly its UUID, once)", (await waitFor("!!document.getElementById('saved-id')", 6000)) && (await ev("document.getElementById('saved-id').textContent")) === target.rowId && DETAIL(m).length === 1 && DETAIL(m)[0].path.endsWith(target.rowId), JSON.stringify([target, DETAIL(m)]));
+    check(g, "opening made only GET requests", MUTATIONS(m).length === 0);
     await load();
     await dashLoaded();
-  }
-
-  /* ======================= Tab order / no keyboard trap ======================= */
-  {
-    const g = "Keyboard: Tab order and no trap";
     await ev("document.getElementById('dash-status').focus()");
-    const seq = [];
-    let reachedView = false, reachedMore = false, viewFocus = null;
-    for (let i = 0; i < 60 && !reachedMore; i++) {
-      await press("Tab");
-      const d = await ev("(() => { const e = document.activeElement; return { id: e.id, cls: String(e.className).split(' ').slice(0, 2).join('.'), label: e.getAttribute('aria-label'), col: e.getAttribute('col-id'), inGrid: !!e.closest('.nmi-grid') }; })()");
-      seq.push(d.id || d.col || d.label || d.cls);
-      if (d.label && /^View invoice/.test(d.label) && !reachedView) { reachedView = true; viewFocus = await ev("(() => { const s = getComputedStyle(document.activeElement); return { os: s.outlineStyle, ow: s.outlineWidth, oo: s.outlineOffset, oc: s.outlineColor, fv: document.activeElement.matches(':focus-visible') }; })()"); }
-      if (d.id === "dash-more") reachedMore = true;
-    }
-    check(g, "Tab from the filters enters the grid, reaches a View button, and continues to 'Load more invoices'", reachedView && reachedMore, seq.join(" > ").slice(0, 700));
-    check(g, "a View button reached by the keyboard shows a visible focus ring (>= 2px solid, :focus-visible)", !!viewFocus && viewFocus.fv && viewFocus.os !== "none" && parseFloat(viewFocus.ow) >= 2, JSON.stringify(viewFocus));
-    check(g, "the focus order is bounded (no trap): Load more is reached within 60 Tab presses", reachedMore);
+    await press("Tab"); await press("ArrowDown"); await press("ArrowDown");
+    for (let i = 0; i < 5; i++) await press("ArrowRight");
+    const t2 = await where();
+    const m2 = mark();
+    await press(" ");
+    check(g, "Space on the focused Actions cell opens that invoice too", t2.col === "actions" && (await waitFor("!!document.getElementById('saved-id')", 6000)) && (await ev("document.getElementById('saved-id').textContent")) === t2.rowId && DETAIL(m2).length === 1, JSON.stringify([t2, DETAIL(m2)]));
+    await load();
+    await dashLoaded();
+    const mb = mark();
+    await ev("document.querySelector('.nmi-grid .ag-row [aria-label^=\"View invoice\"]').click()");
+    check(g, "a pointer click on the inner View button still opens its invoice exactly once", (await waitFor("!!document.getElementById('saved-id')", 6000)) && DETAIL(mb).length === 1);
+    await load();
+    await dashLoaded();
+    // Tab leaves the grid in one press from a header, from a cell, and Shift+Tab leaves backwards.
+    await ev("document.getElementById('dash-status').focus()");
+    await press("Tab"); await press("ArrowDown"); await press("ArrowRight");
+    await press("Tab");
+    check(g, "Tab from a body cell leaves the grid in ONE press and reaches 'Load more invoices'", (await ev("document.activeElement.id")) === "dash-more", String(await activeId()));
     await press("Tab", true);
-    check(g, "Shift+Tab leaves 'Load more' and returns into the grid", await ev("!!document.activeElement.closest('.nmi-grid')"), String(await activeId()));
-    let backOut = false;
-    for (let i = 0; i < 40 && !backOut; i++) { await press("Tab", true); backOut = (await ev("document.activeElement.id")) === "dash-status"; }
-    check(g, "Shift+Tab walks back out of the grid to the status filter (no backwards trap)", backOut, String(await activeId()));
+    const back = await where();
+    check(g, "Shift+Tab from 'Load more' re-enters the grid (no skip, no trap)", back.inGrid, JSON.stringify(back));
+    await press("Tab", true);
+    check(g, "Shift+Tab from inside the grid leaves it backwards to the status filter", (await ev("document.activeElement.id")) === "dash-status", String(await activeId()));
+    await press("Tab");
+    await press("Tab");
+    check(g, "Tab from a column header leaves the grid in one press (forward, no trap)", (await ev("document.activeElement.id")) === "dash-more", String(await activeId()));
+    let steps = 0;
+    while (steps < 12 && (await ev("document.activeElement.tagName")) !== "BODY" && (await ev("document.activeElement.id")) !== "dash-title") { await press("Tab"); steps++; }
+    check(g, "continued Tab presses keep moving through the page (bounded, no trap)", steps < 12, String(steps));
   }
 
   /* ======================= load more keeps sort ======================= */
@@ -574,6 +609,13 @@ try {
     check(g, "all six columns remain in the DOM and the grid body scrolls horizontally when it must", (await ev("document.querySelectorAll('.nmi-grid .ag-header-cell').length")) === 6 && !!sc, JSON.stringify(sc));
     const c = await ev(CONTRAST_SCAN);
     check(g, "dark 390px: text contrast >= WCAG AA", c.length === 0, JSON.stringify(c));
+    await ev("document.getElementById('dash-status').focus()");
+    await press("Tab"); await press("ArrowDown");
+    for (let i = 0; i < 5; i++) await press("ArrowRight");
+    const off = await ev("(() => { const e = document.activeElement; const r = e.getBoundingClientRect(); const vp = document.querySelector('.nmi-grid .ag-body-horizontal-scroll-viewport, .nmi-grid .ag-body-viewport').getBoundingClientRect(); return { col: e.getAttribute('col-id'), x: r.x, right: r.right, vpx: vp.x, vpr: vp.right, vw: innerWidth }; })()");
+    check(g, "at 390px ArrowRight reaches the off-screen 'due' cell and the grid scrolls it fully into view (keyboard access to hidden columns)", off.col === "due" && off.x >= off.vpx - 1 && off.right <= off.vpr + 1 && off.right <= off.vw + 1, JSON.stringify(off));
+    await press("Home");
+    check(g, "Home returns to the first column and scrolls back", (await ev("document.activeElement.getAttribute('col-id')")) === "customer");
     await shot("07-mobile-dark.jpg");
     const first = await ev(`(() => { const row = document.querySelector('.nmi-grid .ag-row'); const rect = (e) => { const r = e.getBoundingClientRect(); return { x: r.x, r: r.right, w: r.width, h: r.height }; }; return { vw: innerWidth, customer: rect(row.querySelector('[col-id=customer]')), total: rect(row.querySelector('[col-id=total]')), view: rect(row.querySelector('[aria-label^="View invoice"]')), scroll: document.querySelector('.nmi-grid .ag-body-horizontal-scroll-viewport')?.scrollLeft ?? 0 }; })()`);
     check(g, "at 390px (grid not scrolled) the first row shows the customer, the exact total and the View action together, all inside the viewport", [first.customer, first.total, first.view].every((r) => r.x >= 0 && r.r <= first.vw + 1) && first.scroll === 0, JSON.stringify(first));
@@ -610,6 +652,71 @@ try {
     check(g, "Load more is fully visible without horizontal scrolling", vis);
     await shot("10-zoom-400.jpg");
     await viewport(1280, 900);
+  }
+
+  /* ======================= larger dataset: bounded rendering ======================= */
+  {
+    const g = "Scale: 600 invoices, bounded rendering";
+    const t0 = Date.now();
+    for (let i = 27; i <= 600; i++) await nodeCreate(a, inv("Scale " + String(i).padStart(4, "0"), { currency: ["USD", "EUR", "GBP", "JPY"][i % 4], lineItems: [{ description: "Service", quantity: "1", unitPrice: ["USD", "EUR", "GBP"].includes(["USD", "EUR", "GBP", "JPY"][i % 4]) ? ((i * 53) % 900 + 1 + 0.25 * (i % 4)).toFixed(2) : String((i * 53) % 9000 + 1) }] }));
+    check(g, "600 synthetic invoices exist for the owner (seeded through the real API)", Number(sql(`SELECT count(*) FROM invoices WHERE created_by='${A_ID()}'`)) === 600, `${Date.now() - t0} ms`);
+    const all = dbRows();
+    const heap = async () => { await send("HeapProfiler.collectGarbage"); return ev("performance.memory ? performance.memory.usedJSHeapSize : 0"); };
+    const nodes = () => ev("document.getElementsByTagName('*').length");
+    await load();
+    await dashLoaded();
+    const h0 = await heap();
+    const n0 = await nodes();
+    const m = mark();
+    const loadTimes = [];
+    while (await ev("!!document.getElementById('dash-more')")) {
+      const have = await ev("document.querySelectorAll('.nmi-grid .ag-row').length");
+      const t = Date.now();
+      await ev("document.getElementById('dash-more').click()");
+      if (!(await waitFor(`document.querySelectorAll('.nmi-grid .ag-row').length === ${have + 20}`, 10000))) break;
+      loadTimes.push(Date.now() - t);
+    }
+    const rows = await gridRows();
+    const lists = LIST(m);
+    check(g, "Load more stops at the 200-invoice rendering bound: exactly 200 rows, no Load more button, an explanation instead", rows.length === 200 && !(await ev("!!document.getElementById('dash-more')")) && (await ev("document.getElementById('dash-limit')?.textContent ?? ''")).includes("200 invoices are loaded"), String(rows.length));
+    check(g, "the server cursor pagination is unchanged: 9 further GETs (20 each, cursor chained) and none after the bound", lists.length === 9 && lists.every((c, i) => c.status === 200 && !!q(m, c).get("cursor") && q(m, c).get("limit") === "20"), String(lists.length));
+    check(g, "the 200 rows are exactly the owner's newest 200, no gap and no duplicate, keyed by UUID", JSON.stringify(rows.map((r) => r.id)) === JSON.stringify(all.slice(0, 200).map((r) => r.id)) && new Set(rows.map((r) => r.id)).size === 200);
+    const cs = await cards();
+    const sums = {};
+    for (const r of all.slice(0, 200)) sums[r.currency] = (sums[r.currency] ?? 0n) + r.minor;
+    const fmtc = (c, v) => (c === "JPY" ? Number(v).toLocaleString("en-US") : (Number(v) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    check(g, "the currency cards equal the exact per-currency sums of the 200 loaded rows (never mixed, never the whole 600)", cs.length === Object.keys(sums).length && cs.every((c) => c.amount.replace(/^[^0-9]*/, "") === fmtc(c.cur, sums[c.cur]) && /200|loaded/.test(c.meta)), JSON.stringify(cs));
+    const h1 = await heap();
+    const n1 = await nodes();
+    PERF.rowsLoaded = 200; PERF.domNodes0 = n0; PERF.domNodes200 = n1; PERF.heapBefore = h0; PERF.heapAfter200 = h1; PERF.loadMoreMs = loadTimes;
+    check(g, "DOM stays bounded at the 200-row limit (fewer than 20,000 elements)", n1 < 20000, `${n0} -> ${n1} elements`);
+    const ts = Date.now();
+    await clickHeader("total");
+    await waitFor(`document.querySelector('.nmi-grid .ag-row [col-id=customer] .cell-main')?.textContent !== ${JSON.stringify(rows[0].name)}`, 5000);
+    PERF.sortMs = Date.now() - ts;
+    check(g, "sorting Total over 200 rows is currency-first then exact BigInt, matches the independent expectation and completes in < 2 s", JSON.stringify(await names()) === JSON.stringify(stable(all.slice(0, 200), cmpTotal, 1).map((r) => r.name)) && PERF.sortMs < 2000, `${PERF.sortMs} ms`);
+    check(g, "the cards are unchanged by the sort", JSON.stringify(await cards()) === JSON.stringify(cs));
+    await ev("document.getElementById('dash-status').focus()");
+    await press("Tab"); await press("ArrowDown");
+    const tk = Date.now();
+    for (let i = 0; i < 120; i++) await press("ArrowDown");
+    PERF.arrow120Ms = Date.now() - tk;
+    const kw = await ev("(() => { const e = document.activeElement; const r = e.closest('.ag-row'); return { kind: e.className.includes('ag-cell') ? 'cell' : e.tagName, rowIndex: r ? Number(r.getAttribute('row-index')) : -1 }; })()");
+    check(g, "From the first row, 120 ArrowDown presses move focus to row index 120 of the 200-row grid in real time", kw.kind === "cell" && kw.rowIndex === 120, `${JSON.stringify(kw)} in ${PERF.arrow120Ms} ms`);
+    await press("Tab");
+    check(g, "Tab from deep inside the 200-row grid leaves it in one press (no focus trap)", !(await ev("!!document.activeElement.closest('.nmi-grid')")), String(await activeId()));
+    await sleep(200);
+    const h2 = await heap();
+    PERF.heapAfterInteract = h2;
+    check(g, "memory observation recorded (JS heap after GC, bytes): no unbounded growth through load, sort and 120 key presses (< 100 MB)", h2 < 100 * 1024 * 1024, `${h0} -> ${h1} -> ${h2}`);
+    await ev("document.getElementById('dash-limit').scrollIntoView({ block: 'end' })");
+    await shot("12-scale-200-limit.jpg");
+    await setValue("dash-search", "Grid 01");
+    check(g, "an invoice outside the 200-row bound is still reachable through the server-side search over the whole account", (await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1", 6000)) && (await names()).join() === "Grid 01");
+    await shot("13-scale-search-beyond-bound.jpg");
+    await ev("document.getElementById('dash-clear')?.click(); true");
+    await setValue("dash-search", "");
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 6000);
   }
 
   /* ======================= sign out locks the workspace ======================= */
@@ -678,6 +785,7 @@ try {
     "",
     "Screenshots (synthetic data only, no credentials): " + shots.join(", "),
     "",
+    `Scale observations (600 invoices, 200-row bound, headless Chrome, this machine; indicative, not a benchmark): ${JSON.stringify(PERF)}.`, "",
     `Build facts: JS ${BUILD.js?.join("; ")}; CSS ${BUILD.css?.join("; ")}.`, "", "Not covered: screen readers (VoiceOver/NVDA), real touch devices, Safari/Firefox, a real browser zoom control (the 400% check is a 320 x 256 CSS px viewport emulation), a hosted/TLS (`__Host-` cookie) deployment.",
     "",
   ];

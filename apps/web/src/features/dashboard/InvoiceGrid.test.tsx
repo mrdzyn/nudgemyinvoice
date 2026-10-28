@@ -7,6 +7,8 @@ import {
   columnsFor,
   CustomerCell,
   InvoiceCell,
+  leaveGridOnTab,
+  openOnKey,
   rowId,
   StatusCell,
   TotalCell,
@@ -133,5 +135,52 @@ describe("sorting comparators (loaded rows only, exact money)", () => {
     expect(compareInstant("2030-01-02", "2030-01-01")).toBe(1);
     expect(statusLabel("pending")).toBe(statusLabel("creating"));
     expect(statusLabel("mismatch")).toBe("Needs operator review");
+  });
+});
+
+describe("keyboard hooks", () => {
+  const cellKey = (key: string, col: string, over: Record<string, unknown> = {}) => {
+    let prevented = false;
+    const opened: string[] = [];
+    const ev = { key, target: null, preventDefault: () => void (prevented = true) };
+    const e = {
+      event: ev,
+      column: { getColId: () => col },
+      data: item(9),
+      context: { onOpen: (id: string) => void opened.push(id) },
+      ...over,
+    };
+    openOnKey(e as unknown as Parameters<typeof openOnKey>[0]);
+    return { opened, prevented };
+  };
+  it("Enter and Space on the Actions cell open exactly that invoice", () => {
+    for (const k of ["Enter", " "]) {
+      const r = cellKey(k, "actions");
+      expect(r.opened).toEqual([item(9).id]);
+      expect(r.prevented).toBe(true);
+    }
+  });
+  it("other keys and other columns do nothing", () => {
+    expect(cellKey("ArrowDown", "actions").opened).toEqual([]);
+    expect(cellKey("Enter", "customer").opened).toEqual([]);
+    expect(cellKey("Enter", "actions", { data: undefined }).opened).toEqual([]);
+  });
+  it("an Enter that came from the inner button is left to the button (no double open)", () => {
+    const ev = {
+      key: "Enter",
+      target: { closest: (sel: string) => (sel === "button" ? {} : null) },
+      preventDefault: () => undefined,
+    };
+    const opened: string[] = [];
+    openOnKey({
+      event: ev,
+      column: { getColId: () => "actions" },
+      data: item(1),
+      context: { onOpen: (id: string) => void opened.push(id) },
+    } as unknown as Parameters<typeof openOnKey>[0]);
+    expect(opened).toEqual([]);
+  });
+  it("Tab hands focus back to the browser from headers and cells (one tab stop, no trap)", () => {
+    expect(leaveGridOnTab()).toBe(false);
   });
 });

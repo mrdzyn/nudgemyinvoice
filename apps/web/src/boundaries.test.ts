@@ -191,6 +191,13 @@ describe("UI shell boundaries", () => {
     expect(importers.map((f) => f.split("/").pop()).sort()).toEqual(["InvoiceGrid.tsx"]);
   });
 
+  it("the grid keeps AG Grid's cell keyboard navigation: cell focus is never suppressed and no timer-driven focus handoff exists", () => {
+    const grid = read(files.find((f) => f.endsWith("InvoiceGrid.tsx")) as string);
+    expect(grid).not.toMatch(/suppressCellFocus|suppressHeaderFocus|suppressKeyboardEvent/);
+    expect(grid).not.toMatch(/setTimeout|requestAnimationFrame|\.focus\(\)/);
+    expect(grid).toMatch(/onCellKeyDown=/);
+  });
+
   it("does not embed the real Sandbox smoke invoice id or any credential-like literal", () => {
     const all = files.map(read).join("\n");
     expect(all).not.toContain(["INV2", "U92W", "76NX", "3P2E", "AGUZ"].join("-"));

@@ -5,7 +5,7 @@ import { initialState } from "../../demo/appState.js";
 import { FIXTURE_INVOICES } from "../../demo/fixtures.js";
 import type { ListItem } from "../../domain/serverList.js";
 import { DashboardScreen } from "./DashboardScreen.js";
-import { initialDash, type DashState } from "./dashboardState.js";
+import { initialDash, MAX_LOADED_ROWS, type DashState } from "./dashboardState.js";
 import { RealDashboardView, summarize } from "./RealDashboard.js";
 
 /**
@@ -238,5 +238,24 @@ describe("isolation from the synthetic preview", () => {
     expect(h).toContain("DEMO / SYNTHETIC");
     expect(h).toContain(FIXTURE_INVOICES[0]?.draft.customerName);
     expect(h).not.toContain("Loading invoices");
+  });
+});
+
+describe("grid disclosure and rendering bound", () => {
+  it("states that column sorting covers only the loaded invoices and filters cover all of them", () => {
+    const h = view({ status: "loaded", items: [item(2), item(1)], nextCursor: "c" });
+    expect(h).toContain('id="dash-sort-note"');
+    expect(h).toContain("Sorting a column reorders only the 2 invoices loaded so far");
+    expect(h).toContain("look through all your saved invoices");
+    expect(h).toContain('aria-describedby="dash-sort-note"');
+  });
+  it("at the bound, Load more is replaced by an explanation and a pointer to the filters", () => {
+    const rows = Array.from({ length: MAX_LOADED_ROWS }, (_, i) => item(i + 1));
+    const h = view({ status: "loaded", items: rows, nextCursor: "c" });
+    expect(h).not.toContain('id="dash-more"');
+    expect(h).toContain('id="dash-limit"');
+    expect(h).toContain(`${MAX_LOADED_ROWS} invoices are loaded`);
+    const below = view({ status: "loaded", items: rows.slice(1), nextCursor: "c" });
+    expect(below).toContain('id="dash-more"');
   });
 });

@@ -1,6 +1,6 @@
 {
   "chrome": "Chrome/156.0.8078.74",
-  "passed": 79,
+  "passed": 105,
   "failed": 0,
   "results": [
     {
@@ -84,6 +84,12 @@
     {
       "group": "AG Grid Community: structure and licensing",
       "name": "the grid is wrapped in a named group and the list is announced (result count)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "visible copy says column sorting covers only the loaded invoices and the filters cover all saved invoices, and the grid is described by it",
       "pass": true,
       "detail": ""
     },
@@ -184,50 +190,116 @@
       "detail": ""
     },
     {
-      "group": "View invoice: keyboard and real saved-invoice navigation",
-      "name": "the View action is a focusable native button with the invoice/customer accessible name",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Tab from the filters enters the grid on its first column header (one tab stop)",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "View invoice: keyboard and real saved-invoice navigation",
-      "name": "Enter on View opens THAT invoice from the server (GET /api/invoice-drafts/:id for exactly its UUID)",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "ArrowRight moves to the next header and ArrowLeft back",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "View invoice: keyboard and real saved-invoice navigation",
-      "name": "opening read nothing but GET requests",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Enter on a focused header sorts that column (keyboard sorting)",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "Keyboard: Tab order and no trap",
-      "name": "Tab from the filters enters the grid, reaches a View button, and continues to 'Load more invoices'",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Enter again on the focused header toggles the sort to descending",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "Keyboard: Tab order and no trap",
-      "name": "a View button reached by the keyboard shows a visible focus ring (>= 2px solid, :focus-visible)",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "ArrowDown moves from the header into the first body row of the same column",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "Keyboard: Tab order and no trap",
-      "name": "the focus order is bounded (no trap): Load more is reached within 60 Tab presses",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "ArrowDown moves down the rows (row index 2)",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "Keyboard: Tab order and no trap",
-      "name": "Shift+Tab leaves 'Load more' and returns into the grid",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "ArrowRight walks the cells in column order: due, total, status, actions",
       "pass": true,
       "detail": ""
     },
     {
-      "group": "Keyboard: Tab order and no trap",
-      "name": "Shift+Tab walks back out of the grid to the status filter (no backwards trap)",
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "ArrowRight at the last column stays on it (no wrap, no escape)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "ArrowUp moves back up the Actions column",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "the focused cell shows a visible focus ring (:focus-visible, >= 2px outline)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Enter on the focused Actions cell opens THAT invoice (GET /api/invoice-drafts/:id for exactly its UUID, once)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "opening made only GET requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Space on the focused Actions cell opens that invoice too",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "a pointer click on the inner View button still opens its invoice exactly once",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Tab from a body cell leaves the grid in ONE press and reaches 'Load more invoices'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Shift+Tab from 'Load more' re-enters the grid (no skip, no trap)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Shift+Tab from inside the grid leaves it backwards to the status filter",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "Tab from a column header leaves the grid in one press (forward, no trap)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: arrow-key grid navigation (supported AG Grid hooks)",
+      "name": "continued Tab presses keep moving through the page (bounded, no trap)",
       "pass": true,
       "detail": ""
     },
@@ -347,6 +419,18 @@
     },
     {
       "group": "390px mobile",
+      "name": "at 390px ArrowRight reaches the off-screen 'due' cell and the grid scrolls it fully into view (keyboard access to hidden columns)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "Home returns to the first column and scrolls back",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
       "name": "at 390px (grid not scrolled) the first row shows the customer, the exact total and the View action together, all inside the viewport",
       "pass": true,
       "detail": ""
@@ -396,6 +480,78 @@
     {
       "group": "400% zoom smoke (320 x 256 CSS px, equivalent to 400% on a 1280 x 1024 window)",
       "name": "Load more is fully visible without horizontal scrolling",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "600 synthetic invoices exist for the owner (seeded through the real API)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "Load more stops at the 200-invoice rendering bound: exactly 200 rows, no Load more button, an explanation instead",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "the server cursor pagination is unchanged: 9 further GETs (20 each, cursor chained) and none after the bound",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "the 200 rows are exactly the owner's newest 200, no gap and no duplicate, keyed by UUID",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "the currency cards equal the exact per-currency sums of the 200 loaded rows (never mixed, never the whole 600)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "DOM stays bounded at the 200-row limit (fewer than 20,000 elements)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "sorting Total over 200 rows is currency-first then exact BigInt, matches the independent expectation and completes in < 2 s",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "the cards are unchanged by the sort",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "From the first row, 120 ArrowDown presses move focus to row index 120 of the 200-row grid in real time",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "Tab from deep inside the 200-row grid leaves it in one press (no focus trap)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "memory observation recorded (JS heap after GC, bytes): no unbounded growth through load, sort and 120 key presses (< 100 MB)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Scale: 600 invoices, bounded rendering",
+      "name": "an invoice outside the 200-row bound is still reachable through the server-side search over the whole account",
       "pass": true,
       "detail": ""
     },

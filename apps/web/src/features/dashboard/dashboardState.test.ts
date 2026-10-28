@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ListItem } from "../../domain/serverList.js";
-import { dashReducer, initialDash, NO_FILTERS, type DashState } from "./dashboardState.js";
+import {
+  dashReducer,
+  initialDash,
+  MAX_LOADED_ROWS,
+  NO_FILTERS,
+  type DashState,
+} from "./dashboardState.js";
 
 /**
  * Objective: the real dashboard list can never show a stale, duplicated or reordered page. Every
@@ -221,5 +227,23 @@ describe("dashReducer", () => {
         dashReducer(s, { type: "failed", generation: 0, kind: "offline", append: false }),
       ).toBe(s);
     });
+  });
+});
+
+describe("rendering bound", () => {
+  it("offers no further page once MAX_LOADED_ROWS invoices are loaded, even with a cursor", () => {
+    const full = loaded(
+      Array.from({ length: MAX_LOADED_ROWS }, (_, i) => i + 1),
+      "more",
+    );
+    expect(full.nextCursor).toBe("more");
+    expect(dashReducer(full, { type: "load-more" })).toBe(full);
+  });
+  it("still pages below the bound", () => {
+    const s = loaded(
+      Array.from({ length: MAX_LOADED_ROWS - 20 }, (_, i) => i + 1),
+      "more",
+    );
+    expect(dashReducer(s, { type: "load-more" }).status).toBe("loading-more");
   });
 });
