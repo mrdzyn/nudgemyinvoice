@@ -70,7 +70,10 @@ export async function createPayPalDraft(
   const coolOff = deps.coolOffSeconds ?? COOL_OFF_SECONDS;
   const { drafts, ops, paypal } = deps;
 
-  const saved = await drafts.get(input.invoiceId);
+  // Ownership gate. This MUST stay the first statement that touches data: a foreign, ownerless or
+  // unknown invoice is indistinguishable (`not_found`) and nothing below runs for it (no operation
+  // read, no stored PayPal id returned, no reserve/claim, no audit row, no provider call).
+  const saved = await drafts.getOwned(input.invoiceId, input.operatorId);
   if (!saved) return { kind: "not_found" };
   if (saved.paypalInvoiceId) {
     return { kind: "created", paypalInvoiceId: saved.paypalInvoiceId, replayed: true };

@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01C4 — real authenticated invoice dashboard (read-only list). **Implemented; audit MINOR-1 (privacy wording) remediated, documentation/evidence only; awaiting independent GPT-6 re-audit.**
-- **Status:** NMI-UI-01C1 (auth), C2 (parse wiring) and C3 (real draft save and read-only saved-invoice detail) are independently audited and squash-merged: C1 `32d9132be419b48a64455fa79c0fca58f9159b89`, C2 `ddffc11471306e3b2c4cd7ea4a6a80303593e674`, C3 (PR #12) `988a8f9f22876f8f19d7424a31ff6b1f62ebf8c9`. C4 adds the owner-scoped, read-only `GET /api/invoice-drafts` and wires it into the real React dashboard; `GET /api/invoice-drafts/:id` becomes operator-scoped. No migration, payment or provider change.
-- **Primary branch:** `main` (C3 squash merge `988a8f9f22876f8f19d7424a31ff6b1f62ebf8c9`).
-- **Working branch:** `feat/nmi-ui-01c4-real-dashboard` (Draft PR; implementation SHA `4309c7f63ee0dc1dc60cad8a079c277aa5a1d399`).
-- **Active task:** `tasks/NMI-UI-01C4-real-dashboard.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-UI-01C4-R1
+- **Current phase:** NMI-UI-01C5-P0 — PayPal draft operator-ownership security gate (backend only). **Implemented on Draft PR; awaiting independent GPT-6 exact-head audit.** The C5 frontend (P1) is not started.
+- **Status:** NMI-UI-01C1 through C4 are independently audited and squash-merged: C1 `32d9132be419b48a64455fa79c0fca58f9159b89`, C2 `ddffc11471306e3b2c4cd7ea4a6a80303593e674`, C3 `988a8f9f22876f8f19d7424a31ff6b1f62ebf8c9`, C4 (real read-only dashboard, PR #13) `568faa0a475af34372520bea5d19e63a4829cb19`. C5-P0 makes `createPayPalDraft` load the invoice with the owner-scoped `getOwned(invoiceId, operatorId)` before any other data access, closing the finding recorded in C4. No provider, schema or payment-algorithm change.
+- **Primary branch:** `main` (C4 squash merge `568faa0a475af34372520bea5d19e63a4829cb19`).
+- **Working branch:** `fix/nmi-c5-p0-paypal-ownership` (Draft PR; implementation SHA `2f208c057ee046dd8037c19f409d7051fe5aa9c1`).
+- **Active task:** `tasks/NMI-UI-01C5-P0-paypal-ownership.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
+- **Active handoff:** NMI-UI-01C5-P0-IMPL
 - **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
@@ -31,16 +31,16 @@
 - Frontend `apps/web`: owner-approved NMI-UI-01B fixture-backed screens and **NMI-UI-01C1 real browser operator authentication** and **NMI-UI-01C2 authenticated parsing** and **NMI-UI-01C3 save/detail** are merged; the real dashboard list is on its C4 Draft PR and the PayPal UI remains deferred to C5.
 
 ## Deferred / open gates
-- **NMI-UI-01C4:** implemented on Draft PR (`4309c7f63ee0dc1dc60cad8a079c277aa5a1d399`); 66 new real-PostgreSQL tests, web suite 442 and a two-operator real-browser journey (79/79 after the MINOR-1 remediation) are recorded in the task. **Independent audit and owner merge approval NOT YET DONE.** The real dashboard is not on `main`.
+- **NMI-UI-01C5-P0:** implemented on Draft PR (`2f208c057ee046dd8037c19f409d7051fe5aa9c1`); 13 new real-PostgreSQL ownership tests (negative control fails 7), 62 existing payment state-machine tests unchanged and passing. **Independent audit and owner merge approval NOT YET DONE.** Not on `main`.
 - **Manual QA still pending:** VoiceOver/NVDA, real touch, Safari/Firefox, 400% browser zoom, HTTPS `__Host-` cookie and hosted reverse proxy; no full WCAG 2.2 AA or deployment claim.
 - **AG Studio (D1):** license/trial/keys unverified; deferred. Native table remains.
 - **Provider boundary:** real OpenAI Responses inference **NOT TESTED**, and no new provider call authorized; prior PayPal draft-only Sandbox one-create smoke budget is exhausted. No new PayPal write authorized, and `PAYPAL_DRAFTS_ENABLED=false` remains default.
-- **Later integration:** C5 controlled Sandbox draft UI; NMI-DEMO. No current provider-enabled demo or hosted release.
+- **Later integration:** C5-P1 controlled Sandbox draft UI (not started; separate approval); NMI-DEMO. No current provider-enabled demo or hosted release.
 - **Other deferred:** PayPal send/grant issuance/reminder automation/webhooks/payment reconciliation; SQLite-versus-Postgres decision, hosting strategy and judge access; editing existing saved drafts.
 - **Operational limitations:** in-memory per-process auth throttling; approval consumption and audit logging separate statements; DB least-privilege grants a deployment prerequisite.
-- **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, or start C5 without separate approval.
+- **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, enable PayPal drafting by default, or start C5-P1 without separate approval.
 - **Privacy scope of search text (C4):** the term travels in `q` in the HTTP GET request URL (customer information). It is not in the browser navigation URL, not in browser storage and not in Fastify logs. Reverse-proxy/ingress/CDN/access logs must redact the query string: deployment prerequisite, UNTESTED. An absolute no-PII-in-URL rule would conflict with the approved GET contract and is an owner decision, not taken.
-- **Security finding carried to C5:** `createPayPalDraft` / `POST /api/invoice-drafts/:id/paypal-draft` still reads the invoice by id without an operator scope (`drafts.get`). Not exploitable with the single operator, but it must be owner-scoped before C5 or any second operator. Documented in `tasks/NMI-UI-01C4-real-dashboard.md`, deliberately not changed under C4.
+- **Security finding (C4) RESOLVED in C5-P0 (pending audit):** `createPayPalDraft` / `POST /api/invoice-drafts/:id/paypal-draft` is now operator-scoped (`getOwned`); a foreign, ownerless or unknown invoice is one identical `404 not_found` and triggers no operation read/write, audit row or provider call.
 
 ## Next action
-GPT-6 independent exact-head audit of the C4 Draft PR, then the owner's merge decision. No live OpenAI/PayPal calls, deployment, merge or C5 without separate authorization.
+GPT-6 independent exact-head audit of the C5-P0 Draft PR, then the owner's merge decision. No real PayPal/OpenAI calls, deployment, merge or C5-P1 without separate authorization.

@@ -1060,4 +1060,25 @@ Absolute "no customer PII in HTTP request URLs" conflicts with the approved GET 
 3. Existing meaningful checks are unweakened; `git diff` against the audited head shows no change under `apps/*/src` other than a test title.
 4. The open finding stands: `createPayPalDraft` still needs operator scope before C5 or a second operator.
 
+## Handoff: NMI-UI-01C5-P0-IMPL
+
+- **Task / phase:** `tasks/NMI-UI-01C5-P0-paypal-ownership.md` (plan: `tasks/NMI-UI-01C-integration-plan.md`)
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `fix/nmi-c5-p0-paypal-ownership`, Draft PR against `main` (starting main `568faa0a475af34372520bea5d19e63a4829cb19`)
+- **Implementation SHA:** `2f208c057ee046dd8037c19f409d7051fe5aa9c1` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT AUDIT. Security-only; no merge, deploy, provider call or C5-P1 work.
+
+### What changed
+One line of behaviour: `createPayPalDraft` loads the invoice via `drafts.getOwned(invoiceId, operatorId)` before anything else. Plus `apps/api/src/paypal-ownership.pg.test.ts` (13 real-PostgreSQL tests, two test-only operators, fake PayPal) and docs. Provider adapter, mapping, fencing, state machine, reconciliation, idempotency, schema and configuration are untouched.
+
+### Audit focus
+1. The ownership gate is the first data access in `createPayPalDraft`; nothing (operation read, stored PayPal id, reserve/claim, audit, provider) can run for a non-owned invoice.
+2. Route behaviour: identical `404 not_found` for foreign/ownerless/unknown/malformed; `503 paypal_disabled` still precedes everything.
+3. The tests assert unchanged operation rows and counts, zero provider calls, and owner behaviour (replay, reconciliation, 12-way fencing). Negative control: reverting to `drafts.get` fails 7 tests.
+4. `git diff main..HEAD -- apps/api/src/services` is a single-statement change plus a comment.
+
+### Not verified
+Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. Production allows exactly one operator, so the gate is defense in depth today.
+
 <!-- HANDOFF_ENTRIES_END -->
