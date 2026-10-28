@@ -362,7 +362,7 @@ try {
     const before = invCount();
     await fillInvoice();
     check(g, "real Review shows the real-save wording and no simulated-save claim", /Saving writes this draft to PostgreSQL/.test(await bodyText()) && !/Simulated save|Idempotency-Key:/.test(await bodyText()));
-    check(g, "the shell notice states saving uses the server and the list/PayPal are not connected", /saving a draft and its\s+saved-invoice page use the server/.test(await bodyText()) && /rows on the dashboard are synthetic/.test(await bodyText()));
+    check(g, "the shell notice (current approved copy) says saving, the list and saved pages use the server, and that saving never creates a PayPal invoice", /Parsing, saving, the invoice list and the\s+saved-invoice pages use the server/.test(await bodyText()) && /Saving never creates a PayPal\s+invoice/.test(await bodyText()));
     await shot("01-review-real-save.jpg");
     await focusId("save-btn");
     await press("Enter"); // keyboard activation
@@ -381,8 +381,8 @@ try {
     check(g, "server-computed total matches the database exactly (271.71)", /\$271\.71/.test(await ev("document.getElementById('saved-total').textContent")) && sql(`SELECT total_minor FROM invoices WHERE id='${savedId}'`) === TOTAL_MINOR);
     check(g, "line total, tax and subtotal match the database", /\$251\.00/.test(t) && /\$20\.71/.test(t) && sql(`SELECT subtotal_minor||','||tax_minor FROM invoices WHERE id='${savedId}'`) === "25100,2071");
     check(g, "one consistent currency for the invoice (USD) in the database", sql(`SELECT currency FROM invoices WHERE id='${savedId}'`) === "USD");
-    check(g, "UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox', customer not notified", /Saved in PostgreSQL/.test(t) && /Not created in PayPal Sandbox/.test(t) && /customer was not notified/.test(t));
-    check(g, "no PayPal id, fixture name or simulated PayPal control is shown", !/INV2-|Create PayPal Sandbox draft|fabricated|DEMO-FAKE|Acme|Northwind|Check status/.test(t), t.slice(0, 300));
+    check(g, "UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox'; saving never creates a PayPal invoice or notifies the customer (current copy)", /Saved in PostgreSQL/.test(t) && /Not created in PayPal Sandbox/.test(t) && /never notifies the customer/.test(t));
+    check(g, "no PayPal id, fixture name or fabricated value is shown, and the only PayPal action is the explicit (confirmation-gated) create control", !/INV2-|fabricated|DEMO-FAKE|Acme|Northwind|Check status/.test(t) && /Create PayPal Sandbox draft/.test(t), t.slice(0, 300));
     check(g, "audit row recorded the save without customer data", Number(sql("SELECT count(*) FROM audit_log WHERE action='invoice.draft_save'")) === 1 && !/Quill|quill\.example/.test(sql("SELECT string_agg(detail::text,' ') FROM audit_log WHERE action='invoice.draft_save'")));
     check(g, "nothing was created in PayPal operations", Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0);
     await shot("02-saved-detail.jpg");
@@ -763,7 +763,7 @@ try {
     check(g, "one parse request and one save request, both from the real session", apiCalls(m).filter((c) => c.path === "/api/invoice-drafts/parse").length === 1 && posts.length === 1 && posts[0].status === 201);
     await ev("document.getElementById('saved-back').click()");
     await waitFor("!!document.getElementById('dash-title')");
-    check(g, "the dashboard title still says its rows are samples", /sample rows/.test(await ev("document.title")));
+    check(g, "the dashboard is the real list (since C4): its tab title carries no sample/fixture label", /Invoice drafts/.test(await ev("document.title")) && !/sample|fixture/i.test(await ev("document.title")));
   }
 
   /* ======================= J: global invariants ======================= */
@@ -774,8 +774,8 @@ try {
     check(g, "no script-readable cookie and no invoice data or id in the URL", s.cookie === "" && !/Quill|Ltd|@/.test(s.href) && !/[0-9a-f]{8}-[0-9a-f]{4}-/.test(s.href), s.href);
     check(g, "no request left the app origin (no PayPal/OpenAI/foreign host)", foreign.length === 0, JSON.stringify(foreign));
     const paths = new Set(netLog.filter((n) => n.path.startsWith("/api/")).map((n) => n.path.replace(/[0-9a-f-]{36}/, ":id")));
-    check(g, "the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/:id)?)$/.test(p)), [...paths].join(","));
-    check(g, "no list or PayPal-draft request was made", ![...paths].some((p) => /paypal/.test(p)) && !netLog.some((n) => n.method === "GET" && n.path === "/api/invoice-drafts"));
+    check(g, "the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts/:id, parse and (since C4) the read-only list", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/:id|\?limit=\d+)?)$/.test(p)), [...paths].join(","));
+    check(g, "no PayPal-draft request was made in this journey (the list exists since C4 and is read-only)", ![...paths].some((p) => /paypal/.test(p)) && !netLog.some((n) => /\/paypal-draft/.test(n.path)));
     check(g, "no PayPal operations or approvals exist; only the test-only fake model ran, exactly once (AI-path regression)", Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && Number(sql("SELECT count(*) FROM approvals")) === 0 && modelCalls() === 1, String(modelCalls()));
     check(g, "every invoice has exactly one currency and non-negative consistent minor totals", sql("SELECT count(*) FROM invoices WHERE total_minor <> subtotal_minor - discount_minor + tax_minor") === "0");
     const log = readFileSync(apiLog, "utf8");

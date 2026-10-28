@@ -1,6 +1,6 @@
 # NMI-UI-01C2 browser parse-wiring journey
 
-Chrome: Chrome/156.0.8078.48 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
+Chrome: Chrome/156.0.8078.74 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
 Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; the draft/clarification paths use a deterministic TEST-ONLY FAKE model client (not OpenAI) behind the real Fastify routes.
 
@@ -17,13 +17,13 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL composer opens with no request | real composer has no fixture example prompts and no 'preview only' wording |  |
 | PASS | REAL composer opens with no request | real composer says parsing calls the server and saving is simulated |  |
 | PASS | REAL composer opens with no request | privacy disclosure and 'live provider not verified' note present |  |
-| PASS | REAL composer opens with no request | shell labels fixture data |  |
+| PASS | REAL composer opens with no request | shell states which features use the server and that no customer is ever emailed (current approved copy) |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | a validated server draft opens the editable Review screen |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | exactly one POST /api/invoice-drafts/parse -> 200 with the CSRF header |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | request body is exactly { text } (trimmed) |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | the fake model was called once (no provider exists) |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | fields come from the server draft |  |
-| PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | Review says it is a server proposal, not saved, and saving is simulated |  |
+| PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | Review says it is a server proposal, not saved yet, and (current copy since C3) that saving writes to PostgreSQL, with no simulated-save claim |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | totals are labelled estimates |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | nothing was written to invoices/approvals by parsing |  |
 | PASS | REAL parse -> review (deterministic FAKE model, not OpenAI) | no horizontal overflow on Review (desktop) |  |
@@ -90,7 +90,7 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | Global invariants | no localStorage/sessionStorage/IndexedDB/Cache entries |  |
 | PASS | Global invariants | no cookie readable from script (HttpOnly) and no invoice text in the URL |  |
 | PASS | Global invariants | no request left the app origin (no OpenAI/PayPal/foreign host) |  |
-| PASS | Global invariants | the only /api routes the browser used are the 3 auth routes and the parse route |  |
+| PASS | Global invariants | the only /api routes the browser used are the 3 auth routes, the parse route and (since C4) the read-only dashboard list |  |
 | PASS | Global invariants | no invoice save/list/detail/PayPal request was made |  |
 | PASS | Global invariants | no invoices or approvals rows were created by this journey |  |
 | PASS | Global invariants | parse attempts are audited without customer text |  |

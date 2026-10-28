@@ -1,6 +1,6 @@
 # NMI-UI-01C3 browser save/detail journey
 
-Chrome: Chrome/156.0.8078.48 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
+Chrome: Chrome/156.0.8078.74 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
 Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey (parsing is not used); the invoices are created by manual entry.
 
@@ -14,7 +14,7 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL logged-out protection | a saved-invoice deep link shows only sign-in |  |
 | PASS | REAL logged-out protection | no invoice request is made while logged out |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | real Review shows the real-save wording and no simulated-save claim |  |
-| PASS | REAL manual invoice -> POST 201 -> GET detail | the shell notice states saving uses the server and the list/PayPal are not connected |  |
+| PASS | REAL manual invoice -> POST 201 -> GET detail | the shell notice (current approved copy) says saving, the list and saved pages use the server, and that saving never creates a PayPal invoice |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | keyboard Enter on 'Save draft' saves and opens the saved-invoice page |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | exactly one POST /api/invoice-drafts -> 201 with CSRF and an Idempotency-Key |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | body is exactly the strict draft (no totals, id, status, fixture fields) |  |
@@ -24,8 +24,8 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL manual invoice -> POST 201 -> GET detail | server-computed total matches the database exactly (271.71) |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | line total, tax and subtotal match the database |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | one consistent currency for the invoice (USD) in the database |  |
-| PASS | REAL manual invoice -> POST 201 -> GET detail | UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox', customer not notified |  |
-| PASS | REAL manual invoice -> POST 201 -> GET detail | no PayPal id, fixture name or simulated PayPal control is shown |  |
+| PASS | REAL manual invoice -> POST 201 -> GET detail | UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox'; saving never creates a PayPal invoice or notifies the customer (current copy) |  |
+| PASS | REAL manual invoice -> POST 201 -> GET detail | no PayPal id, fixture name or fabricated value is shown, and the only PayPal action is the explicit (confirmation-gated) create control |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | audit row recorded the save without customer data |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | nothing was created in PayPal operations |  |
 | PASS | REAL manual invoice -> POST 201 -> GET detail | no horizontal overflow on the saved page (desktop) |  |
@@ -114,12 +114,12 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | saving the proposal writes one invoice and opens the saved page |  |
 | PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | the saved page and its tab title are not labelled fixture data |  |
 | PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | one parse request and one save request, both from the real session |  |
-| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | the dashboard title still says its rows are samples |  |
+| PASS | REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI) | the dashboard is the real list (since C4): its tab title carries no sample/fixture label |  |
 | PASS | Global invariants | no localStorage/sessionStorage/IndexedDB/Cache entries |  |
 | PASS | Global invariants | no script-readable cookie and no invoice data or id in the URL |  |
 | PASS | Global invariants | no request left the app origin (no PayPal/OpenAI/foreign host) |  |
-| PASS | Global invariants | the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id |  |
-| PASS | Global invariants | no list or PayPal-draft request was made |  |
+| PASS | Global invariants | the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts/:id, parse and (since C4) the read-only list |  |
+| PASS | Global invariants | no PayPal-draft request was made in this journey (the list exists since C4 and is read-only) |  |
 | PASS | Global invariants | no PayPal operations or approvals exist; only the test-only fake model ran, exactly once (AI-path regression) |  |
 | PASS | Global invariants | every invoice has exactly one currency and non-negative consistent minor totals |  |
 | PASS | Global invariants | API log contains no customer data, CSRF token or cookie value |  |

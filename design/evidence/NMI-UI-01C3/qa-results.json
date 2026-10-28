@@ -1,5 +1,5 @@
 {
-  "chrome": "Chrome/156.0.8078.48",
+  "chrome": "Chrome/156.0.8078.74",
   "passed": 116,
   "failed": 0,
   "results": [
@@ -41,7 +41,7 @@
     },
     {
       "group": "REAL manual invoice -> POST 201 -> GET detail",
-      "name": "the shell notice states saving uses the server and the list/PayPal are not connected",
+      "name": "the shell notice (current approved copy) says saving, the list and saved pages use the server, and that saving never creates a PayPal invoice",
       "pass": true,
       "detail": ""
     },
@@ -101,13 +101,13 @@
     },
     {
       "group": "REAL manual invoice -> POST 201 -> GET detail",
-      "name": "UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox', customer not notified",
+      "name": "UI says 'Saved in PostgreSQL' and 'Not created in PayPal Sandbox'; saving never creates a PayPal invoice or notifies the customer (current copy)",
       "pass": true,
       "detail": ""
     },
     {
       "group": "REAL manual invoice -> POST 201 -> GET detail",
-      "name": "no PayPal id, fixture name or simulated PayPal control is shown",
+      "name": "no PayPal id, fixture name or fabricated value is shown, and the only PayPal action is the explicit (confirmation-gated) create control",
       "pass": true,
       "detail": ""
     },
@@ -641,7 +641,7 @@
     },
     {
       "group": "REAL parse proposal -> Review -> real save (test-only FAKE model, not OpenAI)",
-      "name": "the dashboard title still says its rows are samples",
+      "name": "the dashboard is the real list (since C4): its tab title carries no sample/fixture label",
       "pass": true,
       "detail": ""
     },
@@ -665,13 +665,13 @@
     },
     {
       "group": "Global invariants",
-      "name": "the browser used only auth, POST /api/invoice-drafts and GET /api/invoice-drafts/:id",
+      "name": "the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts/:id, parse and (since C4) the read-only list",
       "pass": true,
       "detail": ""
     },
     {
       "group": "Global invariants",
-      "name": "no list or PayPal-draft request was made",
+      "name": "no PayPal-draft request was made in this journey (the list exists since C4 and is read-only)",
       "pass": true,
       "detail": ""
     },

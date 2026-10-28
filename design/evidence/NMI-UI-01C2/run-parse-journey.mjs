@@ -311,7 +311,7 @@ try {
     check(g, "real composer has no fixture example prompts and no 'preview only' wording", !/Synthetic example prompts|is not called|only these four examples/.test(t), t.slice(0, 200));
     check(g, "real composer says parsing calls the server and saving is simulated", /Parsing calls the server/.test(t) && /Saving is\s+simulated/.test(t), t.slice(0, 300));
     check(g, "privacy disclosure and 'live provider not verified' note present", /may be sent to OpenAI/.test(t) && /not verified live provider parsing/.test(t));
-    check(g, "shell labels fixture data", /Only parsing a description talks to the server/.test(t));
+    check(g, "shell states which features use the server and that no customer is ever emailed (current approved copy)", /Parsing, saving, the invoice list and the\s+saved-invoice pages use the server/.test(t) && /the customer is never\s+emailed/.test(t));
     await shot("01-real-composer.jpg");
   }
 
@@ -327,7 +327,7 @@ try {
     check(g, "the fake model was called once (no provider exists)", modelCalls() === before + 1);
     check(g, "fields come from the server draft", (await val("f-customerName")) === "Acme Design" && (await val("f-customerEmail")) === "billing@acme.example" && (await val("f-currency")) === "USD" && (await val("f-dueDate")) === "2030-01-15" && (await val("f-taxPercent")) === "8");
     const t = await bodyText();
-    check(g, "Review says it is a server proposal, not saved, and saving is simulated", /Proposed by the AI parser/.test(t) && /not saved anywhere/.test(t) && /Not saved yet/.test(t) && /Saving\s+is still simulated/.test(t) && /Simulated save/.test(t), t.slice(0, 400));
+    check(g, "Review says it is a server proposal, not saved yet, and (current copy since C3) that saving writes to PostgreSQL, with no simulated-save claim", /Proposed by the AI parser/.test(t) && /not saved yet/.test(t) && /Not saved yet/.test(t) && /writes\s+it to PostgreSQL/.test(t) && !/simulated/i.test(t), t.slice(0, 400));
     check(g, "totals are labelled estimates", /Estimated total/.test(t));
     check(g, "nothing was written to invoices/approvals by parsing", Number(sql("SELECT count(*) FROM invoices")) === 0);
     await shot("02-review-from-server.jpg");
@@ -567,7 +567,7 @@ try {
     check(g, "no cookie readable from script (HttpOnly) and no invoice text in the URL", s.cookie === "" && !/Invoice|Acme/.test(s.href), JSON.stringify(s));
     check(g, "no request left the app origin (no OpenAI/PayPal/foreign host)", foreign.length === 0, JSON.stringify(foreign));
     const apiPaths = new Set(netLog.filter((n) => n.path.startsWith("/api/")).map((n) => n.path));
-    check(g, "the only /api routes the browser used are the 3 auth routes and the parse route", [...apiPaths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts\/parse)$/.test(p)), [...apiPaths].join(","));
+    check(g, "the only /api routes the browser used are the 3 auth routes, the parse route and (since C4) the read-only dashboard list", [...apiPaths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts\/parse|invoice-drafts\?limit=\d+)$/.test(p)), [...apiPaths].join(","));
     check(g, "no invoice save/list/detail/PayPal request was made", ![...apiPaths].some((p) => /invoice-drafts$|paypal/.test(p)));
     check(g, "no invoices or approvals rows were created by this journey", Number(sql("SELECT count(*) FROM invoices")) === 0 && Number(sql("SELECT count(*) FROM approvals")) === 0);
     check(g, "parse attempts are audited without customer text", Number(sql("SELECT count(*) FROM audit_log WHERE action = 'invoice.parse'")) > 0 && !/Acme|billing@|Invoice/.test(sql("SELECT string_agg(detail::text, ' ') FROM audit_log WHERE action = 'invoice.parse'")));

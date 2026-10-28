@@ -1,6 +1,6 @@
 # NMI-UI-01C4 browser dashboard journey
 
-Chrome: Chrome/156.0.8078.48 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
+Chrome: Chrome/156.0.8078.74 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
 Privacy scope of the checks below: they prove the browser NAVIGATION URL and browser storage hold no customer data and that the Fastify request log has query strings stripped. They do NOT claim the HTTP GET request URL is free of customer data (the search term travels in `q`), and no reverse proxy, ingress, CDN or access log was exercised (untested). Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey. Two operator accounts exist ONLY in this disposable database (production allows exactly one; `add-second-operator.ts` drops that index in the throw-away database to exercise owner isolation). Invoices are created through the real save route.
 
@@ -17,7 +17,7 @@ Privacy scope of the checks below: they prove the browser NAVIGATION URL and bro
 | PASS | REAL operator A: empty account | GET /api/invoice-drafts -> 200 and the empty state is shown |  |
 | PASS | REAL operator A: empty account | no fixture rows, 'DEMO / SYNTHETIC' banner or sample label appears |  |
 | PASS | REAL operator A: empty account | the list request is a GET with limit=20 and no cursor/filters |  |
-| PASS | REAL operator A: empty account | the shell says the list is server-backed and PayPal is not connected |  |
+| PASS | REAL operator A: empty account | the shell says the list is server-backed and (current copy since C5-P1) that saving never creates a PayPal invoice |  |
 | PASS | REAL data creation (multiple currencies) | operator A owns 26 invoices across USD, EUR, JPY and GBP created through the real save route |  |
 | PASS | REAL operator B private data | operator B owns exactly its 3 invoices |  |
 | PASS | REAL operator B private data | B's dashboard (real browser) lists only B's invoices |  |
@@ -48,7 +48,7 @@ Privacy scope of the checks below: they prove the browser NAVIGATION URL and bro
 | PASS | REAL View opens the server-backed detail (no replay wording) | the page loaded the record with GET /api/invoice-drafts/:id -> 200 |  |
 | PASS | REAL View opens the server-backed detail (no replay wording) | shows the real UUID, customer, EUR currency and the exact server total from PostgreSQL |  |
 | PASS | REAL View opens the server-backed detail (no replay wording) | the notice is the neutral 'opened from your list' one, never 'saved just now' or a replay |  |
-| PASS | REAL View opens the server-backed detail (no replay wording) | no edit, delete, PayPal-create or send control exists |  |
+| PASS | REAL View opens the server-backed detail (no replay wording) | no edit, delete, send or remind control exists; the only PayPal control is the explicit, confirmation-gated create action (since C5-P1) |  |
 | PASS | REAL View opens the server-backed detail (no replay wording) | the title is not labelled fixture or sample |  |
 | PASS | REAL View opens the server-backed detail (no replay wording) | Back to drafts returns to the REAL dashboard (a new real list request, not the preview) |  |
 | PASS | REAL View opens the server-backed detail (no replay wording) | reopening wrote nothing (still exactly 29 invoices, no PayPal operations) |  |

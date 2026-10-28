@@ -1,5 +1,5 @@
 {
-  "chrome": "Chrome/156.0.8078.48",
+  "chrome": "Chrome/156.0.8078.74",
   "passed": 79,
   "failed": 0,
   "results": [
@@ -59,7 +59,7 @@
     },
     {
       "group": "REAL operator A: empty account",
-      "name": "the shell says the list is server-backed and PayPal is not connected",
+      "name": "the shell says the list is server-backed and (current copy since C5-P1) that saving never creates a PayPal invoice",
       "pass": true,
       "detail": ""
     },
@@ -245,7 +245,7 @@
     },
     {
       "group": "REAL View opens the server-backed detail (no replay wording)",
-      "name": "no edit, delete, PayPal-create or send control exists",
+      "name": "no edit, delete, send or remind control exists; the only PayPal control is the explicit, confirmation-gated create action (since C5-P1)",
       "pass": true,
       "detail": ""
     },
