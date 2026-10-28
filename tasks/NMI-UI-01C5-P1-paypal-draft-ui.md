@@ -39,3 +39,29 @@ An authenticated operator opens a saved PostgreSQL invoice, explicitly confirms 
 - Production still allows exactly one operator (owner scoping from C5-P0 is defense in depth).
 - No hosted deployment or public demo exists; NMI-DEMO and the Devpost submission are not started.
 - The C2/C3/C4 journeys assert earlier wording and were not rerun against this build; their results are historical.
+
+## Audit remediation: MAJOR-1 (fix SHA `9b367fb73ea420a179ae853bea9c430405d205fe`)
+
+Independent audit of `d8b715ffbbc7d4308beb6653432dc3543240df6c` returned FIX REQUIRED (MAJOR-1). Frontend, tests, evidence and docs only; the backend, provider adapter, state machine, owner scope and configuration are untouched. Evidence above stays attributed to `17c13e0`/`d8b715f`; the results below are new.
+
+**Defect (confirmed from source):** after a `paypal-mismatch` or `created` POST answer the reducer left `unverified=false`, while the `invoice` prop still described the pre-POST state (`none`). `canOfferCreate("none", ui)` was therefore true before the authoritative GET landed, and a failed GET (`readFailed`) did not block it, so a second create/retry stayed available. The earlier 89/89 journey only exercised a successful, immediate GET.
+
+**Fix (`invoices/paypalPanel.ts`, `PayPalDraftPanel.tsx`, `SavedDetailScreen.tsx`):**
+- **Every POST answer fails closed.** `result` always sets `unverified`. Creation is blocked while `unverified && verifiedWith !== invoice`: it is unlocked only by a read-back that produced the exact invoice object currently shown (a different object, a stale one or a failed one never unlocks it).
+- **Read-backs are bound to their confirmation.** A `seq` counter increments on each confirm; the read started after an answer carries that `seq`, and a late read for an earlier confirmation (or one arriving while a newer POST is in flight) is ignored, so it cannot clear or flag a newer guard.
+- **Failed/malformed/aborted GET never unlocks**, for POST read-backs and for Check status alike; `readFailed` shows a stale-data warning.
+- **`created` is cross-checked:** a read-back only verifies a `created` answer if the durable state is `created` with the SAME PayPal id; a contradicting read (still `none`, another id, `unknown`) is a failed verification.
+- **No blind retry from stale state:** `mapping-refused`, `disabled`, `not-found`, `forbidden` and `bad-request` set `locked`, which no read-back lifts (the panel says creating "is not offered again from this view"); `mismatch` and `created` never offer create even when verified.
+- **Eligibility is judged against what the operator sees:** `canOfferCreate(invoice, ui)` takes the shown invoice, and `open-confirm` re-checks it in the reducer, so the button, the dialog and the reducer cannot disagree.
+- **The post-POST read is always a fresh GET** (`refresh({fresh:true})` drops a read that started before the answer instead of joining it).
+- Unverified view: while awaiting, the panel shows "Saved state not yet confirmed" with Check status only (for `created` it says the saved record has not been re-read yet); it never claims "not created" or offers Create.
+- Preserved: explicit confirmation, single flight, CSRF, 401 invalidation, 60 s timeout = uncertain, owner scope, no automatic POST.
+
+**Tests.** An existing reducer test asserted the defective behaviour ("created/mismatch/rejected/... do not by themselves block the next explicit action" expected `unverified=false`); it was replaced by its opposite (every answer fails closed) rather than kept. No other test was weakened; the old canOfferCreate/readback tests were adapted to the new signatures and tightened. New: 22 reducer/view regression tests, including mismatch + delayed GET, mismatch + failed GET, created + delayed GET, created + failed GET, created + malformed/contradicting GET, mapping refused + stale `none`, uncertain + failed GET (and a failing Check status), valid read-back offering only legitimate actions, a read-back valid only for the exact invoice object, a stale read-back unable to clear a newer guard, and a read-back arriving mid-POST. Web suite 554 tests (was 526).
+**Mutation controls killed:** guard disabled (the audited defect) 22 failing; stale read-back accepted (no `seq` check) 1; `created` read-back not cross-checked 1; failed read-back unlocking 1. **Browser-level negative control:** with the guard disabled the journey fails (63/67 passed; the delayed-GET and failed-GET Create-control checks fail).
+
+**Browser journey (`run-paypal-journey.mjs`, 102/102, was 89):** all earlier checks still pass, plus REAL POST + SIMULATED detail GET failures: created + delayed (held) GET -> no Create control, "Saved state not yet confirmed", "has not been re-read yet"; then the GET fails -> still blocked with a stale-data warning and exactly one POST/one provider create; a Check status that also fails (500) stays blocked; a valid GET then shows the created draft; mismatch + failing GET -> no retry, and after a valid GET the mismatch alert with still no retry; created + malformed 200 GET -> treated as a failed read-back; and after a mapping refusal no Create is offered (not even after the read-back). The GET manipulation is SIMULATED (interception) and labelled; the POSTs and everything else are real against the fake provider.
+
+**Gates:** lint, format:check, typecheck, build, bundle scan and profile validator clean. `pnpm test` without a database: 807 passed, 260 skipped (PostgreSQL-only; reported as skipped). `pnpm test:db` on real PostgreSQL 16.15: 12 files, 277 passed. Hosted CI at `9b367fb73ea420a179ae853bea9c430405d205fe`: Project Baseline run 40641868113 PASS, Stack run 40641868165 PASS.
+
+**Unchanged limitations:** every provider result is from a FAKE; no real PayPal Sandbox or OpenAI call; no provider-budget reset; HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom and hosted proxy untested; no demo phase.

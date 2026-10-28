@@ -1104,4 +1104,25 @@ Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen re
 ### Not verified
 Real PayPal Sandbox and OpenAI (never called; a real call needs separate owner authorization and a strict call budget), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction. No deployment or public demo exists.
 
+## Handoff: NMI-UI-01C5-P1-R1
+
+- **Task / phase:** `tasks/NMI-UI-01C5-P1-paypal-draft-ui.md` (section "Audit remediation: MAJOR-1")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ui-01c5-p1-paypal-draft-ui`, [Draft PR #15](https://github.com/mrdzyn/nudgemyinvoice/pull/15)
+- **Fix SHA:** `9b367fb73ea420a179ae853bea9c430405d205fe` (hosted CI recorded in the PR body)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Frontend, tests and evidence only; no merge, deploy, real provider call, budget reset or demo phase.
+
+### What changed
+Every PayPal draft POST answer now fails closed until a read-back bound to that confirmation (`seq`) has produced the invoice object being shown; failed, malformed, stale or contradicting reads never unlock creation; `mapping-refused`/`disabled`/`not-found`/`forbidden`/`bad-request` lock creating for the view; eligibility is evaluated against the shown invoice in both the button and the reducer; the post-POST read is always a fresh GET.
+
+### Re-audit focus
+1. `paypalPanel.ts`: `result` always sets `unverified`; `canOfferCreate(invoice, ui)`/`awaitingReadback`; `readback` seq binding and the `created` id cross-check; `open-confirm` re-check.
+2. `PayPalDraftPanel.tsx`/`SavedDetailScreen.tsx`: the read-back captures `seq` at answer time, uses `refresh({fresh:true})`, and returns the exact invoice object.
+3. Tests: one pre-existing reducer test asserted the defect and was replaced by its opposite; everything else was kept or tightened (554 web tests; 22 new regression tests; 4 unit mutation controls and 1 browser-level control killed).
+4. Journey 102/102 including delayed/failed/malformed GET after a valid POST (GET manipulation is simulated; the POSTs are real against the fake provider).
+
+### Not verified
+Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction.
+
 <!-- HANDOFF_ENTRIES_END -->
