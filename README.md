@@ -41,7 +41,7 @@ The status below reflects `main` after NMI-UI-01C5-P1. Evidence is labelled hone
 
 ## Stack
 
-React + Vite + TypeScript (native accessible UI; AG Studio **not** used); Fastify/Node; Drizzle + **PostgreSQL** (the only supported database); OpenAI Node SDK (`openai`) / Responses API with Zod-validated structured output; PayPal Invoicing v2 REST **Sandbox only**; Vitest. Not built: PayPal webhooks, hosting (Render or otherwise), invoice sending. The APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
+React + Vite + TypeScript (native accessible UI); the saved-invoice list in the signed-in dashboard is an **AG Grid Community** (MIT, `ag-grid-community` + `ag-grid-react` 36.2.0) grid with sortable and resizable columns (sorting applies to the invoices already loaded; search and filters stay server-side). **AG Studio and AG Grid Enterprise are not used.** The dev-only synthetic design-review preview keeps its native table; Fastify/Node; Drizzle + **PostgreSQL** (the only supported database); OpenAI Node SDK (`openai`) / Responses API with Zod-validated structured output; PayPal Invoicing v2 REST **Sandbox only**; Vitest. Not built: PayPal webhooks, hosting (Render or otherwise), invoice sending. The APIMatic PayPal Context Plugin is a coding-time aid, **not** a substitute for runtime authorization or verification.
 
 ## Getting started
 
@@ -138,7 +138,8 @@ Sending, paying through a buyer flow, verified webhooks and AI-drafted overdue n
 - PayPal webhook integration: https://developer.paypal.com/api/rest/webhooks/
 - APIMatic Context Plugin for PayPal: https://context.apimatic.io/plugins/paypal/
 - Render: https://render.com/
-- AG Studio: https://www.ag-grid.com/studio/react/quick-start/
+- AG Grid Community (used): https://www.ag-grid.com/react-data-grid/
+- AG Studio (not used): https://www.ag-grid.com/studio/react/quick-start/
 
 ## Security and release scope
 

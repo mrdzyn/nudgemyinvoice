@@ -1212,4 +1212,27 @@ Implement the **genuine AG Grid Community** read-only invoice grid in the alread
 
 Official Devpost rules allow AG Grid sponsor-prize consideration for use of **any AG Grid tools**, while the sponsor page values polish, custom widgets/theming/layout and richer use. A functioning Community grid is eligible for consideration **not a guarantee of an award**; only claim AG Grid actually used after the implementation passes. AG Studio is still deferred.
 
+## Handoff: NMI-AG1-IMPL
+
+- **Task / phase:** `tasks/NMI-AG1-ag-grid-dashboard.md` (section "Implementation record (NMI-AG1-IMPL)")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ag1-ag-grid-dashboard`, [Draft PR #17](https://github.com/mrdzyn/nudgemyinvoice/pull/17)
+- **Implementation commit:** `3242c93029da3e6e7caff4066d39f39810aa956b` (Project Baseline `40660106222` and Stack CI `40660106171` success). The documentation commit that follows touches only documentation.
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deployment, publication, Devpost submission, real OpenAI/PayPal call or provider-budget reset; no change to `apps/api`, `packages/db`, migrations, PayPal/OpenAI code, session/CSRF rules or the draft API contract.
+
+### What changed
+Genuine AG Grid Community 36.2.0 renders the real dashboard's invoice list (new `InvoiceGrid.tsx`, `invoiceGridSort.ts`, `app.css` theme mapping), UUID row ids, exact BigInt currency-first sort, resizable columns, native View buttons, narrow-screen column order and explicit keyboard handling; the strict CSP is unchanged (legacy CSS theme, text-glyph icons). Journeys C4, C5-P1 and R0 were adapted to AG Grid selectors without weakening assertions and a new NMI-AG1 journey was added.
+
+### Audit focus
+1. The diff touches only `apps/web`, `pnpm-lock.yaml`, `design/evidence/` and documentation; the dependency pair is the only runtime addition and is pinned exactly; no Enterprise/Studio/license-key code (see the boundary test).
+2. The CSP in `apps/web/vite.config.ts`/`index.html` is unchanged and the production CSS contains no data-URI font; the journey asserts no CSP violation and no injected `<style>`.
+3. Money: `compareTotal` is BigInt and currency-first; the cards still use `summarize` over loaded rows only; no mixed-currency sum exists.
+4. Behaviour preserved: filters/search/Load more/failure states/View navigation/session lock/preview isolation (C4, C5-P1, R0 assertions are unchanged apart from selectors).
+5. Journey claims match the stored evidence under `design/evidence/NMI-AG1/` (`qa-results.json`, `run.log`, `rerun-*`, `negative-control/`); the old evidence folders are untouched.
+6. Keyboard design (header walk, one tab stop per View button, capture-phase Tab handler) and its stated limitations.
+
+### Not verified
+Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), real touch devices, Safari/Firefox, a real browser zoom at 400%, HTTPS `__Host-` cookie, hosted proxy/log redaction, production deployment; bundle size grew (JS +709 kB, +203 kB gzip; CSS +279 kB) and is not mitigated.
+
 <!-- HANDOFF_ENTRIES_END -->
