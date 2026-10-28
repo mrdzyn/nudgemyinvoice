@@ -4,14 +4,14 @@ Chrome: Chrome/156.0.8078.74 (headless). PostgreSQL: postgres (PostgreSQL) 16.15
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
 Privacy scope of the checks below: they prove the browser NAVIGATION URL and browser storage hold no customer data and that the Fastify request log has query strings stripped. They do NOT claim the HTTP GET request URL is free of customer data (the search term travels in `q`), and no reverse proxy, ingress, CDN or access log was exercised (untested). Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; PayPal is a DETERMINISTIC FAKE injected behind the real routes and draft state machine (`test-api-server.ts`); these results prove the UI, transport and local state machine, NOT real PayPal behaviour. No OpenAI client exists. Invoices are created through the real save route.
 
-**89/89 checks passed.**
+**102/102 checks passed.**
 
 | Result | Group | Check | Detail |
 | --- | --- | --- | --- |
 | PASS | setup | disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy |  |
 | PASS | setup | database is a throw-away nmi_test* cluster in a temp directory |  |
 | PASS | setup | PayPal drafting ENABLED on the API but backed ONLY by the deterministic fake client; no OpenAI key/model; the real PayPal client is never constructed |  |
-| PASS | setup | 14 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id |  |
+| PASS | setup | 17 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id |  |
 | PASS | REAL logged-out protection | the real server refuses an unauthenticated PayPal-draft POST (401) and calls nothing |  |
 | PASS | REAL logged-out protection | a session without the CSRF token is refused (403) and nothing is created |  |
 | PASS | REAL main journey (fake provider) | after a reload the app makes NO PayPal-draft request on its own |  |
@@ -53,6 +53,7 @@ Privacy scope of the checks below: they prove the browser NAVIGATION URL and bro
 | PASS | REAL mismatch (fake provider returns a different total) | NO retry control is offered and the durable state is 'mismatch' |  |
 | PASS | REAL mapping refused (rounding) | 422 mapping_refused shows the safe reason and says nothing is rounded silently |  |
 | PASS | REAL mapping refused (rounding) | no operation was created, the provider was never called and the local invoice is unchanged |  |
+| PASS | REAL mapping refused (rounding) | after the refusal (and its read-back) no create/retry control is offered: no blind retry of a refused mapping |  |
 | PASS | REAL EUR and JPY totals in the confirmation | EUR: the dialog shows €300.00 EUR (server-computed) for that exact invoice |  |
 | PASS | REAL EUR and JPY totals in the confirmation | JPY: the dialog shows ¥5,000 JPY (no decimals) |  |
 | PASS | REAL lost response (server creates the draft, the browser loses the answer) | the UI says 'a PayPal draft may or may not exist' (not failure, not success) |  |
@@ -68,6 +69,18 @@ Privacy scope of the checks below: they prove the browser NAVIGATION URL and bro
 | PASS | SIMULATED PayPal-draft answers (interception; the server is not reached) | network failure: fails closed (may or may not exist…), never a created draft, no LEAK |  |
 | PASS | SIMULATED PayPal-draft answers (interception; the server is not reached) | 409 in_progress: says another attempt is in flight and will not repeat; create stays hidden until the state is read |  |
 | PASS | SIMULATED PayPal-draft answers (interception; the server is not reached) | (no PayPal-draft request was made by merely opening these invoices) |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | created: the POST succeeded and the draft exists in the fake provider and the operation row |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | created + DELAYED GET: no Create control and 'Saved state not yet confirmed' with Check status only |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | created + delayed GET: the page does not claim the record was re-read |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | created + FAILED GET: still no Create control, with a stale-data warning |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | created + failed GET: exactly one POST and one provider create (no retry happened) |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | Check status that ALSO fails (500) leaves creation blocked |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | once a GET succeeds the durable 'created' state, id and DRAFT label are shown and nothing can be created |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | mismatch + FAILED GET: no retry control (the prop still says 'not created') |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | mismatch + failed GET: durable state is 'mismatch', exactly one POST, one create |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | after a successful read the mismatch alert is shown and still NO retry is offered |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | created + MALFORMED GET: treated as a failed read-back; no Create control |  |
+| PASS | REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands) | a valid GET afterwards shows the created draft and nothing to create |  |
 | PASS | REAL keyboard operation | Enter on 'Create PayPal Sandbox draft…' opens the dialog and focus lands on Cancel |  |
 | PASS | REAL keyboard operation | Tab moves to the confirm button inside the dialog |  |
 | PASS | REAL keyboard operation | Tab wraps back to Cancel (focus is trapped in the dialog) |  |
@@ -98,6 +111,6 @@ Privacy scope of the checks below: they prove the browser NAVIGATION URL and bro
 | PASS | Global invariants | the API log holds no customer name, e-mail, CSRF token or cookie value |  |
 | PASS | Global invariants | no console errors or uncaught exceptions in the browser |  |
 
-Screenshots (synthetic data only, no credentials): 01-saved-not-created.jpg, 02-confirm-dialog.jpg, 03-created.jpg, 04-creating.jpg, 05-unknown.jpg, 06-rejected.jpg, 07-mismatch.jpg, 08-refused.jpg, 09-lost-response.jpg, 10-mobile-dark-dialog.jpg, 11-mobile-dark-created.jpg, 12-mobile-dark-unknown.jpg, 13-disabled.jpg
+Screenshots (synthetic data only, no credentials): 01-saved-not-created.jpg, 02-confirm-dialog.jpg, 03-created.jpg, 04-creating.jpg, 05-unknown.jpg, 06-rejected.jpg, 07-mismatch.jpg, 08-refused.jpg, 09-lost-response.jpg, 14-created-get-delayed.jpg, 15-mismatch-get-failed.jpg, 10-mobile-dark-dialog.jpg, 11-mobile-dark-created.jpg, 12-mobile-dark-unknown.jpg, 13-disabled.jpg
 
 Not covered: screen readers (VoiceOver/NVDA), real touch devices, Safari/Firefox, 400% zoom, a hosted/TLS (`__Host-` cookie) deployment.

@@ -13,7 +13,7 @@ import { formatDate } from "../dashboard/DashboardScreen.js";
 
 export interface PayPalCapability {
   create: (signal: AbortSignal) => Promise<PayPalDraftResult>;
-  refresh: () => Promise<RefreshOutcome>;
+  refresh: (opts?: { fresh?: boolean }) => Promise<RefreshOutcome>;
   onExpired: () => void;
 }
 
@@ -314,24 +314,34 @@ export function SavedDetailScreen() {
     },
     [id],
   );
-  const refresh = useCallback((): Promise<RefreshOutcome> => {
-    if (!getInvoice || !id) return Promise.resolve("failed");
-    if (inflight.current && inflight.current.id === id) return inflight.current.p;
-    const ac = new AbortController();
-    const p: Promise<RefreshOutcome> = getInvoice(id, ac.signal).then((r) => {
-      if (inflight.current?.ac === ac) inflight.current = null;
-      if (ac.signal.aborted || r.kind === "aborted") return "failed";
-      if (r.kind === "unauthorized") {
-        expired?.();
-        return "failed";
+  const refresh = useCallback(
+    (opts?: { fresh?: boolean }): Promise<RefreshOutcome> => {
+      if (!getInvoice || !id) return Promise.resolve({ ok: false });
+      const running = inflight.current;
+      if (running && running.id === id) {
+        // A normal call joins the read in flight. `fresh` (used right after a POST answered) must
+        // not reuse a read that started BEFORE that answer: drop it and start another.
+        if (!opts?.fresh) return running.p;
+        running.ac.abort();
+        inflight.current = null;
       }
-      if (r.kind !== "ok") return "failed";
-      setLoad({ status: "ok", invoice: r.invoice });
-      return "ok";
-    });
-    inflight.current = { id, p, ac };
-    return p;
-  }, [getInvoice, id, expired]);
+      const ac = new AbortController();
+      const p: Promise<RefreshOutcome> = getInvoice(id, ac.signal).then((r): RefreshOutcome => {
+        if (inflight.current?.ac === ac) inflight.current = null;
+        if (ac.signal.aborted || r.kind === "aborted") return { ok: false };
+        if (r.kind === "unauthorized") {
+          expired?.();
+          return { ok: false };
+        }
+        if (r.kind !== "ok") return { ok: false };
+        setLoad({ status: "ok", invoice: r.invoice });
+        return { ok: true, invoice: r.invoice };
+      });
+      inflight.current = { id, p, ac };
+      return p;
+    },
+    [getInvoice, id, expired],
+  );
 
   const create = useCallback(
     (signal: AbortSignal): Promise<PayPalDraftResult> =>

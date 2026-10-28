@@ -8,6 +8,7 @@ import type { ServerInvoice } from "../../domain/serverInvoice.js";
 import type { PayPalDraftResult } from "../../invoices/api.js";
 import { createPayPalRunner } from "../../invoices/paypalRunner.js";
 import {
+  awaitingReadback,
   canOfferCreate,
   initialPanel,
   panelReducer,
@@ -16,7 +17,8 @@ import {
 } from "../../invoices/paypalPanel.js";
 import { formatDate } from "../dashboard/DashboardScreen.js";
 
-export type RefreshOutcome = "ok" | "failed";
+/** The authoritative re-read: either the exact invoice object GET produced, or a failure. */
+export type RefreshOutcome = { ok: true; invoice: ServerInvoice } | { ok: false };
 
 /** Notice for the last POST answer. Plain statements only: nothing here claims a send or a payment. */
 function OutcomeNotice({ r }: { r: PayPalDraftResult }) {
@@ -164,7 +166,8 @@ export function PayPalDraftPanelView({
   const d = invoice.draft;
   const c = d.currency;
   const busy = ui.phase === "creating";
-  const offer = canOfferCreate(durable, ui);
+  const offer = canOfferCreate(invoice, ui);
+  const awaiting = awaitingReadback(ui, invoice);
   const outcome = ui.outcome;
 
   const createButton = (label: string) => (
@@ -199,16 +202,20 @@ export function PayPalDraftPanelView({
         request cannot be started while this one is in flight.
       </p>
     );
-  } else if (ui.unverified && durable === "none") {
-    // The last answer was uncertain and the saved state has not been re-read: say so instead of "not created".
+  } else if (awaiting) {
+    // A POST answered and the saved state has not been re-read since (or the re-read failed): the
+    // `invoice` prop may still describe the state from BEFORE the POST, so say so and offer nothing.
     body = (
       <div className="row">
         <div>
           <PayPalStatusBadge state="unknown" />
           <div className="paypal-status">Saved state not yet confirmed</div>
           <p>
-            A PayPal draft may or may not exist. Read the saved state before doing anything else; a
-            new create is not offered until you have.
+            {ui.outcome?.kind === "created"
+              ? "The server answered, but the saved record has not been re-read yet."
+              : "A PayPal draft may or may not exist."}{" "}
+            Read the saved state before doing anything else; a new create is not offered until you
+            have.
           </p>
         </div>
         {checkButton}
@@ -341,6 +348,11 @@ export function PayPalDraftPanelView({
                 <p className="hint">
                   Drafting is switched off on the server, so it is not offered.
                 </p>
+              ) : ui.locked ? (
+                <p className="hint">
+                  Creating a draft is not offered again from this view because the server refused
+                  it.
+                </p>
               ) : null}
             </div>
             <div className="stack-buttons">{createButton("Create PayPal Sandbox draft…")}</div>
@@ -421,17 +433,27 @@ export function PayPalDraftPanel({
   invoice: ServerInvoice;
   create: (signal: AbortSignal) => Promise<PayPalDraftResult>;
   /** Re-reads GET /api/invoice-drafts/:id (never a POST); calls in flight are coalesced. */
-  refresh: () => Promise<RefreshOutcome>;
+  refresh: (opts?: { fresh?: boolean }) => Promise<RefreshOutcome>;
   onExpired: () => void;
 }) {
   const [ui, dispatch] = useReducer(panelReducer, initialPanel);
   const live = useRef(true);
   const latest = useRef({ refresh, onExpired });
   latest.current = { refresh, onExpired };
+  const uiRef = useRef(ui);
+  uiRef.current = ui;
 
   const readBack = () => {
-    void latest.current.refresh().then((r) => {
-      if (live.current) dispatch({ type: "readback", ok: r === "ok" });
+    // Bound to the confirmation that just completed: a late answer for an older one is ignored.
+    const seq = uiRef.current.seq;
+    // `fresh`: a read that STARTS after the POST answered (never one already in flight before it).
+    void latest.current.refresh({ fresh: true }).then((r) => {
+      if (!live.current) return;
+      dispatch(
+        r.ok
+          ? { type: "readback", ok: true, seq, invoice: r.invoice }
+          : { type: "readback", ok: false, seq },
+      );
     });
   };
 
@@ -462,7 +484,7 @@ export function PayPalDraftPanel({
     <PayPalDraftPanelView
       invoice={invoice}
       ui={ui}
-      onOpen={() => dispatch({ type: "open-confirm" })}
+      onOpen={() => dispatch({ type: "open-confirm", invoice })}
       onCancel={() => dispatch({ type: "cancel-confirm" })}
       onConfirm={() => {
         if (runner.pending || ui.phase !== "confirming") return; // a double click is one request
@@ -472,8 +494,13 @@ export function PayPalDraftPanel({
       onCheck={() => {
         if (ui.phase !== "idle") return;
         dispatch({ type: "check-start" });
-        void latest.current.refresh().then((r) => {
-          if (live.current) dispatch({ type: "check-done", ok: r === "ok" });
+        void latest.current.refresh({ fresh: true }).then((r) => {
+          if (!live.current) return;
+          dispatch(
+            r.ok
+              ? { type: "check-done", ok: true, invoice: r.invoice }
+              : { type: "check-done", ok: false },
+          );
         });
       }}
     />

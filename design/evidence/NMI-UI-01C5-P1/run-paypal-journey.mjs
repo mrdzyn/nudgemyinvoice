@@ -367,10 +367,13 @@ try {
     ["expire", "Pay Expire", {}],
     ["kbd", "Pay Keyboard", {}],
     ["mobile", "Pay Mobile", {}],
+    ["getdelay", "Pay GetDelay", {}],
+    ["getmm", "Pay GetMismatch", desc("SIM-MISMATCH")],
+    ["getbad", "Pay GetMalformed", {}],
   ]) ID[k] = await nodeCreate(a, name, over);
   {
     const g = "setup";
-    check(g, "14 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id", Number(sql("SELECT count(*) FROM invoices")) === 14 && Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && ppCalls().length === 0);
+    check(g, "17 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id", Number(sql("SELECT count(*) FROM invoices")) === 17 && Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && ppCalls().length === 0);
   }
 
   /* ======================= logged-out ======================= */
@@ -529,6 +532,7 @@ try {
     await confirmCreate();
     check(g, "422 mapping_refused shows the safe reason and says nothing is rounded silently", await waitFor("/mapping_refused/.test(document.getElementById('pp-outcome')?.innerText ?? '')", 8000) && /line total/.test(await panelText()) && /never rounds silently/.test(await panelText()));
     check(g, "no operation was created, the provider was never called and the local invoice is unchanged", (await opRow(ID.refused)) === "" && ppCount("create") === creates && ppCount("find") + ppCount("get") === finds && /Pay Refused/.test(await bodyText()) && /Not created in PayPal Sandbox/.test(await panelText()));
+    check(g, "after the refusal (and its read-back) no create/retry control is offered: no blind retry of a refused mapping", await waitFor("!document.getElementById('create-pp-btn') || document.getElementById('create-pp-btn').disabled", 4000) && /not offered again from this view/.test(await panelText()));
     await shot("08-refused.jpg");
     await backToDashboard();
   }
@@ -602,6 +606,77 @@ try {
     // detail refresh failing after a successful create keeps the id visible but flags staleness
     const mm = mark();
     check(g, "(no PayPal-draft request was made by merely opening these invoices)", PPPOST(mm).length === 0);
+  }
+
+  /* ======================= MAJOR-1: POST succeeds, the authoritative GET is delayed / fails / is malformed ======================= */
+  {
+    const g = "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)";
+    let getMode = "continue";
+    const detailRe = /\/api\/invoice-drafts\/[0-9a-f-]{36}$/;
+    const startRule = () => simulate((p) => {
+      if (!(p.request.method === "GET" && detailRe.test(p.request.url))) return "continue";
+      if (getMode === "hold") return "hold";
+      if (getMode === "500") return { status: 500, body: {} };
+      if (getMode === "junk") return { status: 200, body: { id: "x", draft: {} } };
+      return "continue";
+    });
+    const offered = () => ev("!!document.getElementById('create-pp-btn') && !document.getElementById('create-pp-btn').disabled");
+    const blocked = async (label) => check(g, label, !(await offered()) && /Saved state not yet confirmed/.test(await ev("document.getElementById('pp-body').innerText")) && (await ev("!!document.getElementById('check-pp-btn')")));
+    const checkStatus = async () => { await ev("document.getElementById('check-pp-btn').click()"); await sleep(700); };
+
+    // A. created, GET delayed (held), then failed, then Check status failing, then recovering
+    await openSaved("Pay GetDelay");
+    getMode = "hold";
+    await startRule();
+    const mA = mark();
+    await confirmCreate();
+    await waitFor("/DRAFT created/.test(document.getElementById('pp-outcome')?.innerText ?? '')", 8000);
+    check(g, "created: the POST succeeded and the draft exists in the fake provider and the operation row", (await opRow(ID.getdelay)).startsWith("created|") && PPPOST(mA).length === 1 && PPPOST(mA)[0].status === 201);
+    await blocked("created + DELAYED GET: no Create control and 'Saved state not yet confirmed' with Check status only");
+    check(g, "created + delayed GET: the page does not claim the record was re-read", /has not been re-read yet/.test(await panelText()));
+    await shot("14-created-get-delayed.jpg");
+    await releaseHeld("fail");
+    await waitFor("!!document.getElementById('pp-read-failed')", 4000);
+    await blocked("created + FAILED GET: still no Create control, with a stale-data warning");
+    check(g, "created + failed GET: exactly one POST and one provider create (no retry happened)", PPPOST(mA).length === 1);
+    getMode = "500";
+    await checkStatus();
+    await blocked("Check status that ALSO fails (500) leaves creation blocked");
+    getMode = "continue";
+    await checkStatus();
+    check(g, "once a GET succeeds the durable 'created' state, id and DRAFT label are shown and nothing can be created", await waitFor("!!document.getElementById('pp-id')", 5000) && !(await offered()));
+    await stopSimulating();
+    await backToDashboard();
+
+    // B. mismatch + failed GET: never a retry
+    await openSaved("Pay GetMismatch");
+    getMode = "500";
+    await startRule();
+    const mB = mark();
+    await confirmCreate();
+    await waitFor("/does not match this invoice/.test(document.getElementById('pp-outcome')?.innerText ?? '')", 8000);
+    await blocked("mismatch + FAILED GET: no retry control (the prop still says 'not created')");
+    check(g, "mismatch + failed GET: durable state is 'mismatch', exactly one POST, one create", (await opRow(ID.getmm)).startsWith("mismatch|") && PPPOST(mB).length === 1);
+    await shot("15-mismatch-get-failed.jpg");
+    getMode = "continue";
+    await checkStatus();
+    check(g, "after a successful read the mismatch alert is shown and still NO retry is offered", await waitFor("!!document.getElementById('pp-mismatch')", 5000) && !(await offered()));
+    await stopSimulating();
+    await backToDashboard();
+
+    // C. created + malformed GET (200 with junk) is a failed read-back
+    await openSaved("Pay GetMalformed");
+    getMode = "junk";
+    await startRule();
+    await confirmCreate();
+    await waitFor("/DRAFT created/.test(document.getElementById('pp-outcome')?.innerText ?? '')", 8000);
+    await waitFor("!!document.getElementById('pp-read-failed')", 4000);
+    await blocked("created + MALFORMED GET: treated as a failed read-back; no Create control");
+    getMode = "continue";
+    await checkStatus();
+    check(g, "a valid GET afterwards shows the created draft and nothing to create", await waitFor("!!document.getElementById('pp-id')", 5000) && !(await offered()));
+    await stopSimulating();
+    await backToDashboard();
   }
 
   /* ======================= keyboard ======================= */

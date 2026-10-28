@@ -1,6 +1,6 @@
 {
   "chrome": "Chrome/156.0.8078.74",
-  "passed": 89,
+  "passed": 102,
   "failed": 0,
   "results": [
     {
@@ -23,7 +23,7 @@
     },
     {
       "group": "setup",
-      "name": "14 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id",
+      "name": "17 saved invoices exist in PostgreSQL and none has a PayPal operation or provider id",
       "pass": true,
       "detail": ""
     },
@@ -274,6 +274,12 @@
       "detail": ""
     },
     {
+      "group": "REAL mapping refused (rounding)",
+      "name": "after the refusal (and its read-back) no create/retry control is offered: no blind retry of a refused mapping",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "group": "REAL EUR and JPY totals in the confirmation",
       "name": "EUR: the dialog shows €300.00 EUR (server-computed) for that exact invoice",
       "pass": true,
@@ -360,6 +366,78 @@
     {
       "group": "SIMULATED PayPal-draft answers (interception; the server is not reached)",
       "name": "(no PayPal-draft request was made by merely opening these invoices)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "created: the POST succeeded and the draft exists in the fake provider and the operation row",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "created + DELAYED GET: no Create control and 'Saved state not yet confirmed' with Check status only",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "created + delayed GET: the page does not claim the record was re-read",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "created + FAILED GET: still no Create control, with a stale-data warning",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "created + failed GET: exactly one POST and one provider create (no retry happened)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "Check status that ALSO fails (500) leaves creation blocked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "once a GET succeeds the durable 'created' state, id and DRAFT label are shown and nothing can be created",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "mismatch + FAILED GET: no retry control (the prop still says 'not created')",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "mismatch + failed GET: durable state is 'mismatch', exactly one POST, one create",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "after a successful read the mismatch alert is shown and still NO retry is offered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "created + MALFORMED GET: treated as a failed read-back; no Create control",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL POST + SIMULATED detail GET failure (MAJOR-1: fail closed until the read-back lands)",
+      "name": "a valid GET afterwards shows the created draft and nothing to create",
       "pass": true,
       "detail": ""
     },

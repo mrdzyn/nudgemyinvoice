@@ -150,6 +150,85 @@ describe("transient UI states", () => {
   });
 });
 
+describe("MAJOR-1: nothing is offered while the authoritative read-back is pending or failed", () => {
+  const stale = inv(); // the prop still says 'none' right after a POST
+  const awaiting = (outcome: PayPalDraftResult, extra: Partial<PanelUi> = {}) =>
+    view(stale, { unverified: true, outcome, verifiedWith: null, seq: 1, ...extra });
+  it.each<[string, PayPalDraftResult]>([
+    ["mismatch", { kind: "paypal-mismatch", code: "payload_digest_mismatch" }],
+    ["created", { kind: "created", paypalInvoiceId: "INV2-NEW-1", replayed: false }],
+    ["rejected", { kind: "paypal-rejected", code: "x" }],
+    ["mapping refused", { kind: "mapping-refused", reason: "rounding_required_line" }],
+    ["uncertain", { kind: "uncertain", cause: "network" }],
+  ])(
+    "%s answered, GET not yet landed: no create/retry control, 'not yet confirmed', Check status only",
+    (_n, outcome) => {
+      const h = awaiting(outcome);
+      expect(h).not.toContain("create-pp-btn");
+      expect(h).not.toContain("Not created in PayPal Sandbox");
+      expect(h).toContain("Saved state not yet confirmed");
+      expect(h).toContain("check-pp-btn");
+    },
+  );
+  it("GET failed after the answer (readFailed): still no create/retry, with the stale-data warning", () => {
+    for (const outcome of [
+      { kind: "paypal-mismatch", code: null },
+      { kind: "created", paypalInvoiceId: "INV2-NEW-1", replayed: false },
+      { kind: "uncertain", cause: "timeout" },
+    ] as PayPalDraftResult[]) {
+      const h = awaiting(outcome, { readFailed: true });
+      expect(h).not.toContain("create-pp-btn");
+      expect(h).toContain("could not be re-read");
+      expect(h).toContain("check-pp-btn");
+    }
+  });
+  it("created while the read-back is pending says so honestly (the record has not been re-read)", () => {
+    const h = awaiting({ kind: "created", paypalInvoiceId: "INV2-NEW-1", replayed: false });
+    expect(h).toContain("saved record has not been re-read yet");
+    expect(h).toContain("INV2-NEW-1");
+    expect(h).not.toMatch(NEVER_CLAIMS);
+  });
+  it("a verified read-back (this exact invoice object) offers only the legitimate action", () => {
+    const verified = inv();
+    const h = view(verified, {
+      unverified: true,
+      verifiedWith: verified,
+      outcome: { kind: "uncertain", cause: "network" },
+    });
+    expect(h).toContain("Create PayPal Sandbox draft…");
+    expect(h).toContain("Not created in PayPal Sandbox");
+    expect(h).not.toContain("Saved state not yet confirmed");
+    // mismatch verified: never a retry
+    const m = inv({ state: "mismatch" });
+    expect(
+      view(m, {
+        unverified: true,
+        verifiedWith: m,
+        outcome: { kind: "paypal-mismatch", code: null },
+      }),
+    ).not.toContain("create-pp-btn");
+  });
+  it("a read-back for a DIFFERENT invoice object does not unlock the panel", () => {
+    const h = view(inv(), {
+      unverified: true,
+      verifiedWith: inv(),
+      outcome: { kind: "uncertain", cause: "network" },
+    });
+    expect(h).not.toContain("create-pp-btn");
+  });
+  it("mapping refused, verified: the panel explains it will not be offered again from this view", () => {
+    const verified = inv();
+    const h = view(verified, {
+      unverified: true,
+      locked: true,
+      verifiedWith: verified,
+      outcome: { kind: "mapping-refused", reason: "rounding_required_line" },
+    });
+    expect(h).toMatch(/id="create-pp-btn"[^>]*disabled/); // present but disabled: not an offered action
+    expect(h).toContain("not offered again from this view");
+  });
+});
+
 describe("POST outcome notices", () => {
   const out = (outcome: PayPalDraftResult, durable: Partial<ServerPayPalState> = {}) =>
     view(inv(durable), { outcome });
@@ -267,7 +346,7 @@ describe("confirmation dialog content", () => {
 describe("no automatic request, preview isolation, no persistence", () => {
   it("rendering the connected panel never calls create or refresh", () => {
     const create = vi.fn(() => Promise.resolve({ kind: "aborted" } as PayPalDraftResult));
-    const refresh = vi.fn(() => Promise.resolve("ok" as const));
+    const refresh = vi.fn(() => Promise.resolve({ ok: false } as const));
     renderToString(
       <PayPalDraftPanel invoice={inv()} create={create} refresh={refresh} onExpired={noop} />,
     );

@@ -1,5 +1,5 @@
 import type { MappingRefusalReason, PayPalDraftResult } from "./api.js";
-import type { ServerPayPalState } from "../domain/serverInvoice.js";
+import type { ServerInvoice, ServerPayPalState } from "../domain/serverInvoice.js";
 
 export type DurableState = ServerPayPalState["state"];
 
@@ -10,11 +10,21 @@ export interface PanelUi {
   /** The server said drafting is switched off: no further POST is offered in this view. */
   disabledSeen: boolean;
   /**
-   * An uncertain outcome (or an unresolved one) happened and the durable state has not been re-read
-   * since. While true, creating is NOT offered: the operator must read the state first.
+   * A POST completed (whatever its answer) and the durable state has not been re-read AFTER it.
+   * While the saved invoice is not the one that re-read produced, creating is NOT offered: the
+   * `invoice` prop may still describe the state from before the POST.
    */
   unverified: boolean;
-  /** The last read-only refresh failed (the durable state shown may be stale). */
+  /**
+   * The answer proves creating again is pointless or unsafe from this view (mapping refused, drafting
+   * disabled, not found, forbidden, refused request). Never lifted by a re-read.
+   */
+  locked: boolean;
+  /** Counts confirmations. A read-back belongs to exactly one of them; a stale one is ignored. */
+  seq: number;
+  /** The exact invoice object the last successful authoritative re-read produced. */
+  verifiedWith: ServerInvoice | null;
+  /** The last re-read failed or contradicted the POST answer (the state shown may be stale). */
   readFailed: boolean;
 }
 
@@ -23,40 +33,62 @@ export const initialPanel: PanelUi = {
   outcome: null,
   disabledSeen: false,
   unverified: false,
+  locked: false,
+  seq: 0,
+  verifiedWith: null,
   readFailed: false,
 };
 
 export type PanelAction =
-  | { type: "open-confirm" }
+  /** Carries the invoice currently shown, so eligibility is judged against what the operator sees. */
+  | { type: "open-confirm"; invoice: ServerInvoice }
   | { type: "cancel-confirm" }
   | { type: "confirm" }
   | { type: "result"; result: PayPalDraftResult }
   | { type: "check-start" }
-  | { type: "check-done"; ok: boolean }
-  /** Automatic read-only re-read after a POST answer. */
-  | { type: "readback"; ok: boolean };
+  | { type: "check-done"; ok: boolean; invoice?: ServerInvoice }
+  /** Automatic read-only re-read after a POST answer, tagged with the confirmation it belongs to. */
+  | { type: "readback"; ok: boolean; seq: number; invoice?: ServerInvoice };
 
-/** Outcomes after which the server-side state is not known to the browser until it is re-read. */
-const UNVERIFIED: ReadonlySet<PayPalDraftResult["kind"]> = new Set([
-  "uncertain",
-  "paypal-unknown",
-  "in-progress",
-  "reconciliation-pending",
-  "unavailable",
+/** Answers after which creating again from this view is never offered, whatever a re-read says. */
+const LOCKING: ReadonlySet<PayPalDraftResult["kind"]> = new Set([
+  "mapping-refused",
+  "disabled",
+  "not-found",
+  "forbidden",
+  "bad-request",
 ]);
+
+/**
+ * Does the re-read agree with the POST answer? A `created` answer must be matched by a durable
+ * `created` state carrying the same PayPal id; anything else is not accepted as verification.
+ */
+function agrees(outcome: PayPalDraftResult | null, invoice: ServerInvoice): boolean {
+  if (outcome?.kind !== "created") return true;
+  const pp = invoice.paypal;
+  return pp?.state === "created" && pp.paypalInvoiceId === outcome.paypalInvoiceId;
+}
 
 /** Pure panel state. Nothing here issues a request: the component does, once, from `confirm`. */
 export function panelReducer(s: PanelUi, a: PanelAction): PanelUi {
   switch (a.type) {
     case "open-confirm":
-      return s.phase === "idle" && !s.disabledSeen && !s.unverified
-        ? { ...s, phase: "confirming" }
-        : s;
+      // Same rule as the button: only from an eligible durable state that has been (re-)read.
+      return canOfferCreate(a.invoice, s) ? { ...s, phase: "confirming" } : s;
     case "cancel-confirm":
       return s.phase === "confirming" ? { ...s, phase: "idle" } : s;
     case "confirm":
       // The only transition that leads to a POST, and only from the open confirmation dialog.
-      return s.phase === "confirming" ? { ...s, phase: "creating", outcome: null } : s;
+      return s.phase === "confirming"
+        ? {
+            ...s,
+            phase: "creating",
+            outcome: null,
+            seq: s.seq + 1,
+            verifiedWith: null,
+            readFailed: false,
+          }
+        : s;
     case "result": {
       if (s.phase !== "creating") return s;
       const r = a.result;
@@ -65,27 +97,44 @@ export function panelReducer(s: PanelUi, a: PanelAction): PanelUi {
         phase: "idle",
         outcome: r,
         disabledSeen: s.disabledSeen || r.kind === "disabled",
-        unverified: UNVERIFIED.has(r.kind) ? true : s.unverified,
+        locked: s.locked || LOCKING.has(r.kind),
+        // EVERY answer fails closed until the authoritative re-read after it has landed.
+        unverified: true,
+        verifiedWith: null,
         readFailed: false,
       };
     }
-    case "readback":
-      // Never applies while a new POST is in flight (that answer will trigger its own read-back).
-      return s.phase === "creating"
-        ? s
-        : { ...s, unverified: a.ok ? false : s.unverified, readFailed: !a.ok };
+    case "readback": {
+      // Stale (an earlier confirmation) or while a newer POST is in flight: must not touch the guard.
+      if (a.seq !== s.seq || s.phase === "creating") return s;
+      if (!a.ok || !a.invoice || !agrees(s.outcome, a.invoice))
+        return { ...s, readFailed: true, verifiedWith: null };
+      return { ...s, readFailed: false, verifiedWith: a.invoice };
+    }
     case "check-start":
       return s.phase === "idle" ? { ...s, phase: "checking" } : s;
-    case "check-done":
-      return s.phase === "checking"
-        ? { ...s, phase: "idle", unverified: a.ok ? false : s.unverified, readFailed: !a.ok }
-        : s;
+    case "check-done": {
+      if (s.phase !== "checking") return s;
+      if (!a.ok || !a.invoice || !agrees(s.outcome, a.invoice))
+        return { ...s, phase: "idle", readFailed: true, verifiedWith: null };
+      return { ...s, phase: "idle", readFailed: false, verifiedWith: a.invoice };
+    }
   }
 }
 
-/** Create/retry is offered only from states where a new explicit attempt is safe and meaningful. */
-export function canOfferCreate(durable: DurableState, ui: PanelUi): boolean {
-  if (ui.disabledSeen || ui.unverified || ui.phase !== "idle") return false;
+/** True while a POST answer has not been confirmed by a re-read that produced THIS invoice object. */
+export function awaitingReadback(ui: PanelUi, invoice: ServerInvoice): boolean {
+  return ui.unverified && ui.verifiedWith !== invoice;
+}
+
+/**
+ * Create/retry is offered only from states where a new explicit attempt is safe and meaningful, and
+ * only when the durable state shown is the one the last authoritative re-read produced.
+ */
+export function canOfferCreate(invoice: ServerInvoice, ui: PanelUi): boolean {
+  if (ui.disabledSeen || ui.locked || ui.phase !== "idle") return false;
+  if (awaitingReadback(ui, invoice)) return false;
+  const durable = invoice.paypal?.state ?? "none";
   return durable === "none" || durable === "rejected" || durable === "unknown";
 }
 
