@@ -1,0 +1,481 @@
+{
+  "chrome": "Chrome/156.0.8078.74",
+  "passed": 79,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafts disabled; OPENAI_API_KEY/OPENAI_MODEL empty (no provider can be reached)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "the invoice list is a real AG Grid (ag-root-wrapper, grid role) and the native <table> is gone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "the grid lists exactly the 20 newest invoices, identified by their invoice UUID row ids, in server order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "all 20 loaded rows are present in the DOM (row virtualisation off), each with a labelled View button",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "the six approved columns are present with their headers",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "totals are formatted exactly in the invoice currency and never summed across currencies",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "every row shows the server's PayPal Sandbox status (all 26 have no operation row -> 'No PayPal draft')",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "no AG Grid console warning or error (module/license/theme)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "no Content-Security-Policy violation under the strict production CSP",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "no injected <style> element and no inline <style> in the page (style-src 'self' stays unweakened)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "no AG Grid license watermark or Enterprise/Studio text anywhere",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "the grid is wrapped in a named group and the list is announced (result count)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "AG Grid Community: structure and licensing",
+      "name": "loading the page made only GET list requests (no mutation, no foreign host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Customer ascending: header exposes aria-sort and the rows are reordered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Customer descending: exact reverse (stable ties)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Total ascending: currency code first, then the EXACT minor-unit amount (never a cross-currency magnitude), ties keep server order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Total descending matches the independent BigInt expectation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Due ascending (all equal dates -> server order is kept, stable)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Invoice sorts by the saved instant (oldest first), single-column sort replaces the previous one",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "PayPal Sandbox status sorts by its label (all equal -> server order, stable)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "Actions is not sortable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "sorting issued NO request at all (client-side over the loaded rows)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Sorting: client-side, loaded rows only, exact money",
+      "name": "the currency cards (loaded rows, per currency) are identical before and after sorting",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Resizable columns and keyboard header",
+      "name": "a column header can take keyboard focus",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Resizable columns and keyboard header",
+      "name": "Enter on a focused header sorts that column",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Resizable columns and keyboard header",
+      "name": "dragging the Customer resize handle +60px widens that column",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Resizable columns and keyboard header",
+      "name": "resizing issued NO request and did not change the cards",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Resizable columns and keyboard header",
+      "name": "the Actions column is not resizable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "View invoice: keyboard and real saved-invoice navigation",
+      "name": "the View action is a focusable native button with the invoice/customer accessible name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "View invoice: keyboard and real saved-invoice navigation",
+      "name": "Enter on View opens THAT invoice from the server (GET /api/invoice-drafts/:id for exactly its UUID)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "View invoice: keyboard and real saved-invoice navigation",
+      "name": "opening read nothing but GET requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: Tab order and no trap",
+      "name": "Tab from the filters enters the grid, reaches a View button, and continues to 'Load more invoices'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: Tab order and no trap",
+      "name": "a View button reached by the keyboard shows a visible focus ring (>= 2px solid, :focus-visible)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: Tab order and no trap",
+      "name": "the focus order is bounded (no trap): Load more is reached within 60 Tab presses",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: Tab order and no trap",
+      "name": "Shift+Tab leaves 'Load more' and returns into the grid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Keyboard: Tab order and no trap",
+      "name": "Shift+Tab walks back out of the grid to the status filter (no backwards trap)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Load more with an active sort",
+      "name": "Load more asks the server for the next page with the cursor and the same limit; the sort is NOT sent",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Load more with an active sort",
+      "name": "all 26 rows are present with no duplicate UUID",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Load more with an active sort",
+      "name": "the operator's descending Customer sort is kept over the now-26 loaded rows",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Load more with an active sort",
+      "name": "Total ascending over all 26 loaded rows is currency-first then exact amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Load more with an active sort",
+      "name": "after the last page the per-currency cards equal the whole-account exact sums (independent of the grid sort), never combined",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Load more with an active sort",
+      "name": "no 'Grand total' across currencies exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Server filters and search still drive the grid",
+      "name": "the EUR pill asks the SERVER (currency=EUR) and the grid shows only the EUR invoices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Server filters and search still drive the grid",
+      "name": "search is server-side: the grid shows exactly the one match and the search box stays mounted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Server filters and search still drive the grid",
+      "name": "no match: the grid is replaced by the honest 'No invoices match' state with Clear filters",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Server filters and search still drive the grid",
+      "name": "Clear filters restores the grid from the server",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failures: no grid, no fixture, working Retry",
+      "name": "SIMULATED offline list: the alert replaces the grid; no row and no sample data is shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED failures: no grid, no fixture, working Retry",
+      "name": "Retry reaches the real server again and no match is reported for the unusual search",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Dark theme and contrast",
+      "name": "light desktop: all grid and page text >= WCAG AA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Dark theme and contrast",
+      "name": "the grid follows the app's dark tokens (rows use the dark surface, not AG Grid's white)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Dark theme and contrast",
+      "name": "dark desktop: all grid and page text >= WCAG AA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Dark theme and contrast",
+      "name": "dark: header, row and cell backgrounds are not light (no white flash)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "no page-level horizontal overflow at 390px (the grid scrolls inside itself)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "all six columns remain in the DOM and the grid body scrolls horizontally when it must",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "dark 390px: text contrast >= WCAG AA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "at 390px (grid not scrolled) the first row shows the customer, the exact total and the View action together, all inside the viewport",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "the View action target is >= 24 x 24 CSS px (WCAG 2.2 AA target size)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "the narrow column order is Customer, Total, Actions, PayPal Sandbox, Invoice, Due (nothing removed)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "the remaining columns (PayPal status, invoice, due) are reachable by scrolling the grid sideways",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "tapping View at 390px opens the saved invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "390px mobile",
+      "name": "light 390px: no page overflow and text contrast >= WCAG AA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "400% zoom smoke (320 x 256 CSS px, equivalent to 400% on a 1280 x 1024 window)",
+      "name": "no page-level horizontal scroll at 400% equivalent (reflow, WCAG 1.4.10)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "400% zoom smoke (320 x 256 CSS px, equivalent to 400% on a 1280 x 1024 window)",
+      "name": "the title, filters, grid, View action and Load more all remain present and reachable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "400% zoom smoke (320 x 256 CSS px, equivalent to 400% on a 1280 x 1024 window)",
+      "name": "Load more is fully visible without horizontal scrolling",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Session lock",
+      "name": "Sign out removes the grid and every customer name from the page at once",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Build facts",
+      "name": "the production bundle imports no Enterprise, Charts or Studio package: the only 'ag-grid-enterprise' text is the core's own 'missing module' error message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Build facts",
+      "name": "the production CSS contains no data: font (CSP font-src 'self' stays unweakened)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Build facts",
+      "name": "exactly ag-grid-community and ag-grid-react are the added dependencies, pinned to one exact version",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Build facts",
+      "name": "the production page still carries the strict CSP (no unsafe-inline / unsafe-eval)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no localStorage/sessionStorage/IndexedDB/Cache entries",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no script-readable cookie; the browser NAVIGATION URL carries no customer data or id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no request left the app origin (no PayPal/OpenAI/foreign host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the browser used only auth, GET /api/invoice-drafts and GET /api/invoice-drafts/:id (the seed POSTs came from the harness, not the browser)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the browser sent no mutation of invoice data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no PayPal operations, approvals or model calls exist",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no AG Grid console message at any point in the journey",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no console errors or uncaught exceptions in the browser",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

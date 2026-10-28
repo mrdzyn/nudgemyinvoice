@@ -1144,3 +1144,66 @@ dialog .actions {
     padding: 12px;
   }
 }
+
+/* AG Grid Community, mapped onto the app's own tokens so light and dark follow the page theme. */
+.nmi-grid.ag-theme-quartz {
+  --ag-background-color: var(--surface);
+  --ag-foreground-color: var(--text);
+  --ag-secondary-foreground-color: var(--text-2);
+  --ag-header-background-color: var(--surface-sunken);
+  --ag-header-foreground-color: var(--text-muted);
+  --ag-border-color: var(--border);
+  --ag-secondary-border-color: var(--border);
+  --ag-row-border-color: var(--border);
+  --ag-row-hover-color: var(--surface-sunken);
+  --ag-active-color: var(--focus);
+  --ag-icon-font-color: var(--text-muted);
+  --ag-header-column-resize-handle-color: var(--border-input);
+  --ag-font-family: var(--font-sans);
+  --ag-font-size: 14px;
+  --ag-wrapper-border-radius: 0;
+  --ag-borders: none;
+  --ag-cell-horizontal-padding: 16px;
+  /* Read by the auto-height measurement; the legacy stylesheet does not define it. */
+  --ag-auto-height-max-body-height: 100000px;
+  border: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.nmi-grid .ag-header-cell-text {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.nmi-grid .ag-header-cell-label {
+  gap: 6px;
+}
+.nmi-grid .ag-sort-indicator-icon {
+  color: var(--text-2);
+  font-size: 11px;
+}
+.nmi-grid .ag-right-aligned-header .ag-header-cell-label {
+  justify-content: flex-end;
+}
+.nmi-grid .ag-cell {
+  display: flex;
+  align-items: center;
+  line-height: 1.35;
+}
+.nmi-grid .ag-cell.ag-right-aligned-cell {
+  justify-content: flex-end;
+}
+.nmi-grid .cell-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nmi-grid .cell-stack > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nmi-grid .ag-header-cell:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}

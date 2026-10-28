@@ -56,9 +56,11 @@ describe("states", () => {
   });
   it("B. loaded rows come from the server list, newest first, each with a View action", () => {
     const h = view({ status: "loaded", items: [item(2), item(1)] });
-    expect(h).toContain("Customer 2");
-    expect(h.indexOf("Customer 2")).toBeLessThan(h.indexOf("Customer 1"));
-    expect(h.match(/aria-label="View invoice/g)).toHaveLength(2);
+    // AG Grid draws its rows in the browser (it has no server-side markup), so row content, order and
+    // the View actions are asserted in InvoiceGrid.test.tsx and the real-browser journeys.
+    expect(h).toContain('data-testid="invoice-grid"');
+    expect(h).toContain('class="nmi-grid ag-theme-quartz"');
+    expect(h).not.toContain("<table");
     expect(h).toContain("2 invoices loaded");
     expect(h).not.toMatch(/Create PayPal|Send|Delete|Edit/);
     fixtureLeak(h);
@@ -99,7 +101,7 @@ describe("states", () => {
   it("J. loading the next page keeps the rows and shows progress", () => {
     const h = view({ status: "loading-more", items: [item(2), item(1)], nextCursor: "c" });
     expect(h).toContain("Loading more invoices");
-    expect(h).toContain("Customer 2");
+    expect(h).toContain('data-testid="invoice-grid"');
     expect(h).not.toContain('id="dash-more"');
   });
   it("a next page that is available offers Load more; K. the end says everything is loaded", () => {
@@ -113,7 +115,7 @@ describe("states", () => {
   it("a failed next page keeps the loaded rows and offers a retry", () => {
     const h = view({ status: "loaded", items: [item(1)], nextCursor: "c", moreError: "offline" });
     expect(h).toContain("Could not load more invoices");
-    expect(h).toContain("Customer 1");
+    expect(h).toContain('data-testid="invoice-grid"');
     expect(h).toContain('id="dash-more-retry"');
   });
 });

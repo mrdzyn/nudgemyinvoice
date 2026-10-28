@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, PayPalStatusBadge } from "../../components/Badge.js";
+import { Badge } from "../../components/Badge.js";
 import { Notice } from "../../components/Notice.js";
 import { Spinner } from "../../components/Spinner.js";
 import { useFocusOnMount } from "../../components/hooks.js";
@@ -7,7 +7,7 @@ import { useApp } from "../../demo/AppContext.js";
 import { formatCurrency, formatMinor } from "../../domain/money.js";
 import { MAX_SEARCH_CHARS, minorOf, type ListItem } from "../../domain/serverList.js";
 import { CURRENCY_CODES, type CurrencyCode } from "../../domain/types.js";
-import { formatDate, shortId } from "./DashboardScreen.js";
+import { InvoiceGrid } from "./InvoiceGrid.js";
 import {
   hasFilters,
   NO_FILTERS,
@@ -262,55 +262,7 @@ export function RealDashboardView({
             {items.length} invoice{items.length === 1 ? "" : "s"} loaded
             {state.nextCursor ? ", more available" : ", end of list"}
           </p>
-          <table className="data stack">
-            <caption className="sr-only">Saved invoices, newest first</caption>
-            <thead>
-              <tr>
-                <th scope="col">Invoice</th>
-                <th scope="col">Customer</th>
-                <th scope="col">Due</th>
-                <th scope="col" className="r">
-                  Total
-                </th>
-                <th scope="col">PayPal Sandbox</th>
-                <th scope="col" className="r">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((i) => (
-                <tr key={i.id}>
-                  <td data-label="Invoice">
-                    <span className="mono">{shortId(i.id)}</span>
-                    <div className="cell-sub">Saved {formatDate(i.createdAt)}</div>
-                  </td>
-                  <td data-label="Customer">
-                    <div>{i.customerName}</div>
-                    <div className="cell-sub">{i.customerEmail}</div>
-                  </td>
-                  <td data-label="Due">{formatDate(i.dueDate)}</td>
-                  <td data-label="Total" className="r num">
-                    <strong>{formatCurrency(i.total, i.currency)}</strong>{" "}
-                    <span className="cell-sub">{i.currency}</span>
-                  </td>
-                  <td data-label="PayPal Sandbox">
-                    <PayPalStatusBadge state={i.paypalState} />
-                  </td>
-                  <td data-label="" className="r">
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      aria-label={`View invoice ${shortId(i.id)} for ${i.customerName}`}
-                      onClick={() => onOpen(i.id)}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <InvoiceGrid items={items} onOpen={onOpen} />
           <div className="grid-footer" id="dash-footer">
             {state.status === "loading-more" ? (
               <span role="status">

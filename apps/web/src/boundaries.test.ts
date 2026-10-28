@@ -168,11 +168,27 @@ describe("UI shell boundaries", () => {
     expect(users).toEqual(["src/App.tsx"]);
   });
 
-  it("adds no runtime dependency beyond React (no AG Studio, router, state manager, icon or font package)", () => {
+  it("adds no runtime dependency beyond React and the two AG Grid Community packages (no AG Studio, Enterprise, router, state manager, icon or font package)", () => {
     const pkg = JSON.parse(readFileSync(join(webRoot, "package.json"), "utf8")) as {
       dependencies: Record<string, string>;
     };
-    expect(Object.keys(pkg.dependencies).sort()).toEqual(["react", "react-dom"]);
+    expect(Object.keys(pkg.dependencies).sort()).toEqual([
+      "ag-grid-community",
+      "ag-grid-react",
+      "react",
+      "react-dom",
+    ]);
+    // Exact pins, never a range: the licensed-for-free Community build is what was verified.
+    expect(pkg.dependencies["ag-grid-community"]).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(pkg.dependencies["ag-grid-react"]).toBe(pkg.dependencies["ag-grid-community"]);
+  });
+
+  it("uses AG Grid Community only: no Enterprise, Studio or license-key code, and only the grid file imports it", () => {
+    const all = files.map(read).join("\n");
+    expect(all).not.toMatch(/ag-grid-enterprise|ag-grid-charts|ag-studio|@ag-grid-enterprise/i);
+    expect(all).not.toMatch(/LicenseManager|setLicenseKey|licenseKey/);
+    const importers = files.filter((f) => /from "ag-grid-|import "ag-grid-/.test(read(f)));
+    expect(importers.map((f) => f.split("/").pop()).sort()).toEqual(["InvoiceGrid.tsx"]);
   });
 
   it("does not embed the real Sandbox smoke invoice id or any credential-like literal", () => {
