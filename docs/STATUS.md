@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-UI-01C5-P0 — PayPal draft operator-ownership security gate (backend only). **Implemented on Draft PR; awaiting independent GPT-6 exact-head audit.** The C5 frontend (P1) is not started.
-- **Status:** NMI-UI-01C1 through C4 are independently audited and squash-merged: C1 `32d9132be419b48a64455fa79c0fca58f9159b89`, C2 `ddffc11471306e3b2c4cd7ea4a6a80303593e674`, C3 `988a8f9f22876f8f19d7424a31ff6b1f62ebf8c9`, C4 (real read-only dashboard, PR #13) `568faa0a475af34372520bea5d19e63a4829cb19`. C5-P0 makes `createPayPalDraft` load the invoice with the owner-scoped `getOwned(invoiceId, operatorId)` before any other data access, closing the finding recorded in C4. No provider, schema or payment-algorithm change.
-- **Primary branch:** `main` (C4 squash merge `568faa0a475af34372520bea5d19e63a4829cb19`).
-- **Working branch:** `fix/nmi-c5-p0-paypal-ownership` (Draft PR; implementation SHA `2f208c057ee046dd8037c19f409d7051fe5aa9c1`).
-- **Active task:** `tasks/NMI-UI-01C5-P0-paypal-ownership.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
-- **Active handoff:** NMI-UI-01C5-P0-IMPL
+- **Current phase:** NMI-UI-01C5-P1 — real PayPal Sandbox draft UI on the saved invoice (final React-to-API integration). **Implemented on Draft PR; awaiting independent GPT-6 exact-head audit.** NMI-DEMO is not started.
+- **Status:** NMI-UI-01C1 through C5-P0 are independently audited and squash-merged: C1 `32d9132`, C2 `ddffc11`, C3 `988a8f9`, C4 `568faa0`, and C5-P0 (PayPal draft operator-ownership gate, PR #14) `7e9c1c9b48ed03e3d85d4ad9d401f6803bed0a4c`. C5-P1 wires the existing `POST /api/invoice-drafts/:id/paypal-draft` into the real saved-invoice page behind an explicit confirmation dialog, with durable read-back, read-only Check status and safe handling of every uncertain outcome. No backend, schema, provider or payment-algorithm change; the journey uses a test-only deterministic fake PayPal.
+- **Primary branch:** `main` (C5-P0 squash merge `7e9c1c9b48ed03e3d85d4ad9d401f6803bed0a4c`).
+- **Working branch:** `feat/nmi-ui-01c5-p1-paypal-draft-ui` (Draft PR; implementation SHA `17c13e0e75de07bda310bbd9745b27a97b6bf7bd`).
+- **Active task:** `tasks/NMI-UI-01C5-P1-paypal-draft-ui.md` (phase plan: `tasks/NMI-UI-01C-integration-plan.md`).
+- **Active handoff:** NMI-UI-01C5-P1-IMPL
 - **Owner decisions:** D1 AG Studio deferred pending license verification; D2 no default browser persistence of unsaved customer data; D3 separate authenticated read-only invoice-list task later; D4 editing saved drafts deferred.
 
 ## Accepted evidence
@@ -31,16 +31,16 @@
 - Frontend `apps/web`: owner-approved NMI-UI-01B fixture-backed screens and **NMI-UI-01C1 real browser operator authentication** and **NMI-UI-01C2 authenticated parsing** and **NMI-UI-01C3 save/detail** are merged; the real dashboard list is on its C4 Draft PR and the PayPal UI remains deferred to C5.
 
 ## Deferred / open gates
-- **NMI-UI-01C5-P0:** implemented on Draft PR (`2f208c057ee046dd8037c19f409d7051fe5aa9c1`); 13 new real-PostgreSQL ownership tests (negative control fails 7), 62 existing payment state-machine tests unchanged and passing. **Independent audit and owner merge approval NOT YET DONE.** Not on `main`.
+- **NMI-UI-01C5-P1:** implemented on Draft PR (`17c13e0e75de07bda310bbd9745b27a97b6bf7bd`); 10 new PostgreSQL+Fastify contract tests, web suite 526, an 89/89 real-browser journey against a FAKE PayPal and the unchanged backend. **Independent audit and owner merge approval NOT YET DONE.** Not on `main`. No real PayPal Sandbox or OpenAI call has been made.
 - **Manual QA still pending:** VoiceOver/NVDA, real touch, Safari/Firefox, 400% browser zoom, HTTPS `__Host-` cookie and hosted reverse proxy; no full WCAG 2.2 AA or deployment claim.
 - **AG Studio (D1):** license/trial/keys unverified; deferred. Native table remains.
 - **Provider boundary:** real OpenAI Responses inference **NOT TESTED**, and no new provider call authorized; prior PayPal draft-only Sandbox one-create smoke budget is exhausted. No new PayPal write authorized, and `PAYPAL_DRAFTS_ENABLED=false` remains default.
-- **Later integration:** C5-P1 controlled Sandbox draft UI (not started; separate approval); NMI-DEMO. No current provider-enabled demo or hosted release.
+- **Later integration:** NMI-DEMO (provider-enabled demo, hosting, judge access) and the Devpost submission are not started. Any real PayPal Sandbox call needs separate owner authorization, environment checks and a strict call budget.
 - **Other deferred:** PayPal send/grant issuance/reminder automation/webhooks/payment reconciliation; SQLite-versus-Postgres decision, hosting strategy and judge access; editing existing saved drafts.
 - **Operational limitations:** in-memory per-process auth throttling; approval consumption and audit logging separate statements; DB least-privilege grants a deployment prerequisite.
-- **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, enable PayPal drafting by default, or start C5-P1 without separate approval.
+- **Do not** merge, deploy, call PayPal/OpenAI, reset the completed Sandbox test budget, enable PayPal drafting by default, or start NMI-DEMO without separate approval.
 - **Privacy scope of search text (C4):** the term travels in `q` in the HTTP GET request URL (customer information). It is not in the browser navigation URL, not in browser storage and not in Fastify logs. Reverse-proxy/ingress/CDN/access logs must redact the query string: deployment prerequisite, UNTESTED. An absolute no-PII-in-URL rule would conflict with the approved GET contract and is an owner decision, not taken.
-- **Security finding (C4) RESOLVED in C5-P0 (pending audit):** `createPayPalDraft` / `POST /api/invoice-drafts/:id/paypal-draft` is now operator-scoped (`getOwned`); a foreign, ownerless or unknown invoice is one identical `404 not_found` and triggers no operation read/write, audit row or provider call.
+- **Security finding (C4) resolved in C5-P0 and merged:** `createPayPalDraft` is operator-scoped (`getOwned`); a foreign, ownerless or unknown invoice is one identical `404 not_found` with no operation, audit row or provider call. C5-P1 relies on and re-tests this boundary.
 
 ## Next action
-GPT-6 independent exact-head audit of the C5-P0 Draft PR, then the owner's merge decision. No real PayPal/OpenAI calls, deployment, merge or C5-P1 without separate authorization.
+GPT-6 independent exact-head audit of the C5-P1 Draft PR, then the owner's merge decision. No real PayPal/OpenAI calls, deployment, merge or NMI-DEMO without separate authorization.
