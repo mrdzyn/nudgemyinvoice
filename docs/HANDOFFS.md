@@ -1405,4 +1405,19 @@ No code, scripts, tests, dependencies, CI, schema, database, credentials, produc
 ### Not verified
 Anything against the real PayPal Sandbox; Linux/Windows; other Node majors; independent reproduction.
 
+## Handoff: NMI-DEMO-R1-B-WIRE-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md` (section "Audit remediation NMI-DEMO-R1-B-WIRE-R1")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit of Draft PR #20
+- **State:** READY FOR RE-AUDIT. Only the Markdown-embedded offline runner/tests and records changed; observer source and SHA-256 `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` unchanged; no repository code, script, test or authorization-answer change; no provider call; Gate B BLOCKED/NOT AUTHORIZED.
+
+### Re-audit focus
+1. Extract the files from `docs/NMI-DEMO-R1-B-WIRE-OFFLINE-TESTS.md` and the preload from the WIRE-COUNT document; confirm the hash; run `./run-all.sh` and `./runner-selftest.sh` (expected `ALL DONE (8 ...)` and `11/11`).
+2. Confirm every critical check is a hard failure: T0 hash and fixture, T1 `20/20`, T2 `EPERM`, T3/T3b/T4/T5 JSON assertions with the independent server witness and client outcome, T6 `N/N` and no `FAIL`, assertion-count guard, `set -euo pipefail`, no `${VAR:?}`.
+3. Review the 11 injections for realism (each changes the file it claims to) and try your own.
+
+### Not verified
+Real PayPal behaviour, other platforms, independent reproduction.
+
 <!-- HANDOFF_ENTRIES_END -->
