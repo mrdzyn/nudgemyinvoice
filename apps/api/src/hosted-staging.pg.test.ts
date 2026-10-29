@@ -41,6 +41,9 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
   let scratch: ScratchDatabase;
   let runtimePool: pg.Pool;
   const role = `nmi_rt_${randomBytes(4).toString("hex")}`;
+  // Ephemeral, test-only; exists only in this process and on the disposable role. Never logged.
+  const rolePassword = randomBytes(24).toString("hex");
+  let ownerName = "";
   let dist: string;
   let app: ReturnType<typeof buildApp>;
   let appPort: number;
@@ -158,8 +161,9 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     const admin = new pg.Client({ connectionString: url as string });
     await admin.connect();
     await admin.query(
-      `CREATE ROLE ${role} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION`,
+      `CREATE ROLE ${role} LOGIN PASSWORD '${rolePassword}' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION`,
     );
+    ownerName = (await admin.query("SELECT session_user AS u")).rows[0].u as string;
     const grants = readFileSync(
       join(import.meta.dirname, "..", "..", "..", "packages", "db", "ops", "runtime-role.sql"),
       "utf8",
@@ -170,11 +174,17 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     await admin.query(grants);
     await admin.query(`GRANT USAGE ON SCHEMA ${scratch.schema} TO ${role}`);
     await admin.end();
-    // The app connects with this role's privileges only (SET ROLE at connect).
+    // The app authenticates AS the runtime role itself (genuine LOGIN with its own credential),
+    // never as the owner with a role selected afterwards.
+    const base = new URL(url as string);
     runtimePool = new pg.Pool({
-      connectionString: url as string,
+      host: base.hostname,
+      port: base.port ? Number(base.port) : 5432,
+      database: base.pathname.slice(1),
+      user: role,
+      password: rolePassword,
       max: 5,
-      options: `-c search_path=${scratch.schema} -c role=${role}`,
+      options: `-c search_path=${scratch.schema}`,
     });
 
     dist = mkdtempSync(join(tmpdir(), "nmi-hosted-"));
@@ -472,6 +482,10 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
 
   it("the runtime role holds only the privileges the API needs and cannot alter schema or history", async () => {
     const s = scratch.schema;
+    // Genuine runtime-role login: the authenticated session user IS the runtime role, not the owner.
+    const who = (await runtimePool.query("SELECT session_user AS s, current_user AS c")).rows[0];
+    expect(who).toEqual({ s: role, c: role });
+    expect(ownerName).not.toBe(role);
     const denied = async (sql: string) => {
       const c = await runtimePool.connect();
       try {
@@ -506,13 +520,51 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     ]) {
       await denied(sql);
     }
+    // No way back to owner privileges from inside the session.
+    {
+      const c = await runtimePool.connect();
+      try {
+        await c.query("SET ROLE NONE"); // resets to the session user, which is the runtime role
+        expect((await c.query("SELECT session_user AS s, current_user AS c")).rows[0]).toEqual({
+          s: role,
+          c: role,
+        });
+        await expect(c.query(`CREATE TABLE ${s}.y (a int)`)).rejects.toMatchObject({
+          code: "42501",
+        });
+        await expect(c.query(`DELETE FROM ${s}.invoices`)).rejects.toMatchObject({ code: "42501" });
+        await expect(c.query(`SET ROLE "${ownerName}"`)).rejects.toMatchObject({ code: "42501" });
+        await expect(c.query(`SET SESSION AUTHORIZATION "${ownerName}"`)).rejects.toMatchObject({
+          code: "42501",
+        });
+        // audit INSERT is allowed; reading it back is not
+        await c.query(
+          `INSERT INTO ${s}.audit_log (actor, action, outcome) VALUES ('runtime-role-test','probe','success')`,
+        );
+        await expect(c.query(`SELECT 1 FROM ${s}.audit_log`)).rejects.toMatchObject({
+          code: "42501",
+        });
+      } finally {
+        c.release();
+      }
+    }
+    expect(
+      (
+        await owner(`SELECT count(*)::int AS n FROM ${s}.audit_log WHERE actor='runtime-role-test'`)
+      )[0].n,
+    ).toBe(1);
     // ...while the operations the API needs work.
     const ok = await runtimePool.query(`SELECT count(*)::int AS n FROM ${s}.invoices`);
     expect(ok.rows[0].n).toBe(1);
     const flags = await owner(
       `SELECT rolsuper, rolcreatedb, rolcreaterole, rolcanlogin FROM pg_roles WHERE rolname='${role}'`,
     );
-    expect(flags[0]).toMatchObject({ rolsuper: false, rolcreatedb: false, rolcreaterole: false });
+    expect(flags[0]).toMatchObject({
+      rolsuper: false,
+      rolcreatedb: false,
+      rolcreaterole: false,
+      rolcanlogin: true,
+    });
   });
 });
 

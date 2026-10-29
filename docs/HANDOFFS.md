@@ -1460,4 +1460,15 @@ Targeted local-only tests, CI and documented negative controls; keep final statu
 - **NOT TESTED / residual:** real Render (TLS, `X-Forwarded-For` shape, request-log content for POST, Postgres roles/TLS/lifespan/cost); other browsers, assistive tech, touch; multi-instance behavior (unsupported); the historical NMI-AG1/C4 journeys that assert GET `q` were not re-run and are superseded for search.
 - **Gates:** merge, Render provisioning, secrets, URL sharing and judge access each need separate owner approval. Gates A/B/C NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P1-FIX1
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head re-audit of the remediation, then owner
+- **Branch / PR:** `feat/nmi-render-p1-secure-staging`, Draft PR #21 (no new branch/PR). Audited start HEAD `8d2629d5dd16571d1af8d58f7ad40c0285f226aa`; independent review `5695189217`.
+- **Scope:** MAJOR-1 least-privilege database proof; MAJOR-2 password-safe runbook. Production behavior, UI, search contract, PayPal/OpenAI, schema and migrations unchanged.
+- **Changed:** `apps/api/src/hosted-staging.pg.test.ts` (the application pool now authenticates as a disposable LOGIN role with an ephemeral in-memory password instead of the owner connection with `-c role=`; asserts `session_user = current_user = runtime role`, `SET ROLE NONE` leaves it the runtime role, `SET ROLE`/`SET SESSION AUTHORIZATION` to the owner are refused, DDL/DELETE/sensitive UPDATE/audit SELECT refused with `42501`, audit INSERT works, login/save/search/logout run through that pool; role and credential dropped in `afterAll`); `docs/NMI-RENDER-P1-RUNBOOK.md` §5 step 3 and incident note, `packages/db/ops/runtime-role.sql` header (role created without any password, then interactive `\password`; no password in any `-c`/file/argument).
+- **Evidence (agent-reported, local):** hosted-staging suite 13/13; `pnpm validate` PASS; `pnpm test:db` 312/312 PASS; hosted browser QA 26/26 (that harness already connected as a real LOGIN role). Hosted CI run IDs are in the PR body.
+- **NOT TESTED / residual:** the local PostgreSQL uses trust authentication, so locally the role password is not checked at connect time; the test proves the role identity (`session_user`) and privileges, and hosted CI's password-authenticated service container is the evidence for password login. Real Render behavior remains untested as before.
+- **Gates:** merge, Render provisioning, secrets and sharing each need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->

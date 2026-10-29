@@ -2,11 +2,17 @@
 --
 -- Run once as the migration/owner role, AFTER migrations 0000-0006 have been applied. It changes
 -- privileges only (no table, column or constraint is created or altered). The role is created
--- separately, without a secret in this file:
+-- separately and WITHOUT a password in any statement, file or command line:
 --
---   CREATE ROLE nmi_runtime LOGIN PASSWORD '<generated, kept in the host secret store>'
---     NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION;
+--   CREATE ROLE nmi_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION;
 --
+-- then set its password interactively (psql hashes it client-side; nothing is logged or kept in shell
+-- history), and store the same value only in the host secret store:
+--
+--   psql "$OWNER_DATABASE_URL"   -- then, at the prompt:  \password nmi_runtime
+--
+-- NEVER put a password in this file, in psql -c / -v arguments, or in a committed connection string.
+
 -- What it deliberately cannot do: change schema, TRUNCATE or DELETE anything, create/modify
 -- operators (provisioning is an owner-run CLI), touch approvals or webhook events (unused by the
 -- API), UPDATE or read back-modify the append-only audit log (INSERT only), or UPDATE any invoice

@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-RENDER-P1 — offline hosting-readiness implementation (Draft PR #21; implementation complete, **awaiting independent exact-head audit**). Code candidate for a single-origin, single-instance, provider-disabled Render staging demo. **Nothing is provisioned, deployed, shared or merged**; Gates A/B/C NOT AUTHORIZED. PR #20 (Gate B observer docs) is owner-merged on `main` (`451abc2`); Gate B still has no owner permit.
+- **Current phase:** NMI-RENDER-P1 — offline hosting-readiness implementation (Draft PR #21; implementation complete, review `5695189217` MAJOR-1/2 remediated in NMI-RENDER-P1-FIX1, **awaiting independent exact-head re-audit**). Code candidate for a single-origin, single-instance, provider-disabled Render staging demo. **Nothing is provisioned, deployed, shared or merged**; Gates A/B/C NOT AUTHORIZED. PR #20 (Gate B observer docs) is owner-merged on `main` (`451abc2`); Gate B still has no owner permit.
 - **Status:** Previously merged C1–C5, R0 #16, AG Grid Community #17, R1 docs #18, FIX-B1 #19 and Gate B egress-count documentation #20 remain on `main`. The P1 branch is **task/handoff kickoff only** (no hosting code implemented or Render resource created yet); stage deployment candidate requires Fastify/React same-origin serving, Render host/PORT, HTTPS cookies/proxy QA, URL-search privacy remediation, PostgreSQL deployment planning, tests/CI and independent exact-head audit.
 - **Primary branch:** `main` at `451abc292737775f0c58458520b8f5bf004cd474` (PR #20 owner-authorized squash merge).
 - **Working branch:** `feat/nmi-render-p1-secure-staging` (Draft PR #21; infrastructure/transport only, UI unchanged).
 - **Active task:** `tasks/NMI-RENDER-P1-secure-staging.md`.
-- **Active handoff:** NMI-RENDER-P1-IMPL
+- **Active handoff:** NMI-RENDER-P1-FIX1
 - **Render hosting opportunity:** Owner reports Render credits available (balance, expiry and coverage **unverified**). Option B has become more economically feasible and could support Render sponsor consideration **only after actual tool use**; however, the local judge runbook Option A remains valid. Render HTTPS/same-origin/static+API serving, single-operator demo access, `q` request-URL log redaction (Render HTTP request logs may include requested URL), paid database lifespan through Dec 15, provider-disabled public demo, and safe automatic-deploy controls are **NOT VERIFIED**. No Render provision/deploy authorized. See `docs/NMI-DEMO-DEPLOYMENT-DECISION.md`.
 - **Owner decisions:** D1a AG Studio/Enterprise remains deferred pending commercial license/trial review; D1b owner approved a bounded AG Grid **Community** replacement of the real dashboard invoice table for the hackathon; D2 no default browser persistence of unsaved customer data; D3 read-only owner-scoped list delivered in C4; D4 editing saved drafts deferred.
 
@@ -46,7 +46,7 @@
 - **Security finding (C4) resolved in C5-P0 and merged:** `createPayPalDraft` is operator-scoped (`getOwned`); a foreign, ownerless or unknown invoice is one identical `404 not_found` with no operation, audit row or provider call. C5-P1 relies on and re-tests this boundary.
 
 ## Next action
-1. **Independent GPT-6 exact-head security/functional audit** of Draft PR #21 (NMI-RENDER-P1). Reproduce: `pnpm validate`; `TEST_DATABASE_URL=… REQUIRE_DB_TESTS=1 pnpm test:db` (disposable `nmi_test*` PostgreSQL); `node design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs` (macOS Chrome + PostgreSQL 16).
+1. **Independent GPT-6 exact-head re-audit** of Draft PR #21 (FIX1: runtime-role login proof, password-safe runbook) (NMI-RENDER-P1). Reproduce: `pnpm validate`; `TEST_DATABASE_URL=… REQUIRE_DB_TESTS=1 pnpm test:db` (disposable `nmi_test*` PostgreSQL); `node design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs` (macOS Chrome + PostgreSQL 16).
 2. After a PASS the owner decides whether to squash-merge. A merge is **not** authorization to create Render resources.
 3. Separate owner approvals, in order: provision staging (`docs/NMI-RENDER-P1-RUNBOOK.md` §3–6), live verification incl. platform request-log check, then judge access/sharing. Gates A/B/C remain separate and NOT AUTHORIZED.
 No real OpenAI/PayPal calls, budget reset, Render provisioning, deployment, merge, publication or Devpost submission occur in any of these steps without separate owner authorization.

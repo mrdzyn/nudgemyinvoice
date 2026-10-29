@@ -69,12 +69,17 @@ No migration runs on app start. Migrations are forward-only plain SQL in journal
    done
    ```
    (`-1` = one transaction per file; stop on the first error. If one fails midway the earlier files remain applied — fix and continue from that file; never re-run an applied file. Take a backup/snapshot **before** step 2.) Drizzle files contain `--> statement-breakpoint` comments; `psql` ignores them as comments.
-3. Create the runtime role (secret generated locally, pasted once into Render's secret store):
+3. Create the runtime role. The password is **never** written in a command line, SQL file, shell history, `psql -c` argument or process list:
    ```sh
    psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -c \
-     "CREATE ROLE nmi_runtime LOGIN PASSWORD '<generated>' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION"
+     "CREATE ROLE nmi_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION"
+   psql "$OWNER_DATABASE_URL"
+   ```
+   In the interactive session run `\password nmi_runtime` and type a long random password at the hidden prompt twice (generate it with a password manager; `psql` hashes it client-side with SCRAM before sending, so the cleartext is never sent in a statement, logged by the server, or kept in history). Quit, paste the same value once into Render's secret store as part of the runtime `DATABASE_URL`, then run the grants:
+   ```sh
    psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/db/ops/runtime-role.sql
    ```
+   Until the password is set the role cannot log in over password authentication. Do not use `ALTER ROLE … PASSWORD '…'`, `CREATE ROLE … PASSWORD '…'` or `-c`/`-v` with the secret, and do not echo the connection string.
    If Render does not let the owner create roles, **stop**: do not run the app as the owner; escalate to the owner (the least-privilege requirement is a gate, not a nicety).
 4. Provision the single operator **as the owner**, once, from the operator's machine:
    `DATABASE_URL=… NMI_OPERATOR_USERNAME=… NMI_OPERATOR_PASSWORD=… pnpm --filter @nmi/api provision-operator`
@@ -111,7 +116,7 @@ No migration runs on app start. Migrations are forward-only plain SQL in journal
 
 - **Bad deploy:** in the dashboard redeploy the previous pinned SHA (the app is stateless apart from PostgreSQL). Migrations are forward-only: do not change the schema during judging.
 - **Data problem:** restore the snapshot taken before judging (§5), then re-verify §6 steps 3, 6, 7.
-- **Incident (suspected leak):** suspend the web service, `UPDATE sessions SET revoked_at = now()`, rotate `SESSION_SECRET` and the operator password, rotate `nmi_runtime`'s password.
+- **Incident (suspected leak):** suspend the web service, `UPDATE sessions SET revoked_at = now()`, rotate `SESSION_SECRET` and the operator password, rotate `nmi_runtime`'s password (interactive `\password nmi_runtime`, as in §5 step 3).
 - **After judging (after 2026-12-15):** delete the web service and database, delete the secrets, revoke sessions first, rotate anything ever loaded into Render.
 - Option A (clone-and-run) remains the judge-access fallback at all times.
 
