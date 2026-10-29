@@ -39,6 +39,15 @@ const listQuery = z.strictObject({
   status: z.enum(PAYPAL_STATUS_GROUPS).optional(),
   q: z.string().trim().min(1).max(LIST_MAX_SEARCH).optional(),
 });
+// Search transport that keeps customer text out of every request URL: the whole query travels in an
+// authenticated, CSRF-protected POST body. Same fields and limits as the GET query, same strictness.
+const searchBody = z.strictObject({
+  limit: z.number().int().min(1).max(LIST_MAX_LIMIT).optional(),
+  cursor: z.string().min(1).max(120).optional(),
+  currency: z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]]).optional(),
+  status: z.enum(PAYPAL_STATUS_GROUPS).optional(),
+  q: z.string().trim().min(1).max(LIST_MAX_SEARCH).optional(),
+});
 const idempotencyHeader = z.string().regex(/^[A-Za-z0-9_-]{8,128}$/);
 
 export interface InvoiceDraftRouteDeps {
@@ -175,23 +184,26 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
   // ------------------------------------------------------------------- list
   // Read-only, owner-scoped (the operator comes from the server session, never from the client),
   // keyset-paginated, bounded. No provider call, no mutation, no audit row (nothing to record).
-  app.get("/api/invoice-drafts", { preHandler: app.requireOperator }, async (req, reply) => {
-    noStore(reply);
-    const query = listQuery.safeParse(req.query);
-    if (!query.success)
-      return reply.code(400).send({ error: "invalid_query", issues: issues(query.error) });
+  type ListInput = {
+    limit?: number | undefined;
+    cursor?: string | undefined;
+    currency?: CurrencyCode | undefined;
+    status?: (typeof PAYPAL_STATUS_GROUPS)[number] | undefined;
+    q?: string | undefined;
+  };
+  const runList = async (req: FastifyRequest, reply: FastifyReply, input: ListInput) => {
     let cursor;
-    if (query.data.cursor !== undefined) {
-      cursor = decodeCursor(query.data.cursor);
+    if (input.cursor !== undefined) {
+      cursor = decodeCursor(input.cursor);
       if (!cursor) return reply.code(400).send({ error: "invalid_cursor" });
     }
     const page = await list.list({
       operatorId: operatorId(req),
-      limit: query.data.limit ?? LIST_DEFAULT_LIMIT,
+      limit: input.limit ?? LIST_DEFAULT_LIMIT,
       cursor,
-      currency: query.data.currency,
-      status: query.data.status,
-      search: query.data.q,
+      currency: input.currency,
+      status: input.status,
+      search: input.q,
     });
     return reply.send({
       items: page.items.map((i) => ({
@@ -206,7 +218,33 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
       })),
       nextCursor: page.nextCursor ? encodeCursor(page.nextCursor) : null,
     });
+  };
+
+  // Search text must never be sent in a URL: ingress, CDN and platform request logs record URLs.
+  // A `q` on the GET list is refused before any lookup (in addition to the authentication check).
+  app.get("/api/invoice-drafts", { preHandler: app.requireOperator }, async (req, reply) => {
+    noStore(reply);
+    if ("q" in (req.query as Record<string, unknown>)) {
+      return reply.code(400).send({ error: "search_requires_post" });
+    }
+    const query = listQuery.safeParse(req.query);
+    if (!query.success)
+      return reply.code(400).send({ error: "invalid_query", issues: issues(query.error) });
+    return runList(req, reply, query.data);
   });
+
+  // Same owner-scoped, read-only list as the GET above, with the search term in the request body.
+  app.post(
+    "/api/invoice-drafts/search",
+    { preHandler: app.requireOperator },
+    async (req, reply) => {
+      noStore(reply);
+      const body = searchBody.safeParse(req.body ?? {});
+      if (!body.success)
+        return reply.code(400).send({ error: "invalid_query", issues: issues(body.error) });
+      return runList(req, reply, body.data);
+    },
+  );
 
   // ------------------------------------------------------------------- read
   app.get("/api/invoice-drafts/:id", { preHandler: app.requireOperator }, async (req, reply) => {

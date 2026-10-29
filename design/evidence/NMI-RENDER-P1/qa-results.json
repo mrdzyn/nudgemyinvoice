@@ -1,0 +1,163 @@
+{
+  "generatedBy": "design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs",
+  "passed": 26,
+  "total": 26,
+  "results": [
+    {
+      "group": "setup",
+      "name": "production server entry (runtime role) reachable only through the HTTPS proxy; two synthetic invoices saved via the real route",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "single-origin",
+      "name": "the built React app loads over HTTPS from Fastify (sign-in form present)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "single-origin",
+      "name": "the page carries the header CSP incl. frame-ancestors 'none', HSTS and nosniff",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "single-origin",
+      "name": "a missing asset is a 404 JSON, never the SPA shell",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "single-origin",
+      "name": "/health is JSON through the same origin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "single-origin",
+      "name": "an SPA deep link reload serves the app shell",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "session",
+      "name": "sign-in through the UI over HTTPS reaches the workspace",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "session",
+      "name": "Chrome stored __Host-nmi_session as Secure, HttpOnly, SameSite=Lax, Path=/ (no Domain attribute)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "session",
+      "name": "the cookie value is not readable by page script",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "dashboard",
+      "name": "the owner-scoped dashboard lists both invoices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "typing a customer name filters on the server to exactly one row",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "searching by e-mail also finds the row",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "a search with no match shows the no-match state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "clearing the search restores both rows",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "every request line the proxy (host request log) saw for searching was the fixed 'POST /api/invoice-drafts/search'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "no customer name, e-mail, fragment or ?q= appears anywhere in the whole proxy request log",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "the browser navigation URL and storage hold no search text",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "the server process output holds no search text or e-mail",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "negative control: the legacy GET ?q= WOULD be visible to the proxy log, and is refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "providers",
+      "name": "no browser request left the one origin (no OpenAI/PayPal/CDN host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "providers",
+      "name": "the console shows no CSP violation or script error on the hosted build",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "session",
+      "name": "Sign out returns to the sign-in form",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "session",
+      "name": "after sign out the cookie is gone and the old server session is revoked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "session",
+      "name": "an unauthenticated search is 401",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "database",
+      "name": "the schema is unchanged by running the app as the runtime role",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "database",
+      "name": "no unexpected audit failures",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

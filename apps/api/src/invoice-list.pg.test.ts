@@ -79,6 +79,18 @@ describe.skipIf(!url)("GET /api/invoice-drafts (real PostgreSQL)", () => {
     return {
       get: (u: string) =>
         app.inject({ method: "GET", url: u, headers: { cookie: `nmi_session=${cookie}` } }),
+      /** The privacy-preserving search transport: the whole query is the JSON body, the URL is fixed. */
+      search: (payload: unknown) =>
+        app.inject({
+          method: "POST",
+          url: "/api/invoice-drafts/search",
+          headers: {
+            cookie: `nmi_session=${cookie}`,
+            "x-csrf-token": csrf,
+            origin: ORIGIN,
+          },
+          payload: payload as object,
+        }),
       post: (u: string, payload: unknown, key: string) =>
         app.inject({
           method: "POST",
@@ -136,8 +148,18 @@ describe.skipIf(!url)("GET /api/invoice-drafts (real PostgreSQL)", () => {
     createdAt: string;
     paypal: { state: string };
   };
+  // A query that carries search text uses POST /search (the only supported transport for `q`);
+  // everything else exercises the GET list.
   const list = async (s: S, qs = "") => {
-    const r = await s.get(`/api/invoice-drafts${qs}`);
+    const params = new URLSearchParams(qs);
+    let r;
+    if (params.has("q")) {
+      const body: Record<string, unknown> = Object.fromEntries(params);
+      if (typeof body["limit"] === "string") body["limit"] = Number(body["limit"]);
+      r = await s.search(body);
+    } else {
+      r = await s.get(`/api/invoice-drafts${qs}`);
+    }
     return {
       r,
       body: r.json() as { items: Item[]; nextCursor: string | null } & Record<string, unknown>,
@@ -402,10 +424,110 @@ describe.skipIf(!url)("GET /api/invoice-drafts (real PostgreSQL)", () => {
     apps.push(app);
     const s = await login(app, "operator-a", PW_A);
     const needle = "SecretCustomerName";
-    expect((await s.get(`/api/invoice-drafts?q=${needle}&limit=5`)).statusCode).toBe(200);
-    expect(logs).toContain('"url":"/api/invoice-drafts"'); // the path is still logged
+    expect((await s.search({ q: needle, limit: 5 })).statusCode).toBe(200);
+    expect(logs).toContain('"url":"/api/invoice-drafts/search"'); // the path is still logged
+    expect(logs).not.toContain(needle);
+    // Legacy transport: refused, and even then neither the term nor the query string is logged.
+    const legacy = await s.get(`/api/invoice-drafts?q=${needle}&limit=5`);
+    expect(legacy.statusCode).toBe(400);
+    expect(legacy.json()).toEqual({ error: "search_requires_post" });
     expect(logs).not.toContain(needle);
     expect(logs).not.toMatch(/q=|limit=5/);
+  });
+
+  describe("privacy-preserving search transport (NMI-RENDER-P1)", () => {
+    it("POST /search returns exactly the same ordered items as the legacy GET did, owner-scoped", async () => {
+      await create(sA, draft({ customerName: "Same Order One" }));
+      await create(sA, draft({ customerName: "Same Order Two" }));
+      await create(sB, draft({ customerName: "Same Order Foreign" }));
+      const viaPost = await sA.search({ q: "same order", limit: 10 });
+      expect(viaPost.statusCode).toBe(200);
+      expect(viaPost.headers["cache-control"]).toBe("no-store");
+      const names = (viaPost.json() as { items: Item[] }).items.map((i) => i.customerName);
+      expect(names).toEqual(["Same Order Two", "Same Order One"]);
+      // the same filters without text give the same body through GET and POST
+      const g = (await sA.get("/api/invoice-drafts?limit=5&currency=USD")).json();
+      const p = (await sA.search({ limit: 5, currency: "USD" })).json();
+      expect(p).toEqual(g);
+    });
+    it.each([
+      ["a repeated or foreign field", { q: "a", extra: 1 }],
+      ["a non-string q", { q: 5 }],
+      ["an empty q", { q: "   " }],
+      ["an over-long q", { q: "x".repeat(101) }],
+      ["a string limit", { limit: "5" }],
+      ["limit 0", { limit: 0 }],
+      ["limit above the maximum", { limit: 51 }],
+      ["an unknown currency", { currency: "XXX" }],
+      ["a malformed cursor", { cursor: "not-a-cursor" }],
+    ])("rejects %s with 400 and no data", async (_n, body) => {
+      const r = await sA.search(body);
+      expect(r.statusCode).toBe(400);
+      expect(r.headers["cache-control"]).toBe("no-store");
+      expect(r.body).not.toMatch(/items|customer/);
+    });
+    it("is authenticated, CSRF-protected and origin-checked, with the same denials as other mutations", async () => {
+      const app = apps[0] as FastifyInstance;
+      const anon = await app.inject({
+        method: "POST",
+        url: "/api/invoice-drafts/search",
+        headers: { origin: ORIGIN },
+        payload: { q: "Acme" },
+      });
+      expect(anon.statusCode).toBe(401);
+      const foreign = await app.inject({
+        method: "POST",
+        url: "/api/invoice-drafts/search",
+        headers: { origin: "http://evil.example" },
+        payload: { q: "Acme" },
+      });
+      expect(foreign.statusCode).toBe(403);
+      expect(foreign.json()).toEqual({ error: "origin_rejected" });
+      const noOrigin = await app.inject({
+        method: "POST",
+        url: "/api/invoice-drafts/search",
+        payload: { q: "Acme" },
+      });
+      expect(noOrigin.statusCode).toBe(403);
+      for (const r of [anon, foreign, noOrigin]) expect(r.body).not.toMatch(/customer|items/);
+    });
+    it("a valid session without the CSRF token is refused (403) and nothing is listed", async () => {
+      const app = apps[0] as FastifyInstance;
+      const cookie = (
+        await app.inject({
+          method: "POST",
+          url: "/api/auth/login",
+          headers: { origin: ORIGIN },
+          payload: { username: "operator-a", password: PW_A },
+        })
+      ).cookies.find((c) => c.name === "nmi_session")?.value as string;
+      const r = await app.inject({
+        method: "POST",
+        url: "/api/invoice-drafts/search",
+        headers: { origin: ORIGIN, cookie: `nmi_session=${cookie}`, "x-csrf-token": "wrong" },
+        payload: { q: "Acme" },
+      });
+      expect(r.statusCode).toBe(403);
+      expect(r.json()).toEqual({ error: "csrf_rejected" });
+    });
+    it("refuses the legacy GET ?q= for every spelling, before any lookup, and never echoes the term", async () => {
+      for (const u of [
+        "/api/invoice-drafts?q=Acme",
+        "/api/invoice-drafts?q=",
+        "/api/invoice-drafts?limit=5&q=a%40b.example",
+        "/api/invoice-drafts?q=a&q=b",
+      ]) {
+        const r = await sA.get(u);
+        expect(r.statusCode, u).toBe(400);
+        expect(r.json(), u).toEqual({ error: "search_requires_post" });
+      }
+      // an anonymous caller still gets only 401 (no information about the transport rule)
+      const anon = await (apps[0] as FastifyInstance).inject({
+        method: "GET",
+        url: "/api/invoice-drafts?q=Acme",
+      });
+      expect(anon.statusCode).toBe(401);
+    });
   });
 
   it("does not require a CSRF token for GET and refuses a foreign-origin POST on the same path", async () => {

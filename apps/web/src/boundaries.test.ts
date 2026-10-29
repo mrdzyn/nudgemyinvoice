@@ -71,7 +71,7 @@ describe("UI shell boundaries", () => {
     expect(new Set(routes("invoices/api.ts"))).toEqual(
       new Set([
         "/api/invoice-drafts",
-        "/api/invoice-drafts?${params.toString()}",
+        "/api/invoice-drafts/search",
         "/api/invoice-drafts/${id}",
         "/api/invoice-drafts/${id}/paypal-draft",
       ]),
@@ -84,7 +84,7 @@ describe("UI shell boundaries", () => {
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/\$\{id\}(\/paypal-draft)?|\?\$\{params\.toString\(\)\})?)$/.test(
+          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?)?)$/.test(
             p,
           ),
       ),
@@ -98,14 +98,16 @@ describe("UI shell boundaries", () => {
     ).toEqual(["src/invoices/api.ts"]);
   });
 
-  it("the list request is a GET (its q parameter is part of the HTTP request URL) and the real dashboard never writes search text to the browser navigation URL or storage", () => {
+  it("the list request is a POST whose URL carries no query string (search text lives only in the body) and the real dashboard never writes search text to the browser navigation URL or storage", () => {
     const api = read(join(root, "invoices/api.ts"));
     const listBlock = api.slice(
       api.indexOf("async list("),
       api.indexOf("async createPayPalDraft("),
     );
-    expect(listBlock).toMatch(/method: "GET"/);
-    expect(listBlock).not.toMatch(/method: "(POST|PUT|PATCH|DELETE)"|body:/);
+    expect(listBlock).toMatch(/method: "POST"/);
+    expect(listBlock).toMatch(/"\/api\/invoice-drafts\/search"/);
+    expect(listBlock).not.toMatch(/method: "(GET|PUT|PATCH|DELETE)"|URLSearchParams|\?\$\{|\?q=/);
+    expect(listBlock).toMatch(/"x-csrf-token": csrfToken/);
     const dash = [
       "features/dashboard/RealDashboard.tsx",
       "features/dashboard/useDashboard.ts",

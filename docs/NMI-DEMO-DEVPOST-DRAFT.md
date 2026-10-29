@@ -40,7 +40,7 @@ Single operator, server-side sessions (HttpOnly cookie), Origin + CSRF checks on
 **Where customer data can and cannot appear (precise):**
 - **Browser navigation URL and history:** no customer data.
 - **Persistent browser storage** (localStorage, sessionStorage, IndexedDB, cache): no customer data.
-- **HTTP request URL of the dashboard search:** the search text **is** sent to the server in the `q` query parameter of `GET /api/invoice-drafts?...` (it may be a customer name, e-mail address or invoice-id prefix).
+- **HTTP request URL of the dashboard search:** the search text is sent in the JSON body of `POST /api/invoice-drafts/search`, never in a URL (NMI-RENDER-P1, offline-tested; no hosted platform log has been inspected).
 - **Fastify (API) logs:** query strings are stripped; only URL paths are logged.
 - **Reverse-proxy, ingress, CDN/WAF and platform access logs:** **unverified** (no hosted deployment was tested). Redacting or omitting the query string of `/api/invoice-drafts` there is a **deployment prerequisite** before any hosted use.
 

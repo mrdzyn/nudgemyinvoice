@@ -369,22 +369,25 @@ describe("list request and results", () => {
   });
   const page = (items: unknown[], nextCursor: string | null = null) => ({ items, nextCursor });
   const q: ListQuery = { limit: 3, cursor: null, currency: null, status: null, q: null };
+  const CSRF = "csrf-token-for-tests";
   const list = (res: () => Response | Promise<Response>, query = q, signal = sig()) =>
-    createInvoiceApi(async () => res()).list(query, signal);
+    createInvoiceApi(async () => res()).list(query, CSRF, signal);
 
-  it("is a credentialed, no-store GET with only the query string and no body or CSRF header", async () => {
+  it("is a credentialed, no-store, CSRF-protected POST whose URL is fixed and whose body carries the whole query", async () => {
     let seen: { url: string; init: RequestInit } | undefined;
     const r = await createInvoiceApi(
       async (url, init) => ((seen = { url, init }), reply(200, page([row(1)]))),
     ).list(
       { limit: 20, cursor: "abc_DEF-1", currency: "EUR", status: "created", q: "Zeta & Co/100%" },
+      CSRF,
       sig(),
     );
     expect(r.kind).toBe("ok");
-    const u = new URL(seen!.url, "http://x");
-    expect(u.pathname).toBe("/api/invoice-drafts");
-    expect(Object.fromEntries(u.searchParams)).toEqual({
-      limit: "20",
+    // privacy: the URL is the fixed path with no query string, so no request-URL log can hold the term
+    expect(seen?.url).toBe("/api/invoice-drafts/search");
+    expect(seen?.url).not.toMatch(/[?=&]|Zeta|Co/);
+    expect(JSON.parse(String(seen?.init.body))).toEqual({
+      limit: 20,
       cursor: "abc_DEF-1",
       currency: "EUR",
       status: "created",
@@ -395,14 +398,19 @@ describe("list request and results", () => {
       seen?.init.credentials,
       seen?.init.cache,
       seen?.init.redirect,
-    ]).toEqual(["GET", "same-origin", "no-store", "error"]);
-    expect(seen?.init.body).toBeUndefined();
-    expect(JSON.stringify(seen?.init.headers)).not.toMatch(/csrf|idempotency/i);
+    ]).toEqual(["POST", "same-origin", "no-store", "error"]);
+    expect(seen?.init.headers).toEqual({
+      "content-type": "application/json",
+      "cache-control": "no-store",
+      "x-csrf-token": CSRF,
+    });
   });
-  it("omits parameters that are not set", async () => {
-    let url = "";
-    await createInvoiceApi(async (u) => ((url = u), reply(200, page([])))).list(q, sig());
-    expect(url).toBe("/api/invoice-drafts?limit=3");
+  it("omits fields that are not set from the body", async () => {
+    let body = "";
+    await createInvoiceApi(
+      async (_u, init) => ((body = String(init.body)), reply(200, page([]))),
+    ).list(q, CSRF, sig());
+    expect(JSON.parse(body)).toEqual({ limit: 3 });
   });
   it("returns the validated page, newest first, and a cursor only after a full page", async () => {
     const r = await list(() => reply(200, page([row(1), row(2), row(3)], "next_cursor_1")));
@@ -436,14 +444,15 @@ describe("list request and results", () => {
     expect(await list(() => reply(400, { error: "invalid_query" }))).toEqual({ kind: "rejected" });
     expect(await list(() => reply(500))).toEqual({ kind: "unavailable" });
     expect(await list(() => reply(503))).toEqual({ kind: "unavailable" });
-    expect(await createInvoiceApi(() => Promise.reject(new TypeError("x"))).list(q, sig())).toEqual(
-      { kind: "offline" },
-    );
+    expect(
+      await createInvoiceApi(() => Promise.reject(new TypeError("x"))).list(q, CSRF, sig()),
+    ).toEqual({ kind: "offline" });
     const ac = new AbortController();
     ac.abort();
     expect(
       await createInvoiceApi(() => Promise.reject(new DOMException("a", "AbortError"))).list(
         q,
+        CSRF,
         ac.signal,
       ),
     ).toEqual({ kind: "aborted" });

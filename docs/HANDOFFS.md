@@ -1430,4 +1430,56 @@ Real PayPal behaviour, other platforms, independent reproduction.
 ### Re-audit focus
 Runner T2 makes no probe outside the sandbox; S5 is the only unsandboxed run (one connect to non-routable `192.0.2.1`); Request B / acceptance banner no longer say "NOT OFFLINE VALIDATED / DRAFT" and state the true status; re-run `./run-all.sh` (8 assertions) and `./runner-selftest.sh` (11/11) from the extracted files.
 
+## Handoff: NMI-RENDER-P1-START
+
+- **From:** GPT-6 orchestrator after owner squash merge of PR #20
+- **To:** Coding agent for bounded implementation of `tasks/NMI-RENDER-P1-secure-staging.md`, then independent GPT-6 exact-head audit
+- **Branch:** `feat/nmi-render-p1-secure-staging`; continue on **existing Draft PR**, no second branch/PR
+- **Base main:** `451abc292737775f0c58458520b8f5bf004cd474` (PR #20 merge)
+- **Phase:** NMI-RENDER-P1 — OFFLINE-ONLY HOSTING READINESS, not Render deployment
+- **UI design gate:** Not applicable; no material visual/UI behavior changes are authorized
+
+### Immediate implementation
+
+Read AGENTS.md, STATUS, project profile, the P1 task, and only relevant source/tests. Implement a single-origin Fastify+React production build, explicit production Render host/PORT binding while retaining local-loopback default, production HTTPS session/origin/CSRF/proxy checks, and a provider-disabled staging configuration with exact docs and targeted tests. **Privacy is release-critical:** the existing GET invoice search with customer text in `q` risks host access-log disclosure; prove a safe transport or leave deployment BLOCKED and escalate. Do not silently disable search, expose real customer data or weaken logging. Prepare a least-privilege PostgreSQL migration plan and non-provisioning Render operator runbook. No automatically enabled Blueprint previews or push-to-deploy.
+
+### Verification and prohibitions
+
+Targeted local-only tests, CI and documented negative controls; keep final status honest about any untested proxy, PostgreSQL, browser or platform behavior. Do not connect/provision Render, create billable databases, deploy, edit/pay provider credentials, authorize PayPal Gate B, merge, upload a video or submit to Devpost. All gates A/B/C remain NOT AUTHORIZED. On completion append `NMI-RENDER-P1-IMPL` handoff and request independent exact-head re-audit.
+
+## Handoff: NMI-RENDER-P1-IMPL
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head security/functional audit, then owner
+- **Branch / PR:** `feat/nmi-render-p1-secure-staging`, Draft PR #21 (no second branch/PR). Start HEAD `7b1a33e`.
+- **Scope:** `tasks/NMI-RENDER-P1-secure-staging.md` (implementation record at its end). UI design gate: Not applicable; approved UI unchanged.
+- **Changed:** `apps/api` (`config.ts` HOST/TRUST_PROXY/WEB_DIST_DIR + production guards; `app.ts` header policy, hop-count trust, static registration; `plugins/web-static.ts`; `routes/invoice-drafts.ts` POST search + GET `q` refusal; `server.ts` host); `apps/web` (`invoices/api.ts` list = CSRF POST, `RealApp.tsx`, tests); `packages/db/ops/runtime-role.sql`; `docs/NMI-RENDER-P1-RUNBOOK.md`; SECURITY/ARCHITECTURE/DEPLOYMENT-DECISION/Devpost/checklist wording; `.env.example`; `design/evidence/NMI-RENDER-P1/`.
+- **Not changed:** provider clients, OAuth/payment scope, PayPal enablement, schema/migrations, UI, authorization answers, merged PR #19/#20 content.
+- **Review focus:** (1) `web-static.ts` cannot serve outside `dist` or shadow `/api`/`/health`; (2) POST search keeps exactly the GET list's owner scoping/order and is CSRF/Origin protected; no path leaves `q` in a URL; (3) `TRUST_PROXY` hop semantics (`(addr, hop) => hop < n`); (4) `runtime-role.sql` completeness (the app works as that role; the `operators.created_at` UPDATE grant is only for `FOR UPDATE`); (5) the runbook's unverified Render assumptions.
+- **Evidence (agent-reported, local):** `pnpm validate` PASS; `pnpm test:db` PASS against disposable PostgreSQL; hosted browser QA 26/26 (headless Chrome, TLS proxy simulation, real production entry as the runtime role); implementation head `118e6e384d22dda0bf08b633e74c572346b93198`: Project Baseline CI run 40840429802 and Stack CI run 40840429753 both success (an earlier head `bfb4945` Stack CI run 40839185404 FAILED because one test assumed a locally built `apps/web/dist`; fixed in `118e6e3`). Any later head is docs-only; its CI run IDs are in the PR body.
+- **NOT TESTED / residual:** real Render (TLS, `X-Forwarded-For` shape, request-log content for POST, Postgres roles/TLS/lifespan/cost); other browsers, assistive tech, touch; multi-instance behavior (unsupported); the historical NMI-AG1/C4 journeys that assert GET `q` were not re-run and are superseded for search.
+- **Gates:** merge, Render provisioning, secrets, URL sharing and judge access each need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
+## Handoff: NMI-RENDER-P1-FIX1
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head re-audit of the remediation, then owner
+- **Branch / PR:** `feat/nmi-render-p1-secure-staging`, Draft PR #21 (no new branch/PR). Audited start HEAD `8d2629d5dd16571d1af8d58f7ad40c0285f226aa`; independent review `5695189217`.
+- **Scope:** MAJOR-1 least-privilege database proof; MAJOR-2 password-safe runbook. Production behavior, UI, search contract, PayPal/OpenAI, schema and migrations unchanged.
+- **Changed:** `apps/api/src/hosted-staging.pg.test.ts` (the application pool now authenticates as a disposable LOGIN role with an ephemeral in-memory password instead of the owner connection with `-c role=`; asserts `session_user = current_user = runtime role`, `SET ROLE NONE` leaves it the runtime role, `SET ROLE`/`SET SESSION AUTHORIZATION` to the owner are refused, DDL/DELETE/sensitive UPDATE/audit SELECT refused with `42501`, audit INSERT works, login/save/search/logout run through that pool; role and credential dropped in `afterAll`); `docs/NMI-RENDER-P1-RUNBOOK.md` §5 step 3 and incident note, `packages/db/ops/runtime-role.sql` header (role created without any password, then interactive `\password`; no password in any `-c`/file/argument).
+- **Evidence (agent-reported, local):** hosted-staging suite 13/13; `pnpm validate` PASS; `pnpm test:db` 312/312 PASS; hosted browser QA 26/26 (that harness already connected as a real LOGIN role). Hosted CI run IDs are in the PR body.
+- **NOT TESTED / residual:** the local PostgreSQL uses trust authentication, so locally the role password is not checked at connect time; the test proves the role identity (`session_user`) and privileges, and hosted CI's password-authenticated service container is the evidence for password login. Real Render behavior remains untested as before.
+- **Gates:** merge, Render provisioning, secrets and sharing each need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
+## Handoff: NMI-RENDER-P1-FIX2
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head re-audit, then owner
+- **Branch / PR:** `feat/nmi-render-p1-secure-staging`, Draft PR #21 (no new branch/PR). Audited start HEAD `06bcde291024a0cc57d5225eeacfc4d9e0371c59`; independent review `5697068323`.
+- **Scope:** documentation only. MAJOR-3: `docs/NMI-RENDER-P1-RUNBOOK.md` §5 no longer uses a password-bearing `OWNER_DATABASE_URL`; owner access uses non-secret `PG*` parameters and a temporary 0600 `PGPASSFILE` filled from a hidden `read -s` prompt via shell builtins, with trap cleanup; operator provisioning uses a passwordless `DATABASE_URL` plus that file and a hidden-prompt operator password in a subshell. MINOR-1: `docs/STATUS.md` kickoff-only wording replaced (implementation complete, awaiting audit and owner merge, no Render resource). `runtime-role.sql` comment only.
+- **Not changed:** production code, tests, schema, role grants, UI, providers.
+- **Evidence:** snippet escape/permission check run locally (mode 600, `:`/`\` escaped); `pnpm validate` and hosted CI run IDs in the PR body.
+- **NOT TESTED:** the full `provision-operator` CLI run via `PGPASSFILE` (only the driver path was exercised); pgpass support in `pg` is deprecated upstream (a DeprecationWarning is printed; runbook says to stop, not fall back to a URL password, if it fails); real Render behavior and external TLS.
+- **Gates:** merge, Render provisioning, secrets, sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->

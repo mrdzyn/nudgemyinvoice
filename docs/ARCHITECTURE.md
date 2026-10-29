@@ -88,7 +88,7 @@ The committed schema (`packages/db`) is PostgreSQL only. Supporting SQLite local
 | --- | --- | --- |
 | `vite` dev server | `http://localhost:5173` | `server.proxy` in `apps/web/vite.config.ts` -> `http://127.0.0.1:3001` |
 | `vite preview` (built bundle with the production CSP) | `http://localhost:4173` | `preview.proxy`, same target |
-| Hosted (not yet authorized) | the one public HTTPS origin | any reverse proxy routing `/api/*` to Fastify on that origin; set `TRUST_PROXY=true` only behind it, so login throttling sees the client address |
+| Hosted staging (code ready, NOT deployed or authorized) | the one public HTTPS origin; Fastify serves the built web app and `/api`, `/health` itself (`WEB_DIST_DIR`, default `apps/web/dist` in production) | the platform's TLS router only; `TRUST_PROXY=1` (exact hop count, never `true` in production), `HOST=0.0.0.0` on the injected `PORT`; see `docs/NMI-RENDER-P1-RUNBOOK.md` |
 
 The production CSP is `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'`. The synthetic design-review preview (`App.tsx`) is reachable only from the dev server with `VITE_NMI_SYNTHETIC_PREVIEW=1`; production bundles contain neither it nor its simulated sign-in.
 

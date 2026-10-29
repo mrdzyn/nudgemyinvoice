@@ -1,5 +1,9 @@
+import { isIP } from "node:net";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { assertSandboxConfig } from "@nmi/paypal";
+
+const WILDCARD_HOSTS = new Set(["0.0.0.0", "::"]);
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -20,7 +24,18 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
   SESSION_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(480),
   SESSION_IDLE_MINUTES: z.coerce.number().int().min(1).max(1440).default(60),
-  TRUST_PROXY: z.enum(["true", "false"]).default("false"),
+  // Interface to listen on. Loopback by default; a wildcard is accepted only with NODE_ENV=production
+  // (a hosted container must listen on 0.0.0.0 so the platform router can reach it).
+  HOST: z
+    .string()
+    .refine((h) => isIP(h) !== 0, "HOST must be an IP address")
+    .default("127.0.0.1"),
+  // "false" (default), "true" (trust every hop: development/test behind a known local proxy only) or
+  // a hop count: trust exactly that many proxies counted from the server, so a client-supplied
+  // X-Forwarded-For entry can never become the address that login throttling keys on.
+  TRUST_PROXY: z.enum(["true", "false", "1", "2", "3"]).default("false"),
+  // Directory with the built web app (apps/web/dist). Defaults to it in production; absent otherwise.
+  WEB_DIST_DIR: z.string().min(1).optional(),
   OPENAI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(64).max(4096).default(1024),
   // Real PayPal sandbox calls are OFF unless explicitly enabled, and then credentials are mandatory.
   PAYPAL_DRAFTS_ENABLED: z.enum(["true", "false"]).default("false"),
@@ -31,6 +46,10 @@ const envSchema = z.object({
 export interface AppConfig {
   nodeEnv: "development" | "test" | "production";
   port: number;
+  /** Interface the server binds. 127.0.0.1 unless explicitly configured (wildcard needs production). */
+  host: string;
+  /** Built web app served from this same origin, or null (development: Vite serves it). */
+  webDistDir: string | null;
   /** Normalized origin (scheme + host + port) of the only browser origin allowed to call the API. */
   webOrigin: string;
   paypalBaseUrl: string;
@@ -43,7 +62,8 @@ export interface AppConfig {
   sessionIdleMinutes: number;
   /** Cookies are Secure in production or whenever the web origin is https. */
   cookieSecure: boolean;
-  trustProxy: boolean;
+  /** false, true (all hops) or the number of trusted proxy hops. */
+  trustProxy: boolean | number;
   /** Server-only. Null unless both OPENAI_API_KEY and OPENAI_MODEL are set; never logged or returned. */
   openai: { apiKey: string; model: string; maxOutputTokens: number } | null;
   /** True only when the owner explicitly enabled real PayPal sandbox draft creation. */
@@ -64,9 +84,29 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       "PAYPAL_DRAFTS_ENABLED=true requires PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET",
     );
   }
+  if (WILDCARD_HOSTS.has(e.HOST) && e.NODE_ENV !== "production") {
+    throw new Error("HOST=0.0.0.0 or :: is only accepted with NODE_ENV=production");
+  }
+  if (e.NODE_ENV === "production") {
+    // Hosted mode fails closed on anything that would weaken the browser boundary.
+    if (!webOrigin.startsWith("https://")) {
+      throw new Error("NODE_ENV=production requires an https WEB_ORIGIN");
+    }
+    if (e.TRUST_PROXY === "true") {
+      throw new Error("NODE_ENV=production requires TRUST_PROXY=false or a hop count (1-3)");
+    }
+  }
+  const trustProxy =
+    e.TRUST_PROXY === "true" ? true : e.TRUST_PROXY === "false" ? false : Number(e.TRUST_PROXY);
   return {
     nodeEnv: e.NODE_ENV,
     port: e.PORT,
+    host: e.HOST,
+    webDistDir:
+      e.WEB_DIST_DIR ??
+      (e.NODE_ENV === "production"
+        ? fileURLToPath(new URL("../../web/dist", import.meta.url))
+        : null),
     webOrigin,
     paypalBaseUrl: paypal.origin,
     aiConfigured: Boolean(e.OPENAI_API_KEY && e.OPENAI_MODEL),
@@ -75,7 +115,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     sessionTtlMinutes: e.SESSION_TTL_MINUTES,
     sessionIdleMinutes: e.SESSION_IDLE_MINUTES,
     cookieSecure: e.NODE_ENV === "production" || webOrigin.startsWith("https://"),
-    trustProxy: e.TRUST_PROXY === "true",
+    trustProxy,
     openai:
       e.OPENAI_API_KEY && e.OPENAI_MODEL
         ? {

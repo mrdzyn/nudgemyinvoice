@@ -71,3 +71,7 @@ Official hackathon [Render sponsor page](https://paypalaihackathon.devpost.com/d
 2. Choose A-only (recommended) or A + B.
 3. If B: authorize an R1 phase and a budget; decide how judge credentials are shared (Devpost private testing-instructions field).
 4. Decide whether to approve a small product change adding a visible SIMULATED banner for evaluation mode (not done in R0: no product changes).
+
+## NMI-RENDER-P1 update — code readiness (2026-10-29; nothing provisioned or deployed)
+
+Option B's repository prerequisites are now implemented and offline-tested on a Draft PR (not merged): single-origin static + API serving, explicit `HOST`/`PORT`, exact-hop proxy trust, header CSP/HSTS, a privacy-preserving POST search (no customer text in any request URL; the legacy GET `q` is refused), a least-privilege PostgreSQL role script and a manual setup/rollback runbook (`docs/NMI-RENDER-P1-RUNBOOK.md`). Blocker 3 above is **resolved in code**; what remains unverified is the real platform: Render HTTPS/`__Host-` behavior, what its request log records, and Render-side database privileges and lifespan. Provisioning, secrets, DNS and judge access remain separate owner decisions. Option A stays the fallback.

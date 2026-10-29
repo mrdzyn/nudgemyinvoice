@@ -2,6 +2,7 @@
  * Typed same-origin transport for the two saved-draft routes wired in C3:
  *   POST /api/invoice-drafts        (save, idempotent)
  *   GET  /api/invoice-drafts/:id    (read-only detail)
+ *   POST /api/invoice-drafts/search (read-only list/search; query in the body, never in the URL)
  * Responses are UNTRUSTED and strictly validated; a persisted record is authoritative and is never
  * reconstructed from a browser estimate or a fixture. The CSRF token is supplied per call from
  * volatile memory. Nothing here talks to PayPal or OpenAI.
@@ -134,7 +135,7 @@ export interface InvoiceApi {
     signal: AbortSignal,
   ): Promise<SaveResult>;
   get(id: string, signal: AbortSignal): Promise<GetResult>;
-  list(query: ListQuery, signal: AbortSignal): Promise<ListResult>;
+  list(query: ListQuery, csrfToken: string, signal: AbortSignal): Promise<ListResult>;
   createPayPalDraft(id: string, csrfToken: string, signal: AbortSignal): Promise<PayPalDraftResult>;
 }
 
@@ -201,19 +202,25 @@ export function createInvoiceApi(
             : { kind: "rejected", messages: [] };
       }
     },
-    async list(query, signal) {
-      const params = new URLSearchParams();
-      params.set("limit", String(query.limit));
-      if (query.cursor) params.set("cursor", query.cursor);
-      if (query.currency) params.set("currency", query.currency);
-      if (query.status) params.set("status", query.status);
-      if (query.q) params.set("q", query.q);
+    async list(query, csrfToken, signal) {
+      // The whole query (including the operator's search text) travels in a POST body: the request
+      // URL is fixed, so hosting/ingress request-URL logs can never contain customer names or e-mails.
+      const body: Record<string, unknown> = { limit: query.limit };
+      if (query.cursor) body["cursor"] = query.cursor;
+      if (query.currency) body["currency"] = query.currency;
+      if (query.status) body["status"] = query.status;
+      if (query.q) body["q"] = query.q;
       let res: Response;
       try {
-        res = await doFetch(`/api/invoice-drafts?${params.toString()}`, {
+        res = await doFetch("/api/invoice-drafts/search", {
           ...base,
-          method: "GET",
-          headers: { "cache-control": "no-store" },
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+            "x-csrf-token": csrfToken,
+          },
+          body: JSON.stringify(body),
           signal,
         });
       } catch {

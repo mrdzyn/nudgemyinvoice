@@ -11,6 +11,7 @@ import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-dra
 import type { InvoiceModelClient } from "@nmi/ai";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import { healthRoutes } from "./routes/health.js";
+import { API_CSP, PAGE_CSP, registerWebStatic } from "./plugins/web-static.js";
 
 export interface AppDeps {
   db: Db;
@@ -33,7 +34,12 @@ const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
   const app = Fastify({
     bodyLimit: 64 * 1024,
-    trustProxy: config.trustProxy,
+    // A number is a hop count: trust exactly that many proxies from the server side, so the client
+    // address is the entry the nearest trusted proxy appended, never a client-supplied one.
+    trustProxy:
+      typeof config.trustProxy === "number"
+        ? (_addr: string, hop: number) => hop < (config.trustProxy as number)
+        : config.trustProxy,
     logger: {
       level: config.nodeEnv === "test" && !deps.logStream ? "silent" : "info",
       ...(deps.logStream ? { stream: deps.logStream } : {}),
@@ -81,6 +87,16 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
 
   app.addHook("onSend", async (_req, reply) => {
     void reply.header("x-content-type-options", "nosniff");
+    // Header-level policy for every response (a <meta> CSP cannot carry frame-ancestors).
+    const type = String(reply.getHeader("content-type") ?? "");
+    void reply.header("content-security-policy", type.startsWith("text/html") ? PAGE_CSP : API_CSP);
+    void reply.header("referrer-policy", "no-referrer");
+    void reply.header("x-frame-options", "DENY");
+    void reply.header("cross-origin-opener-policy", "same-origin");
+    void reply.header("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=()");
+    if (config.cookieSecure) {
+      void reply.header("strict-transport-security", "max-age=15552000");
+    }
   });
 
   // Every state-changing request must come from the configured web origin. A missing Origin is
@@ -130,5 +146,6 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     clock: deps.clock,
     seams: deps.invoiceSeams,
   });
+  if (config.webDistDir) registerWebStatic(app, config.webDistDir);
   return app;
 }

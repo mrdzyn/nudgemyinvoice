@@ -65,7 +65,7 @@
 | No unintended provider calls | **Confirmed for R0** | R0 made no OpenAI/PayPal request; simulated launcher never constructs the real clients (unit-tested); `PAYPAL_DRAFTS_ENABLED` defaults to false. |
 | No newly exposed debug/test routes | **Confirmed** | Routes: `/health`, `/api/auth/{login,logout,session}`, `/api/invoice-drafts[/parse|/:id[/paypal-draft]]` only. The fake-provider launcher is a separate file never imported by production (unit-tested: `no-fake-provider-switch.test.ts`). |
 | Browser origin restrictions preserved | **Confirmed** | Origin/CSRF tests and journeys unchanged and passing (runbook: login from the exact `WEB_ORIGIN`). |
-| No customer data in browser persistent storage or the browser navigation URL/history | **Confirmed** | Every journey asserts empty localStorage/sessionStorage/IndexedDB/Cache and no customer data in the navigation URL. **Not claimed:** the dashboard search text IS sent in the `q` parameter of the HTTP GET request URL; Fastify strips query strings from its logs; proxy/ingress/CDN log redaction is unverified (blocker 6). |
+| No customer data in browser persistent storage or the browser navigation URL/history | **Confirmed** | Every journey asserts empty localStorage/sessionStorage/IndexedDB/Cache and no customer data in the navigation URL. Since NMI-RENDER-P1 the dashboard search text travels in a POST body (fixed request URL), proven offline against a proxy request-line capture; no real host log has been inspected. Older journeys that asserted the GET `q` transport predate this change. |
 
 ## E. Evidence summary on `main` + R0 (all deterministic fakes; none is real-provider evidence)
 
