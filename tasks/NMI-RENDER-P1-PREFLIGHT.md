@@ -41,3 +41,6 @@ Use an **isolated disposable PostgreSQL 16 instance** configured to require SCRA
 After the independent GPT-6 exact-head evidence audit and **separate owner squash approval**, staging remains **NOT AUTHORIZED** until the owner makes a new, cost-scoped explicit decision to create a Render web service/database. Even then, run the live QA from `docs/NMI-RENDER-P1-RUNBOOK.md` before sharing any URL. This P1 preflight does not authorize Gate A (OpenAI), Gate B (PayPal — historical one-create budget exhausted) or Gate C (combined); all remain NOT AUTHORIZED.
 
 Deliver exact final HEAD, local evidence, CI runs and independent-audit request on **the existing Draft PR**. Do not merge, provision, deploy, upload or publish.
+
+## Implementation record (NMI-RENDER-P1-PREFLIGHT-IMPL)
+**State:** verification complete, awaiting independent exact-head audit. Verifier `scripts/preflight-provision-operator.mjs` (`pnpm preflight:provision`); sanitized results in `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md` (36/36). Production CLI and all runtime code unmodified. Deferred: `pg@9` removal of `PGPASSFILE` support needs a separate reviewed approach; Render TLS/role behavior untested.

@@ -1499,4 +1499,15 @@ Read task, AGENTS, STATUS, project profile and only the relevant runbook/CLI/DB 
 
 No production code, database schema/grant, provider, UI or CI-policy changes without scope escalation. No merge, Render provisioning, billing, deployment, provider call, live judge login or publication. Gates A/B/C are NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P1-PREFLIGHT-IMPL
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head evidence audit, then owner
+- **Branch / PR:** `docs/nmi-render-p1-operator-provision-preflight`, Draft PR #22 (no new branch/PR). Start HEAD `c9a9f99c6792b8970a264999448b284f7d1d3eba`.
+- **Scope:** offline verification only. Added `scripts/preflight-provision-operator.mjs` (test-only verifier) + `preflight:provision` script, `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`, task/STATUS/handoff updates. **No production code, schema, grants, UI or provider change**; the CLI ran unmodified.
+- **Result (agent-reported, local):** 36/36 checks against an isolated SCRAM-enforcing PostgreSQL 16.15: real CLI create and rotate over a 0600 `PGPASSFILE` + passwordless URL (password with `:` and `\`), hashed password, audit rows, session revocation, credential_version 1→2, three negative controls (missing, wrong, 0644 file) fail closed with no mutation, no secret in args/output/repo, full cleanup. `pg@8.23.1` deprecation warning observed and left visible.
+- **Review focus:** the verifier really enforces SCRAM (assertions on `pg_hba_file_rules`, stored verifier, no-password refusal); the CLI is invoked as a child process, not mocked; leak checks; honest limitations (sampled process table, no TLS, macOS only, no Render).
+- **NOT TESTED:** Render PostgreSQL/TLS (`sslmode=require`), Linux, `pg@9` behavior (would fail closed), hosted CI does not run the verifier.
+- **Gates:** merge, Render provisioning and sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->

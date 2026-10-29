@@ -18,6 +18,7 @@
     "test:db": "REQUIRE_DB_TESTS=1 vitest run .pg.test.ts",
     "build": "pnpm -r --if-present build",
     "check:bundle": "node scripts/check-bundle-secrets.mjs",
+    "preflight:provision": "node scripts/preflight-provision-operator.mjs",
     "db:generate": "pnpm --filter @nmi/db generate",
     "validate": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm check:bundle"
   },
