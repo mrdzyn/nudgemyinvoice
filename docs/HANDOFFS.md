@@ -1520,4 +1520,17 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **NOT TESTED:** unchanged (Render PostgreSQL/TLS, Linux, `pg@9`); teardown fault injection uses fake dependencies except the `PG_BIN` case.
 - **Gates:** Gates A/B/C NOT AUTHORIZED; no merge/provision/deploy.
 
+## Handoff: NMI-RENDER-P2-APPROVAL-PREP
+
+- **From:** GPT-6 planning after user selected Mrdzyn Render workspace for staging preparation but withheld permission to provision until **actual charges** are reviewed.
+- **To:** Independent P2 documentation review, owner cost inspection, then separately authorized provisioning workflow
+- **Branch:** `docs/nmi-render-p2-staging-approval` (Draft PR, no production or cloud changes)
+- **Base/main:** `652cf702fd93b05a9b9d64ee9b4c2151c30833b2`; PR #22 preflight audit PASS `5698358485` and squash merge confirmed.
+- **Task:** `tasks/NMI-RENDER-P2-APPROVAL-PACKET.md`
+- **Artifact:** `docs/NMI-RENDER-P2-STAGING-APPROVAL-PACKET.md`
+- **Read-only Render observations:** confirmed Mrdzyn workspace ID `tea-dbgnjq1srm7s73ebcq2g`, zero PostgreSQL instances returned; services list returns `null` and must not be treated as proof of zero. Account-specific Pro/Hobby plan, credits/expiry, tax, accrued usage and charge estimates NOT ACCESSIBLE through available Render tools. Public Render list prices only, not a bill or spending authorization.
+- **Plan:** one 512-MB web instance and PG16/256-MB/1-GB database, Singapore region, manual pinned commit and disabled auto-deploy, provider-disabled and authenticated owner-only QA; Pro required for HTTP request logs under existing runbook. Do not add a Blueprint, public URL or secrets to GitHub.
+- **Blocking approvals:** owner must inspect Render Billing, confirm actual applicable credits and cost, accept any Pro upgrade and separately authorize resource creation and first deploy. User explicitly instructed **no provisioning before approval of actual charges**.
+- **Gates:** A/OpenAI, B/PayPal, C/combined NOT AUTHORIZED; no cloud resource, billing or deploy approval, no judge access.
+
 <!-- HANDOFF_ENTRIES_END -->
