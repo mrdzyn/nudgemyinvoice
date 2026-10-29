@@ -1355,4 +1355,18 @@ No schema/DB store changes, app user interface or API/auth contract, OpenAI retr
 ### Not verified
 Real PayPal behaviour (never called); a genuine PayPal 401 on create; the live wire-count evidence for Gate B (to be defined after merge).
 
+## Handoff: NMI-DEMO-R1-FIX-B1-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-FIX-B1-paypal-401-no-resend.md` (documentation remediation of review 5692710098, one MINOR)
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit of Draft PR #19, then the owner's merge decision
+- **Branch / PR:** `fix/nmi-demo-r1-fix-b1-paypal-create-retry`, [Draft PR #19](https://github.com/mrdzyn/nudgemyinvoice/pull/19)
+- **State:** READY FOR RE-AUDIT. Docs only: no executable code, test, schema or authorization-answer change; no provider call; no merge, deployment, budget reset or Devpost submission. Gate B BLOCKED.
+
+### What was corrected
+Stale current-tense statements ("the client can resend", "code not yet started", "implements the bounded FIX-B1" as the next action) in STATUS, acceptance doc 5.0, the owner-authorization form and checklist blocker 18 now separate (1) the **historical** resend defect on `main` before PR #19, (2) the **corrected implementation on Draft PR #19** (`90aba259ef0f6643f428d3bd9b7bb2e1d16cd230`, not audited, not merged) and (3) the Gate B unblock conditions: audit PASS, owner-authorized merge, a documentation step defining the live wire-count procedure, and a fresh written Request B. STATUS "Next action" now starts with the re-audit.
+
+### Re-audit focus
+No remaining statement presents the defect as the current state of the branch or the fix as unwritten/merged/audited; no authorization answer changed; the diff since `ad6de6c` is documentation only.
+
 <!-- HANDOFF_ENTRIES_END -->
