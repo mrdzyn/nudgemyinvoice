@@ -1,6 +1,6 @@
 # NMI-RENDER-P2 — Mrdzyn staging configuration and actual-charge approval
 
-**State: PREPARATION ONLY.** The owner confirmed using the connected **Mrdzyn** Render workspace, and explicitly required **approval of actual charges before anything is provisioned**. No provisioning authorization has been granted.
+**State: CONFIGURATION SELECTED, PREPARATION ONLY.** The owner selected **Mrdzyn Hobby + Free web + Free PostgreSQL 16** ($0 published compute baseline) **for PayPal hackathon judges**. The owner previously required separate approval of actual billing/overage exposure **before anything is provisioned**; that requirement is unchanged. **No resource creation, initial deploy, judge sharing, provider call, native-log evidence waiver or cost approval is granted by this selection.**
 
 **Base `main`:** `652cf702fd93b05a9b9d64ee9b4c2151c30833b2` (owner squash merge of audited offline preflight PR #22).  
 **Branch:** `docs/nmi-render-p2-staging-approval` — Draft PR, documentation only.  
@@ -30,3 +30,13 @@
 **Stop:** If exact charges cannot be read via the connector, document what the owner needs to inspect in Dashboard → Mrdzyn → Billing. **Do not try to provision as a way of discovering prices.**
 
 **Gates A (OpenAI), B (PayPal), C (combined): NOT AUTHORIZED.** Render provisioning/deployment/sharing NOT AUTHORIZED.
+
+## Owner selection recorded — 2026-10-29 (not a release authorization)
+
+- **Selected resource options:** Free Node.js Web Service and Free PostgreSQL 16 (1 GB), Singapore, one of each, in Mrdzyn **Hobby**; no Pro or paid resource. Published compute baseline $0, not a guarantee of $0 overage/other charges. Confirm actual Free plan labels before any eventual create.
+- **Audience:** judges after owner-only QA and separate authorization to share a password-protected URL; judges must not see provider claims beyond the tested manual/offline path. Single shared-operator app means no per-judge isolation; require safe credential distribution and reset/rotation or supervised demos.
+- **Hard limits:** Free web sleeps after 15 minutes inactivity and cold start may be ~1 minute; Free PG expires after 30 days, has no managed backups or managed pooling, may be unavailable for maintenance, and is capped at 1 GB. Confirm actual judging period plus teardown before PG expiry. Earlier Dec 15 persistence assumption is NOT met by the selected Free plan; no production or customer data permitted.
+- **Unresolved Pro-only HTTP logs:** Native Render edge request logs unavailable on Hobby. Existing P1 privacy/edge-log acceptance step remains NOT VERIFIED; an independently reviewed alternative evidence contract plus explicit owner acceptance is required before judge URL sharing. Do not silently waive it.
+- **Cost controls:** User screenshot confirms $50 credit expiring Oct 1, 2027 and Hobby monthly included quotas (750 Free hours, 5 GB bandwidth, 500 pipeline minutes). Overages may still be billed; no resource creation/initial deployment until the owner sees actual checkout settings, overage terms and grants bounded provisioning/billing approval.
+- **Execution warning:** Render may initiate the first deploy at service creation even with Auto-Deploy OFF; tool does not pin initial SHA. Require owner-approved safe pinned release process, provider-disabled secrets and independent HTTPS QA. Do not add Blueprints, paid add-ons, secrets to Git or external services.
+- **Authority:** selection only. No provisioning, deploy, merge, publication, judge access, provider Gates A/B/C or financial charges authorized.
