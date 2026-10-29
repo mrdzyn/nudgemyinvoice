@@ -9,7 +9,7 @@
 | **SIMULATED providers** (default; no credentials; matches the reproducible setup) | Nothing real-provider has been authorized yet | "SIMULATED: parser and PayPal are stand-ins (no provider calls)" |
 | **Real providers** (only after the owner authorizes Gates A/B in `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md` and they pass) | Real OpenAI/PayPal Sandbox were exercised | Label each step LIVE vs SIMULATED individually |
 
-Never present a SIMULATED step as real. The real interface, authentication, PostgreSQL storage, validation, dashboard and the draft **state machine** are real in both modes.
+Never present a SIMULATED step as real. **Today only the SIMULATED mode is permitted** (all three provider gates are PENDING). The real interface, authentication, PostgreSQL storage, validation, dashboard and the draft **state machine** are real in both modes.
 
 ## Shot list (SIMULATED default)
 
@@ -38,3 +38,11 @@ Total ≈ 2:40. Tighten the 1:45 beat first if it runs long.
 - [ ] Captions (accessibility) and a transcript.
 - [ ] Export under 3:00; verify length on the exported file.
 - [ ] Upload (owner only, later) as **public** YouTube; test playback while signed out.
+
+## Real-provider recording rules (only after the owner answers Request C — `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`)
+
+- **Do not re-create a PayPal draft for a take.** Gate B's single create is spent when it runs. Show the already-created DRAFT read-only (detail page and dashboard "PayPal draft created") and say on screen and aloud that it was created in a separate, earlier verified run; label it "REAL (recorded earlier, run R1-B-…)". A live second create needs its own separate permit.
+- A live OpenAI parse in the recording consumes calls from a **new** Request C cap; practise with the simulated mode first and record the live take once.
+- Segment tags: LIVE (real provider this take), RECORDED EARLIER (real, from a labelled run), SIMULATED. Use the exact label strings of the evidence templates. Keep the tag on screen for the whole segment.
+- Before recording: fresh disposable database, secrets entered off-screen, `.env` and terminal not visible, no URL bar with private hosts, no real customer data, no provider dashboard with account e-mails/ids.
+- If any gate is not REAL PASS at recording time, that segment is SIMULATED and says so. Length < 3:00; nothing is uploaded or submitted without separate owner action.

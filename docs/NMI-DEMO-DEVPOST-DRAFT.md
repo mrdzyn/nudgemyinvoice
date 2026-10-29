@@ -29,7 +29,7 @@ PayPal **Invoicing v2** (Sandbox only): OAuth token, create DRAFT invoice, show 
 - **[not verified]** search/reconciliation/timeout/error behaviour against the real Sandbox, and a complete real-provider browser journey. These paths are covered by deterministic fake-transport and PostgreSQL tests.
 
 ## AI provider / model used
-OpenAI **Responses API** via the official `openai` SDK, structured output validated with Zod. **[not verified]** against the real provider: no live OpenAI request has been run; the parser is tested with deterministic fake models. Model: **[owner to confirm — the repository has no default; chosen at deployment via `OPENAI_MODEL`]**.
+OpenAI **Responses API** via the official `openai` SDK, structured output validated with Zod. **[not verified]** against the real provider: no live OpenAI request has been run; the parser is tested with deterministic fake models. Model: **[owner to confirm]** — the repository has no default (`OPENAI_MODEL`); the proposed acceptance model is `gpt-6-luna`, but **do not name it as used or verified** unless `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md` Gate A is REAL PASS (then say exactly: "real parsing verified once on two synthetic inputs on <date>"). Wording matrix: acceptance doc section 7.
 
 ## Architecture
 `apps/web` (React/Vite/TypeScript), `apps/api` (Fastify, strict Zod boundaries), `packages/db` (Drizzle + PostgreSQL), `packages/shared` (exact money, schemas), `packages/ai` (parser), `packages/paypal` (allow-listed Sandbox adapter), `packages/domain` (approval gate). Monetary values are decimal strings / integer minor units; no floating-point money.
@@ -70,3 +70,12 @@ No hosted deployment. Follow `docs/NMI-DEMO-JUDGE-RUNBOOK.md` (clean-clone teste
 
 ## Eligibility and compliance (owner to confirm)
 Original work; open-source MIT license; Sandbox only; no real customer data; no unlicensed assets. The official rules (https://paypalaihackathon.devpost.com/rules) were independently retrieved and verified by the independent reviewer: repository setup/run instructions **or** a hosted demo satisfy the functional-access requirement, and a public open-source repository/license and a public YouTube video under 3 minutes are required. Eligibility, team/account and sponsor-tool questions, and every other criterion, remain the owner's to confirm; this draft makes no claim about them.
+
+## Provider evidence status for the submission text (R1)
+
+| Item | Today | After a gate (only if REAL PASS, quote run ID/date) |
+| --- | --- | --- |
+| Real OpenAI parsing | **[not verified]** — Gate A PENDING | "verified once, two synthetic inputs" |
+| New PayPal Sandbox DRAFT via browser | **[not verified]** — Gate B PENDING (historical backend USD 5.00 draft **[verified, historical]**) | "one Sandbox DRAFT created and verified through the browser path" |
+| Real-provider end-to-end walkthrough | **[not verified]** — Gate C PENDING | label each video segment LIVE or SIMULATED |
+Do not describe simulated runs, fake providers or fixtures as live. Do not publish a result that is not in a filled, owner-reviewed template.

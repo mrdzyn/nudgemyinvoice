@@ -1,6 +1,6 @@
 # NMI-DEMO-R1 — Real-provider acceptance readiness (owner-gated)
 
-- **State:** PREPARATION ONLY. No real-provider call, deployment, Devpost upload or submission authorized.
+- **State:** PREPARATION DOCUMENTS WRITTEN (documentation only), awaiting independent GPT-6 exact-head audit. No real-provider call, deployment, Devpost upload or submission authorized; Gates A, B and C are **PENDING / NOT AUTHORIZED**.
 - **Starting `main`:** `2d5a7034fe7b78d927d19d534bf9958d91b3b7fd` (NMI-AG1 Community dashboard, independently audited and owner squash-merged PR #17).
 - **Branch:** `docs/nmi-demo-r1-provider-acceptance`; **Draft PR**; keep the audit and merge gates independent of provider-test authorization.
 - **Prior artifacts:** `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`, `docs/NMI-DEMO-JUDGE-RUNBOOK.md`, `docs/NMI-DEMO-SUBMISSION-CHECKLIST.md`, `docs/NMI-DEMO-VIDEO-SCRIPT.md`, `docs/NMI-DEMO-DEVPOST-DRAFT.md`.
@@ -58,3 +58,14 @@ Not authorized by Gate A or B alone. Requires **separate** owner approval **afte
 ## Acceptance vs implementation
 
 These documents describe a prepared method, **not** successful live OpenAI/PayPal acceptance. Until explicit approved tests have been executed, Devpost claims must state real OpenAI unverified; only historical backend PayPal DRAFT verified; full live browser flow unverified. No AG Studio trial required.
+
+## Preparation record (NMI-DEMO-R1-PREP)
+
+Documentation only: no change under `apps/`, `packages/`, `scripts/`, migrations, CI, `pnpm-lock.yaml` or `design/evidence/`; no OpenAI or PayPal request, no credential, no budget reset, no drafting enabled.
+
+- **Gate A (OpenAI), prepared:** proposed model `gpt-6-luna`; public docs (checked 2026-10-29) list Responses API and Structured Outputs, USD 0.10 / 0.50 per 1M input / output tokens (short context), default reasoning effort medium. Entitlement is **unconfirmed** and the owner must check it without a billable request. Static review of `packages/ai/src/client.ts` found two owner decisions: (A-F1) the SDK client uses `maxRetries: 1`, so 3 application parses can be up to 6 HTTP requests; (A-F2) with default medium reasoning, the 1024 default output cap could end `incomplete`; recommended configuration-only mitigation `OPENAI_MAX_OUTPUT_TOKENS=4096` (arithmetic worst case about USD 0.0021 per call, 0.0063 for 3, 0.0126 if each is resent). Procedure: max 3 calls (USD Northwind, EUR Vienna, optional missing-due-date check), strict schema/domain validation, server totals (expected USD 540.00 / EUR 599.97), PayPal credentials unset and drafting `false`, redacted token/cost/latency evidence from the provider usage page (the app does not record tokens) with `PENDING` allowed for lag, manual fallback on failure, real-failure fallback otherwise SIMULATED. No code change was made for A-F1/A-F2; each would be its own approved task.
+- **Gate B (PayPal), prepared:** existing `NudgeMyBillsAI` Sandbox app; one manually entered synthetic USD 540.00 invoice; exactly one new create only under a separate permit, no retry, read-only verification (browser POST count = 1, `attempts=1`, one operation row, PayPal dashboard N+1 and DRAFT/USD/540.00/2030-01-15), drafting disabled immediately after. The 1/1 historical budget stays exhausted. Static finding: the one-create guard was a private harness outside the repository, so the bound is procedural plus database evidence.
+- **Gate C, prepared as a request only:** combined walkthrough after A and B each REAL PASS; by default it shows the already-created Gate B DRAFT read-only and does **not** create another PayPal draft; a live third create would be a separate permit that is not requested.
+- **Deliverables:** `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md` (rewritten), new `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md` and `docs/NMI-DEMO-EVIDENCE-TEMPLATES.md`; checklist (blockers 4, 17-19), Devpost draft (provider evidence status table, model wording), video script (real-provider recording rules) and the runbook Mode B note updated; STATUS and handoff `NMI-DEMO-R1-PREP`.
+- **Preserved:** merged AG Grid dashboard and local judge setup unchanged.
+- **Open owner decisions:** A-F1, A-F2, spend limit, model entitlement, whether to answer Requests A/B at all, local-only vs hosted judging, video mode. Real OpenAI, new PayPal create and the combined walkthrough remain **PENDING**.

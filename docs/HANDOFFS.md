@@ -1274,4 +1274,22 @@ Keep the readiness PR **Draft**, run applicable local doc checks and mandatory h
 
 Official hackathon rules: https://paypalaihackathon.devpost.com/rules (deadline 2026-11-12 12:00 PST, 2026-11-13 04:00 PHT). Official currently documented OpenAI small-model candidate: https://developers.openai.com/api/docs/models/gpt-6-luna and pricing https://developers.openai.com/api/docs/pricing. Recheck model/account availability before any separately approved paid call.
 
+## Handoff: NMI-DEMO-R1-PREP
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-provider-acceptance.md` (section "Preparation record")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head audit, then owner merge decision, then owner decisions on Requests A/B/C
+- **Branch / PR:** `docs/nmi-demo-r1-provider-acceptance`, [Draft PR #18](https://github.com/mrdzyn/nudgemyinvoice/pull/18)
+- **State:** READY FOR INDEPENDENT AUDIT. No product/provider code, lockfile, migration, CI or evidence change; no OpenAI/PayPal request; no credential handled; no budget reset; PayPal drafting stays disabled; nothing merged, deployed, uploaded or submitted.
+
+### Audit focus
+1. Diff is documentation only (`docs/`, `tasks/`).
+2. Nothing implies authorization: all three requests read NOT AUTHORIZED; the PayPal 1/1 budget is stated exhausted and not reset; Request B is a separate one-create permit with no retry; Gate C does not create another draft.
+3. Facts: model page and pricing (`gpt-6-luna`, Responses, Structured Outputs, USD 0.10/0.50, medium default reasoning) and the two static findings (`maxRetries: 1`, output cap vs reasoning) match `packages/ai/src/client.ts` and `apps/api/src/config.ts`; PayPal SQL column names match migration 0005/0000; no in-repo create counter is stated honestly.
+4. REAL / PENDING / SIMULATED rules and redaction rules are complete; templates carry no pre-filled results; Devpost/video/checklist wording cannot overstate.
+5. Operator commands use silent prompts, keep OpenAI unset for B and PayPal unset for A, and tear down.
+
+### Not verified
+Everything provider-side: model entitlement/pricing on the owner's account, any real response, token usage, PayPal behaviour for the new invoice; commands were reviewed statically (the OpenAI and PayPal steps cannot be dry-run without credentials).
+
 <!-- HANDOFF_ENTRIES_END -->

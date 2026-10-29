@@ -20,8 +20,8 @@
 
 - [ ] Confirm the rules not independently verified (eligibility, team/account, sponsor rules, judging dates, testing-instructions field) on the live Devpost page; the access, repository/license and video-length rules are already independently verified.
 - [ ] Decide deployment (A only, or A + B) — see the decision doc.
-- [ ] Decide whether to authorize real-provider Gate A (OpenAI) and/or Gate B (one new PayPal Sandbox draft) — see the acceptance plan. Without them the demo is SIMULATED and must be labelled so.
-- [ ] Choose the OpenAI model name for the Devpost text (or state "not verified live").
+- [ ] Decide whether to authorize real-provider **Request A** (OpenAI, up to 3 calls), **Request B** (exactly one new PayPal Sandbox USD 540.00 DRAFT) and, later, **Request C** (combined walkthrough) — three separate forms in `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`, procedure in `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`. All three are **NOT AUTHORIZED** today; without them the demo is SIMULATED and must be labelled so.
+- [ ] Choose the OpenAI model for the Devpost text: proposed `gpt-6-luna` (public docs list Responses + Structured Outputs, USD 0.10/0.50 per 1M input/output tokens; account entitlement unconfirmed). Name it publicly **only** after Gate A is REAL PASS; otherwise write "not verified live".
 - [ ] Record, caption and upload the video (public YouTube, < 3:00); test playback signed out.
 - [ ] Fill and submit Devpost (paste the draft; add video URL; testing instructions = runbook link).
 - [ ] Re-run `pnpm validate` and the runbook on the exact final commit; tag the submitted commit.
@@ -34,7 +34,7 @@
 | 1 | Real OpenAI Responses call never executed | Any claim of real AI parsing | **Open** (Gate A) |
 | 2 | No complete real-provider browser journey | Any claim "works end to end against real providers" | **Open** (Gates A+B) |
 | 3 | PayPal search/reconciliation/timeout/error paths never run against the real Sandbox | Claims about real error handling | **Open**; fake-transport + PostgreSQL tests only |
-| 4 | One-create PayPal Sandbox budget exhausted | Any new real draft | **Open**; needs explicit new authorization |
+| 4 | One-create PayPal Sandbox budget exhausted (1/1) | Any new real draft | **Open**; not reset by R1; only Request B (exactly one new create, separate permit) can authorize a new create |
 | 5 | HTTPS + `__Host-nmi_session` cookie never tested | Any hosted deployment | **Open** (Option B only) |
 | 6 | Reverse-proxy/ingress/CDN log redaction of `q` (customer search text in GET URL) | Any hosted deployment | **Open**; documented prerequisite |
 | 7 | No single-origin static+API serving configuration exists | Any hosted deployment | **Open** (Option B only) |
@@ -47,6 +47,9 @@
 | 14 | Evaluation mode shows no in-app "SIMULATED" badge | Judges mistaking simulated for real | **Open** (needs owner-approved product change); mitigated by runbook, console banner and video labels |
 | 15 | Docker container path of the runbook not exercised | Runbook completeness | **Open** (local PostgreSQL path tested) |
 | 16 | Webhooks, sending, payment collection, reminders, multi-user | Not implemented | Out of scope; do not claim |
+| 17 | Gate A decisions: SDK `maxRetries: 1` (up to 6 HTTP requests for 3 parses) and `gpt-6-luna` default medium reasoning vs 1024 default output cap | Authorizing Request A | **Open** (owner decisions A-F1/A-F2; recommended configuration-only mitigation `OPENAI_MAX_OUTPUT_TOKENS=4096`; no code change in R1) |
+| 18 | No in-repository PayPal create counter (the earlier one-create guard was a private harness) | Request B | **Open**; bound is procedural + `attempts=1` + one operation row (acceptance doc 5.1) |
+| 19 | Real-provider evidence | Any REAL claim | All three gates **PENDING**; templates in `docs/NMI-DEMO-EVIDENCE-TEMPLATES.md` |
 
 ## D. Security and privacy confirmations (R0 audit)
 
