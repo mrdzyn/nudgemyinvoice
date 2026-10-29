@@ -518,16 +518,25 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
 
 describe.skipIf(!url)("one-hop proxy trust keeps login throttling honest", () => {
   let scratch: ScratchDatabase;
+  let dist: string;
   beforeAll(async () => {
     scratch = await createScratchDatabase(url as string, 4);
+    dist = mkdtempSync(join(tmpdir(), "nmi-throttle-"));
+    writeFileSync(join(dist, "index.html"), "<!doctype html><title>shell</title>");
   });
-  afterAll(async () => scratch?.drop());
+  afterAll(async () => {
+    await scratch?.drop();
+    if (dist) rmSync(dist, { recursive: true, force: true });
+  });
 
   const attempts = async (env: Record<string, string>, forwarded: (i: number) => string) => {
-    const app = buildApp(loadConfig({ ...baseEnv, DATABASE_URL: url as string, ...env }), {
-      db: createDb(scratch.pool),
-      passwordParams: weak,
-    });
+    const app = buildApp(
+      loadConfig({ ...baseEnv, DATABASE_URL: url as string, WEB_DIST_DIR: dist, ...env }),
+      {
+        db: createDb(scratch.pool),
+        passwordParams: weak,
+      },
+    );
     let limited = 0;
     for (let i = 0; i < 30; i++) {
       const r = await app.inject({
