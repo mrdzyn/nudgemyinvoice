@@ -1482,4 +1482,21 @@ Targeted local-only tests, CI and documented negative controls; keep final statu
 - **NOT TESTED:** the full `provision-operator` CLI run via `PGPASSFILE` (only the driver path was exercised); pgpass support in `pg` is deprecated upstream (a DeprecationWarning is printed; runbook says to stop, not fall back to a URL password, if it fails); real Render behavior and external TLS.
 - **Gates:** merge, Render provisioning, secrets, sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P1-PREFLIGHT-START
+
+- **From:** GPT-6 orchestration after owner squash merge of PR #21
+- **To:** Coding/test agent implementing and recording offline operator-CLI verification; then independent GPT-6 exact-head audit
+- **Base main:** `d13c0a6e28443642ce611ce459122b682c1de92f`
+- **Branch:** `docs/nmi-render-p1-operator-provision-preflight`; continue existing Draft PR; no new branch or PR
+- **Task:** `tasks/NMI-RENDER-P1-PREFLIGHT.md`
+- **State:** TASK STARTED; the full `provision-operator` CLI over temporary `PGPASSFILE` has NOT YET been tested in this phase; no Render resource is authorized.
+
+### Immediate instructions
+
+Read task, AGENTS, STATUS, project profile and only the relevant runbook/CLI/DB testing code. Use a disposable **SCRAM-enforcing** PostgreSQL 16 local fixture, never Render or real databases. Run the actual provisioning CLI with a 0600 password file, passwordless `DATABASE_URL`, and synthetic passwords (including `:` and `\\`); prove create and rotation, negative control with no password source, audit/hashed-password evidence and complete teardown. Preserve the genuine-login least-privilege work from PR #21. Record sanitized commands, environment, warnings, results and limitations in a new preflight evidence document. If the driver requires unsafe secrets handling, STOP and report rather than weakening the boundary. Limit code additions to test-only helpers where warranted, run required CI, append `NMI-RENDER-P1-PREFLIGHT-IMPL` when complete and ask for independent audit.
+
+### Boundaries
+
+No production code, database schema/grant, provider, UI or CI-policy changes without scope escalation. No merge, Render provisioning, billing, deployment, provider call, live judge login or publication. Gates A/B/C are NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->
