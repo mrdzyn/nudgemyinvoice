@@ -1520,4 +1520,26 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **NOT TESTED:** unchanged (Render PostgreSQL/TLS, Linux, `pg@9`); teardown fault injection uses fake dependencies except the `PG_BIN` case.
 - **Gates:** Gates A/B/C NOT AUTHORIZED; no merge/provision/deploy.
 
+## Handoff: NMI-RENDER-P2-APPROVAL-PREP
+
+- **From:** GPT-6 planning after user selected Mrdzyn Render workspace for staging preparation but withheld permission to provision until **actual charges** are reviewed.
+- **To:** Independent P2 documentation review, owner cost inspection, then separately authorized provisioning workflow
+- **Branch:** `docs/nmi-render-p2-staging-approval` (Draft PR, no production or cloud changes)
+- **Base/main:** `652cf702fd93b05a9b9d64ee9b4c2151c30833b2`; PR #22 preflight audit PASS `5698358485` and squash merge confirmed.
+- **Task:** `tasks/NMI-RENDER-P2-APPROVAL-PACKET.md`
+- **Artifact:** `docs/NMI-RENDER-P2-STAGING-APPROVAL-PACKET.md`
+- **Read-only Render observations:** confirmed the Mrdzyn workspace (ID omitted from the public repository), no PostgreSQL instances returned; service inventory returned `null`, not evidence of zero. Render tools cannot read private billing. Owner screenshots confirm Hobby included usage and $50 credit; projected overages, taxes and account-specific charge eligibility still unverified. Public list prices are not a spending authorization.
+- **Owner-selected judges staging (2026-10-29):** Mrdzyn **Hobby Free web + Free PostgreSQL 16** (1 GB) in Singapore, $0 published compute baseline, one instance/database, manual pinned audited `main@652cf702`, Auto-Deploy OFF, provider-disabled and single-operator synthetic data. Free web sleeps after 15 minutes; Free PG expires after 30 days with no managed backups. Original P1 Render platform HTTP-request-log requirement remains NOT VERIFIED on Hobby; a separately reviewed alternate evidence plan and owner risk acceptance are required **before judge release**. Judges' evaluation window/teardown date must be verified before creation. No Blueprint, secrets in GitHub, or URL share.
+- **Billing evidence:** Owner supplied Render Billing screenshots: **$50 Hackathon Participant promotional credit expiring 2027-10-01**, no pending invoices/charges shown, Hobby included 750 Free instance-hours, 5 GB outbound bandwidth and 500 pipeline minutes (0 used). $0 baseline does not eliminate possible usage overages; credit eligibility for charges unknown. No Pro upgrade selected.
+- **Blocking approvals:** owner explicitly selected **Free+Free for judges**, but also explicitly retained **no provisioning before approving actual charges**. Resource creation (even free), initial deploy, any overage exposure, native HTTP-log security substitution and external judge access are separate explicit human approval gates. No merge or cloud creation authorized.
+- **Gates:** A/OpenAI, B/PayPal, C/combined NOT AUTHORIZED; no cloud resource, billing or deploy approval, no judge access.
+
+## Handoff: NMI-RENDER-P2-APPROVAL-FIX1
+
+- **From:** Implementation agent (Claude) — docs-only remediation of independent audit PR #23 comment 6500483434 (FIX REQUIRED: 2 MAJOR, 4 MINOR, 3 INFORMATIONAL).
+- **To:** Independent GPT-6 exact-head re-audit, then owner. **Branch/PR:** `docs/nmi-render-p2-staging-approval`, Draft PR #23. Starting HEAD `3d2c7e861232cbb1531705fd20abc15f9623b598`.
+- **Changed (docs only):** packet §1A deployment source mechanism (future owner-created branch `release/nmi-render-judges-2026` from exactly `652cf702…`; Render tracks it, never `main`; HEAD verified before provisioning; deployed SHA verified after first deploy; STOP on mismatch; creation may start the first build; `WEB_ORIGIN` fails closed until the verified HTTPS origin is set), §1B P1/P2 precedence, header clarification, stale Dec-15/$85 wording, payment-method row, full teardown checklist, mandatory judge-reset-or-supervised-access PASS criterion, in-memory throttling and credential rules, workspace ID removed; P1 runbook precedence banner; STATUS and task.
+- **Not done (by design):** the release branch was NOT created; no Render resource; no billing/plan change; no deploy, merge, publication, URL/credential sharing; no OpenAI/PayPal call.
+- **Open:** payment-method status is unrecorded; alternate request-log evidence contract and owner risk acceptance still required; Render behavior untested. Gates A/B/C NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->

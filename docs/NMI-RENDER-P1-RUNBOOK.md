@@ -1,5 +1,7 @@
 # NMI-RENDER-P1 — Render staging: manual setup, migration and rollback runbook
 
+> **Precedence note (NMI-RENDER-P2):** for the owner-selected Mrdzyn **Hobby Free web + Free PostgreSQL 16** judges staging, `docs/NMI-RENDER-P2-STAGING-APPROVAL-PACKET.md` §1B **overrides** this runbook's paid-database, 2026-12-15 lifespan/teardown and Pro-workspace request-log requirements (§2, §5 step 1, §6 step 5, §7). All other controls here remain mandatory, and the native Render request-log check is **NOT VERIFIED on Hobby** (not waived). Nothing here authorizes provisioning.
+
 > **NOT EXECUTED. NOT AUTHORIZED.** Nothing here has been run on Render. No Render service, database, Blueprint, preview environment, DNS record, secret or URL exists. Every step below needs a **separate, written owner approval** after the P1 Draft PR has an independent audit PASS and is owner-merged. This runbook contains variable **names only**, never values.
 >
 > Gates A, B and C (`docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`) remain **NOT AUTHORIZED**. The staging instance has **no OpenAI or PayPal credentials**.
