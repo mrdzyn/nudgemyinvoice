@@ -30,6 +30,16 @@ Prepare a strictly bounded, reproducible, secret-safe **REAL** provider acceptan
 
 Not authorized by Gate A or B alone. Requires **separate** owner approval **after both gates pass** to claim complete real-provider journey. Do not silently run combined tests or rerun a PayPal create merely for a video; prefer recording evidence already obtained, explicitly labelling live versus simulated portions.
 
+## Owner update: Render credits now available (not verified)
+
+- The owner reports that Render credits are now available. **Amount, expiration, workspace/billing plan and applicable services remain unverified.**
+- Before deciding between Option A (the tested local judge runbook) and A+B (optional Render HTTPS host), review `docs/NMI-DEMO-DEPLOYMENT-DECISION.md` section **Render credits update — 2026-10-29** and official Render hackathon sponsor terms. **Render deployment is not authorized by the credit announcement.**
+- The coding agent should include a brief docs-only decision memo: Render web+PostgreSQL architecture, exact planned cost and credit runway **only if actual current balance/pricing is safely available**, otherwise mark unknown; single-origin static/API routing, secure `__Host-` cookie, owner/operator sharing constraints, provider-disabled judge mode, log privacy and backup/cleanup requirements.
+- Render's Pro+ request logs may include requested URLs; dashboard search `q` currently carries customer text in the HTTP GET URL. This is an unresolved privacy blocker for public hosting. A sandboxed/synthetic demo does not waive the need to assess request-log retention/redaction.
+- Existing test-only simulated launcher **must not** be enabled on a public production service. A hosted full demo requires separate owner-approved secure implementation and independent review, potentially as a new `NMI-HOST-R0` Draft PR after R1.
+- PayPal hackathon has Render sponsor prizes for **actual Render tool use**; credits alone are not use. Rules allow at most one sponsor prize per winning entry. Do not claim hosted demo, Render integration or Render prize eligibility based solely on owning credits.
+- **Do not** provision Render, create a service or database, apply credits, link GitHub credentials, change account billing, deploy any commit, expose provider credentials or modify application code under this docs-only task.
+
 ## R1 preparation deliverables
 
 1. Reconcile stale `docs/STATUS.md` and submission/Devpost drafts with confirmed PR #17 merge `2d5a7034fe7b78d927d19d534bf9958d91b3b7fd`; AG Grid Community 36.2.0 is genuinely on `main` (not Studio, no Enterprise trial).
