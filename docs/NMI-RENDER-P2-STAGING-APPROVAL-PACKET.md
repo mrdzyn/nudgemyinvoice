@@ -6,7 +6,7 @@
 - **Repository:** `mrdzyn/nudgemyinvoice`, [GitHub](https://github.com/mrdzyn/nudgemyinvoice).
 - **Approved code candidate:** `main@652cf702fd93b05a9b9d64ee9b4c2151c30833b2` (owner squash merge of independently audited P1/preflight PR #22; original P1 implementation merged via PR #21).
 - **Render destination (user selected):** workspace name **Mrdzyn**, confirmed Render workspace ID `tea-dbgnjq1srm7s73ebcq2g`.
-- **Read-only Render inspection at preparation:** `list_workspaces` returned one workspace named Mrdzyn. `list_postgres_instances` said **No Postgres instances found**. `list_services` returned `null`, **not sufficient to prove zero services**. Neither workspace plan nor credit balance, expiry, applicability or billing forecast is available through the connected Render tools. **Do not claim credits will pay any charge.**
+- **Read-only Render inspection at preparation:** `list_workspaces` returned one workspace named Mrdzyn. `list_postgres_instances` said **No Postgres instances found**. `list_services` returned `null`, **not sufficient to prove zero services**. The connected tools do not expose workspace plan or billing forecasts. **Owner-supplied Render Billing screenshot (2026-10-29) confirms $50.00 Hackathon Participant promotional credit expiring 2027-10-01, no pending charges and no past invoices.** The workspace plan and whether this promotion offsets the Pro subscription/compute/storage remain **UNKNOWN**. **Do not claim credits will cover any specific charge.**
 - **Current approval scope:** PREPARE ONLY. The owner expressly requires separate review and written approval of **actual Mrdzyn charges** before provisioning anything. Proposed upper spending figures (including previously discussed $85) are **not** authorized and are **not enforceable automatic budget caps**.
 - **External/provider gates:** OpenAI Gate A, PayPal Gate B and combined Gate C are **NOT AUTHORIZED**. Historical one-create Sandbox smoke budget stays exhausted. No live provider access, credentials or calls.
 - **Authoritative implementation/ops:** `docs/NMI-RENDER-P1-RUNBOOK.md` and `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`; this packet adds specific cost/approval restrictions, and does not supersede security/runbook gates.
@@ -47,7 +47,21 @@ Official sources checked 2026-10-29:
 | Workspace **Hobby**, upgrade to Pro + staging | **$38** total baseline ($25 + $7 + $6) | Tax, bandwidth/build minutes overages, extra storage, existing resources, credit restrictions |
 | Stay Hobby while preserving mandatory HTTP-request-log verification | **NOT ACCEPTABLE** under current QA contract | Upgrade decision needed; do not silently waive platform log gate |
 
-**Important:** these are published standard **list rates only**; no current workspace plan or invoice was available through the connector. These are **not** firm quotes, a guarantee of no overages or proof that promotional credits offset workspace subscription, DB storage or compute. Render charges can span more than one billing cycle before the intended **2026-12-15** teardown. Even a requested hard maximum (for example $85) cannot be claimed as enforced until an actual billing/limiting mechanism is reviewed. No Pro upgrade or paid resource is permitted under this document.
+**Important:** these are published standard **list rates only**; current workspace plan, Pro fee applicability and an actual incremental quote were not available through the connector. The owner supplied an account screenshot with **no pending charges and no past invoices** at capture, but that does not price future resources. These are **not** firm quotes, a guarantee of no overages or proof that promotional credits offset workspace subscription, DB storage or compute. Render charges can span more than one billing cycle before the intended **2026-12-15** teardown. Even a requested hard maximum (for example $85) cannot be claimed as enforced until an actual billing/limiting mechanism is reviewed. No Pro upgrade or paid resource is permitted under this document.
+
+### Verified promotional credit (2026-10-29)
+
+The user supplied a screenshot of **Mrdzyn → Billing → Credit Balance** showing:
+
+- **Total promotional credit:** **US$50.00** (Hackathon Participant, one promotion).
+- **Expires:** **October 1, 2027**; displayed as $50 credit, expires after 12 months.
+- **Pending charges:** none shown.
+- **Invoice history:** no past invoices shown.
+- **Not shown in the screenshot:** **current workspace plan**, Pro subscription price on this account, whether promo credit applies to workspace fees, supported PostgreSQL backups/PITR, tax and other overage forecasts. All remain **unverified**.
+
+At published list prices, if a **new Pro** workspace ($25) plus web ($7) plus database ($6) are *all credit-eligible*, the simple steady-state baseline is **$38/month**; $50 then covers about **1.3 months**, before tax/overages/proration. The user has **not approved** that $38 plan, and credit use has **not** been proven for Pro. If already Pro, **$13/month** is the proposed incremental compute baseline but the existing workspace charge still matters for the total bill.
+
+**Approval rule:** Do **not** upgrade the workspace or create paid resources until account-specific plan and credit coverage are confirmed and the owner approves the actual prospective charges and a bounded total spend. Only $50 in promotion is supported by evidence, not an $85 credit allowance.
 
 ## 3. Owner must supply actual billing facts (no secret values)
 
@@ -56,8 +70,9 @@ Open **Render Dashboard → select Mrdzyn workspace → Billing** and privately 
 | Required fact | As of 2026-10-29 | Approval condition |
 | --- | --- | --- |
 | Mrdzyn current plan (Hobby/Pro/other) and its monthly fee | **UNKNOWN** | Confirm whether Pro is already active; otherwise explicitly authorize upgrade **separately** |
-| Applicable remaining credits, expiry and covered charge categories | **UNKNOWN** | Confirm from actual billing/credits display; do not assume workspace-fee coverage |
-| Accrued charges and other services in workspace | **UNKNOWN** | Ensure proposed staging does not obscure existing charges |
+| Promotional credit balance and expiry | **$50.00, expires 2027-10-01 — confirmed in owner-supplied Billing screenshot** | Not a spend authorization or indication of recurring-credit renewal |
+| Eligible charges covered by this promotion (Pro plan vs compute/DB/storage) | **UNKNOWN** | Verify applicability with Render before approving a Pro upgrade or charges |
+| Billing screenshot's pending charges and invoice history | **No pending charges; no past invoices (as captured 2026-10-29)** | Check again immediately before any resource creation; other services still unconfirmed |
 | Estimated web compute, DB compute, storage, tax, bandwidth/build overages | **ESTIMATE ONLY** | Reconcile plan selection to live dashboard quote and billing basis |
 | Price exposure from provisioning date to teardown (target 2026-12-15) | **UNKNOWN** | Record full period and billing cycle boundaries; no auto-expiration assumption |
 | PostgreSQL backup/PITR, retention and access-level rights | **UNKNOWN** | Check plan support and who can create `LOGIN` roles; no superuser assumption |
@@ -113,7 +128,7 @@ Proposed **non-secret** environment names and safe values:
 Before an owner can grant a bounded next step, request confirmation of:
 
 - Billing plan and existing commitment in Mrdzyn; if not Pro, is Pro upgrade acceptable given its `$25/month` list fee and possible charges?
-- Actual usable credits, expiry, what they cover, balance after applying expected services.
+- Confirmed **$50 promotional credit expiring 2027-10-01**; still need what charge types it covers (particularly the $25 Pro subscription), and projected post-charge balance.
 - Exact resource options and approved incremental ceiling **through 2026-12-15** including taxes, storage, bandwidth, fees and a stop threshold.
 - Whether staged public HTTPS access is acceptable for *owner-only* authenticated QA; external sharing will be a later separate approval.
 
