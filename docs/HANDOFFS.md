@@ -1387,4 +1387,22 @@ Update acceptance §5.0–5.4, unanswered Request B, evidence Template B, checkl
 
 No code, scripts, tests, dependencies, CI, schema, database, credentials, production runtime changes, API calls, deployment or billing work in this docs-only PR. If a trustworthy actual-process send count cannot be demonstrated without executable repo changes, stop and document that additional prerequisite rather than claiming readiness.
 
+## Handoff: NMI-DEMO-R1-B-WIRE-IMPL
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md` (section "Completion record")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head audit, then the owner's merge decision
+- **Branch / PR:** `docs/nmi-demo-r1-b-wire-evidence`, [Draft PR #20](https://github.com/mrdzyn/nudgemyinvoice/pull/20)
+- **State:** READY FOR INDEPENDENT AUDIT. Markdown only; no repository code, script, test, dependency, CI or schema change; no PayPal/OpenAI request; no credential; no budget reset; no merge, deployment, Render, upload or Devpost action. Gate B BLOCKED/NOT AUTHORIZED; Gates A/C NOT AUTHORIZED.
+
+### Audit focus
+1. The observer source in `docs/NMI-DEMO-R1-B-WIRE-COUNT.md` section 3: reads only `request.origin/method/path`; classification exactness; one origin literal; no env override; summary fields; signal handling; hash `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` (the code fence hashes to it; Prettier is bypassed for the fences).
+2. Reproduce `docs/NMI-DEMO-R1-B-WIRE-OFFLINE-TESTS.md` (`run-all.sh`) on the auditor's machine, especially T3/T4 (unmodified observer + production client at the wire), T5 negative control and T6 (actual pnpm/tsx server, three shutdown shapes).
+3. Operator blocks are shell-safe (no inline comments; bash/zsh script and interactive were executed from the document) and require: hash check, proxy check, listening-PID match, zero-count snapshot before the single click, Ctrl-C shutdown, per-PID summary reading.
+4. Honest limits: no real PayPal send witnessed; detection not prevention; experimental channel; macOS only; agent-run.
+5. No authorization answer changed; Gate B still blocked; browser/DB/dashboard counts not substituted.
+
+### Not verified
+Anything against the real PayPal Sandbox; Linux/Windows; other Node majors; independent reproduction.
+
 <!-- HANDOFF_ENTRIES_END -->

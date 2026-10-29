@@ -48,9 +48,9 @@ Pre-create DB: invoices __ (expect 0 before save) ; paypal_draft_operations __ (
 Saved invoice (DB): currency ___ total_minor ____ due_date ______ (expect USD 54000 2030-01-15) ; saved page total ______
 Creates used: _/1 ; browser POST .../paypal-draft count (DevTools): __ (expect 1) ; second create attempted: yes/no
 Server-to-PayPal outbound create SEND ATTEMPTS (not guaranteed provider receipt): PENDING until observed; count ____ (expected exactly 1) ; source: exact Node/Undici observer only after verified/audited
-Observer procedure commit: PENDING ; audited preload SHA-256: PENDING ; offline positive/negative loopback proof: PENDING
-Observer actual API PID: PENDING ; observer active before click: PENDING ; pre-click create sends: PENDING (expect 0)
-Post-stop aggregate: CREATE ____ OAuth ____ SHOW ____ SEARCH ____ UNEXPECTED ____ ; other-process ambiguity: yes/no
+Observer procedure commit: PENDING ; audited preload SHA-256 (expected `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e`): PENDING ; offline validation (agent) recorded: yes/no ; independently audited/reproduced: PENDING ; `shasum` of the file used equals the audited hash: yes/no ; proxy variables unset: yes/no
+Listening PID (lsof): PENDING ; `NMI-WIRE ACTIVE entry=server.ts` PID equal to it: yes/no ; pre-click SIGUSR2 snapshot (complete=false) all counts 0: yes/no ; pre-click create sends: PENDING (expect 0)
+Final summary file of the listening PID (complete=true, signal ____): CREATE ____ (expect 1) OAuth ____ SHOW ____ SEARCH ____ UNEXPECTED ____ (expect 0) FOREIGN ____ (expect 0) events ____ ; STOP line printed: yes/no ; other processes' files all events=0: yes/no ; stopped with Ctrl-C: yes/no
 Observer summary complete and secrets/headers/body/id absent: yes/no ; observer failure/unknown count STOP: yes/no
 Corroboration: browser-to-API create POST count ____ (expect 1), DB attempts ____ (expect 1), Sandbox N->N+1 ____ (separate proof, not wire count)
 Operation row: state ______ attempts __ has_remote __ remote_tail ____ ; operation row count __ (expect 1)
