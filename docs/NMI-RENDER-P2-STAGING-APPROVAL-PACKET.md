@@ -6,7 +6,7 @@
 - **Repository:** `mrdzyn/nudgemyinvoice`, [GitHub](https://github.com/mrdzyn/nudgemyinvoice).
 - **Approved code candidate:** `main@652cf702fd93b05a9b9d64ee9b4c2151c30833b2` (owner squash merge of independently audited P1/preflight PR #22; original P1 implementation merged via PR #21).
 - **Render destination (user selected):** workspace name **Mrdzyn**, confirmed Render workspace ID `tea-dbgnjq1srm7s73ebcq2g`.
-- **Read-only Render inspection at preparation:** `list_workspaces` returned one workspace named Mrdzyn. `list_postgres_instances` said **No Postgres instances found**. `list_services` returned `null`, **not sufficient to prove zero services**. The connected tools do not expose workspace plan or billing forecasts. **Owner-supplied Render Billing screenshot (2026-10-29) confirms $50.00 Hackathon Participant promotional credit expiring 2027-10-01, no pending charges and no past invoices.** The workspace plan and whether this promotion offsets the Pro subscription/compute/storage remain **UNKNOWN**. **Do not claim credits will cover any specific charge.**
+- **Read-only Render inspection at preparation:** `list_workspaces` returned one workspace named Mrdzyn. `list_postgres_instances` said **No Postgres instances found**. `list_services` returned `null`, **not sufficient to prove zero services**. The connected tools do not expose workspace plan or billing forecasts. **Owner-supplied Render Billing screenshot (2026-10-29) confirms $50.00 Hackathon Participant promotional credit expiring 2027-10-01, no pending charges and no past invoices.** The owner now identifies the workspace as **Hobby** and provided its **Monthly Included Usage** screenshot (750 free instance-hours, 5 GB outbound bandwidth, two custom domains, 25 allowed services, 500 build pipeline minutes; all counters at zero). This supports a Hobby-first proposal; the screenshot itself is from Included Usage, not the Plan tab, so the plan should be rechecked at creation. Whether the promotion offsets Pro subscription/compute/storage remains **UNKNOWN**. **Do not claim credits will cover any specific charge.**
 - **Current approval scope:** PREPARE ONLY. The owner expressly requires separate review and written approval of **actual Mrdzyn charges** before provisioning anything. Proposed upper spending figures (including previously discussed $85) are **not** authorized and are **not enforceable automatic budget caps**.
 - **External/provider gates:** OpenAI Gate A, PayPal Gate B and combined Gate C are **NOT AUTHORIZED**. Historical one-create Sandbox smoke budget stays exhausted. No live provider access, credentials or calls.
 - **Authoritative implementation/ops:** `docs/NMI-RENDER-P1-RUNBOOK.md` and `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`; this packet adds specific cost/approval restrictions, and does not supersede security/runbook gates.
@@ -41,11 +41,16 @@ Official sources checked 2026-10-29:
 - [Render dashboard billing](https://render.com/docs/render-dashboard): Billing page shows actual current plan, past invoices and accrued charges.
 - [Render PostgreSQL setup](https://render.com/docs/postgresql-creating-connecting): PG16, region and 1-GB storage are selectable; expansion cannot later be shrunk.
 
-| Scenario | Indicative recurring baseline (USD/month) | Not included |
+| Scenario | Indicative recurring baseline (USD/month) | Staging trade-off |
 | --- | ---: | --- |
-| Workspace **already Pro**, additional staging resources only | **$13** incremental ($7 web + $6 DB) | Workspace's existing $25, other services, overages, taxes, credits |
-| Workspace **Hobby**, upgrade to Pro + staging | **$38** total baseline ($25 + $7 + $6) | Tax, bandwidth/build minutes overages, extra storage, existing resources, credit restrictions |
-| Stay Hobby while preserving mandatory HTTP-request-log verification | **NOT ACCEPTABLE** under current QA contract | Upgrade decision needed; do not silently waive platform log gate |
+| **Hobby + Free web + Free PostgreSQL** | **$0** for free compute | Free web sleeps after 15 minutes idle (roughly 1-minute cold start), Free PostgreSQL **expires 30 days after creation**, 1 GB, no managed backups; Pro-only Render HTTP request-log acceptance gate unresolved |
+| **Hobby + Free web + paid PostgreSQL** | **$6** DB compute | Durable paid DB; web still spins down; platform HTTP-log gate unresolved |
+| **Hobby + paid web + paid PostgreSQL** | **$13** ($7 + $6) | Avoids web cold starts and free DB expiration; platform HTTP-log gate unresolved |
+| **Pro + paid web + paid PostgreSQL** | **$38** ($25 + $7 + $6) | Can verify native platform HTTP request logs; promotion's applicability to Pro fee remains unverified |
+
+These are public *baseline* prices, **not Mrdzyn quotes**, and do not include usage overages, taxes, proration or additional storage. The included **750 hours are for Free web instances only**, not a subsidy for paid compute. The **25 services** allowance is a workspace limit, not 25 paid services free of charge. Render's free Postgres **30-day expiry makes it incompatible with the existing 2026-12-15 lifespan** unless an owner-approved upgrade, new disposable rebuild or shorter lifespan is selected. Free instances are not a production or guaranteed-uptime hosting model.
+
+**Security trade-off / NON-WAIVER:** Hobby can run the application, but Render's native **platform HTTP request logs require Pro or higher**. App-origin logs plus an external HTTPS client probe can offer useful supporting evidence but **cannot prove what Render's own request-log pipeline records**. The current P1 runbook's native-log verification therefore remains **BLOCKED/NOT VERIFIED** on Hobby. Do not silently mark it PASS or share the judge URL under the old acceptance contract. Any revised Hobby acceptance must be a separate, explicitly owner-approved and independently reviewed evidence plan.
 
 **Important:** these are published standard **list rates only**; current workspace plan, Pro fee applicability and an actual incremental quote were not available through the connector. The owner supplied an account screenshot with **no pending charges and no past invoices** at capture, but that does not price future resources. These are **not** firm quotes, a guarantee of no overages or proof that promotional credits offset workspace subscription, DB storage or compute. Render charges can span more than one billing cycle before the intended **2026-12-15** teardown. Even a requested hard maximum (for example $85) cannot be claimed as enforced until an actual billing/limiting mechanism is reviewed. No Pro upgrade or paid resource is permitted under this document.
 
@@ -59,9 +64,15 @@ The user supplied a screenshot of **Mrdzyn → Billing → Credit Balance** show
 - **Invoice history:** no past invoices shown.
 - **Not shown in the screenshot:** **current workspace plan**, Pro subscription price on this account, whether promo credit applies to workspace fees, supported PostgreSQL backups/PITR, tax and other overage forecasts. All remain **unverified**.
 
-At published list prices, if a **new Pro** workspace ($25) plus web ($7) plus database ($6) are *all credit-eligible*, the simple steady-state baseline is **$38/month**; $50 then covers about **1.3 months**, before tax/overages/proration. The user has **not approved** that $38 plan, and credit use has **not** been proven for Pro. If already Pro, **$13/month** is the proposed incremental compute baseline but the existing workspace charge still matters for the total bill.
+At published list prices, if a **new Pro** workspace ($25) plus web ($7) plus database ($6) are *all credit-eligible*, the simple steady-state baseline is **$38/month**; $50 then covers about **1.3 months**, before tax/overages/proration. The user has **not approved** that $38 plan, and credit use has **not** been proven for Pro. The owner identifies Mrdzyn as Hobby; on Hobby, **$0/month** Free web + Free PG is a valid **short-lived prototype** option subject to the 30-day PG deadline and Pro-only logging gap, whereas **$6/month** Free web + paid PG offers persistence without upgrading the workspace. Neither option has been selected or provisioned.
 
 **Approval rule:** Do **not** upgrade the workspace or create paid resources until account-specific plan and credit coverage are confirmed and the owner approves the actual prospective charges and a bounded total spend. Only $50 in promotion is supported by evidence, not an $85 credit allowance.
+
+### Hobby included-usage screenshot (2026-10-29)
+
+Owner identified **Mrdzyn as Hobby**, and supplied **Billing → Included Usage** showing 0 of 750 monthly Free instance-hours used, 0 of 5 GB bandwidth, 0 of 2 custom domains, 0 of 25 services and 0 of 500 pipeline minutes. This is a report of *usage and quotas*, **not** proof that any paid service compute or a Pro plan is included. The credit balance remains **US$50**, expiring **2027-10-01**.
+
+**Recommended next decision for the owner:** choose between (A) zero-baseline-cost temporary Hobby Free+Free test strictly for short-lived smoke QA with no native HTTP log PASS; (B) Hobby Free web + $6/month paid PG if persistent synthetic data is essential; (C) owner-approved Pro for the original native-log acceptance plan. Any plan choice requires an explicit approval before creating resources, even Free resources.
 
 ## 3. Owner must supply actual billing facts (no secret values)
 
@@ -69,7 +80,7 @@ Open **Render Dashboard → select Mrdzyn workspace → Billing** and privately 
 
 | Required fact | As of 2026-10-29 | Approval condition |
 | --- | --- | --- |
-| Mrdzyn current plan (Hobby/Pro/other) and its monthly fee | **UNKNOWN** | Confirm whether Pro is already active; otherwise explicitly authorize upgrade **separately** |
+| Mrdzyn workspace plan | **Owner reports Hobby ($0/month workspace fee); Included Usage screenshot consistent but does not show Plan tab** | Verify in Plan before provisioning; Pro upgrade not authorized |
 | Promotional credit balance and expiry | **$50.00, expires 2027-10-01 — confirmed in owner-supplied Billing screenshot** | Not a spend authorization or indication of recurring-credit renewal |
 | Eligible charges covered by this promotion (Pro plan vs compute/DB/storage) | **UNKNOWN** | Verify applicability with Render before approving a Pro upgrade or charges |
 | Billing screenshot's pending charges and invoice history | **No pending charges; no past invoices (as captured 2026-10-29)** | Check again immediately before any resource creation; other services still unconfirmed |
@@ -81,6 +92,8 @@ Open **Render Dashboard → select Mrdzyn workspace → Billing** and privately 
 If any necessary figure cannot be verified using the actual Mrdzyn billing dashboard and plan selection, **do not proceed**. Resource creation incurs costs; do not treat GitHub approval, connector installation or this packet as permission.
 
 ## 4. Prepared web service configuration (not submitted)
+
+**Important:** The table below is the earlier *paid-service/Pro-compatible* candidate, **NOT** a decision to purchase it. For a separately approved Hobby Free-web alternative, change web plan to `free` and, if short-lived disposable testing is accepted, DB plan to `free`. Those changes affect cold starts, 30-day database lifetime and the unresolved native-log gate; do not silently switch plans on creation.
 
 | Setting | Proposed value |
 | --- | --- |
@@ -127,9 +140,9 @@ Proposed **non-secret** environment names and safe values:
 
 Before an owner can grant a bounded next step, request confirmation of:
 
-- Billing plan and existing commitment in Mrdzyn; if not Pro, is Pro upgrade acceptable given its `$25/month` list fee and possible charges?
+- Mrdzyn is **owner-reported Hobby** with no workspace monthly fee. Should staging remain Hobby (with explicit disposition of the Pro-only native HTTP request-log gate), or should a separately approved `$25/month` Pro upgrade be considered?
 - Confirmed **$50 promotional credit expiring 2027-10-01**; still need what charge types it covers (particularly the $25 Pro subscription), and projected post-charge balance.
-- Exact resource options and approved incremental ceiling **through 2026-12-15** including taxes, storage, bandwidth, fees and a stop threshold.
+- Choose Free web/Free PG vs Free web/paid PG vs paid web/paid PG on Hobby vs Pro; decide whether a short-lived 30-day Free DB window is acceptable or if persistence **through 2026-12-15** is required. Confirm the approved incremental ceiling for the chosen timeline, including taxes, storage, bandwidth, fees and a stop threshold.
 - Whether staged public HTTPS access is acceptable for *owner-only* authenticated QA; external sharing will be a later separate approval.
 
 Suggested written approval **only after** those values are filled and owner accepts:
