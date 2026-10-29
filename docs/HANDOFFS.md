@@ -1310,4 +1310,63 @@ Everything provider-side: model entitlement/pricing on the owner's account, any 
 ### Not verified
 Any provider-side behaviour; the PayPal fix itself (not written); the preservation plan (never executed); real-shell behaviour beyond the stubbed bash/zsh runs on macOS.
 
+## Handoff: NMI-DEMO-R1-FIX-B1-START
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-FIX-B1-paypal-401-no-resend.md`
+- **From:** GPT-6 orchestrator, following owner's authorization to start the next bounded task
+- **To:** coding agent (Claude/Codex), then independent GPT-6 exact-head audit
+- **Base main:** `85470d9a5fef15b260f9e1c52673a7e2c7d03824` (owner squash-merged NMI-DEMO-R1 PR #18)
+- **Branch / PR:** `fix/nmi-demo-r1-fix-b1-paypal-create-retry` / existing Draft PR
+- **State:** READY FOR IMPLEMENTATION. Setup is task/STATUS/handoff only; no code/test changes yet, no live provider calls, no Sandbox-budget reset, no merge, no Render provisioning, deployment, video upload or Devpost submission. Gate B remains **BLOCKED**.
+
+### Immediate objective
+
+In `packages/paypal/src/client.ts` the helper retries any 401, including mutating `POST /v2/invoicing/invoices`. The existing `client.test.ts` expects two create POSTs. **Correct this** so one create invocation emits at most one create POST. Preserve single refresh-and-resend for safe read-only show and search. Preflight OAuth must succeed before create. Counter + negative-control tests must assert actual fake transport egress, not merely browser POST count or a durable claim counter.
+
+### Additional fail-closed service boundary
+
+In `apps/api/src/services/paypal-draft-service.ts`, `PayPalRejectedError` is stored as `rejected`; `packages/db/src/paypal-operation-store.ts` currently permits `rejected` to be claimed later in create mode. After a **create POST has actually been attempted and received 401**, blindly marking it retryable is inconsistent with one-provider-request-per-operation. Prefer a conservative `PayPalOutcomeUnknownError("http_401")` from the adapter, so the service persists `unknown` and later requests **reconcile read-only** (no additional create) without changing the DB schema. A pre-create OAuth rejection remains safely retryable and counts **zero** create POSTs. Preserve prior definite status handling unless the task requires escalation.
+
+### Evidence
+
+- Targeted `packages/paypal` tests: first create 401 = **one** wire POST, no create resend; GET show and logical read-only search keep safe token refresh; timeout, 5xx, invalid response and OAuth failure fail closed, all with counts.
+- Focused service / PG test: one HTTP 401 after sent create leaves attempts=1 with no `created` state, and a later authenticated app POST causes read-only reconciliation only, not another provider create. Preserve owner isolation; use disposable local PG plus deterministic fake transports. Negative control fails if resend is reintroduced.
+- Follow repo testing policy `docs/TESTING.md`, relevant `docs/SECURITY.md` and mandatory GitHub CI; record exact HEAD and CI run IDs. Revise §5.0 of provider acceptance docs to **implemented on Draft PR, still BLOCKED pending audit/merge/new owner permit**, never mark Gate B as passed. Keep Gate A/C untouched.
+
+### Prohibitions
+
+No schema/DB store changes, app user interface or API/auth contract, OpenAI retry change, extra dependencies, secret exposure, real PayPal/OpenAI requests or new provider sandbox create, Render deployment, video upload, Devpost submission, merge. Escalate genuine blockers rather than broadening scope.
+
+## Handoff: NMI-DEMO-R1-FIX-B1-IMPL
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-FIX-B1-paypal-401-no-resend.md` (section "Implementation record")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `fix/nmi-demo-r1-fix-b1-paypal-create-retry`, [Draft PR #19](https://github.com/mrdzyn/nudgemyinvoice/pull/19)
+- **Implementation commit:** `90aba259ef0f6643f428d3bd9b7bb2e1d16cd230` (Project Baseline `40813564538`, Stack CI `40813564390` success); a docs-only commit follows.
+- **State:** READY FOR INDEPENDENT AUDIT. No provider call, credential, budget reset, merge, deployment, Render provisioning, upload or Devpost submission. Gate B **BLOCKED** until audit PASS, owner-authorized squash merge, a documentation step citing the merged commit, and a NEW Request B. Authorization answers unchanged (all NOT AUTHORIZED).
+
+### Audit focus
+1. `packages/paypal/src/client.ts`: required `effect` parameter, resend only for `"read"`, create 401 -> unknown, other classifications unchanged, OAuth preflight unchanged, allow-list untouched.
+2. Service/store untouched; the 401 -> unknown path reaches `markUnknown` and later read-only reconciliation (see the PostgreSQL test), and `rejected` re-claim semantics are unchanged for other statuses.
+3. Tests count wire-level create POSTs through a deterministic fake transport; the negative controls (`negative-control.md`) genuinely fail; foreign-operator isolation incl. zero token requests.
+4. Docs do not change any authorization answer, mark Gate B passed or imply provider evidence.
+
+### Not verified
+Real PayPal behaviour (never called); a genuine PayPal 401 on create; the live wire-count evidence for Gate B (to be defined after merge).
+
+## Handoff: NMI-DEMO-R1-FIX-B1-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-FIX-B1-paypal-401-no-resend.md` (documentation remediation of review 5692710098, one MINOR)
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit of Draft PR #19, then the owner's merge decision
+- **Branch / PR:** `fix/nmi-demo-r1-fix-b1-paypal-create-retry`, [Draft PR #19](https://github.com/mrdzyn/nudgemyinvoice/pull/19)
+- **State:** READY FOR RE-AUDIT. Docs only: no executable code, test, schema or authorization-answer change; no provider call; no merge, deployment, budget reset or Devpost submission. Gate B BLOCKED.
+
+### What was corrected
+Stale current-tense statements ("the client can resend", "code not yet started", "implements the bounded FIX-B1" as the next action) in STATUS, acceptance doc 5.0, the owner-authorization form and checklist blocker 18 now separate (1) the **historical** resend defect on `main` before PR #19, (2) the **corrected implementation on Draft PR #19** (`90aba259ef0f6643f428d3bd9b7bb2e1d16cd230`, not audited, not merged) and (3) the Gate B unblock conditions: audit PASS, owner-authorized merge, a documentation step defining the live wire-count procedure, and a fresh written Request B. STATUS "Next action" now starts with the re-audit.
+
+### Re-audit focus
+No remaining statement presents the defect as the current state of the branch or the fix as unwritten/merged/audited; no authorization answer changed; the diff since `ad6de6c` is documentation only.
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -139,7 +139,7 @@ describe("OAuth", () => {
     expect(f.calls.filter((r) => r.url.endsWith("/v1/oauth2/token"))).toHaveLength(1);
   });
 
-  it("a 401 refreshes the token once and resends; a second 401 is a rejection", async () => {
+  it("a read-only GET with a 401 refreshes the token once and resends; a second 401 is unknown", async () => {
     let seen = 0;
     const f = fake({
       "POST /v1/oauth2/token": () => tokenOk,
@@ -147,15 +147,38 @@ describe("OAuth", () => {
     });
     expect(await client(f.transport).getInvoice("INV2-1")).toBeNull();
     expect(f.calls.filter((r) => r.url.endsWith("/token"))).toHaveLength(2);
+    expect(f.calls.filter((r) => r.method === "GET")).toHaveLength(2);
 
     const always401 = fake({
       "POST /v1/oauth2/token": () => tokenOk,
-      "POST /v2/invoicing/invoices": () => ok({}, 401),
+      "GET /v2/invoicing/invoices/INV2-1": () => ok({}, 401),
+    });
+    await expect(client(always401.transport).getInvoice("INV2-1")).rejects.toBeInstanceOf(
+      PayPalOutcomeUnknownError,
+    );
+    expect(always401.calls.filter((r) => r.method === "GET")).toHaveLength(2); // one refresh, one resend
+  });
+
+  it("the read-only invoice-number search (a POST with no effect) also refreshes once on a 401", async () => {
+    let seen = 0;
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        seen++ === 0 ? ok({}, 401) : ok({ total_items: 0, total_pages: 0, items: [] }),
+    });
+    expect(await client(f.transport).findInvoiceIdsByNumber("NMI-00000000000000000001")).toEqual(
+      [],
+    );
+    expect(f.calls.filter((r) => r.url.endsWith("/search-invoices"))).toHaveLength(2);
+    expect(f.calls.filter((r) => r.url.endsWith("/token"))).toHaveLength(2);
+    const twice = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () => ok({}, 401),
     });
     await expect(
-      client(always401.transport).createDraftInvoice({ body: reqBody, requestId: "r" }),
-    ).rejects.toMatchObject({ code: "http_401" });
-    expect(always401.calls.filter((r) => r.url.endsWith("/invoices"))).toHaveLength(2); // exactly one resend
+      client(twice.transport).findInvoiceIdsByNumber("NMI-00000000000000000001"),
+    ).rejects.toBeInstanceOf(PayPalOutcomeUnknownError);
+    expect(twice.calls.filter((r) => r.url.endsWith("/search-invoices"))).toHaveLength(2);
   });
 
   it("OAuth failure is a rejection and NO create request is ever sent", async () => {
@@ -605,5 +628,113 @@ describe("verifyRemoteDraft", () => {
       ok: false,
       code: "reference_differs",
     });
+  });
+});
+
+describe("a draft create is sent AT MOST ONCE per call (FIX-B1)", () => {
+  const creates = (calls: HttpRequest[]) =>
+    calls.filter((r) => r.method === "POST" && r.url === `${BASE}/v2/invoicing/invoices`);
+  const attempt = (create: () => HttpResponse | Promise<HttpResponse>) => {
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/invoices": create,
+    });
+    return {
+      f,
+      run: () => client(f.transport).createDraftInvoice({ body: reqBody, requestId: "r" }),
+    };
+  };
+
+  it("create 201 sends exactly one create POST", async () => {
+    const { f, run } = attempt(() => ok({ id: "INV2-NEW-1" }, 201));
+    await run();
+    expect(creates(f.calls)).toHaveLength(1);
+  });
+
+  it("create HTTP 401 sends exactly ONE create POST, never refreshes-and-resends, and is outcome UNKNOWN (not rejected)", async () => {
+    const { f, run } = attempt(() => ok({}, 401));
+    const err = await run().catch((e) => e);
+    expect(err).toBeInstanceOf(PayPalOutcomeUnknownError);
+    expect(err).not.toBeInstanceOf(PayPalRejectedError);
+    expect(err.code).toBe("http_401");
+    expect(creates(f.calls)).toHaveLength(1);
+    expect(f.calls.filter((r) => r.url.endsWith("/token"))).toHaveLength(1); // no refresh after the POST
+  });
+
+  it("a 401 on the create does not refresh even when a later read would", async () => {
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/invoices": () => ok({}, 401),
+    });
+    const c = client(f.transport);
+    await expect(c.createDraftInvoice({ body: reqBody, requestId: "r" })).rejects.toBeInstanceOf(
+      PayPalOutcomeUnknownError,
+    );
+    expect(creates(f.calls)).toHaveLength(1);
+  });
+
+  it.each([
+    ["timeout", () => Promise.reject(new TransportError("timeout"))],
+    ["network error", () => Promise.reject(new TransportError("network"))],
+    ["HTTP 500", () => ok({}, 500)],
+    ["HTTP 502", () => ok({}, 502)],
+    ["HTTP 503", () => ok({}, 503)],
+    ["201 with no id", () => ok({ nope: 1 }, 201)],
+    ["201 with a malformed body", () => ({ status: 201, headers: {}, body: "<html>" })],
+  ])(
+    "create %s: ONE create POST, outcome unknown, no automatic second POST",
+    async (_n, create) => {
+      const { f, run } = attempt(create as () => HttpResponse);
+      await expect(run()).rejects.toBeInstanceOf(PayPalOutcomeUnknownError);
+      expect(creates(f.calls)).toHaveLength(1);
+    },
+  );
+
+  it.each([400, 403, 404, 409, 422, 429])(
+    "create HTTP %i stays a definite rejection with ONE create POST",
+    async (status) => {
+      const { f, run } = attempt(() => ok({}, status));
+      await expect(run()).rejects.toBeInstanceOf(PayPalRejectedError);
+      expect(creates(f.calls)).toHaveLength(1);
+    },
+  );
+
+  it("OAuth failure before the create: ZERO create POSTs, a definite rejection", async () => {
+    for (const tokenRoute of [
+      () => ok({ error: "invalid_client" }, 401),
+      () => ok({}, 500),
+      () => ok({ x: 1 }),
+    ]) {
+      const f = fake({ "POST /v1/oauth2/token": tokenRoute });
+      await expect(
+        client(f.transport).createDraftInvoice({ body: reqBody, requestId: "r" }),
+      ).rejects.toBeInstanceOf(PayPalRejectedError);
+      expect(creates(f.calls)).toHaveLength(0);
+    }
+  });
+
+  it("a stale cached token is refreshed BEFORE the create (so an expired token never reaches the create)", async () => {
+    let t = 1_000;
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/invoices": () => ok({ id: "INV2-NEW-2" }, 201),
+      "GET /v2/invoicing/invoices/INV2-NEW-2": () => ok({}, 404),
+    });
+    const c = client(f.transport, () => t);
+    await c.getInvoice("INV2-NEW-2");
+    t += 4_000_000; // far beyond the 3,600 s lifetime
+    await c.createDraftInvoice({ body: reqBody, requestId: "r" });
+    expect(f.calls.filter((r) => r.url.endsWith("/token"))).toHaveLength(2);
+    expect(creates(f.calls)).toHaveLength(1);
+  });
+
+  it("a mutating call has no default that allows a resend: the call helper requires an explicit effect", async () => {
+    const src = (await import("node:fs")).readFileSync(
+      new URL("./client.ts", import.meta.url),
+      "utf8",
+    );
+    expect(src).not.toMatch(/retryOn401/);
+    expect(src).toMatch(/effect: "read" \| "create",/);
+    expect(src).toMatch(/effect === "read"/);
   });
 });

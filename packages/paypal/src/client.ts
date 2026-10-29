@@ -212,12 +212,18 @@ export class PayPalSandboxClient {
   }
 
   // ------------------------------------------------------------- plumbing
+  /**
+   * One authenticated request. `effect` has NO default on purpose: only a `"read"` request may be
+   * resent after an HTTP 401 (one token refresh, one resend). A `"create"` request is sent at most
+   * once per call, whatever the answer, so a mutating POST can never be resent by accident.
+   */
   private async call(
     method: "GET" | "POST",
     path: string,
     body: unknown,
+    effect: "read" | "create",
     extraHeaders: Record<string, string> = {},
-    retryOn401 = true,
+    alreadyRefreshed = false,
   ): Promise<HttpResponse> {
     const url = `${this.base}${path}`;
     guardRequest(method, url); // refuses anything outside the four allowed operations
@@ -234,11 +240,12 @@ export class PayPalSandboxClient {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       timeoutMs: this.opts.requestTimeoutMs ?? 15_000,
     });
-    if (res.status === 401 && retryOn401) {
-      // The token was refused, so the request was not processed: refresh once and resend.
+    if (res.status === 401 && effect === "read" && !alreadyRefreshed) {
+      // Read-only request (show, or the search which is a POST with no effect): the token was
+      // refused, so refresh once and resend. Never done for a create.
       this.token = null;
       await this.accessToken(true);
-      return this.call(method, path, body, extraHeaders, false);
+      return this.call(method, path, body, effect, extraHeaders, true);
     }
     return res;
   }
@@ -255,7 +262,7 @@ export class PayPalSandboxClient {
   }): Promise<{ paypalInvoiceId: string }> {
     let res;
     try {
-      res = await this.call("POST", "/v2/invoicing/invoices", input.body, {
+      res = await this.call("POST", "/v2/invoicing/invoices", input.body, "create", {
         "paypal-request-id": input.requestId, // sent for retries; NOT relied on (documented only for other endpoints)
         prefer: "return=representation",
       });
@@ -268,7 +275,11 @@ export class PayPalSandboxClient {
       if (!id) throw new PayPalOutcomeUnknownError("response_unparseable");
       return { paypalInvoiceId: id };
     }
-    if ([400, 401, 403, 404, 409, 422, 429].includes(res.status)) {
+    // A 401 after the create POST was sent is NOT treated as "definitely not created": it is never
+    // resent, and it is recorded as unknown so that every later request reconciles read-only
+    // instead of re-entering the create path (a rejected operation may be claimed for create again).
+    if (res.status === 401) throw new PayPalOutcomeUnknownError("http_401");
+    if ([400, 403, 404, 409, 422, 429].includes(res.status)) {
       throw new PayPalRejectedError(`http_${res.status}${issueToken(res.body)}`);
     }
     throw new PayPalOutcomeUnknownError(`http_${res.status}`);
@@ -279,7 +290,7 @@ export class PayPalSandboxClient {
     if (!REMOTE_ID.test(paypalInvoiceId)) throw new PayPalRejectedError("invalid_invoice_id");
     let res;
     try {
-      res = await this.call("GET", `/v2/invoicing/invoices/${paypalInvoiceId}`, undefined);
+      res = await this.call("GET", `/v2/invoicing/invoices/${paypalInvoiceId}`, undefined, "read");
     } catch (e) {
       throw new PayPalOutcomeUnknownError(e instanceof TransportError ? e.kind : "request_failed");
     }
@@ -294,12 +305,17 @@ export class PayPalSandboxClient {
   async findInvoiceIdsByNumber(invoiceNumber: string): Promise<string[]> {
     let res;
     try {
-      res = await this.call("POST", "/v2/invoicing/search-invoices", {
-        invoice_number: invoiceNumber,
-        page: 1,
-        page_size: 20,
-        total_required: true,
-      });
+      res = await this.call(
+        "POST",
+        "/v2/invoicing/search-invoices",
+        {
+          invoice_number: invoiceNumber,
+          page: 1,
+          page_size: 20,
+          total_required: true,
+        },
+        "read",
+      );
     } catch (e) {
       throw new PayPalOutcomeUnknownError(e instanceof TransportError ? e.kind : "request_failed");
     }
