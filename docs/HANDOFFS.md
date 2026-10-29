@@ -1310,4 +1310,31 @@ Everything provider-side: model entitlement/pricing on the owner's account, any 
 ### Not verified
 Any provider-side behaviour; the PayPal fix itself (not written); the preservation plan (never executed); real-shell behaviour beyond the stubbed bash/zsh runs on macOS.
 
+## Handoff: NMI-DEMO-R1-FIX-B1-START
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-FIX-B1-paypal-401-no-resend.md`
+- **From:** GPT-6 orchestrator, following owner's authorization to start the next bounded task
+- **To:** coding agent (Claude/Codex), then independent GPT-6 exact-head audit
+- **Base main:** `85470d9a5fef15b260f9e1c52673a7e2c7d03824` (owner squash-merged NMI-DEMO-R1 PR #18)
+- **Branch / PR:** `fix/nmi-demo-r1-fix-b1-paypal-create-retry` / existing Draft PR
+- **State:** READY FOR IMPLEMENTATION. Setup is task/STATUS/handoff only; no code/test changes yet, no live provider calls, no Sandbox-budget reset, no merge, no Render provisioning, deployment, video upload or Devpost submission. Gate B remains **BLOCKED**.
+
+### Immediate objective
+
+In `packages/paypal/src/client.ts` the helper retries any 401, including mutating `POST /v2/invoicing/invoices`. The existing `client.test.ts` expects two create POSTs. **Correct this** so one create invocation emits at most one create POST. Preserve single refresh-and-resend for safe read-only show and search. Preflight OAuth must succeed before create. Counter + negative-control tests must assert actual fake transport egress, not merely browser POST count or a durable claim counter.
+
+### Additional fail-closed service boundary
+
+In `apps/api/src/services/paypal-draft-service.ts`, `PayPalRejectedError` is stored as `rejected`; `packages/db/src/paypal-operation-store.ts` currently permits `rejected` to be claimed later in create mode. After a **create POST has actually been attempted and received 401**, blindly marking it retryable is inconsistent with one-provider-request-per-operation. Prefer a conservative `PayPalOutcomeUnknownError("http_401")` from the adapter, so the service persists `unknown` and later requests **reconcile read-only** (no additional create) without changing the DB schema. A pre-create OAuth rejection remains safely retryable and counts **zero** create POSTs. Preserve prior definite status handling unless the task requires escalation.
+
+### Evidence
+
+- Targeted `packages/paypal` tests: first create 401 = **one** wire POST, no create resend; GET show and logical read-only search keep safe token refresh; timeout, 5xx, invalid response and OAuth failure fail closed, all with counts.
+- Focused service / PG test: one HTTP 401 after sent create leaves attempts=1 with no `created` state, and a later authenticated app POST causes read-only reconciliation only, not another provider create. Preserve owner isolation; use disposable local PG plus deterministic fake transports. Negative control fails if resend is reintroduced.
+- Follow repo testing policy `docs/TESTING.md`, relevant `docs/SECURITY.md` and mandatory GitHub CI; record exact HEAD and CI run IDs. Revise §5.0 of provider acceptance docs to **implemented on Draft PR, still BLOCKED pending audit/merge/new owner permit**, never mark Gate B as passed. Keep Gate A/C untouched.
+
+### Prohibitions
+
+No schema/DB store changes, app user interface or API/auth contract, OpenAI retry change, extra dependencies, secret exposure, real PayPal/OpenAI requests or new provider sandbox create, Render deployment, video upload, Devpost submission, merge. Escalate genuine blockers rather than broadening scope.
+
 <!-- HANDOFF_ENTRIES_END -->
