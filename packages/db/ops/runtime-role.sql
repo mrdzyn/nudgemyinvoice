@@ -9,7 +9,7 @@
 -- then set its password interactively (psql hashes it client-side; nothing is logged or kept in shell
 -- history), and store the same value only in the host secret store:
 --
---   psql "$OWNER_DATABASE_URL"   -- then, at the prompt:  \password nmi_runtime
+--   psql   -- (owner session, see runbook §5 step 2)  then, at the prompt:  \password nmi_runtime
 --
 -- NEVER put a password in this file, in psql -c / -v arguments, or in a committed connection string.
 

@@ -1471,4 +1471,15 @@ Targeted local-only tests, CI and documented negative controls; keep final statu
 - **NOT TESTED / residual:** the local PostgreSQL uses trust authentication, so locally the role password is not checked at connect time; the test proves the role identity (`session_user`) and privileges, and hosted CI's password-authenticated service container is the evidence for password login. Real Render behavior remains untested as before.
 - **Gates:** merge, Render provisioning, secrets and sharing each need separate owner approval. Gates A/B/C NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P1-FIX2
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head re-audit, then owner
+- **Branch / PR:** `feat/nmi-render-p1-secure-staging`, Draft PR #21 (no new branch/PR). Audited start HEAD `06bcde291024a0cc57d5225eeacfc4d9e0371c59`; independent review `5697068323`.
+- **Scope:** documentation only. MAJOR-3: `docs/NMI-RENDER-P1-RUNBOOK.md` §5 no longer uses a password-bearing `OWNER_DATABASE_URL`; owner access uses non-secret `PG*` parameters and a temporary 0600 `PGPASSFILE` filled from a hidden `read -s` prompt via shell builtins, with trap cleanup; operator provisioning uses a passwordless `DATABASE_URL` plus that file and a hidden-prompt operator password in a subshell. MINOR-1: `docs/STATUS.md` kickoff-only wording replaced (implementation complete, awaiting audit and owner merge, no Render resource). `runtime-role.sql` comment only.
+- **Not changed:** production code, tests, schema, role grants, UI, providers.
+- **Evidence:** snippet escape/permission check run locally (mode 600, `:`/`\` escaped); `pnpm validate` and hosted CI run IDs in the PR body.
+- **NOT TESTED:** the full `provision-operator` CLI run via `PGPASSFILE` (only the driver path was exercised); pgpass support in `pg` is deprecated upstream (a DeprecationWarning is printed; runbook says to stop, not fall back to a URL password, if it fails); real Render behavior and external TLS.
+- **Gates:** merge, Render provisioning, secrets, sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->

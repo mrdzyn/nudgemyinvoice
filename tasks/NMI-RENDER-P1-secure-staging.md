@@ -70,3 +70,7 @@ Acceptance A–F: tests `apps/api/src/hosting.test.ts`, `hosted-staging.pg.test.
 - MAJOR-1: `hosted-staging.pg.test.ts` now connects its application pool as a disposable `LOGIN` role (ephemeral in-memory password), not as the owner with `-c role=`; it asserts `session_user`/`current_user`, that `SET ROLE NONE` and `SET [SESSION AUTHORIZATION|ROLE]` cannot recover owner privileges, the privilege denials (`42501`), audit INSERT success, and drops the role afterwards. Local trust-auth caveat: password verification itself is evidenced by hosted CI, not the local server.
 - MAJOR-2: runbook §5 step 3 and `runtime-role.sql` create the role without a password and set it with interactive `\password`; no secret in any command argument or file.
 - Unchanged: production code, UI, search contract, providers, schema.
+
+### Remediation FIX2 (review 5697068323, documentation only)
+- MAJOR-3: runbook §5 owner access via non-secret `PG*` parameters + temporary protected `PGPASSFILE`; provisioning via passwordless `DATABASE_URL`; cleanup steps; fail closed if it does not authenticate.
+- MINOR-1: STATUS kickoff-only wording corrected.

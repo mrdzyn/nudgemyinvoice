@@ -54,36 +54,57 @@
 | `WEB_DIST_DIR` | absent (default `apps/web/dist`) | |
 | `NMI_*` simulated-evaluation switches | **never set** | test-only launcher is not shipped |
 
-The owner role's connection string (migrations, provisioning) is used only from the operator's machine/shell for §5 and is **never** stored on the web service.
+The owner role's credential (migrations, provisioning) is used only from the operator's machine/shell for §5 and is **never** stored on the web service.
 
 ## 5. PostgreSQL: migration and least-privilege plan (owner-run, manual)
 
 No migration runs on app start. Migrations are forward-only plain SQL in journal order (`packages/db/migrations/meta/_journal.json`: `0000`–`0006`).
 
 1. Create the Render PostgreSQL instance (region = web service region; paid plan covering 2026-12-15; confirm backup/retention). Record plan/price privately.
-2. From the operator's machine, with the **owner** connection string in the shell only (use the external URL with `sslmode=require`; add the operator's IP to the allow list only for the duration):
+2. **Owner session setup (once per sitting, bash on the operator's machine).** The owner credential never appears in a command argument, a URL, shell history, a repository file or a log. Use only non-secret connection parameters (copy host, port, database and user from the Render dashboard's *external* connection details; they are not the password) and a temporary protected password file that `psql` and the Node `pg` driver both read through `PGPASSFILE`. Add the operator's IP to the allow list only for the duration.
+   ```sh
+   export PGHOST='<external host>' PGPORT='5432' PGDATABASE='<database>' PGUSER='<owner user>' PGSSLMODE=require
+   umask 077
+   export PGPASSFILE="$(mktemp)"
+   trap 'rm -f "$PGPASSFILE"; unset PGPASSFILE' EXIT
+   IFS= read -rsp 'Owner DB password (input hidden): ' OWNER_PW; echo
+   OWNER_PW=${OWNER_PW//\\/\\\\}; OWNER_PW=${OWNER_PW//:/\\:}
+   printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$OWNER_PW" > "$PGPASSFILE"
+   unset OWNER_PW
+   ```
+   `read -s` and `printf` are shell builtins, so the value never reaches a process argument list; the file is mode 0600 and is deleted when the shell exits (also run `rm -f "$PGPASSFILE"` explicitly when finished, and do not copy the file). Use the Render-provided value only; never paste it into a chat, ticket or script. If the prompt or file step fails, **stop** (fail closed): do not fall back to a URL that embeds the password. Every `psql` below then needs no password argument; add `-v ON_ERROR_STOP=1` so a failure aborts.
+   Apply the migrations (take a backup/snapshot **before** this step):
    ```sh
    for f in 0000_young_mister_fear 0001_complete_spot 0002_light_proteus 0003_audit_log_immutable \
             0004_zippy_namorita 0005_glorious_giant_girl 0006_known_colleen_wing; do
-     psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -1 -f "packages/db/migrations/$f.sql" || break
+     psql -v ON_ERROR_STOP=1 -1 -f "packages/db/migrations/$f.sql" || break
    done
    ```
-   (`-1` = one transaction per file; stop on the first error. If one fails midway the earlier files remain applied — fix and continue from that file; never re-run an applied file. Take a backup/snapshot **before** step 2.) Drizzle files contain `--> statement-breakpoint` comments; `psql` ignores them as comments.
-3. Create the runtime role. The password is **never** written in a command line, SQL file, shell history, `psql -c` argument or process list:
+   (`-1` = one transaction per file; stop on the first error. If one fails midway the earlier files remain applied — fix and continue from that file; never re-run an applied file. Drizzle files contain `--> statement-breakpoint` comments; `psql` ignores them as comments.)
+3. Create the runtime role. The runtime password is **never** written in a command line, SQL file, shell history, `psql -c` argument or process list:
    ```sh
-   psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -c \
+   psql -v ON_ERROR_STOP=1 -c \
      "CREATE ROLE nmi_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION"
-   psql "$OWNER_DATABASE_URL"
+   psql
    ```
-   In the interactive session run `\password nmi_runtime` and type a long random password at the hidden prompt twice (generate it with a password manager; `psql` hashes it client-side with SCRAM before sending, so the cleartext is never sent in a statement, logged by the server, or kept in history). Quit, paste the same value once into Render's secret store as part of the runtime `DATABASE_URL`, then run the grants:
+   In the interactive session run `\password nmi_runtime` and type a long random password at the hidden prompt twice (generate it with a password manager; `psql` hashes it client-side with SCRAM before sending, so the cleartext is never sent in a statement, logged by the server, or kept in history). Quit, paste the same value once into Render's secret store as part of the runtime `DATABASE_URL` (entered in the dashboard, not in a shell), then run the grants:
    ```sh
-   psql "$OWNER_DATABASE_URL" -v ON_ERROR_STOP=1 -f packages/db/ops/runtime-role.sql
+   psql -v ON_ERROR_STOP=1 -f packages/db/ops/runtime-role.sql
    ```
-   Until the password is set the role cannot log in over password authentication. Do not use `ALTER ROLE … PASSWORD '…'`, `CREATE ROLE … PASSWORD '…'` or `-c`/`-v` with the secret, and do not echo the connection string.
+   Until the password is set the role cannot log in over password authentication. Do not use `ALTER ROLE … PASSWORD '…'`, `CREATE ROLE … PASSWORD '…'` or `-c`/`-v` with a secret, and do not echo any connection string.
    If Render does not let the owner create roles, **stop**: do not run the app as the owner; escalate to the owner (the least-privilege requirement is a gate, not a nicety).
-4. Provision the single operator **as the owner**, once, from the operator's machine:
-   `DATABASE_URL=… NMI_OPERATOR_USERNAME=… NMI_OPERATOR_PASSWORD=… pnpm --filter @nmi/api provision-operator`
-   (password generated locally; never printed or committed).
+4. Provision the single operator **as the owner**, once, from the same shell (so `PGPASSFILE` is still set). The CLI requires a `postgres://` `DATABASE_URL`; give it one **without a password** and the `pg` driver takes the password from `PGPASSFILE`. The operator password is read with a hidden prompt into an environment variable for this one command only (environment variables are not command-line arguments); it is never echoed, printed or committed:
+   ```sh
+   (
+     IFS= read -rsp 'Operator password (input hidden): ' NMI_OPERATOR_PASSWORD; echo
+     export NMI_OPERATOR_PASSWORD
+     DATABASE_URL="postgres://$PGUSER@$PGHOST:$PGPORT/$PGDATABASE?sslmode=require" \
+     NMI_OPERATOR_USERNAME='<operator name>' \
+       pnpm --filter @nmi/api provision-operator
+   )
+   ```
+   The subshell discards the password when it ends. The `pg` driver's `PGPASSFILE` lookup is deprecated upstream but works in the pinned version; if it does not authenticate (the CLI prints only `Provisioning failed.`), **stop** — do not substitute a password-bearing URL — and have the audit/owner choose a reviewed alternative. This command is **not** run by this branch's tests against Render.
+   Cleanup now: `rm -f "$PGPASSFILE"; unset PGPASSFILE PGHOST PGPORT PGDATABASE PGUSER PGSSLMODE`, remove the allow-listed IP, and close the shell.
 5. Verify as `nmi_runtime`: `SELECT` works on `invoices`; `CREATE TABLE`, `DELETE FROM invoices`, `UPDATE audit_log`, `TRUNCATE` fail with `42501` (the same denials `hosted-staging.pg.test.ts` asserts offline).
 6. Use TLS for any connection leaving Render's private network. The app connects over the internal URL in the same region.
 
