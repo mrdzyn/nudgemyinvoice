@@ -1430,4 +1430,21 @@ Real PayPal behaviour, other platforms, independent reproduction.
 ### Re-audit focus
 Runner T2 makes no probe outside the sandbox; S5 is the only unsandboxed run (one connect to non-routable `192.0.2.1`); Request B / acceptance banner no longer say "NOT OFFLINE VALIDATED / DRAFT" and state the true status; re-run `./run-all.sh` (8 assertions) and `./runner-selftest.sh` (11/11) from the extracted files.
 
+## Handoff: NMI-RENDER-P1-START
+
+- **From:** GPT-6 orchestrator after owner squash merge of PR #20
+- **To:** Coding agent for bounded implementation of `tasks/NMI-RENDER-P1-secure-staging.md`, then independent GPT-6 exact-head audit
+- **Branch:** `feat/nmi-render-p1-secure-staging`; continue on **existing Draft PR**, no second branch/PR
+- **Base main:** `451abc292737775f0c58458520b8f5bf004cd474` (PR #20 merge)
+- **Phase:** NMI-RENDER-P1 — OFFLINE-ONLY HOSTING READINESS, not Render deployment
+- **UI design gate:** Not applicable; no material visual/UI behavior changes are authorized
+
+### Immediate implementation
+
+Read AGENTS.md, STATUS, project profile, the P1 task, and only relevant source/tests. Implement a single-origin Fastify+React production build, explicit production Render host/PORT binding while retaining local-loopback default, production HTTPS session/origin/CSRF/proxy checks, and a provider-disabled staging configuration with exact docs and targeted tests. **Privacy is release-critical:** the existing GET invoice search with customer text in `q` risks host access-log disclosure; prove a safe transport or leave deployment BLOCKED and escalate. Do not silently disable search, expose real customer data or weaken logging. Prepare a least-privilege PostgreSQL migration plan and non-provisioning Render operator runbook. No automatically enabled Blueprint previews or push-to-deploy.
+
+### Verification and prohibitions
+
+Targeted local-only tests, CI and documented negative controls; keep final status honest about any untested proxy, PostgreSQL, browser or platform behavior. Do not connect/provision Render, create billable databases, deploy, edit/pay provider credentials, authorize PayPal Gate B, merge, upload a video or submit to Devpost. All gates A/B/C remain NOT AUTHORIZED. On completion append `NMI-RENDER-P1-IMPL` handoff and request independent exact-head re-audit.
+
 <!-- HANDOFF_ENTRIES_END -->
