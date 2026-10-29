@@ -1337,4 +1337,22 @@ In `apps/api/src/services/paypal-draft-service.ts`, `PayPalRejectedError` is sto
 
 No schema/DB store changes, app user interface or API/auth contract, OpenAI retry change, extra dependencies, secret exposure, real PayPal/OpenAI requests or new provider sandbox create, Render deployment, video upload, Devpost submission, merge. Escalate genuine blockers rather than broadening scope.
 
+## Handoff: NMI-DEMO-R1-FIX-B1-IMPL
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-FIX-B1-paypal-401-no-resend.md` (section "Implementation record")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `fix/nmi-demo-r1-fix-b1-paypal-create-retry`, [Draft PR #19](https://github.com/mrdzyn/nudgemyinvoice/pull/19)
+- **Implementation commit:** `90aba259ef0f6643f428d3bd9b7bb2e1d16cd230` (Project Baseline `40813564538`, Stack CI `40813564390` success); a docs-only commit follows.
+- **State:** READY FOR INDEPENDENT AUDIT. No provider call, credential, budget reset, merge, deployment, Render provisioning, upload or Devpost submission. Gate B **BLOCKED** until audit PASS, owner-authorized squash merge, a documentation step citing the merged commit, and a NEW Request B. Authorization answers unchanged (all NOT AUTHORIZED).
+
+### Audit focus
+1. `packages/paypal/src/client.ts`: required `effect` parameter, resend only for `"read"`, create 401 -> unknown, other classifications unchanged, OAuth preflight unchanged, allow-list untouched.
+2. Service/store untouched; the 401 -> unknown path reaches `markUnknown` and later read-only reconciliation (see the PostgreSQL test), and `rejected` re-claim semantics are unchanged for other statuses.
+3. Tests count wire-level create POSTs through a deterministic fake transport; the negative controls (`negative-control.md`) genuinely fail; foreign-operator isolation incl. zero token requests.
+4. Docs do not change any authorization answer, mark Gate B passed or imply provider evidence.
+
+### Not verified
+Real PayPal behaviour (never called); a genuine PayPal 401 on create; the live wire-count evidence for Gate B (to be defined after merge).
+
 <!-- HANDOFF_ENTRIES_END -->

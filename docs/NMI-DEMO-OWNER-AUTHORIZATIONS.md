@@ -27,7 +27,7 @@ Agent-visible facts: `gpt-6-luna` price USD 0.10 / 1M input and 0.50 / 1M output
 
 ## Request B — PayPal Sandbox, exactly one new DRAFT — **BLOCKED, do not answer YES**
 
-**Request ID:** `R1-B` · **Block:** `packages/paypal/src/client.ts` resends a draft-create `POST` after HTTP 401 and `client.test.ts` asserts two create POSTs, so "exactly one create request" cannot be guaranteed. **Unblock conditions** (acceptance doc 5.0): a separate fix task that never resends a create after 401, keeps the safe refresh for read-only calls, fails closed without recreating and tests that one 401 yields exactly one create POST; independent exact-head audit; merged to `main`; this form updated to cite the fix commit and to count **wire** requests. Only then may the owner be asked again.
+**Request ID:** `R1-B` · **Fix status (information only, no answer given):** implemented on Draft PR #19 (`90aba259ef0f6643f428d3bd9b7bb2e1d16cd230`), not audited, not merged. **Block:** `packages/paypal/src/client.ts` resends a draft-create `POST` after HTTP 401 and `client.test.ts` asserts two create POSTs, so "exactly one create request" cannot be guaranteed. **Unblock conditions** (acceptance doc 5.0): a separate fix task that never resends a create after 401, keeps the safe refresh for read-only calls, fails closed without recreating and tests that one 401 yields exactly one create POST; independent exact-head audit; merged to `main`; this form updated to cite the fix commit and to count **wire** requests. Only then may the owner be asked again.
 
 The form below is the **draft for the future request** (not answerable now):
 
