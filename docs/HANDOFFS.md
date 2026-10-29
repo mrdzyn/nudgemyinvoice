@@ -1253,4 +1253,25 @@ Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), rea
 ### Not verified
 Screen readers, real touch, Safari/Firefox, real 400% zoom, keyboard column resizing, hosted HTTPS/proxy, any real provider; bundle size unmitigated.
 
+## Handoff: NMI-DEMO-R1-START
+
+- **Task:** `tasks/NMI-DEMO-R1-provider-acceptance.md`
+- **From:** GPT-6 orchestration following owner squash merge of AG Grid Community PR #17
+- **To:** Claude coding agent for docs-only acceptance readiness, then GPT-6 exact-head audit and owner merge decision
+- **Base main:** `2d5a7034fe7b78d927d19d534bf9958d91b3b7fd`
+- **Branch / PR:** `docs/nmi-demo-r1-provider-acceptance` / same Draft PR
+- **State:** READY FOR DOCS-ONLY IMPLEMENTATION. Absolutely **NO real OpenAI/PayPal provider calls**, no Sandbox create, no budget reset, no production/runtime code change, no deployment/Devpost/video publication.
+
+### Goal and boundaries
+
+Read `AGENTS.md`, `docs/STATUS.md`, `config/project-profile.json`, `tasks/NMI-DEMO-R1-provider-acceptance.md` and relevant R0 operator runbook/provider acceptance/checklist/Devpost docs. **Do not load full handoff history**. Reconcile AG Grid PR #17 as passed/merged. Prepare operator-ready, secret-safe checklists for **Gate A** (OpenAI; propose `gpt-6-luna`, but owner confirms model, entitlement and cost) and **Gate B** (exactly one new PayPal Sandbox USD 540.00 DRAFT, newly approved separately), plus two distinct approval-request texts, stop conditions, sanitized evidence fields and a limited offline preflight/CI plan.
+
+Leave `PAYPAL_DRAFTS_ENABLED=false` and existing one-create budget 1/1 exhausted. Every real-provider test is **PENDING** and needs explicit future owner approval after this preparation is independently audited and merged. Gate C combined browser test requires its own authorization. All provider credentials are private; never print or commit them. Never present fake/test-only evidence as real-provider acceptance.
+
+Keep the readiness PR **Draft**, run applicable local doc checks and mandatory hosted CI, report exact HEAD and checks for independent GPT-6 audit. Never merge/deploy/publish/submit or contact providers.
+
+### Sources
+
+Official hackathon rules: https://paypalaihackathon.devpost.com/rules (deadline 2026-11-12 12:00 PST, 2026-11-13 04:00 PHT). Official currently documented OpenAI small-model candidate: https://developers.openai.com/api/docs/models/gpt-6-luna and pricing https://developers.openai.com/api/docs/pricing. Recheck model/account availability before any separately approved paid call.
+
 <!-- HANDOFF_ENTRIES_END -->
