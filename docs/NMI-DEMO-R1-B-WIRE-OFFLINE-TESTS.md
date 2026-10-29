@@ -9,12 +9,12 @@ The first version of `run-all.sh` printed diagnostic summaries and could finish 
 - `set -euo pipefail`, an `EXIT` trap that prints `RUNNER FAILED (exit N) at step: ...` on any failure, and **no `${VAR:?}` guards**: the self-test found that macOS `bash` 3.2 can end a script with status **0** after a `${VAR:?}` expansion error, so required variables are checked explicitly with `die`.
 - **T0 preflight:** the observer file must hash to `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e`; the repository `tsx` must exist; `sandbox-exec` and `openssl` must exist; the pre-fix fixture (`NMI_OLD_PAYPAL_SRC`) must exist, **must contain** the `retryOn401` marker and **must differ** from the repository client, which must contain the FIX-B1 `effect === "read"` guard and no `retryOn401`.
 - **T1:** `offline-tests.mjs` must exit 0 **and** report exactly `20/20 passed`.
-- **T2:** `sandbox-check.mjs` run inside and outside the sandbox: inside, a connection to the non-routable documentation address `192.0.2.1` must fail with **`EPERM`** (the sandbox's own denial code) while loopback connects; outside, the same probe must **not** be `EPERM`/`CONNECTED` (it times out). A generic fetch error is not accepted.
+- **T2:** `sandbox-check.mjs` is run **only inside the sandbox** (no probe is ever made outside it): loopback must connect and a connection to the non-routable documentation address `192.0.2.1` must fail with **`EPERM`** (the sandbox's own denial code, refused before any packet exists). A generic fetch error is not accepted.
 - **T3, T3b, T4, T5:** `assert-wire.mjs` parses the observer's **summary JSON files** (not stderr) and requires the exact counts object (all seven fields), `complete=true`, `signal=null`, the expected `stop`, exactly one summary for the test entry, zero events in every other process, the presence/absence of the `create>1` STOP line, no secret-like text, plus an **independent witness**: what the fake server itself saw (T3: exactly `POST /v2/invoicing/invoices host=api-m.sandbox.paypal.com`; T4/T5: its own counts of tokens, creates, gets, searches and other requests) and the client's own outcome (e.g. `PayPalOutcomeUnknownError:http_401`). T3 proves **one** send whose origin matched the real Sandbox origin (create=1, foreign=0). T4 proves **create401 = exactly one outbound create** (observer 1, server 1) with `unexpected=0`. T5 requires the pre-fix fixture and **requires** `create=2`, `oauth=2`, `stop=true`, the STOP line and two creates at the server witness; with the fixture missing or not pre-fix, the runner fails at T0.
 - **T6:** `server-test.mjs` (process attachment, listening-PID identification, SDK-resend wire count, `SIGUSR2` snapshot, shutdown summaries for three shutdown shapes, secret redaction, hazard documentation) must exit 0, end with `N/N passed` (equal numbers, at least 12) and print no `FAIL`. `server-test.mjs` now also kills the server process group and stops PostgreSQL on any exit path.
 - **Assertion-count guard:** exactly **8** `ASSERT OK` lines (T2, T3, T3b, four T4, T5) must have been produced, so a stubbed or skipped assertion helper cannot pass.
 
-`runner-selftest.sh` is the **failure-injection test**: it copies the files, injects one fault per case, runs the copy of `run-all.sh`, and requires a **nonzero exit, the `RUNNER FAILED` marker, the expected failure message and no `ALL DONE`**; each mutation is checked to have actually changed its file. Cases: S1 fixture variable missing, S2 "pre-fix" fixture that is really the fixed client, S3 tampered observer (hash), S4 observer that double-counts creates with the hash check bypassed (the assertions must catch it), S5 a `sandbox-exec` shim that does not deny the network, S6 a fixture that answers `create401` with 201, S7 `tsx` missing, S8 the actual-server test failing, S9 the assertion helper stubbed out, S10 the T5 expectation weakened to one create, S11 the fixture directory missing.
+`runner-selftest.sh` is the **failure-injection test**: it copies the files, injects one fault per case, runs the copy of `run-all.sh`, and requires a **nonzero exit, the `RUNNER FAILED` marker, the expected failure message and no `ALL DONE`**; each mutation is checked to have actually changed its file. Cases: S1 fixture variable missing, S2 "pre-fix" fixture that is really the fixed client, S3 tampered observer (hash), S4 observer that double-counts creates with the hash check bypassed (the assertions must catch it), S5 a `sandbox-exec` shim that does not deny the network (the only run outside the sandbox: one connect to the reserved, non-routable `192.0.2.1`, in the self-test only), S6 a fixture that answers `create401` with 201, S7 `tsx` missing, S8 the actual-server test failing, S9 the assertion helper stubbed out, S10 the T5 expectation weakened to one create, S11 the fixture directory missing.
 
 ## How to reproduce
 
@@ -40,7 +40,7 @@ Needs Node 24, the repository's `tsx` and dependencies (`$NMI_REPO/apps/api/node
 ```
 T0 preflight                    observer hash matches; tsx present; pre-fix fixture present, has retryOn401, differs from the fixed client
 T1 offline-tests.mjs            20/20 passed
-T2 ASSERT OK                    external connect = EPERM inside the sandbox (loopback CONNECTED), TIMEOUT outside it
+T2 ASSERT OK                    external connect = EPERM inside the sandbox, loopback CONNECTED (no probe outside the sandbox)
 T3 ASSERT OK                    unmodified observer: events=1 create=1 foreign=0 stop=false ; server saw exactly [POST /v2/invoicing/invoices host=api-m.sandbox.paypal.com]
 T3b ASSERT OK                   TLS server offering h2+http/1.1: server saw HTTP/1.1 ; events=1 create=1
 T4-create201 ASSERT OK          events=2 create=1 oauth=1 ; server tokens=1 creates=1 ; outcome none
@@ -174,7 +174,9 @@ process.exit(bad ? 1 : 0);
 
 <!-- prettier-ignore -->
 ```js
-// Proves the network sandbox DENIES non-loopback egress (by its own error code), not merely "some fetch error".
+// Proves the network sandbox DENIES non-loopback egress by its own error code (EPERM), not merely "some error".
+// run-all.sh runs this ONLY inside the sandbox, where the connect to the reserved documentation address
+// 192.0.2.1 (RFC 5737, non-routable) is refused by the sandbox before any packet exists.
 import { connect, createServer } from "node:net";
 const probe = (host, port) => new Promise((res) => {
   const s = connect({ host, port, timeout: 1500 });
@@ -442,16 +444,13 @@ cat "$WORK/t1.txt"
 grep -Eq "^20/20 passed$" "$WORK/t1.txt" || die "T1 did not report 20/20 passed"
 
 STEP="T2 sandbox denial"
-echo "### T2 the sandbox denies non-loopback egress by its own error code (EPERM), loopback still works, and outside the sandbox the same probe is NOT denied"
+echo "### T2 INSIDE the sandbox a non-loopback connect is refused with the sandbox's own EPERM while loopback connects (no probe is ever made outside the sandbox)"
 INSIDE="$(sandbox-exec -p "$SB" node sandbox-check.mjs)"
-OUTSIDE="$(node sandbox-check.mjs)"
 echo "inside:  $INSIDE"
-echo "outside: $OUTSIDE"
-IN="$INSIDE" OUT="$OUTSIDE" node -e '
-const i = JSON.parse(process.env.IN), o = JSON.parse(process.env.OUT);
-const ok = i.loopback === "CONNECTED" && i.external === "EPERM" && o.loopback === "CONNECTED" && o.external !== "EPERM" && o.external !== "CONNECTED";
-if (!ok) { console.error("sandbox denial NOT proven: " + JSON.stringify({ i, o })); process.exit(1); }
-console.log("ASSERT OK  T2: external connect is EPERM inside the sandbox and " + o.external + " outside it");' | tee -a "$WORK/asserts.log"
+IN="$INSIDE" node -e '
+const i = JSON.parse(process.env.IN);
+if (!(i.loopback === "CONNECTED" && i.external === "EPERM")) { console.error("sandbox denial NOT proven: " + JSON.stringify(i)); process.exit(1); }
+console.log("ASSERT OK  T2: external connect is EPERM inside the sandbox and loopback connects");' | tee -a "$WORK/asserts.log"
 
 STEP="T3 unmodified observer origin match"
 echo "### T3 UNMODIFIED observer, default-port https origin through a fail-closed loopback redirect"
@@ -541,7 +540,7 @@ d="$(mk s4)"; perl -pi -e 's/c\[kind\] \+= 1;/c[kind] += (kind === "create" ? 2 
 NEW="$(shasum -a 256 "$d/nmi-wire-observer.cjs" | cut -d' ' -f1)"; perl -pi -e "s/004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e/$NEW/" "$d/run-all.sh"
 inject "S4 observer double-counts creates (hash bypassed so the ASSERTIONS must catch it)" "FAIL\|ASSERT FAILED\|did not report" "$d" "${BASE[@]}"
 d="$(mk s5)"; mkdir "$d/bin"; printf '#!/bin/bash\nshift 2\nexec "$@"\n' > "$d/bin/sandbox-exec"; chmod +x "$d/bin/sandbox-exec"
-inject "S5 sandbox that does not deny the network (T2 must not accept it)" "sandbox denial NOT proven" "$d" PATH="$d/bin:$PATH" "${BASE[@]}"
+inject "S5 sandbox that does not deny the network (the ONLY run outside the sandbox: one connect to the non-routable 192.0.2.1; T2 must reject it)" "sandbox denial NOT proven" "$d" PATH="$d/bin:$PATH" "${BASE[@]}"
 d="$(mk s6)"; perl -pi -e 's/mode === "create401" \? send\(401, \{\}\)/mode === "create401" ? send(201, { id: "INV2-FAKE-1" })/' "$d/client-wire-test.mts"; changed "$d" client-wire-test.mts
 inject "S6 fixture serves 201 instead of 401 for create401 (T4 outcome assertion)" "ASSERT FAILED" "$d" "${BASE[@]}"
 d="$(mk s7)"; inject "S7 tsx missing" "tsx not found" "$d" NMI_REPO="$ROOT" NMI_OLD_PAYPAL_SRC="$OLD"

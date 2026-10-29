@@ -1420,4 +1420,14 @@ Anything against the real PayPal Sandbox; Linux/Windows; other Node majors; inde
 ### Not verified
 Real PayPal behaviour, other platforms, independent reproduction.
 
+## Handoff: NMI-DEMO-R1-B-WIRE-R2
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md` (section "Audit remediation NMI-DEMO-R1-B-WIRE-R2")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit of Draft PR #20
+- **State:** READY FOR RE-AUDIT. Observer source and SHA-256 `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` unchanged; only the Markdown-embedded runner/self-test files (T2) and status wording changed; no repository code, script, test, dependency or authorization-answer change; Gate B BLOCKED / NOT AUTHORIZED.
+
+### Re-audit focus
+Runner T2 makes no probe outside the sandbox; S5 is the only unsandboxed run (one connect to non-routable `192.0.2.1`); Request B / acceptance banner no longer say "NOT OFFLINE VALIDATED / DRAFT" and state the true status; re-run `./run-all.sh` (8 assertions) and `./runner-selftest.sh` (11/11) from the extracted files.
+
 <!-- HANDOFF_ENTRIES_END -->
