@@ -1369,4 +1369,22 @@ Stale current-tense statements ("the client can resend", "code not yet started",
 ### Re-audit focus
 No remaining statement presents the defect as the current state of the branch or the fix as unwritten/merged/audited; no authorization answer changed; the diff since `ad6de6c` is documentation only.
 
+## Handoff: NMI-DEMO-R1-B-WIRE-START
+
+- **Task:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md`; **procedure draft:** `docs/NMI-DEMO-R1-B-WIRE-COUNT.md`.
+- **From:** GPT-6 orchestrator after owner squash merge of independently audited FIX-B1 PR #19
+- **To:** Claude coding agent for **documentation-only completion and offline validation**, then independent GPT-6 exact-head audit
+- **Base main:** `09bbe90a977516c27bc0715141e74e090b41fba5`; **branch/PR:** `docs/nmi-demo-r1-b-wire-evidence` / existing Draft PR
+- **State:** PREPARATION ONLY; no provider calls, observer execution with real credentials, PayPal Sandbox draft, budget reset, deployment, merge, Render provisioning, video upload or Devpost submission. Gates A and C NOT AUTHORIZED; Gate B BLOCKED / NOT AUTHORIZED.
+
+### Goal
+
+Reconcile all outdated references to PR #19 being unmerged. Specify and offline validate a **secret-safe server-to-PayPal create egress counter**, not a browser-to-Fastify counter or PostgreSQL `attempts=1`. Recommended Node Undici `undici:client:sendHeaders` diagnostic event, exact Sandbox method/path allow-list, aggregate-only output, no logging headers or bodies, no proxy/MITM, outside-repo temporary owner-only preload. **The event occurs before socket write; it proves a local send attempt, NOT confirmed PayPal receipt.** Corroborate with the N→N+1 Sandbox DRAFT result and durable state. Provide offline loopback positive and double-send negative controls without a real PayPal request, and prove observer reaches the actual Fastify process started by pnpm/tsx; otherwise mark as still BLOCKED and propose separate approved implementation. Preserve `PAYPAL_DRAFTS_ENABLED=false` and the historical exhausted 1/1 create budget.
+
+Update acceptance §5.0–5.4, unanswered Request B, evidence Template B, checklist, task, STATUS, handoff and PR body as the real evidence becomes *prepared* (not real-PASS). Do not touch Gate A/C approval answers or execute Gate B. Run applicable doc checks and mandatory hosted CI. Report final HEAD, checks and limitations and request exact-head GPT-6 audit. Do not merge.
+
+### Security and scope
+
+No code, scripts, tests, dependencies, CI, schema, database, credentials, production runtime changes, API calls, deployment or billing work in this docs-only PR. If a trustworthy actual-process send count cannot be demonstrated without executable repo changes, stop and document that additional prerequisite rather than claiming readiness.
+
 <!-- HANDOFF_ENTRIES_END -->
