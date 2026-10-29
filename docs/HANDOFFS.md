@@ -1542,4 +1542,16 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Not done (by design):** the release branch was NOT created; no Render resource; no billing/plan change; no deploy, merge, publication, URL/credential sharing; no OpenAI/PayPal call.
 - **Open:** payment-method status is unrecorded; alternate request-log evidence contract and owner risk acceptance still required; Render behavior untested. Gates A/B/C NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P3-CONTRACT-AUTH-PREP
+
+- **From:** GPT-6, after independent P2 PR #23 documentation re-audit PASS (review `5700479990`) and owner-authorized squash merge. `main` verified at `18b86c1ad2eeef14deec2b7a50a03232c39d4f05`.
+- **To:** Independent exact-head security/privacy/documentation audit, then owner consideration of **docs-only** squash merge.
+- **Branch:** `docs/nmi-render-p3-hobby-evidence-authorization` (new Draft PR; NOT the future deploy source).
+- **Task:** `tasks/NMI-RENDER-P3-HOBBY-CONTRACT-AUTH.md`.
+- **Documents:** `docs/NMI-RENDER-P3A-HOBBY-PRIVACY-EVIDENCE-CONTRACT.md` — future HPE-01…11 owner-only HTTPS QA, simulated negative controls, sanitized data, explicit **HPE-EDGE NOT OBSERVABLE** (Pro-only Render request logs), independent audit and later separate owner residual acceptance; `docs/NMI-RENDER-P3B-PROVISIONING-AUTHORIZATION.md` — UNSIGNED approval template distinguishing release branch, billing exposure, Free PG, Free web+possible first deploy, owner-only QA, judge sharing and teardown.
+- **Verified context:** Mrdzyn owner-reported Hobby, $50 Hackathon Participant credits expiring 2027-10-01, 750 Free hours / 5 GB outbound bandwidth / 500 pipeline minutes; approved selected configuration Free Node web+Free PG16, 1 GB, Singapore, published $0 compute baseline, **not an approved charge cap**. Actual payment-method status, overage exposure and judging end are **UNKNOWN**. Render Free PG expires 30 days after creation and has no managed backups; Free web sleeps. Pro-only platform HTTP logs unavailable on Hobby; no technical PASS or waiver granted.
+- **Future release:** audited code SHA `652cf702fd93b05a9b9d64ee9b4c2151c30833b2`. Dedicated `release/nmi-render-judges-2026` must be owner-created and pinned from this SHA **only after separate permission**. Branch NOT CREATED; no Render web/PG services created. Web service creation may trigger first deploy even if Auto-Deploy OFF.
+- **No actions:** No cloud resources, provider calls, actual live QA, secrets, money movement, credits consumed, Devpost publication, judge URL release, PR merge or billing changes; no owner contract signature or security residual acceptance. OpenAI A / PayPal B / combined C **NOT AUTHORIZED**.
+- **Next owner-controlled order:** exact-head audit + CI; docs merge approval; independent approval of evidence test contract; verify account cost and 30-day judge timeline; separately authorize release branch / Free PG / Free web+first deploy; execute owner-only QA; independent evidence audit; explicit platform-log residual risk decision; **separate** judge-share approval; teardown.
+
 <!-- HANDOFF_ENTRIES_END -->
