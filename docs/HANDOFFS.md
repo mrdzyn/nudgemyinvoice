@@ -1187,4 +1187,70 @@ The runbook's migration snippet now exits with the migration result (final `(exi
 ### Not verified
 Real OpenAI and PayPal (never called), the Mode B and Docker parts of the runbook, other operating systems/shells, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
+## Handoff: NMI-AG1-START
+
+- **Task / phase:** `tasks/NMI-AG1-ag-grid-dashboard.md`
+- **From:** GPT-6 orchestrator / product owner authorization to start the bounded Community grid enhancement
+- **To:** Claude/Codex implementation agent; then GPT-6 independent exact-head audit
+- **Branch:** `feat/nmi-ag1-ag-grid-dashboard`
+- **Base:** `main` at `f61b653c8131da7446f57ab38db7c118801b8fcd` (NMI-DEMO-R0 PR #16 owner squash-merge)
+- **State:** READY FOR IMPLEMENTATION. Contract and STATUS reconciliation only; no AG Grid code, tests, real-provider requests, deployment, merge, Devpost submission or provider budget reset.
+
+### Immediate task
+
+Implement the **genuine AG Grid Community** read-only invoice grid in the already approved real dashboard screen. Read `AGENTS.md`, current `docs/STATUS.md`, `config/project-profile.json`, active task, this handoff and relevant UI/design/accessibility/testing/code/test files only. The existing `RealDashboard` is PostgreSQL-backed and uses a native HTML table; retain the cards, filters, pagination, error and empty states, keyboard View action, responsive behavior, and fake-provider/production isolation.
+
+### Non-negotiable boundaries and proof
+
+- Use only current compatible `ag-grid-community` + `ag-grid-react`; **no AG Studio/Enterprise, no license/trial keys**. Current AG Grid React docs demonstrate Community module registration and supported theming; verify exact installed version APIs.
+- Server search/status/currency filters operate over the owner's account; AG Grid local sorting operates **only over rows already loaded**. Keep loaded-rows-only currency cards and exact BigInt money; no FX/mixed-currency totals and no new API calls triggered by sorting.
+- Update UI tests/browser journeys to target real grid semantics instead of native `tbody tr`; preserve behavioral assertions, rerun and attribute new evidence to NMI-AG1. Capture sanitized desktop/mobile/dark/keyboard and strict-CSP browser QA.
+- No app API, payment, provider or database changes, and no real OpenAI/PayPal calls. PayPal one-create smoke budget exhausted; default `PAYPAL_DRAFTS_ENABLED=false`.
+- After implementation, update task/STATUS/docs, record exact HEAD, test/CI results and remaining accessibility limitations, keep the PR **Draft**, request independent GPT-6 exact-head audit. Do not merge/deploy/publish/submit.
+
+### Sponsor positioning
+
+Official Devpost rules allow AG Grid sponsor-prize consideration for use of **any AG Grid tools**, while the sponsor page values polish, custom widgets/theming/layout and richer use. A functioning Community grid is eligible for consideration **not a guarantee of an award**; only claim AG Grid actually used after the implementation passes. AG Studio is still deferred.
+
+## Handoff: NMI-AG1-IMPL
+
+- **Task / phase:** `tasks/NMI-AG1-ag-grid-dashboard.md` (section "Implementation record (NMI-AG1-IMPL)")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ag1-ag-grid-dashboard`, [Draft PR #17](https://github.com/mrdzyn/nudgemyinvoice/pull/17)
+- **Implementation commit:** `3242c93029da3e6e7caff4066d39f39810aa956b` (Project Baseline `40660106222` and Stack CI `40660106171` success). The documentation commit that follows touches only documentation.
+- **State:** READY FOR INDEPENDENT AUDIT. No merge, deployment, publication, Devpost submission, real OpenAI/PayPal call or provider-budget reset; no change to `apps/api`, `packages/db`, migrations, PayPal/OpenAI code, session/CSRF rules or the draft API contract.
+
+### What changed
+Genuine AG Grid Community 36.2.0 renders the real dashboard's invoice list (new `InvoiceGrid.tsx`, `invoiceGridSort.ts`, `app.css` theme mapping), UUID row ids, exact BigInt currency-first sort, resizable columns, native View buttons, narrow-screen column order and explicit keyboard handling; the strict CSP is unchanged (legacy CSS theme, text-glyph icons). Journeys C4, C5-P1 and R0 were adapted to AG Grid selectors without weakening assertions and a new NMI-AG1 journey was added.
+
+### Audit focus
+1. The diff touches only `apps/web`, `pnpm-lock.yaml`, `design/evidence/` and documentation; the dependency pair is the only runtime addition and is pinned exactly; no Enterprise/Studio/license-key code (see the boundary test).
+2. The CSP in `apps/web/vite.config.ts`/`index.html` is unchanged and the production CSS contains no data-URI font; the journey asserts no CSP violation and no injected `<style>`.
+3. Money: `compareTotal` is BigInt and currency-first; the cards still use `summarize` over loaded rows only; no mixed-currency sum exists.
+4. Behaviour preserved: filters/search/Load more/failure states/View navigation/session lock/preview isolation (C4, C5-P1, R0 assertions are unchanged apart from selectors).
+5. Journey claims match the stored evidence under `design/evidence/NMI-AG1/` (`qa-results.json`, `run.log`, `rerun-*`, `negative-control/`); the old evidence folders are untouched.
+6. Keyboard design (header walk, one tab stop per View button, capture-phase Tab handler) and its stated limitations.
+
+### Not verified
+Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), real touch devices, Safari/Firefox, a real browser zoom at 400%, HTTPS `__Host-` cookie, hosted proxy/log redaction, production deployment; bundle size grew (JS +709 kB, +203 kB gzip; CSS +279 kB) and is not mitigated.
+
+## Handoff: NMI-AG1-R1
+
+- **Task / phase:** `tasks/NMI-AG1-ag-grid-dashboard.md` (section "Audit remediation NMI-AG1-R1")
+- **From:** Claude implementation agent
+- **To:** GPT-6 independent exact-head re-audit, then owner merge decision
+- **Branch / PR:** `feat/nmi-ag1-ag-grid-dashboard`, [Draft PR #17](https://github.com/mrdzyn/nudgemyinvoice/pull/17)
+- **Remediation commit:** `f58c4fc27521b25f396ea8a99ac66948a66a5198` (Project Baseline `40670277117`, Stack CI `40670276998` success); a documentation-only commit follows.
+- **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deployment, publication, Devpost submission, real OpenAI/PayPal call or budget reset; no server, API-contract, migration, payment or security change.
+
+### Re-audit focus
+1. MAJOR-1: `InvoiceGrid.tsx` has no `suppressCellFocus`, timer or manual focus code; Tab/Shift+Tab leave the grid via `tabToNextHeader`/`tabToNextCell`; arrow navigation, Enter-sort, and Enter/Space on the Actions cell via `onCellKeyDown`; the journey's arrow-key checks and the negative control (14 failures with `suppressCellFocus`).
+2. MINOR-1: `#dash-sort-note` copy and `aria-describedby`.
+3. MINOR-2: `MAX_LOADED_ROWS = 200`, reducer refusal, `#dash-limit` footer, search reaching older invoices, the 600-invoice evidence; confirm the owner accepts the 200-row UX limit and the reasoning for keeping rows un-virtualised.
+4. Diff touches only `apps/web`, `design/evidence/NMI-AG1` and documentation; C4/C5-P1/R0 assertions unchanged.
+
+### Not verified
+Screen readers, real touch, Safari/Firefox, real 400% zoom, keyboard column resizing, hosted HTTPS/proxy, any real provider; bundle size unmitigated.
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -360,10 +360,10 @@ try {
     check(g, "exactly one real POST /api/invoice-drafts -> 201; one durable row in PostgreSQL with the OPERATOR'S edit (2030-02-01)", posts.length === 1 && posts[0].status === 201 && sql(`SELECT due_date::text FROM invoices WHERE id='${usdId}'`) === "2030-02-01" && Number(sql("SELECT count(*) FROM invoices")) === 1);
     check(g, "the saved page shows the real id and the server-computed total $540.00 (2 x 250.00 + 8% tax), saved in PostgreSQL only", /\$540\.00/.test(await ev("document.getElementById('saved-total').textContent")) && sql(`SELECT total_minor FROM invoices WHERE id='${usdId}'`) === "54000" && /Not created in PayPal Sandbox/.test(await panelText()));
     await ev("document.getElementById('saved-back').click()");
-    await waitFor("!!document.querySelector('tbody tr')", 8000);
-    check(g, "the real dashboard lists the saved invoice from PostgreSQL with 'No PayPal draft' and a USD card", (await ev("[...document.querySelectorAll('tbody tr')].some((r) => /Acme Design/.test(r.textContent) && /No PayPal draft/.test(r.textContent))")) && /USD/.test(await ev("document.getElementById('dash-cards').innerText")) && LIST(m).length >= 1);
+    await waitFor("!!document.querySelector('.nmi-grid .ag-row')", 8000);
+    check(g, "the real dashboard lists the saved invoice from PostgreSQL with 'No PayPal draft' and a USD card", (await ev("[...document.querySelectorAll('.nmi-grid .ag-row')].some((r) => /Acme Design/.test(r.textContent) && /No PayPal draft/.test(r.textContent))")) && /USD/.test(await ev("document.getElementById('dash-cards').innerText")) && LIST(m).length >= 1);
     await shot("03-dashboard.jpg");
-    await ev("document.querySelector('tbody tr [aria-label^=\"View invoice\"]').click()");
+    await ev("document.querySelector('.nmi-grid .ag-row [aria-label^=\"View invoice\"]').click()");
     await waitFor("!!document.getElementById('saved-id') && !!document.getElementById('pp-body')", 8000);
     const m2 = mark();
     await ev("(() => { const b = document.getElementById('create-pp-btn'); b.focus(); b.click(); })()");
@@ -378,8 +378,8 @@ try {
     check(g, "the page re-read the durable state with GET after the POST and shows the same id", DETAIL(m2).length >= 1 && (await ev("document.getElementById('pp-id').textContent")) === row[1]);
     await shot("05-created.jpg");
     await ev("document.getElementById('saved-back').click()");
-    await waitFor("!!document.querySelector('tbody tr')", 8000);
-    check(g, "back on the dashboard the same invoice now reads 'PayPal draft created' (state from the server)", await ev("[...document.querySelectorAll('tbody tr')].some((r) => /Acme Design/.test(r.textContent) && /PayPal draft created/.test(r.textContent))"));
+    await waitFor("!!document.querySelector('.nmi-grid .ag-row')", 8000);
+    check(g, "back on the dashboard the same invoice now reads 'PayPal draft created' (state from the server)", await ev("[...document.querySelectorAll('.nmi-grid .ag-row')].some((r) => /Acme Design/.test(r.textContent) && /PayPal draft created/.test(r.textContent))"));
   }
 
   /* ======================= EUR via clarification: a second currency, never mixed ======================= */
@@ -395,7 +395,7 @@ try {
     check(g, "the answer is appended, the same endpoint is called again and Review opens with EUR", await waitFor(reviewOpen, 8000) && PARSE(m).length === 2 && (await val("f-currency")) === "EUR" && (await val("f-dueDate")) === "2030-03-01");
     check(g, "saving stores a EUR invoice with the exact server total 599.97 (3 x 199.99)", (await saveAndOpen()) && sql("SELECT total_minor FROM invoices WHERE customer_name='Vienna Cafe'") === "59997" && /€599\.97/.test(await ev("document.getElementById('saved-total').textContent")));
     await ev("document.getElementById('saved-back').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 2", 8000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 2", 8000);
     const cards = await ev("[...document.querySelectorAll('.currency-card')].map((c) => c.querySelector('.top span').textContent + ' ' + c.querySelector('.amount').textContent)");
     check(g, "the dashboard keeps USD and EUR in separate cards with no combined total", cards.length === 2 && cards.some((c) => /^USD \$540\.00/.test(c)) && cards.some((c) => /^EUR €599\.97/.test(c)) && !/Grand total/i.test(await bodyText()), JSON.stringify(cards));
     await shot("07-two-currencies.jpg");
@@ -420,7 +420,7 @@ try {
   {
     const g = "REAL logout";
     await ev("[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Sign out').click()");
-    check(g, "Sign out locks the workspace at once and the server session is revoked", await waitFor("!!document.getElementById('login-title') && !document.querySelector('tbody tr')", 6000) && activeSessions() === 0);
+    check(g, "Sign out locks the workspace at once and the server session is revoked", await waitFor("!!document.getElementById('login-title') && !document.querySelector('.nmi-grid .ag-row')", 6000) && activeSessions() === 0);
     check(g, "no customer data remains in the page after sign-out", !/Acme Design|Vienna Cafe/.test(await ev("document.documentElement.outerHTML")));
   }
 } catch (e) {

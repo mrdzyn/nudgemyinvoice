@@ -1,0 +1,481 @@
+{
+  "chrome": "Chrome/156.0.8078.74",
+  "passed": 79,
+  "failed": 0,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated (0000-0006) and API healthy behind the proxy",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "database is a throw-away nmi_test* cluster in a temp directory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "PayPal drafts disabled; OPENAI_API_KEY/OPENAI_MODEL empty (no provider can be reached)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "a dashboard deep link shows only sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "no list request is made while logged out",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logged-out protection",
+      "name": "the real server answers an unauthenticated list with 401 and no data",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: empty account",
+      "name": "GET /api/invoice-drafts -> 200 and the empty state is shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: empty account",
+      "name": "no fixture rows, 'DEMO / SYNTHETIC' banner or sample label appears",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: empty account",
+      "name": "the list request is a GET with limit=20 and no cursor/filters",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: empty account",
+      "name": "the shell says the list is server-backed and (current copy since C5-P1) that saving never creates a PayPal invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL data creation (multiple currencies)",
+      "name": "operator A owns 26 invoices across USD, EUR, JPY and GBP created through the real save route",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator B private data",
+      "name": "operator B owns exactly its 3 invoices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator B private data",
+      "name": "B's dashboard (real browser) lists only B's invoices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator B private data",
+      "name": "none of A's customers appear in B's page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator B private data",
+      "name": "after sign-out none of B's data remains in the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "first page: 20 rows, exactly A's newest 20 in the database order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "none of operator B's customers is visible to A",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "one card per currency present on the page, never combined",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "every card shows exactly the loaded sum recomputed from PostgreSQL minor units",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "the summary is labelled as covering loaded invoices only, not all invoices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "no grand total across currencies exists",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "Load more sends the server cursor with the same limit and no filters",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "all 26 rows, no duplicates and no skips, in exact database order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "the end of the list is announced and no more button remains",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "after the last page the cards equal the whole-account per-currency sums",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL operator A: list, currency cards and paging",
+      "name": "the dashboard made only GET requests (no mutation, no PayPal, no provider)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "the EUR pill asks the SERVER for currency=EUR and shows only the EUR invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "changing a filter after paging drops the old cursor and resets the rows",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "search matches the oldest invoice, which is not on the first page (server-side, not page-local)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "the search text never appears in the browser NAVIGATION URL (location.href) and is not kept in localStorage (the HTTP GET request URL does carry it in q; see the next check)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "DOCUMENTED, not hidden: the HTTP GET request URL carries the search term in `q` (customer data); proxy/ingress/CDN access logs must redact it (deployment prerequisite, untested here)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "an invoice-id prefix finds exactly that invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "another operator's customers cannot be found by search",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "Clear filters restores the full first page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "the PayPal 'created' filter shows no rows: no PayPal draft exists (state comes from durable data)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL filters and search (server-side over the whole account)",
+      "name": "the 'No PayPal draft' filter lists the invoices (all 26 have no operation row)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "keyboard Enter on View opens the saved-invoice page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "the page loaded the record with GET /api/invoice-drafts/:id -> 200",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "shows the real UUID, customer, EUR currency and the exact server total from PostgreSQL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "the notice is the neutral 'opened from your list' one, never 'saved just now' or a replay",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "no edit, delete, send or remind control exists; the only PayPal control is the explicit, confirmation-gated create action (since C5-P1)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "the title is not labelled fixture or sample",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "Back to drafts returns to the REAL dashboard (a new real list request, not the preview)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL View opens the server-backed detail (no replay wording)",
+      "name": "reopening wrote nothing (still exactly 29 invoices, no PayPal operations)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL cross-operator access (operator A's session against operator B's data)",
+      "name": "A reading B's invoice by id gets 404, indistinguishable from an unknown id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL cross-operator access (operator A's session against operator B's data)",
+      "name": "A's list through the real route holds 26 rows and none of B's",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL cross-operator access (operator A's session against operator B's data)",
+      "name": "a client-supplied operatorId is refused (400), never honoured",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL cross-operator access (operator A's session against operator B's data)",
+      "name": "bad cursor / oversized limit / unknown parameter are refused with 400",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "500: an alert with Retry, no rows, no fixture and no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "200 with an unknown shape: an alert with Retry, no rows, no fixture and no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "200 with a cursor after a short page: an alert with Retry, no rows, no fixture and no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "403: an alert with Retry, no rows, no fixture and no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "400: an alert with Retry, no rows, no fixture and no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "network failure: an alert with Retry, no rows, no fixture and no LEAK",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "Retry is genuine: it re-requests the real server and the real list returns",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "a failed next page keeps the 20 loaded rows and offers 'Try loading more again'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "retrying the next page then really loads rows 21-26 without duplicates",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "a superseded (EUR) response arriving after the JPY filter never appears",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "SIMULATED list failures (interception; server not reached)",
+      "name": "a failed detail load after View shows an error: no record, no fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and session expiry clear the dashboard",
+      "name": "Sign out locks at once: no customer row remains in the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and session expiry clear the dashboard",
+      "name": "after sign-out none of A's customers is in the DOM",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and session expiry clear the dashboard",
+      "name": "re-authentication shows A's real list again (fresh load)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and session expiry clear the dashboard",
+      "name": "a real 401 on the next page ends the session and shows sign-in",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL logout and session expiry clear the dashboard",
+      "name": "the list request really returned 401 and no row remains in the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no horizontal overflow at 390px (loaded list)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "list text contrast >= WCAG AA (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no overflow and AA contrast on the error state (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "the error is an announced alert region with a focusable Retry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no overflow and AA contrast on the opened detail (dark, 390px)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "list text contrast >= WCAG AA (light, desktop)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL 390px mobile and dark theme",
+      "name": "no horizontal overflow on desktop",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no localStorage/sessionStorage/IndexedDB/Cache entries",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no script-readable cookie; the browser NAVIGATION URL (location.href) carries no customer data, search text or id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no request left the app origin (no PayPal/OpenAI/foreign host)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts and GET /api/invoice-drafts/:id",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no PayPal operations, approvals or model calls exist",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "every list request in the journey was a GET (the list never mutates)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "the Fastify request log (query strings stripped) holds no search text, customer name, CSRF token or cookie value",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "Global invariants",
+      "name": "no console errors or uncaught exceptions in the browser",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

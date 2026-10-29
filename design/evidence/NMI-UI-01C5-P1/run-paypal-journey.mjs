@@ -320,20 +320,20 @@ try {
     if (await onLogin()) await login(user, pass);
     if (!(await waitFor("!!document.querySelector('.app-nav')"))) throw new Error("sign-in failed");
     await waitFor("!!document.getElementById('dash-title')");
-    await waitFor("!!document.querySelector('tbody tr') || !!document.getElementById('dash-empty')", 8000);
+    await waitFor("!!document.querySelector('.nmi-grid .ag-row') || !!document.getElementById('dash-empty')", 8000);
   }
   /** Dashboard -> search the customer -> View (the real reopen path). */
   async function openSaved(name) {
     await waitFor("!!document.getElementById('dash-search')", 6000);
     await fillText("dash-search", name);
-    await waitFor(`document.querySelectorAll('tbody tr').length === 1 && document.querySelector('tbody tr td[data-label=Customer] div').textContent === ${JSON.stringify(name)}`, 6000);
-    await ev("document.querySelector('tbody tr [aria-label^=\"View invoice\"]').click()");
+    await waitFor(`document.querySelectorAll('.nmi-grid .ag-row').length === 1 && document.querySelector('.nmi-grid .ag-row [col-id=customer] .cell-main').textContent === ${JSON.stringify(name)}`, 6000);
+    await ev("document.querySelector('.nmi-grid .ag-row [aria-label^=\"View invoice\"]').click()");
     if (!(await waitFor("!!document.getElementById('saved-id') && !!document.getElementById('pp-body')", 8000))) throw new Error("saved page did not open for " + name);
   }
   const backToDashboard = async () => {
     await ev("document.getElementById('saved-back').click()");
     await waitFor("!!document.getElementById('dash-title')", 6000);
-    await waitFor("!!document.querySelector('tbody tr') || !!document.getElementById('dash-empty')", 8000);
+    await waitFor("!!document.querySelector('.nmi-grid .ag-row') || !!document.getElementById('dash-empty')", 8000);
   };
   const dialogOpen = () => ev("!!document.querySelector('dialog[open]')");
   const dialogText = () => ev("document.querySelector('dialog[open]')?.innerText.replace(/\\s+/g, ' ') ?? ''");
@@ -393,7 +393,7 @@ try {
     await waitFor("!!document.getElementById('dash-title')");
     const m0 = mark();
     check(g, "after a reload the app makes NO PayPal-draft request on its own", PPPOST(m0).length === 0 && ppCalls().length === 0);
-    await waitFor("!!document.querySelector('tbody tr')", 8000);
+    await waitFor("!!document.querySelector('.nmi-grid .ag-row')", 8000);
     const mOpen = mark();
     await openSaved("Pay Ok");
     const m = mark();
@@ -435,9 +435,9 @@ try {
     const mc = mark();
     check(g, "no 'Check status' is offered once created (nothing left to resolve)", !(await ev("!!document.getElementById('check-pp-btn')")));
     await backToDashboard();
-    check(g, "back on the REAL dashboard the invoice's PayPal status is read from the server: 'PayPal draft created'", (await ev("[...document.querySelectorAll('tbody tr')].some((r) => /Pay Ok/.test(r.textContent) && /PayPal draft created/.test(r.textContent))")) && !/DEMO \/ SYNTHETIC/.test(await bodyText()));
+    check(g, "back on the REAL dashboard the invoice's PayPal status is read from the server: 'PayPal draft created'", (await waitFor("[...document.querySelectorAll('.nmi-grid .ag-row')].some((r) => /Pay Ok/.test(r.textContent) && /PayPal draft created/.test(r.textContent))", 4000)) && !/DEMO \/ SYNTHETIC/.test(await bodyText()));
     await setStatusFilter("created");
-    check(g, "the server-side 'PayPal draft created' filter lists exactly that invoice", (await waitFor("document.querySelectorAll('tbody tr').length === 1", 6000)) && (await rowNames()).join() === "Pay Ok");
+    check(g, "the server-side 'PayPal draft created' filter lists exactly that invoice", (await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1", 6000)) && (await rowNames()).join() === "Pay Ok");
     await setStatusFilter("ALL");
     check(g, "no PayPal-draft POST happened on the dashboard", PPPOST(mc).length === 0);
     // reload on the saved invoice id is not restorable: and never auto-posts
@@ -449,7 +449,7 @@ try {
 
   /* ======================= double click, in-flight ======================= */
   async function setStatusFilter(v) { await ev(`(() => { const e = document.getElementById('dash-status'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(e, ${JSON.stringify(v)}); e.dispatchEvent(new Event('change', { bubbles: true })); })()`); await sleep(500); }
-  async function rowNames() { return ev("[...document.querySelectorAll('tbody tr td[data-label=Customer] div:first-child')].map((e) => e.textContent)"); }
+  async function rowNames() { return ev("[...document.querySelectorAll('.nmi-grid .ag-row [col-id=customer] .cell-main')].map((e) => e.textContent)"); }
   {
     const g = "REAL double confirm and in-flight state (fake provider takes 4 s)";
     await openSaved("Pay Slow");

@@ -10,6 +10,14 @@ export interface Filters {
   q: string;
 }
 
+/**
+ * Rendering bound. The server pages 20 at a time and the grid keeps every loaded row in the DOM (so
+ * assistive technology sees real rows), therefore the dashboard stops offering "Load more" once this
+ * many invoices are loaded. Older invoices stay reachable through the server-side search and the
+ * currency/status filters, which search the whole account.
+ */
+export const MAX_LOADED_ROWS = 200;
+
 export const NO_FILTERS: Filters = { currency: "ALL", status: "ALL", q: "" };
 export const hasFilters = (f: Filters) => f.currency !== "ALL" || f.status !== "ALL" || f.q !== "";
 
@@ -78,7 +86,7 @@ export function dashReducer(s: DashState, a: DashAction): DashState {
       };
     case "load-more":
       // Only from a settled list that really has another page; a double click is a no-op.
-      if (s.status !== "loaded" || !s.nextCursor) return s;
+      if (s.status !== "loaded" || !s.nextCursor || s.items.length >= MAX_LOADED_ROWS) return s;
       return { ...s, status: "loading-more", moreError: null, generation: s.generation + 1 };
     case "page": {
       if (a.generation !== s.generation) return s;

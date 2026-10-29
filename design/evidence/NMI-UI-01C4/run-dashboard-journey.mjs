@@ -304,8 +304,8 @@ try {
   const A_ID = () => opId(USER);
   const B_ID = () => opId(USER_B);
   const dbNames = (op, limit = 1000) => sql(`SELECT string_agg(customer_name, '|' ORDER BY created_at DESC, id DESC) FROM (SELECT * FROM invoices WHERE created_by='${op}' ORDER BY created_at DESC, id DESC LIMIT ${limit}) t`).split("|");
-  const rowNames = () => ev("[...document.querySelectorAll('tbody tr td[data-label=Customer] div:first-child')].map((e) => e.textContent)");
-  const rowIds = () => ev("[...document.querySelectorAll('tbody tr [aria-label^=\"View invoice\"]')].map((b) => b.getAttribute('aria-label'))");
+  const rowNames = () => ev("[...document.querySelectorAll('.nmi-grid .ag-row [col-id=customer] .cell-main')].map((e) => e.textContent)");
+  const rowIds = () => ev("[...document.querySelectorAll('.nmi-grid .ag-row [aria-label^=\"View invoice\"]')].map((b) => b.getAttribute('aria-label'))");
   const cards = () => ev("[...document.querySelectorAll('.currency-card')].map((c) => ({ cur: c.querySelector('.top span').textContent, amount: c.querySelector('.amount').textContent, meta: c.querySelector('.meta').textContent }))");
   const setValue = (id, v) => ev(`(() => { const e = document.getElementById(${JSON.stringify(id)}); const proto = e instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(e, ${JSON.stringify(v)}); e.dispatchEvent(new Event(e instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true })); })()`);
   const fillText = async (id, v) => { await focusId(id); await ev(`document.getElementById(${JSON.stringify(id)}).select()`); await typeText(v); };
@@ -320,7 +320,7 @@ try {
     if (!(await waitFor("!!document.querySelector('.app-nav')"))) throw new Error("sign-in failed for " + user);
     await waitFor("!!document.getElementById('dash-title')");
   }
-  const dashLoaded = (ms = 8000) => waitFor("!!document.querySelector('tbody tr') || !!document.getElementById('dash-empty') || !!document.getElementById('dash-no-match') || !!document.getElementById('dash-error')", ms);
+  const dashLoaded = (ms = 8000) => waitFor("!!document.querySelector('.nmi-grid .ag-row') || !!document.getElementById('dash-empty') || !!document.getElementById('dash-no-match') || !!document.getElementById('dash-error')", ms);
   const sessionAuth = async () => {
     const c = await sessionCookie();
     const r = await fetch(API + "/api/auth/session", { headers: { cookie: `${c.name}=${c.value}`, origin: ORIGIN } });
@@ -436,7 +436,7 @@ try {
     await shot("03-first-page.jpg");
     const m2 = mark();
     await ev("document.getElementById('dash-more').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length > 20", 6000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length > 20", 6000);
     const lists = LIST(m2);
     check(g, "Load more sends the server cursor with the same limit and no filters", lists.length === 1 && lists[0].status === 200 && !!q(m2, lists[0]).get("cursor") && q(m2, lists[0]).get("limit") === "20");
     const names2 = await rowNames();
@@ -459,26 +459,26 @@ try {
     await dashLoaded();
     let m = mark();
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'EUR').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 1", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1", 5000);
     let c1 = LIST(m).at(-1);
     check(g, "the EUR pill asks the SERVER for currency=EUR and shows only the EUR invoice", q(m, c1).get("currency") === "EUR" && !q(m, c1).has("cursor") && (await rowNames()).join() === NAMES.ui[1]);
     m = mark();
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'All currencies').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 20", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 5000);
     // page 2 then a filter: the cursor must be dropped
     await ev("document.getElementById('dash-more').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 26", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 26", 5000);
     m = mark();
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'JPY').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 1", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1", 5000);
     c1 = LIST(m).at(-1);
     check(g, "changing a filter after paging drops the old cursor and resets the rows", !q(m, c1).has("cursor") && q(m, c1).get("currency") === "JPY" && (await rowNames()).join() === NAMES.ui[2]);
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'All currencies').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 20", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 5000);
     // search finds a row that is NOT on page 1
     m = mark();
     await fillText("dash-search", "Bulk 01");
-    await waitFor("document.querySelectorAll('tbody tr').length === 1 && document.querySelector('tbody tr td[data-label=Customer] div').textContent === 'Bulk 01'", 6000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1 && document.querySelector('.nmi-grid .ag-row [col-id=customer] .cell-main').textContent === 'Bulk 01'", 6000);
     const sq = LIST(m).at(-1);
     check(g, "search matches the oldest invoice, which is not on the first page (server-side, not page-local)", q(m, sq).get("q") === "Bulk 01" && !q(m, sq).has("cursor"), q(m, sq).toString());
     check(g, "the search text never appears in the browser NAVIGATION URL (location.href) and is not kept in localStorage (the HTTP GET request URL does carry it in q; see the next check)", !/Bulk/.test(await ev("location.href")) && (await ev(STORAGE)).local === 0);
@@ -486,20 +486,20 @@ try {
     check(g, "an invoice-id prefix finds exactly that invoice", await (async () => {
       const id = sql(`SELECT id FROM invoices WHERE customer_name='Bulk 01'`);
       await fillText("dash-search", id.slice(0, 8));
-      return waitFor("document.querySelectorAll('tbody tr').length === 1 && document.querySelector('tbody tr td[data-label=Customer] div').textContent === 'Bulk 01'", 6000);
+      return waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1 && document.querySelector('.nmi-grid .ag-row [col-id=customer] .cell-main').textContent === 'Bulk 01'", 6000);
     })());
     await fillText("dash-search", "B Private");
     check(g, "another operator's customers cannot be found by search", await waitFor("!!document.getElementById('dash-no-match')", 6000) && /No invoices match these filters/.test(await bodyText()));
     await shot("05-no-match.jpg");
     await ev("document.getElementById('dash-clear').click()");
-    check(g, "Clear filters restores the full first page", await waitFor("document.querySelectorAll('tbody tr').length === 20 && document.getElementById('dash-search').value === ''", 6000));
+    check(g, "Clear filters restores the full first page", await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20 && document.getElementById('dash-search').value === ''", 6000));
     await ev("document.getElementById('dash-status').focus()");
     await setValue("dash-status", "created");
     check(g, "the PayPal 'created' filter shows no rows: no PayPal draft exists (state comes from durable data)", await waitFor("!!document.getElementById('dash-no-match')", 5000));
     await setValue("dash-status", "none");
-    check(g, "the 'No PayPal draft' filter lists the invoices (all 26 have no operation row)", await waitFor("document.querySelectorAll('tbody tr').length === 20", 5000) && (await ev("[...document.querySelectorAll('tbody tr td[data-label=\"PayPal Sandbox\"]')].every((c) => /No PayPal draft/i.test(c.textContent))")));
+    check(g, "the 'No PayPal draft' filter lists the invoices (all 26 have no operation row)", await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 5000) && (await ev("[...document.querySelectorAll('.nmi-grid .ag-row [col-id=status]')].every((c) => /No PayPal draft/i.test(c.textContent))")));
     await setValue("dash-status", "ALL");
-    await waitFor("document.querySelectorAll('tbody tr').length === 20", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 5000);
   }
 
   /* ======================= reopen a saved invoice ======================= */
@@ -507,10 +507,10 @@ try {
     const g = "REAL View opens the server-backed detail (no replay wording)";
     const target = sql(`SELECT id||'|'||customer_name FROM invoices WHERE customer_name='Vienna Cafe'`).split("|");
     await fillText("dash-search", "Vienna");
-    await waitFor("document.querySelectorAll('tbody tr').length === 1", 5000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1", 5000);
     const m = mark();
     await focusId("dash-search");
-    await ev("document.querySelector('tbody tr [aria-label^=\"View invoice\"]').focus()");
+    await ev("document.querySelector('.nmi-grid .ag-row [aria-label^=\"View invoice\"]').focus()");
     await press("Enter"); // keyboard activation
     check(g, "keyboard Enter on View opens the saved-invoice page", await waitFor("!!document.getElementById('saved-id')", 8000));
     const d = DETAIL(m);
@@ -523,7 +523,7 @@ try {
     await shot("06-opened-detail.jpg");
     const m2 = mark();
     await ev("document.getElementById('saved-back').click()");
-    check(g, "Back to drafts returns to the REAL dashboard (a new real list request, not the preview)", (await waitFor("!!document.querySelector('tbody tr')", 6000)) && LIST(m2).length >= 1 && !/DEMO \/ SYNTHETIC/.test(await bodyText()));
+    check(g, "Back to drafts returns to the REAL dashboard (a new real list request, not the preview)", (await waitFor("!!document.querySelector('.nmi-grid .ag-row')", 6000)) && LIST(m2).length >= 1 && !/DEMO \/ SYNTHETIC/.test(await bodyText()));
     check(g, "reopening wrote nothing (still exactly 29 invoices, no PayPal operations)", Number(sql("SELECT count(*) FROM invoices")) === 29 && Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0);
   }
 
@@ -562,20 +562,20 @@ try {
       await sleep(300);
       await waitFor("!!document.getElementById('dash-error')", 6000);
       const t = await bodyText();
-      check(g, `${name}: an alert with Retry, no rows, no fixture and no LEAK`, (await ev("!!document.getElementById('dash-error') && !!document.getElementById('dash-retry')")) && re.test(t) && !/LEAK|Acme|Northwind|DEMO \/ SYNTHETIC/.test(t) && !(await ev("!!document.querySelector('tbody tr')")), t.slice(0, 200));
+      check(g, `${name}: an alert with Retry, no rows, no fixture and no LEAK`, (await ev("!!document.getElementById('dash-error') && !!document.getElementById('dash-retry')")) && re.test(t) && !/LEAK|Acme|Northwind|DEMO \/ SYNTHETIC/.test(t) && !(await ev("!!document.querySelector('.nmi-grid .ag-row')")), t.slice(0, 200));
       await stopSimulating();
     }
     await shot("07-list-error.jpg");
     const m = mark();
     await ev("document.getElementById('dash-retry').click()");
-    check(g, "Retry is genuine: it re-requests the real server and the real list returns", (await waitFor("document.querySelectorAll('tbody tr').length === 20", 6000)) && LIST(m).length >= 1 && LIST(m).at(-1).status === 200);
+    check(g, "Retry is genuine: it re-requests the real server and the real list returns", (await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 6000)) && LIST(m).length >= 1 && LIST(m).at(-1).status === 200);
     // failed next page keeps rows
     await simulate((p) => (p.request.method === "GET" && /cursor=/.test(p.request.url) ? { status: 503, body: {} } : "continue"));
     await ev("document.getElementById('dash-more').click()");
     check(g, "a failed next page keeps the 20 loaded rows and offers 'Try loading more again'", (await waitFor("!!document.getElementById('dash-more-error')", 5000)) && (await rowNames()).length === 20);
     await stopSimulating();
     await ev("document.getElementById('dash-more-retry').click()");
-    check(g, "retrying the next page then really loads rows 21-26 without duplicates", (await waitFor("document.querySelectorAll('tbody tr').length === 26", 6000)) && new Set(await rowNames()).size === 26);
+    check(g, "retrying the next page then really loads rows 21-26 without duplicates", (await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 26", 6000)) && new Set(await rowNames()).size === 26);
 
     // stale / out-of-order: hold a filter request, change filter, then release the stale answer
     await load();
@@ -585,7 +585,7 @@ try {
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'EUR').click()");
     await sleep(300);
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'JPY').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 1 && /Tokyo Works/.test(document.body.innerText)", 6000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 1 && /Tokyo Works/.test(document.body.innerText)", 6000);
     await releaseHeld({ status: 200, body: ghost });
     await sleep(600);
     check(g, "a superseded (EUR) response arriving after the JPY filter never appears", !/Stale Ghost/.test(await bodyText()) && (await rowNames()).join() === "Tokyo Works");
@@ -593,22 +593,22 @@ try {
 
     // failed detail open never shows a fixture
     await ev("[...document.querySelectorAll('.pill')].find((b) => b.textContent.trim() === 'All currencies').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length === 20", 6000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length === 20", 6000);
     await simulate((p) => (p.request.method === "GET" && /\/api\/invoice-drafts\/[0-9a-f-]{36}$/.test(p.request.url) ? { status: 500, body: {} } : "continue"));
-    await ev("document.querySelector('tbody tr [aria-label^=\"View invoice\"]').click()");
+    await ev("document.querySelector('.nmi-grid .ag-row [aria-label^=\"View invoice\"]').click()");
     await waitFor("!!document.getElementById('saved-error')", 6000);
     const t2 = await bodyText();
     check(g, "a failed detail load after View shows an error: no record, no fixture", /could not be shown/.test(t2) && !/Acme|Northwind|DEMO-FAKE|INV2-/.test(t2) && !(await ev("!!document.getElementById('saved-total')")));
     await stopSimulating();
     await ev("document.getElementById('saved-back').click()");
-    await waitFor("!!document.querySelector('tbody tr')", 6000);
+    await waitFor("!!document.querySelector('.nmi-grid .ag-row')", 6000);
   }
 
   /* ======================= logout and expiry clear sensitive data ======================= */
   {
     const g = "REAL logout and session expiry clear the dashboard";
     await ev("[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Sign out').click()");
-    check(g, "Sign out locks at once: no customer row remains in the page", await waitFor("!document.querySelector('tbody tr') && /Signing out/.test(document.body.innerText)", 1500));
+    check(g, "Sign out locks at once: no customer row remains in the page", await waitFor("!document.querySelector('.nmi-grid .ag-row') && /Signing out/.test(document.body.innerText)", 1500));
     await waitFor("!!document.getElementById('login-title')", 6000);
     check(g, "after sign-out none of A's customers is in the DOM", !/Quill|Vienna|Tokyo|Bulk/.test(await ev("document.documentElement.outerHTML")));
     await signInAs(USER, PASSWORD);
@@ -642,8 +642,8 @@ try {
     await shot("09-mobile-dark-error.jpg");
     await stopSimulating();
     await ev("document.getElementById('dash-retry').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length > 0", 6000);
-    await ev("document.querySelector('tbody tr [aria-label^=\"View invoice\"]').click()");
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length > 0", 6000);
+    await ev("document.querySelector('.nmi-grid .ag-row [aria-label^=\"View invoice\"]').click()");
     await waitFor("!!document.getElementById('saved-id')", 8000);
     ov = await ev(OVERFLOW);
     c = await ev(CONTRAST_SCAN);
@@ -653,7 +653,7 @@ try {
     await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }] });
     // light desktop contrast of the loaded list
     await ev("document.getElementById('saved-back').click()");
-    await waitFor("document.querySelectorAll('tbody tr').length > 0", 6000);
+    await waitFor("document.querySelectorAll('.nmi-grid .ag-row').length > 0", 6000);
     const cl = await ev(CONTRAST_SCAN);
     check(g, "list text contrast >= WCAG AA (light, desktop)", cl.length === 0, JSON.stringify(cl));
     const ovd = await ev(OVERFLOW);

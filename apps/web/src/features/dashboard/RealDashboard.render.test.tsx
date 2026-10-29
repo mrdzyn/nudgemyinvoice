@@ -5,7 +5,7 @@ import { initialState } from "../../demo/appState.js";
 import { FIXTURE_INVOICES } from "../../demo/fixtures.js";
 import type { ListItem } from "../../domain/serverList.js";
 import { DashboardScreen } from "./DashboardScreen.js";
-import { initialDash, type DashState } from "./dashboardState.js";
+import { initialDash, MAX_LOADED_ROWS, type DashState } from "./dashboardState.js";
 import { RealDashboardView, summarize } from "./RealDashboard.js";
 
 /**
@@ -56,9 +56,11 @@ describe("states", () => {
   });
   it("B. loaded rows come from the server list, newest first, each with a View action", () => {
     const h = view({ status: "loaded", items: [item(2), item(1)] });
-    expect(h).toContain("Customer 2");
-    expect(h.indexOf("Customer 2")).toBeLessThan(h.indexOf("Customer 1"));
-    expect(h.match(/aria-label="View invoice/g)).toHaveLength(2);
+    // AG Grid draws its rows in the browser (it has no server-side markup), so row content, order and
+    // the View actions are asserted in InvoiceGrid.test.tsx and the real-browser journeys.
+    expect(h).toContain('data-testid="invoice-grid"');
+    expect(h).toContain('class="nmi-grid ag-theme-quartz"');
+    expect(h).not.toContain("<table");
     expect(h).toContain("2 invoices loaded");
     expect(h).not.toMatch(/Create PayPal|Send|Delete|Edit/);
     fixtureLeak(h);
@@ -99,7 +101,7 @@ describe("states", () => {
   it("J. loading the next page keeps the rows and shows progress", () => {
     const h = view({ status: "loading-more", items: [item(2), item(1)], nextCursor: "c" });
     expect(h).toContain("Loading more invoices");
-    expect(h).toContain("Customer 2");
+    expect(h).toContain('data-testid="invoice-grid"');
     expect(h).not.toContain('id="dash-more"');
   });
   it("a next page that is available offers Load more; K. the end says everything is loaded", () => {
@@ -113,7 +115,7 @@ describe("states", () => {
   it("a failed next page keeps the loaded rows and offers a retry", () => {
     const h = view({ status: "loaded", items: [item(1)], nextCursor: "c", moreError: "offline" });
     expect(h).toContain("Could not load more invoices");
-    expect(h).toContain("Customer 1");
+    expect(h).toContain('data-testid="invoice-grid"');
     expect(h).toContain('id="dash-more-retry"');
   });
 });
@@ -236,5 +238,24 @@ describe("isolation from the synthetic preview", () => {
     expect(h).toContain("DEMO / SYNTHETIC");
     expect(h).toContain(FIXTURE_INVOICES[0]?.draft.customerName);
     expect(h).not.toContain("Loading invoices");
+  });
+});
+
+describe("grid disclosure and rendering bound", () => {
+  it("states that column sorting covers only the loaded invoices and filters cover all of them", () => {
+    const h = view({ status: "loaded", items: [item(2), item(1)], nextCursor: "c" });
+    expect(h).toContain('id="dash-sort-note"');
+    expect(h).toContain("Sorting a column reorders only the 2 invoices loaded so far");
+    expect(h).toContain("look through all your saved invoices");
+    expect(h).toContain('aria-describedby="dash-sort-note"');
+  });
+  it("at the bound, Load more is replaced by an explanation and a pointer to the filters", () => {
+    const rows = Array.from({ length: MAX_LOADED_ROWS }, (_, i) => item(i + 1));
+    const h = view({ status: "loaded", items: rows, nextCursor: "c" });
+    expect(h).not.toContain('id="dash-more"');
+    expect(h).toContain('id="dash-limit"');
+    expect(h).toContain(`${MAX_LOADED_ROWS} invoices are loaded`);
+    const below = view({ status: "loaded", items: rows.slice(1), nextCursor: "c" });
+    expect(below).toContain('id="dash-more"');
   });
 });
