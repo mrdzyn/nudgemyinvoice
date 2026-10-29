@@ -133,7 +133,7 @@ Choose the OpenAI model from the models available to your own account (the app h
 - Create your own Sandbox REST app at the PayPal Developer dashboard (Sandbox → Apps & Credentials) with the **Invoicing** feature enabled and a Sandbox **Business** (merchant) account. Do not use Live credentials; the server refuses any non-Sandbox PayPal base URL.
 - Keep credentials in your shell or an ignored `.env` file. Never commit them. Without these variables the app still works: parsing falls back to manual entry and PayPal draft creation answers `paypal_disabled`.
 - Real PayPal drafting creates **one DRAFT per invoice in your Sandbox**. It does not email anyone, send the invoice or move money.
-- Real-provider behaviour has **not** been verified end to end by the project (see `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`); expect to be the first to try it.
+- Real-provider behaviour has **not** been verified end to end by the project (see `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`); expect to be the first to try it. The **project owner's** bounded acceptance runs (call caps, synthetic inputs, evidence rules) are a separate, separately authorized procedure there; this Mode B section is for judges using their own accounts and does not authorize or substitute for those runs.
 
 Default (neither set): `pnpm --filter @nmi/api start`. Check it is up: `curl http://127.0.0.1:3001/health` → `{"status":"ok","paypalEnvironment":"sandbox","aiConfigured":false}`.
 

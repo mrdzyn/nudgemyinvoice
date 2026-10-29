@@ -1253,4 +1253,61 @@ Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), rea
 ### Not verified
 Screen readers, real touch, Safari/Firefox, real 400% zoom, keyboard column resizing, hosted HTTPS/proxy, any real provider; bundle size unmitigated.
 
+## Handoff: NMI-DEMO-R1-START
+
+- **Task:** `tasks/NMI-DEMO-R1-provider-acceptance.md`
+- **From:** GPT-6 orchestration following owner squash merge of AG Grid Community PR #17
+- **To:** Claude coding agent for docs-only acceptance readiness, then GPT-6 exact-head audit and owner merge decision
+- **Base main:** `2d5a7034fe7b78d927d19d534bf9958d91b3b7fd`
+- **Branch / PR:** `docs/nmi-demo-r1-provider-acceptance` / same Draft PR
+- **State:** READY FOR DOCS-ONLY IMPLEMENTATION. Absolutely **NO real OpenAI/PayPal provider calls**, no Sandbox create, no budget reset, no production/runtime code change, no deployment/Devpost/video publication.
+
+### Goal and boundaries
+
+Read `AGENTS.md`, `docs/STATUS.md`, `config/project-profile.json`, `tasks/NMI-DEMO-R1-provider-acceptance.md` and relevant R0 operator runbook/provider acceptance/checklist/Devpost docs. **Do not load full handoff history**. Reconcile AG Grid PR #17 as passed/merged. Prepare operator-ready, secret-safe checklists for **Gate A** (OpenAI; propose `gpt-6-luna`, but owner confirms model, entitlement and cost) and **Gate B** (exactly one new PayPal Sandbox USD 540.00 DRAFT, newly approved separately), plus two distinct approval-request texts, stop conditions, sanitized evidence fields and a limited offline preflight/CI plan.
+
+Leave `PAYPAL_DRAFTS_ENABLED=false` and existing one-create budget 1/1 exhausted. Every real-provider test is **PENDING** and needs explicit future owner approval after this preparation is independently audited and merged. Gate C combined browser test requires its own authorization. All provider credentials are private; never print or commit them. Never present fake/test-only evidence as real-provider acceptance.
+
+Keep the readiness PR **Draft**, run applicable local doc checks and mandatory hosted CI, report exact HEAD and checks for independent GPT-6 audit. Never merge/deploy/publish/submit or contact providers.
+
+### Sources
+
+Official hackathon rules: https://paypalaihackathon.devpost.com/rules (deadline 2026-11-12 12:00 PST, 2026-11-13 04:00 PHT). Official currently documented OpenAI small-model candidate: https://developers.openai.com/api/docs/models/gpt-6-luna and pricing https://developers.openai.com/api/docs/pricing. Recheck model/account availability before any separately approved paid call.
+
+## Handoff: NMI-DEMO-R1-PREP
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-provider-acceptance.md` (section "Preparation record")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head audit, then owner merge decision, then owner decisions on Requests A/B/C
+- **Branch / PR:** `docs/nmi-demo-r1-provider-acceptance`, [Draft PR #18](https://github.com/mrdzyn/nudgemyinvoice/pull/18)
+- **State:** READY FOR INDEPENDENT AUDIT. No product/provider code, lockfile, migration, CI or evidence change; no OpenAI/PayPal request; no credential handled; no budget reset; PayPal drafting stays disabled; nothing merged, deployed, uploaded or submitted.
+
+### Audit focus
+1. Diff is documentation only (`docs/`, `tasks/`).
+2. Nothing implies authorization: all three requests read NOT AUTHORIZED; the PayPal 1/1 budget is stated exhausted and not reset; Request B is a separate one-create permit with no retry; Gate C does not create another draft.
+3. Facts: model page and pricing (`gpt-6-luna`, Responses, Structured Outputs, USD 0.10/0.50, medium default reasoning) and the two static findings (`maxRetries: 1`, output cap vs reasoning) match `packages/ai/src/client.ts` and `apps/api/src/config.ts`; PayPal SQL column names match migration 0005/0000; no in-repo create counter is stated honestly.
+4. REAL / PENDING / SIMULATED rules and redaction rules are complete; templates carry no pre-filled results; Devpost/video/checklist wording cannot overstate.
+5. Operator commands use silent prompts, keep OpenAI unset for B and PayPal unset for A, and tear down.
+
+### Not verified
+Everything provider-side: model entitlement/pricing on the owner's account, any real response, token usage, PayPal behaviour for the new invoice; commands were reviewed statically (the OpenAI and PayPal steps cannot be dry-run without credentials).
+
+## Handoff: NMI-DEMO-R1-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-provider-acceptance.md` (section "Audit remediation NMI-DEMO-R1-R1")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit, then owner decisions
+- **Branch / PR:** `docs/nmi-demo-r1-provider-acceptance`, [Draft PR #18](https://github.com/mrdzyn/nudgemyinvoice/pull/18)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no executable code, test, lockfile, migration, CI or evidence change; no OpenAI/PayPal request; no credential; no budget reset; Render not provisioned; nothing merged, deployed, uploaded or submitted. Gates A, B and C remain NOT AUTHORIZED; **Gate B is BLOCKED**.
+
+### Re-audit focus
+1. MAJOR-1: acceptance doc 5.0 and Request B state the confirmed defect (`call()` resends after 401; `createDraftInvoice` does not opt out; `client.test.ts` expects two POSTs), mark Gate B BLOCKED, specify the separate fix (no create resend after 401; read-only refresh kept; fail closed, no recreate; one 401 = one create POST) and the unblock conditions; the fix is **not** implemented here; the earlier "no automatic re-create" statement is corrected.
+2. MINOR-1: three attempts vs up to six wire requests; A-strict needs a separate audited `maxRetries: 0` fix, otherwise explicit up-to-six authorization with spend limit and provider-reported count.
+3. MINOR-2: Gate C sequence no longer reopens the dropped Gate B invoice; default read-only PayPal dashboard view labelled RECORDED EARLIER; preservation plan only as an owner option; no implicit invoice creation.
+4. MINOR-3: snippets have no inline comments, silent client id and secret entry, `SETUP OK` check blocks, separate start and teardown blocks; executed from the document in bash and zsh, script and interactive (stub `pnpm`, dummy values), plus negative checks that wrongly set credentials print `SETUP WRONG - STOP`.
+5. Wording cannot be read as an authorization; evidence templates carry no pre-filled results.
+
+### Not verified
+Any provider-side behaviour; the PayPal fix itself (not written); the preservation plan (never executed); real-shell behaviour beyond the stubbed bash/zsh runs on macOS.
+
 <!-- HANDOFF_ENTRIES_END -->

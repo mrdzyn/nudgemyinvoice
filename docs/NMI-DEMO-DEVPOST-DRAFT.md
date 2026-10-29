@@ -29,7 +29,7 @@ PayPal **Invoicing v2** (Sandbox only): OAuth token, create DRAFT invoice, show 
 - **[not verified]** search/reconciliation/timeout/error behaviour against the real Sandbox, and a complete real-provider browser journey. These paths are covered by deterministic fake-transport and PostgreSQL tests.
 
 ## AI provider / model used
-OpenAI **Responses API** via the official `openai` SDK, structured output validated with Zod. **[not verified]** against the real provider: no live OpenAI request has been run; the parser is tested with deterministic fake models. Model: **[owner to confirm — the repository has no default; chosen at deployment via `OPENAI_MODEL`]**.
+OpenAI **Responses API** via the official `openai` SDK, structured output validated with Zod. **[not verified]** against the real provider: no live OpenAI request has been run; the parser is tested with deterministic fake models. Model: **[owner to confirm]** — the repository has no default (`OPENAI_MODEL`); the proposed acceptance model is `gpt-6-luna`, but **do not name it as used or verified** unless `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md` Gate A is REAL PASS (then say exactly: "real parsing verified once on two synthetic inputs on <date>"). Wording matrix: acceptance doc section 7.
 
 ## Architecture
 `apps/web` (React/Vite/TypeScript), `apps/api` (Fastify, strict Zod boundaries), `packages/db` (Drizzle + PostgreSQL), `packages/shared` (exact money, schemas), `packages/ai` (parser), `packages/paypal` (allow-listed Sandbox adapter), `packages/domain` (approval gate). Monetary values are decimal strings / integer minor units; no floating-point money.
@@ -58,7 +58,7 @@ Single operator, server-side sessions (HttpOnly cookie), Origin + CSRF checks on
 Human-approved invoice sending, signature-verified payment webhooks and reconciliation, overdue detection with AI-drafted (never auto-sent) reminders, multi-user accounts, hosted deployment, real-provider acceptance runs.
 
 ## Built with
-React, Vite, TypeScript, Fastify, Drizzle ORM, PostgreSQL, Zod, Vitest, OpenAI Responses API **[integration implemented; not verified live]**, PayPal Invoicing v2 (Sandbox), **AG Grid Community** (MIT) for the saved-invoice grid (sortable and resizable columns, custom cells and a status renderer, themed to light and dark under a strict Content-Security-Policy). *Sponsor tools:* the README lists an APIMatic Context Plugin for PayPal as a coding-time aid **[owner to confirm it was actually used before listing it]**; AG Grid Community **is used** in the app (implemented on Draft PR #17; confirm the merge before publishing this line); AG Studio and AG Grid Enterprise were **not** used; using AG Grid makes the entry eligible for sponsor consideration under the rules, which is not a claim of selection or a prize; Render was **not** used (no deployment). Do not list a tool the project did not use.
+React, Vite, TypeScript, Fastify, Drizzle ORM, PostgreSQL, Zod, Vitest, OpenAI Responses API **[integration implemented; not verified live]**, PayPal Invoicing v2 (Sandbox), **AG Grid Community** (MIT) for the saved-invoice grid (sortable and resizable columns, custom cells and a status renderer, themed to light and dark under a strict Content-Security-Policy). *Sponsor tools:* the README lists an APIMatic Context Plugin for PayPal as a coding-time aid **[owner to confirm it was actually used before listing it]**; AG Grid Community **is used** in the app (independently audited and merged in PR #17 on `main` at `2d5a7034`; no Enterprise/Studio); AG Studio and AG Grid Enterprise were **not** used; using AG Grid makes the entry eligible for sponsor consideration under the rules, which is not a claim of selection or a prize; Render was **not** used (no deployment). Do not list a tool the project did not use.
 
 ## Links
 - GitHub: https://github.com/mrdzyn/nudgemyinvoice (public, MIT license visible in the repository)
@@ -70,3 +70,12 @@ No hosted deployment. Follow `docs/NMI-DEMO-JUDGE-RUNBOOK.md` (clean-clone teste
 
 ## Eligibility and compliance (owner to confirm)
 Original work; open-source MIT license; Sandbox only; no real customer data; no unlicensed assets. The official rules (https://paypalaihackathon.devpost.com/rules) were independently retrieved and verified by the independent reviewer: repository setup/run instructions **or** a hosted demo satisfy the functional-access requirement, and a public open-source repository/license and a public YouTube video under 3 minutes are required. Eligibility, team/account and sponsor-tool questions, and every other criterion, remain the owner's to confirm; this draft makes no claim about them.
+
+## Provider evidence status for the submission text (R1)
+
+| Item | Today | After a gate (only if REAL PASS, quote run ID/date) |
+| --- | --- | --- |
+| Real OpenAI parsing | **[not verified]** — Gate A PENDING | "verified once, two synthetic inputs" |
+| New PayPal Sandbox DRAFT via browser | **[not verified]** — Gate B PENDING and **BLOCKED** pending a PayPal client fix (historical backend USD 5.00 draft **[verified, historical]**) | "one Sandbox DRAFT created and verified through the browser path" |
+| Real-provider end-to-end walkthrough | **[not verified]** — Gate C PENDING | label each video segment LIVE or SIMULATED |
+Do not describe simulated runs, fake providers or fixtures as live. Do not publish a result that is not in a filled, owner-reviewed template.
