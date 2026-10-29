@@ -1510,4 +1510,14 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **NOT TESTED:** Render PostgreSQL/TLS (`sslmode=require`), Linux, `pg@9` behavior (would fail closed), hosted CI does not run the verifier.
 - **Gates:** merge, Render provisioning and sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P1-PREFLIGHT-FIX1
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head re-audit, then owner
+- **Branch / PR:** `docs/nmi-render-p1-operator-provision-preflight`, Draft PR #22. Audited start HEAD `e4fda9bfb9c0387bb73c56017dab095d5deb4253`; independent review `5698125509`.
+- **Changed (verifier and docs only):** `scripts/preflight-provision-operator.mjs` (strict negative-control verdict; fail-closed `teardown`; 18 fault-injection self-tests; version-banner crash fix), `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`, task, STATUS. No production code, schema, grants, UI or provider change.
+- **Result (agent-reported, local):** full disposable SCRAM PostgreSQL 16.15 run 54/54 (cleanup: stop exit 0, status = not running, pid gone, port refused, files absent); `PG_BIN=/nonexistent` injection exits 1 with `pg.init`/`pg.start` failing. Hosted CI run IDs are in the PR body.
+- **NOT TESTED:** unchanged (Render PostgreSQL/TLS, Linux, `pg@9`); teardown fault injection uses fake dependencies except the `PG_BIN` case.
+- **Gates:** Gates A/B/C NOT AUTHORIZED; no merge/provision/deploy.
+
 <!-- HANDOFF_ENTRIES_END -->

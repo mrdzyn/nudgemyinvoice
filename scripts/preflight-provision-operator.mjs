@@ -12,7 +12,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {
-  existsSync,
+  lstatSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
@@ -65,6 +65,181 @@ let started = false;
 
 const bin = (n) => join(PG_BIN, n);
 const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", ...opts });
+
+/** Exact CLI-failure contract for the negative controls (pure, so it can be self-tested). */
+const PERM_WARNING =
+  /^WARNING: password file ".*" has group or world access; permissions should be u=rw \(0600\) or less$/;
+function negVerdict(r, expectPermWarning) {
+  const lines = r.err.split("\n").map((l) => l.trimEnd());
+  const failedMsg = lines.filter((l) => l === "Provisioning failed.").length === 1;
+  const warn = lines.some((l) => PERM_WARNING.test(l));
+  const noSuccess = !r.out.split("\n").some((l) => /^Operator (created|updated)/.test(l));
+  const noSecret = !SECRETS.some((x) => r.out.includes(x) || r.err.includes(x));
+  return {
+    ok: r.code === 1 && failedMsg && noSuccess && noSecret && (expectPermWarning ? warn : true),
+    detail: { exit: r.code, failedMsg, permWarning: warn, noSuccess, noSecret },
+  };
+}
+
+const fsGone = (path) => {
+  try {
+    lstatSync(path);
+    return false;
+  } catch (e) {
+    return e?.code === "ENOENT"; // any other error (EACCES, ...) is NOT proof of absence
+  }
+};
+const realDeps = {
+  run,
+  gone: fsGone,
+  rm: (p) => rmSync(p, { recursive: true, force: true }),
+  readPid: (dir) => {
+    try {
+      const n = Number(readFileSync(join(dir, "postmaster.pid"), "utf8").split("\n")[0]);
+      return Number.isInteger(n) && n > 0 ? n : null;
+    } catch {
+      return null;
+    }
+  },
+  pidAlive: (pid) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (e) {
+      return e?.code === "ESRCH" ? false : "unknown"; // EPERM etc. => cannot claim it stopped
+    }
+  },
+  /** TCP probe in Node (no external `nc`): only ECONNREFUSED proves the port is closed. */
+  probe: (host, prt) =>
+    new Promise((resolve) => {
+      const sock = net.connect({ host, port: prt });
+      sock.setTimeout(1500);
+      sock.on("connect", () => {
+        sock.destroy();
+        resolve("open");
+      });
+      sock.on("timeout", () => {
+        sock.destroy();
+        resolve("unknown");
+      });
+      sock.on("error", (e) => resolve(e?.code === "ECONNREFUSED" ? "closed" : "unknown"));
+    }),
+};
+
+/**
+ * Fail-closed teardown. Every verdict requires positive proof; an unavailable command, a spawn
+ * error, an unreadable pid, or an inconclusive probe is a FAILURE, never a pass.
+ */
+async function teardown(d, ctx) {
+  const r = {
+    stopCommandOk: false,
+    processStopped: false,
+    portClosed: false,
+    dirRemoved: false,
+    pgpassRemoved: false,
+  };
+  const pid = ctx.dataDir ? d.readPid(ctx.dataDir) : null;
+  if (!ctx.started && pid === null) {
+    // never started and no postmaster.pid: there is no server to stop
+    r.stopCommandOk = true;
+    r.processStopped = true;
+  } else {
+    const stop = d.run(bin("pg_ctl"), ["-D", ctx.dataDir, "-m", "immediate", "-w", "stop"]);
+    r.stopCommandOk = !stop.error && stop.status === 0;
+    const status = d.run(bin("pg_ctl"), ["-D", ctx.dataDir, "status"]);
+    const notRunning = !status.error && status.status === 3; // pg_ctl status: 3 = not running
+    const alive = pid === null ? "unknown" : d.pidAlive(pid);
+    r.processStopped = notRunning && alive === false;
+  }
+  if (ctx.port) r.portClosed = (await d.probe(HOST, ctx.port)) === "closed";
+  else r.portClosed = !ctx.started;
+  try {
+    if (ctx.work) d.rm(ctx.work);
+  } catch {
+    /* the removal checks below decide */
+  }
+  r.dirRemoved = !ctx.work || d.gone(ctx.work);
+  r.pgpassRemoved = !ctx.pgpass || d.gone(ctx.pgpass);
+  r.ok = Object.values(r).every((v) => v === true);
+  return r;
+}
+
+/** Failure injection: every fault must be DETECTED (verdict not ok); the control must pass. */
+async function selfTests() {
+  const ctx = { started: true, dataDir: "/x/pg", port: 5999, work: "/x", pgpass: "/x/pgpass" };
+  const good = {
+    run: (_c, a) => ({ status: a.includes("status") ? 3 : 0 }),
+    gone: () => true,
+    rm: () => {},
+    readPid: () => 4242,
+    pidAlive: () => false,
+    probe: async () => "closed",
+  };
+  const faults = [
+    ["pg_ctl stop exits nonzero", { run: (_c, a) => ({ status: a.includes("status") ? 3 : 1 }) }],
+    [
+      "pg_ctl cannot be spawned (ENOENT)",
+      { run: () => ({ status: null, error: new Error("ENOENT") }) },
+    ],
+    [
+      "pg_ctl status says the server is still running",
+      { run: (_c, a) => ({ status: a.includes("status") ? 0 : 0 }) },
+    ],
+    ["server pid is still alive after stop", { pidAlive: () => true }],
+    ["server pid cannot be determined", { readPid: () => null }],
+    ["liveness of the pid is inconclusive (EPERM)", { pidAlive: () => "unknown" }],
+    ["port probe is inconclusive (probe tool unavailable)", { probe: async () => "unknown" }],
+    ["port still accepts connections", { probe: async () => "open" }],
+    ["temp directory removal fails", { gone: (p) => p !== "/x" }],
+    ["password file not removed", { gone: (p) => p !== "/x/pgpass" }],
+  ];
+  const results = [];
+  const control = await teardown(good, ctx);
+  results.push({ name: "control: all-good teardown is accepted", ok: control.ok === true });
+  for (const [name, patch] of faults) {
+    const v = await teardown({ ...good, ...patch }, ctx);
+    results.push({ name: `fault detected: ${name}`, ok: v.ok === false });
+  }
+  const base = { code: 1, out: "", err: "Provisioning failed.\n" };
+  const warnLine =
+    'WARNING: password file "/t/open" has group or world access; permissions should be u=rw (0600) or less';
+  const negCases = [
+    ["control: expected failure message is accepted", negVerdict(base, false).ok === true],
+    [
+      "control: 0644 failure with the permission warning is accepted",
+      negVerdict({ ...base, err: `${warnLine}\nProvisioning failed.\n` }, true).ok === true,
+    ],
+    [
+      "fault detected: nonzero exit with a different message",
+      negVerdict(
+        {
+          ...base,
+          code: 2,
+          err: "Set DATABASE_URL (postgres://), NMI_OPERATOR_USERNAME and NMI_OPERATOR_PASSWORD in the environment.\n",
+        },
+        false,
+      ).ok === false,
+    ],
+    [
+      "fault detected: exit 1 without the expected message",
+      negVerdict({ ...base, err: "boom\n" }, false).ok === false,
+    ],
+    [
+      "fault detected: exit 0 even with the message",
+      negVerdict({ ...base, code: 0 }, false).ok === false,
+    ],
+    [
+      "fault detected: 0644 case without the permission warning",
+      negVerdict(base, true).ok === false,
+    ],
+    [
+      "fault detected: success line printed on a failure",
+      negVerdict({ ...base, out: "Operator created.\n" }, false).ok === false,
+    ],
+  ];
+  for (const [name, ok] of negCases) results.push({ name, ok });
+  return results;
+}
 
 /** Escape ':' and '\' exactly as docs/NMI-RENDER-P1-RUNBOOK.md §5 step 2 does. */
 const escapePgpass = (pw) => pw.replaceAll("\\", "\\\\").replaceAll(":", "\\:");
@@ -140,6 +315,12 @@ const snapshot = (env) => ({
 });
 
 async function main() {
+  for (const t of await selfTests())
+    check(
+      `selftest.${checks.filter((c) => c.id.startsWith("selftest.")).length + 1}`,
+      t.name,
+      t.ok,
+    );
   work = mkdtempSync(join(tmpdir(), "nmi-preflight-")); // mode 0700
   chmodSync(work, 0o700);
   dataDir = join(work, "pg");
@@ -401,23 +582,15 @@ async function main() {
       })(),
     ],
   ];
-  const permNote = [];
   for (const [label, e] of cases) {
     const r = await runCli(e, label);
-    const leakInErr = SECRETS.some((s) => r.out.includes(s) || r.err.includes(s));
+    const v = negVerdict(r, label.includes("0644"));
     check(
-      `neg.${label.split(" ")[0]}.${label.includes("0644") ? "perm" : label.includes("wrong") ? "wrong" : "missing"}`,
-      `${label}: clean nonzero exit, no secret in output`,
-      r.code !== 0 && !leakInErr,
-      `exit=${r.code}; cli_stderr=${JSON.stringify(
-        r.err
-          .split("\n")
-          .filter((l) => /^(Provisioning failed|WARNING|Set DATABASE)/.test(l))
-          .map((l) => l.replace(/"[^"]*nmi-preflight-[^"]*"/, "<tmp pgpass>"))
-          .join(" | "),
-      )}`,
+      `neg.${label.includes("0644") ? "perm" : label.includes("wrong") ? "wrong" : "missing"}`,
+      `${label}: exit 1 with exactly one 'Provisioning failed.' line${label.includes("0644") ? " and the pgpass file-permission warning" : ""}, no success line, no secret`,
+      v.ok,
+      JSON.stringify(v.detail),
     );
-    permNote.push(label);
   }
   const after = snapshot(env);
   check(
@@ -449,30 +622,6 @@ async function main() {
   );
 }
 
-function cleanup() {
-  const result = { stopped: false, dirRemoved: false, portClosed: false, pgpassRemoved: false };
-  try {
-    if (started && dataDir) {
-      run(bin("pg_ctl"), ["-D", dataDir, "-m", "immediate", "-w", "stop"]);
-      result.stopped = true;
-    }
-  } catch {
-    /* best-effort cleanup/scan; failures surface through the cleanup and scan checks */
-  }
-  try {
-    if (work) rmSync(work, { recursive: true, force: true });
-  } catch {
-    /* best-effort cleanup/scan; failures surface through the cleanup and scan checks */
-  }
-  result.dirRemoved = !work || !existsSync(work);
-  result.pgpassRemoved = !work || !existsSync(join(work, "pgpass"));
-  if (port) {
-    result.portClosed = run("nc", ["-z", HOST, String(port)]).status !== 0;
-  } else result.portClosed = true;
-  result.stopped = result.stopped || !started;
-  return result;
-}
-
 function scanRepo() {
   // The secrets are random per run and exist only in memory: they must not be in any tracked or
   // untracked repository file at the end of the run.
@@ -493,6 +642,7 @@ function scanRepo() {
   return { files: listed.length, hits };
 }
 
+const out = (r) => (r.stdout ?? "unavailable").trim() || "unavailable";
 const versions = () => {
   const pgVer = JSON.parse(
     readFileSync(join(ROOT, "node_modules/.pnpm/pg@8.23.1/node_modules/pg/package.json"), "utf8"),
@@ -501,11 +651,11 @@ const versions = () => {
     readdirSync(join(ROOT, "node_modules/.pnpm")).find((d) => d.startsWith("pgpass@")) ?? "unknown";
   return {
     node: process.version,
-    pnpm: run("pnpm", ["-v"]).stdout.trim(),
-    postgres: run(bin("postgres"), ["--version"]).stdout.trim(),
+    pnpm: out(run("pnpm", ["-v"])),
+    postgres: out(run(bin("postgres"), ["--version"])),
     "pg (driver)": pgVer,
     pgpass: pgpassPkg,
-    os: `${run("uname", ["-sr"]).stdout.trim()} ${run("uname", ["-m"]).stdout.trim()}`,
+    os: `${out(run("uname", ["-sr"]))} ${out(run("uname", ["-m"]))}`,
   };
 };
 
@@ -516,7 +666,13 @@ try {
   fatal = e instanceof Error ? e.message.replaceAll(/\S*(Pw:)\S*/g, "[redacted]") : "error";
   process.exitCode = 1;
 } finally {
-  const cleanupResult = cleanup();
+  const cleanupResult = await teardown(realDeps, {
+    started,
+    dataDir,
+    port,
+    work,
+    pgpass: work ? join(work, "pgpass") : null,
+  });
   const repo = scanRepo();
   const all = captured.join("\n");
   const leakedOutput = SECRETS.some((s) => all.includes(s));
@@ -533,11 +689,8 @@ try {
   );
   check(
     "cleanup",
-    "server stopped, temp dir and PGPASSFILE removed, port closed",
-    cleanupResult.stopped &&
-      cleanupResult.dirRemoved &&
-      cleanupResult.pgpassRemoved &&
-      cleanupResult.portClosed,
+    "pg_ctl stop exit 0, pg_ctl status = not running, postmaster pid gone, port refuses connections (Node TCP probe), temp dir and PGPASSFILE absent",
+    cleanupResult.ok,
     JSON.stringify(cleanupResult),
   );
   const failed = checks.filter((c) => !c.ok).length;

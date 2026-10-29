@@ -43,4 +43,7 @@ After the independent GPT-6 exact-head evidence audit and **separate owner squas
 Deliver exact final HEAD, local evidence, CI runs and independent-audit request on **the existing Draft PR**. Do not merge, provision, deploy, upload or publish.
 
 ## Implementation record (NMI-RENDER-P1-PREFLIGHT-IMPL)
-**State:** verification complete, awaiting independent exact-head audit. Verifier `scripts/preflight-provision-operator.mjs` (`pnpm preflight:provision`); sanitized results in `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md` (36/36). Production CLI and all runtime code unmodified. Deferred: `pg@9` removal of `PGPASSFILE` support needs a separate reviewed approach; Render TLS/role behavior untested.
+**State:** verification complete, awaiting independent exact-head audit. Verifier `scripts/preflight-provision-operator.mjs` (`pnpm preflight:provision`); sanitized results in `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md` (54/54). Production CLI and all runtime code unmodified. Deferred: `pg@9` removal of `PGPASSFILE` support needs a separate reviewed approach; Render TLS/role behavior untested.
+
+### Remediation FIX1 (review 5698125509; verifier + docs only)
+MINOR-1: the three negative controls now require exit 1, exactly one `Provisioning failed.` line, no success line, no secret, and (0644) the pgpass permission warning. MINOR-2: teardown is fail closed (pg_ctl stop status, pg_ctl status = not running, pid gone, Node TCP probe where only ECONNREFUSED counts, ENOENT-only absence). 18 fault-injection self-tests plus a real `PG_BIN=/nonexistent` injection (found and fixed a report-crash in the version banner). Production code unchanged.
