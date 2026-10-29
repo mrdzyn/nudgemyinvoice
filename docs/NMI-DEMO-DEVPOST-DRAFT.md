@@ -76,6 +76,6 @@ Original work; open-source MIT license; Sandbox only; no real customer data; no 
 | Item | Today | After a gate (only if REAL PASS, quote run ID/date) |
 | --- | --- | --- |
 | Real OpenAI parsing | **[not verified]** — Gate A PENDING | "verified once, two synthetic inputs" |
-| New PayPal Sandbox DRAFT via browser | **[not verified]** — Gate B PENDING (historical backend USD 5.00 draft **[verified, historical]**) | "one Sandbox DRAFT created and verified through the browser path" |
+| New PayPal Sandbox DRAFT via browser | **[not verified]** — Gate B PENDING and **BLOCKED** pending a PayPal client fix (historical backend USD 5.00 draft **[verified, historical]**) | "one Sandbox DRAFT created and verified through the browser path" |
 | Real-provider end-to-end walkthrough | **[not verified]** — Gate C PENDING | label each video segment LIVE or SIMULATED |
 Do not describe simulated runs, fake providers or fixtures as live. Do not publish a result that is not in a filled, owner-reviewed template.

@@ -1292,4 +1292,22 @@ Official hackathon rules: https://paypalaihackathon.devpost.com/rules (deadline 
 ### Not verified
 Everything provider-side: model entitlement/pricing on the owner's account, any real response, token usage, PayPal behaviour for the new invoice; commands were reviewed statically (the OpenAI and PayPal steps cannot be dry-run without credentials).
 
+## Handoff: NMI-DEMO-R1-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-provider-acceptance.md` (section "Audit remediation NMI-DEMO-R1-R1")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit, then owner decisions
+- **Branch / PR:** `docs/nmi-demo-r1-provider-acceptance`, [Draft PR #18](https://github.com/mrdzyn/nudgemyinvoice/pull/18)
+- **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no executable code, test, lockfile, migration, CI or evidence change; no OpenAI/PayPal request; no credential; no budget reset; Render not provisioned; nothing merged, deployed, uploaded or submitted. Gates A, B and C remain NOT AUTHORIZED; **Gate B is BLOCKED**.
+
+### Re-audit focus
+1. MAJOR-1: acceptance doc 5.0 and Request B state the confirmed defect (`call()` resends after 401; `createDraftInvoice` does not opt out; `client.test.ts` expects two POSTs), mark Gate B BLOCKED, specify the separate fix (no create resend after 401; read-only refresh kept; fail closed, no recreate; one 401 = one create POST) and the unblock conditions; the fix is **not** implemented here; the earlier "no automatic re-create" statement is corrected.
+2. MINOR-1: three attempts vs up to six wire requests; A-strict needs a separate audited `maxRetries: 0` fix, otherwise explicit up-to-six authorization with spend limit and provider-reported count.
+3. MINOR-2: Gate C sequence no longer reopens the dropped Gate B invoice; default read-only PayPal dashboard view labelled RECORDED EARLIER; preservation plan only as an owner option; no implicit invoice creation.
+4. MINOR-3: snippets have no inline comments, silent client id and secret entry, `SETUP OK` check blocks, separate start and teardown blocks; executed from the document in bash and zsh, script and interactive (stub `pnpm`, dummy values), plus negative checks that wrongly set credentials print `SETUP WRONG - STOP`.
+5. Wording cannot be read as an authorization; evidence templates carry no pre-filled results.
+
+### Not verified
+Any provider-side behaviour; the PayPal fix itself (not written); the preservation plan (never executed); real-shell behaviour beyond the stubbed bash/zsh runs on macOS.
+
 <!-- HANDOFF_ENTRIES_END -->

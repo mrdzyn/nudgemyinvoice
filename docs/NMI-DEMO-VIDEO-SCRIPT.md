@@ -39,10 +39,12 @@ Total ≈ 2:40. Tighten the 1:45 beat first if it runs long.
 - [ ] Export under 3:00; verify length on the exported file.
 - [ ] Upload (owner only, later) as **public** YouTube; test playback while signed out.
 
-## Real-provider recording rules (only after the owner answers Request C — `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`)
+## Real-provider recording rules (only after the owner answers Request C — `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`; none is answered today)
 
-- **Do not re-create a PayPal draft for a take.** Gate B's single create is spent when it runs. Show the already-created DRAFT read-only (detail page and dashboard "PayPal draft created") and say on screen and aloud that it was created in a separate, earlier verified run; label it "REAL (recorded earlier, run R1-B-…)". A live second create needs its own separate permit.
-- A live OpenAI parse in the recording consumes calls from a **new** Request C cap; practise with the simulated mode first and record the live take once.
-- Segment tags: LIVE (real provider this take), RECORDED EARLIER (real, from a labelled run), SIMULATED. Use the exact label strings of the evidence templates. Keep the tag on screen for the whole segment.
-- Before recording: fresh disposable database, secrets entered off-screen, `.env` and terminal not visible, no URL bar with private hosts, no real customer data, no provider dashboard with account e-mails/ids.
-- If any gate is not REAL PASS at recording time, that segment is SIMULATED and says so. Length < 3:00; nothing is uploaded or submitted without separate owner action.
+- **Gate B is BLOCKED** (PayPal client resend after 401, acceptance doc 5.0), so no new PayPal draft exists or may be created for a take. Until Gate B is REAL PASS, **PayPal parts stay SIMULATED** (or show only the historical backend fact in narration text, not as a screen recording).
+- **Gate B drops its database.** The Gate B invoice cannot be reopened in the app later. The truthful default is: (1) the app parts (real parse if Gate A passed and Request C authorizes it, save, dashboard) run on a **fresh** database with the invoices listed in the authorization; (2) the Gate B DRAFT is shown **read-only in the PayPal Sandbox dashboard**, account details masked, tagged "RECORDED EARLIER — created in run R1-B-…, not linked to the app records shown". Never show an app screen claiming "PayPal draft created" for an invoice that did not receive that state in that database.
+- **Never** create another invoice, PayPal draft or provider call "for the take". Only invoices named in the Request C authorization may be created; there is no live second PayPal create unless a separate permit exists (not requested). A preserved/restored database is allowed only under the retention plan (acceptance doc 6.3) the owner approved.
+- A live OpenAI parse in the recording uses a **new** Request C cap and counts both parse attempts and provider requests (up to 6 wire requests under path A-six). Practise in the simulated mode first and record the live take once.
+- Segment tags: LIVE (real provider this take), RECORDED EARLIER (real, from a labelled run), SIMULATED. Use the exact label strings of the evidence templates and keep the tag on screen for the whole segment.
+- Before recording: fresh disposable database, secrets entered off-screen (silent prompts), `.env` and terminal not visible, no URL bar with private hosts, no real customer data, no provider dashboard showing account e-mails or ids.
+- If any gate is not REAL PASS at recording time, that segment is SIMULATED and says so. Length under 3:00; nothing is uploaded or submitted without separate owner action.

@@ -1,5 +1,7 @@
 # NudgeMyInvoice — Real-provider acceptance procedure (PREPARED, NOT EXECUTED)
 
+> **Gate B is BLOCKED** (section 5.0: the PayPal client can resend a draft-create POST after an HTTP 401, which breaks the one-request permit) until a separately approved and independently audited code fix is merged. **Gates A and C are NOT AUTHORIZED; Gate A is also waiting for the owner's request-count choice (4.2).**
+>
 > **Nothing in this document has been run.** No OpenAI request, no PayPal request, no budget reset and no PayPal drafting has happened in R0, R1 or any documentation task. This is an **execution-ready procedure for the owner** with three independent gates (A OpenAI, B PayPal Sandbox, C combined browser). Each gate needs its **own written owner authorization** (`docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`). Approval of one gate is not approval of another. A documentation merge, a README line, "next", this file, or a previous approval is **never** an authorization. Evidence templates: `docs/NMI-DEMO-EVIDENCE-TEMPLATES.md`.
 
 ## 1. What is and is not verified today
@@ -8,7 +10,7 @@
 | --- | --- | --- |
 | Real PayPal Sandbox OAuth, **one** create, one read-only show (USD 5.00, DRAFT), backend only, 2026-10-26 | **REAL PASS (historical)** | Owner-local sanitized evidence (`NMI-P2-I2-SANDBOX-SMOKE-01`). Its one-create budget is **1/1, exhausted**; nothing here resets it. |
 | Real OpenAI Responses parsing | **PENDING** (never executed) | Gate A |
-| New PayPal Sandbox DRAFT (USD 540.00) through the browser path | **PENDING** | Gate B |
+| New PayPal Sandbox DRAFT (USD 540.00) through the browser path | **PENDING; Gate B BLOCKED** | Section 5.0 |
 | Complete real-provider browser walkthrough | **PENDING** | Gate C |
 | PayPal search / reconciliation / timeout / error paths against the real Sandbox | **NOT TESTED** | Fake transports + PostgreSQL tests only |
 | All UI/browser journeys to date (C1–C5, R0, NMI-AG1) | **SIMULATED** | Deterministic fakes; never provider acceptance |
@@ -51,14 +53,18 @@ Compatibility with this repository (static review, no request made): `packages/a
 
 ### 4.2 Two static findings the owner must decide before authorizing (no code change is made in R1)
 
-| # | Finding | Effect | Options (owner decides in the Gate A authorization) |
-| --- | --- | --- | --- |
-| A-F1 | The OpenAI client is built with `maxRetries: 1` (SDK default behaviour is therefore **one transparent resend** after a connection error, 408, 409, 429 or 5xx). The application counts **parse requests**, not HTTP requests. | "At most 3 calls" can mean up to **3 application parses but up to 6 HTTP requests** if every request is retried once. | **(a, recommended)** Accept it: the cap is 3 parse attempts; the hard bound is the provider-side spend limit and the STOP rule "any non-2xx ends the run"; the operator reports the provider's own request count. **(b)** Require a separate, owner-approved code task that sets `maxRetries: 0` for the acceptance run **before** Gate A is authorized (not part of R1). |
-| A-F2 | `gpt-6-luna` defaults to reasoning effort **medium**; the repo does not set `reasoning` and `OPENAI_MAX_OUTPUT_TOKENS` defaults to 1024 (allowed 64–4096). Reasoning tokens count toward `max_output_tokens`. | A 1024 or 512 cap may end `incomplete` with no parsed object: a billed call that fails closed to manual entry and spends one of the three. | **(a, recommended)** Run with `OPENAI_MAX_OUTPUT_TOKENS=4096` (configuration only; ceiling cost below). **(b)** Require a separate code task to set `reasoning: { effort: "low" }`/`"none"`. Do **not** shrink the cap to 512. |
+**A-F1: three application attempts are not three provider requests.** The client is built with `maxRetries: 1` (`packages/ai/src/client.ts`). The OpenAI SDK may therefore transparently resend a request once after a connection error, 408, 409, 429 or 5xx. The application issues at most **3 parse attempts**, but the provider can receive **up to 6 actual (wire) requests**, and a resent request can be billed. Request A must choose exactly one path; if neither is chosen the answer is NO:
+
+| Path | What it means | Needed before the run |
+| --- | --- | --- |
+| **A-strict (3 provider requests at most)** | The only way to guarantee a hard limit of 3 wire requests. | A **separate, owner-approved and independently audited code fix** setting `maxRetries: 0` (with a unit test that one failing request produces exactly one provider request). Not part of R1; Gate A cannot use this path until that fix is merged. |
+| **A-six (up to 6 wire requests)** | The cap is 3 parse attempts and the owner explicitly accepts up to **6** actual requests. | The authorization text must say "up to 6 provider (wire) requests" and state the provider-side spend limit; the transparent worst case is in 4.3; the run records the **provider-reported** request count; any count above 6 or any unexplained request is a STOP and REAL FAIL. |
+
+**A-F2: reasoning budget.** `gpt-6-luna` defaults to reasoning effort **medium**; the repo sets no `reasoning` and `OPENAI_MAX_OUTPUT_TOKENS` defaults to 1024 (allowed 64–4096). Reasoning tokens count toward `max_output_tokens`, so a low cap can end `incomplete` with no parsed object: a billed call that fails closed to manual entry and uses one of the three attempts. Configuration-only mitigation **(recommended)**: `OPENAI_MAX_OUTPUT_TOKENS=4096` (ceiling in 4.3). Alternative: a separate audited code task setting a lower reasoning effort. Never lower the cap to 512.
 
 ### 4.3 Cost ceiling (arithmetic, not a measurement)
 
-Per call: input ≈ 300–400 tokens (instructions ≈ 250 + synthetic input ≈ 40–60) × USD 0.10/1M ≈ USD 0.00004; output ≤ 4,096 tokens × USD 0.50/1M = USD 0.002048. **Worst case ≈ USD 0.0021 per call, USD 0.0063 for 3 calls, USD 0.0126 if every call were resent once (6 requests)**, excluding any other usage. The owner still sets a provider-side limit (a dedicated project/key with the lowest available budget cap, e.g. USD 1; if the account offers no cap, a dedicated key revoked immediately after the run). Rates may change: recheck the pricing page on the run day; stop if the price differs materially.
+Per call: input ≈ 300–400 tokens (instructions ≈ 250 + synthetic input ≈ 40–60) × USD 0.10/1M ≈ USD 0.00004; output ≤ 4,096 tokens × USD 0.50/1M = USD 0.002048. **Worst case ≈ USD 0.0021 per request: USD 0.0063 for 3 requests (A-strict) and USD 0.0126 for 6 requests (A-six, every attempt resent once)**, excluding any other usage. The owner still sets a provider-side limit (a dedicated project/key with the lowest available budget cap, e.g. USD 1; if the account offers no cap, a dedicated key revoked immediately after the run). Rates may change: recheck the pricing page on the run day; stop if the price differs materially.
 
 ### 4.4 Synthetic inputs (fictitious; no PII). Exactly these strings, no others
 
@@ -76,17 +82,31 @@ Prerequisite: written Gate A authorization with model, A-F1/A-F2 choices and cal
 
 1. [ ] Run ID chosen; fresh disposable database migrated (7 migrations) and operator provisioned (runbook 3–5).
 2. [ ] Provider-side limit set; dedicated key created; model entitlement and price confirmed **without** a billable request. Record only "confirmed / not confirmed".
-3. [ ] In a new shell (secrets via silent prompts), set exactly:
+3. [ ] Open a **new** interactive bash or zsh shell in the repository root. Paste **block 1** (no comments, secrets read silently; each line is a separate command, so a failure is visible and nothing is chained):
    ```bash
-   export SESSION_SECRET="$(openssl rand -base64 48)" WEB_ORIGIN=http://localhost:5173 PORT=3001
-   export PAYPAL_ENV=sandbox PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com
+   export SESSION_SECRET="$(openssl rand -base64 48)"
+   export WEB_ORIGIN=http://localhost:5173
+   export PORT=3001
+   export PAYPAL_ENV=sandbox
+   export PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com
    export PAYPAL_DRAFTS_ENABLED=false
    unset PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET
-   export OPENAI_MODEL=gpt-6-luna OPENAI_MAX_OUTPUT_TOKENS=4096   # per the authorization
-   printf 'OpenAI API key (hidden): '; read -rs OPENAI_API_KEY; echo; export OPENAI_API_KEY
+   export OPENAI_MODEL=gpt-6-luna
+   export OPENAI_MAX_OUTPUT_TOKENS=4096
+   printf 'OpenAI API key (hidden): '
+   read -rs OPENAI_API_KEY
+   echo
+   export OPENAI_API_KEY
+   ```
+   Use the model and cap written in the authorization if they differ. Then paste **block 2** (it checks the setup and does not print any secret; it prints `SETUP OK` only if every condition holds):
+   ```bash
+   if [ -n "${OPENAI_API_KEY-}" ] && [ -z "${PAYPAL_CLIENT_ID-}" ] && [ -z "${PAYPAL_CLIENT_SECRET-}" ] && [ "${PAYPAL_DRAFTS_ENABLED-}" = "false" ] && [ "${PAYPAL_ENV-}" = "sandbox" ]; then echo "SETUP OK"; else echo "SETUP WRONG - STOP"; fi
+   ```
+   Then start the API in the same shell (**block 3**; leave it running):
+   ```bash
    pnpm --filter @nmi/api start
    ```
-4. [ ] `curl -s http://127.0.0.1:3001/health` shows `"paypalEnvironment":"sandbox"` and `"aiConfigured":true`. No SIMULATED banner. PayPal credentials are unset and drafting is `false` (check with `[ -z "${PAYPAL_CLIENT_ID-}" ] && echo unset`).
+4. [ ] In a second terminal run `curl -s http://127.0.0.1:3001/health`: it shows `"paypalEnvironment":"sandbox"` and `"aiConfigured":true`. The API console shows no SIMULATED banner.
 5. [ ] Start the web app (runbook 7), sign in, open DevTools → Network (preserve log) to read the `POST /api/invoice-drafts/parse` status and time. A browser tab with only the app.
 6. [ ] Counter before: calls used **0/3**. A1: paste the exact text → *Parse with AI* **once**. Do not click again while it runs. Record HTTP status, response time, and what the Review screen shows (field by field against 4.4). Counter **1/3**.
 7. [ ] Save A1 (Review → Save). Confirm the saved page total is **USD 540.00** (server-computed) and the dashboard row exists. (This proves model output was re-validated and money was recomputed by the server.)
@@ -94,13 +114,13 @@ Prerequisite: written Gate A authorization with model, A-F1/A-F2 choices and cal
 9. [ ] A3 (optional, counter **3/3**): expect a clarification/manual path and no invented due date. Do not save.
 10. [ ] Verify nothing else happened: `psql "$DATABASE_URL" -tAc "select count(*) from paypal_draft_operations"` is **0**; no PayPal control was used.
 11. [ ] Usage evidence: from the provider's usage/billing page for that dedicated key/project (may lag) read **request count, input tokens, output tokens, cost** per call or in total. If not yet visible write **PENDING (provider dashboard lag)**; do not estimate. Server and browser do not record tokens.
-12. [ ] Teardown: Ctrl-C the API; `unset OPENAI_API_KEY OPENAI_MODEL OPENAI_MAX_OUTPUT_TOKENS`; revoke/rotate the key; drop the disposable database (runbook 11).
+12. [ ] Teardown: Ctrl-C the API, then in that shell run `unset OPENAI_API_KEY OPENAI_MODEL OPENAI_MAX_OUTPUT_TOKENS`; revoke/rotate the key; drop the disposable database (runbook 11).
 13. [ ] Fill the Gate A template, mark each field REAL / PENDING, review it for secrets, hand it to the agent for committing.
 
 ### 4.6 STOP conditions (end the run; report; no retry)
 
 - Any OpenAI response other than HTTP 200 on a parse; any `unavailable`/`invalid` outcome on A1 or A2 (that is a **REAL FAIL**, recorded with the fallback observed).
-- Any request count above the authorized cap per the provider's own usage, any unexpected cost, a different model name in the usage page, or a price different from 4.1.
+- Any request count above the authorized limit per the provider's own usage (**3** under A-strict, **6** under A-six; a count of 4–6 under A-strict is a REAL FAIL of the limit), any unexpected cost, a different model name in the usage page, or a price different from 4.1.
 - Real PII or any non-synthetic text typed or pasted; any secret visible on screen or in the terminal.
 - A PayPal credential present, `PAYPAL_DRAFTS_ENABLED` not `false`, any `paypal_draft_operations` row, or a SIMULATED banner.
 - A parse that returns totals different from the server's recomputation being shown as authoritative, or a due date invented for A3 (REAL FAIL of the validation contract; stop and report).
@@ -110,30 +130,60 @@ Prerequisite: written Gate A authorization with model, A-F1/A-F2 choices and cal
 
 **REAL PASS (Gate A)** requires: A1 and A2 each HTTP 200 and a validated draft whose fields equal 4.4; server totals USD 540.00 and EUR 599.97; no PayPal operation row; PayPal credentials absent; usage captured or explicitly PENDING; no secret in evidence; run within the call cap. A3, if run, must not invent a due date. Anything else is REAL FAIL or PENDING, labelled exactly. A REAL PASS proves only that this model, schema and these two synthetic inputs worked once; it does not prove accuracy, robustness or cost at scale.
 
-## 5. Gate B — PayPal Sandbox (one new DRAFT), exactly one create
+## 5. Gate B — PayPal Sandbox (one new DRAFT), exactly one create — **BLOCKED**
 
-### 5.1 Fixed facts and limits
+### 5.0 BLOCKED: the client can resend a draft-create POST after HTTP 401
+
+**Finding (independent review 5692235966, confirmed against the code at this commit).** `packages/paypal/src/client.ts` `call()` defaults `retryOn401 = true`: on a 401 it clears the token, fetches a new one and **calls itself again with the same method, path and body**. `createDraftInvoice()` goes through `call("POST", "/v2/invoicing/invoices", …)` without turning that off, and `client.test.ts` ("a 401 refreshes the token once and resends…") asserts **two** create POSTs (`toHaveLength(2)`). So a single browser click, one operation row and `attempts=1` can still put **two** HTTP create POSTs on the wire. That contradicts the permit "exactly one draft-create request, no retry of any kind" and means the database/browser counts in 5.2 are **not sufficient evidence** of one PayPal request. (The `paypal-request-id` header is sent but the code states it is not relied on.)
+
+**Status:** Gate B is **BLOCKED**. Request B (`docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`) must not be answered YES, and 5.1–5.4 are **reference only, not to be executed**, until the unblock conditions below are met. The PayPal one-create budget stays 1/1 exhausted. Nothing in R1 changes executable code.
+
+**Required fix (a separate task, e.g. `NMI-DEMO-R1-FIX-B1`, its own approval, its own PR, independent audit):**
+1. A draft-create POST is **never resent** after HTTP 401 (or any other status): `createDraftInvoice` must disable the 401 resend (e.g. `retryOn401 = false` for this call), so one `createDraftInvoice` invocation produces **at most one** `POST /v2/invoicing/invoices`.
+2. **Safe OAuth refresh stays for read-only calls:** `GET` show and search keep the single refresh-and-resend on 401 (a second 401 is still a rejection). The access token is validated or refreshed **before** the create is sent (using the existing expiry logic), so an ordinary expired token does not reach the create at all.
+3. **Fail closed, never silently recreate:** a 401 on the create is surfaced as a non-retried failure that the service handles through the existing fenced state machine (no second create; no automatic or implicit re-run; the operation is not left in a state that allows a blind re-create). The fix task decides, and the audit confirms, whether a 401 on create is classified as definite rejection or as unknown-then-read-only-reconciliation; either way nothing is recreated.
+4. **Tests:** (a) one 401 on the create yields **exactly one** create POST and a failure that is not retried (replacing the current `toHaveLength(2)` expectation for the create path); (b) a 401 on a `GET` still refreshes once and resends; (c) a second 401 on a `GET` is a rejection; (d) a service-level test that a 401 on create leaves `attempts=1`, no second create, no `created` state without a remote id; (e) a counting transport test proving the number of create requests equals the number of `createDraftInvoice` calls under 401, timeout and `unknown` outcomes.
+5. No change to the allow-list (`guardRequest`), the Sandbox host check, the state machine's claim fencing or any other PayPal behaviour.
+
+**Unblock conditions (all required):** the fix is merged to `main` after an independent exact-head audit; `pnpm validate` and hosted CI pass on it; this procedure and Request B are updated to cite the fix commit and to count **wire** requests (a counting transport or the owner's browser/network evidence), not only database rows; and the owner then answers a **new** Request B. Until then Gate B, and any claim of a new PayPal draft, stays **BLOCKED / PENDING**.
+
+### 5.1 Fixed facts and limits (reference only while BLOCKED)
 
 - App: existing Sandbox REST app **`NudgeMyBillsAI`**, the existing US Sandbox **Business** account, Invoicing v2, `PAYPAL_ENV=sandbox`, `PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com` (the server refuses any other host).
 - Historical one-create budget **1/1 exhausted**; this gate neither resets nor bypasses it. The permit is **one new** create, valid only for the run ID in the authorization, then it is **0 left**.
 - One synthetic invoice, entered **manually** in the UI (Gate B does not use OpenAI and OpenAI credentials stay unset): customer `Northwind Studio`, `ap@northwind.example`, **USD**, one line `Logo concepts` qty `2` × `250.00`, tax `8%`, no discount, due `2030-01-15` → 500.00 + 40.00 = **USD 540.00** exactly.
 - Permitted PayPal traffic: OAuth token; exactly **one** create-DRAFT request; read-only `GET` of the created invoice (the service does this to verify); a read-only search by the invoice number **only** if the create outcome is uncertain (the service's own reconciliation). **No** send, remind, record payment, cancel, delete, refund, webhook, Live host, or second create. **No retry of any kind**, automatic or manual, even on timeout or `unknown`.
-- Static findings (R1 review of `paypal-draft-service.ts`/adapter): creation is a fenced single claim with `attempts` incremented before the request; an uncertain outcome becomes `unknown` and is resolved by read-only reconciliation, never a blind re-create; the adapter has per-request timeouts and no automatic re-create. The earlier "one-create guard" was a private test harness outside this repository; **there is no in-repository counter**, so the bound for this gate is procedural plus the database evidence below. This is why the checklist forbids clicking *Create* twice and why the permit ends at the run.
+- Static findings (R1 review of `paypal-draft-service.ts` and the adapter, corrected after review 5692235966): creation is a fenced single claim that increments `attempts` before the request; an uncertain outcome becomes `unknown` and is resolved by read-only reconciliation, not by a blind re-create; the adapter has per-request timeouts. **However the client resends the create POST once after a 401 (section 5.0)**, so `attempts=1` is a per-claim count and is **not** proof of one wire request. The earlier "one-create guard" was a private harness outside this repository; there is no in-repository counter.
 
-### 5.2 Operator checklist (owner executes)
+### 5.2 Operator checklist (reference only while BLOCKED; owner executes after unblock)
 
 Prerequisite: written Gate B authorization naming the run ID.
 
 1. [ ] PayPal Developer dashboard, **Sandbox** mode: app is `NudgeMyBillsAI`, Invoicing enabled, tied to the intended Business account; no Live app/credential is in use. In the Sandbox Business account's invoice list note the **number of existing invoices/drafts** (record the count only): N.
 2. [ ] Fresh disposable database migrated and operator provisioned (runbook 3–5); verify `select count(*) from invoices` = 0 and `select count(*) from paypal_draft_operations` = 0.
-3. [ ] New shell, secrets via silent prompts; **OpenAI unset**:
+3. [ ] Open a **new** interactive bash or zsh shell in the repository root. Paste **block 1** (no comments; the client id **and** the secret are read silently; one command per line):
    ```bash
-   export SESSION_SECRET="$(openssl rand -base64 48)" WEB_ORIGIN=http://localhost:5173 PORT=3001
-   export PAYPAL_ENV=sandbox PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com
+   export SESSION_SECRET="$(openssl rand -base64 48)"
+   export WEB_ORIGIN=http://localhost:5173
+   export PORT=3001
+   export PAYPAL_ENV=sandbox
+   export PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com
    unset OPENAI_API_KEY OPENAI_MODEL
-   printf 'PayPal SANDBOX client id: '; read -r PAYPAL_CLIENT_ID; export PAYPAL_CLIENT_ID
-   printf 'PayPal SANDBOX secret (hidden): '; read -rs PAYPAL_CLIENT_SECRET; echo; export PAYPAL_CLIENT_SECRET
+   printf 'PayPal SANDBOX client id (hidden): '
+   read -rs PAYPAL_CLIENT_ID
+   echo
+   printf 'PayPal SANDBOX secret (hidden): '
+   read -rs PAYPAL_CLIENT_SECRET
+   echo
+   export PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET
    export PAYPAL_DRAFTS_ENABLED=true
+   ```
+   Then **block 2** (prints `SETUP OK` only if every condition holds; prints no secret):
+   ```bash
+   if [ -n "${PAYPAL_CLIENT_ID-}" ] && [ -n "${PAYPAL_CLIENT_SECRET-}" ] && [ -z "${OPENAI_API_KEY-}" ] && [ "${PAYPAL_DRAFTS_ENABLED-}" = "true" ] && [ "${PAYPAL_ENV-}" = "sandbox" ] && [ "${PAYPAL_API_BASE_URL-}" = "https://api-m.sandbox.paypal.com" ]; then echo "SETUP OK"; else echo "SETUP WRONG - STOP"; fi
+   ```
+   Then **block 3** in the same shell (leave it running):
+   ```bash
    pnpm --filter @nmi/api start
    ```
 4. [ ] `/health` shows `"paypalEnvironment":"sandbox"`, `"aiConfigured":false`; no SIMULATED banner. Web app up (runbook 7), signed in, DevTools Network open (preserve log).
@@ -150,7 +200,12 @@ Prerequisite: written Gate B authorization naming the run ID.
    Expect one row: `created | 1 | t | <last 4>`, count `1`, invoice `USD | 54000 | 2030-01-15 | t`.
 10. [ ] PayPal dashboard (Sandbox Business account, read-only): the invoice count is **N+1**; the new item is **DRAFT** (not sent/unpaid/paid), currency USD, total 540.00, due 2030-01-15, number `NMI-` + 20 hex characters. Record these values; mask the PayPal invoice id to its last 4 characters and omit account e-mails/ids.
 11. [ ] App check: detail shows `PayPal draft created` and the dashboard row reads "PayPal draft created".
-12. [ ] **Immediately** after: Ctrl-C the API (drafting off), `unset PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET PAYPAL_DRAFTS_ENABLED`, rotate or delete the REST app secret if the owner wishes, drop the disposable database, and confirm any later start has `PAYPAL_DRAFTS_ENABLED=false`. Record the teardown time.
+12. [ ] **Immediately** after the create outcome is observed and the read-only checks are done: Ctrl-C the API, then in that shell run **block 4** (disables drafting for any later start and removes the credentials from the environment):
+   ```bash
+   export PAYPAL_DRAFTS_ENABLED=false
+   unset PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET
+   ```
+   Rotate or delete the REST app secret if the owner wishes. Then handle the database as chosen in the authorization: **drop** it (default; runbook 11) or **preserve** it under the retention plan in 6.3. Record the teardown time.
 13. [ ] Fill the Gate B template (REAL / PENDING per field), review for secrets/ids, hand over. The owner must **not** delete the Sandbox draft (the agent never touches it; deletion is the owner's separate choice and is not part of this procedure).
 
 ### 5.3 STOP conditions
@@ -167,9 +222,27 @@ Prerequisite: written Gate B authorization naming the run ID.
 
 **REAL PASS (Gate B)** requires all of: one browser create POST; one operation row `created`, `attempts=1`; invoice linked; PayPal dashboard shows exactly one new item, status DRAFT, USD 540.00, due 2030-01-15; drafting disabled again; no send/remind/pay; evidence redacted. It proves one Sandbox DRAFT through the browser path; it does **not** prove search/reconciliation/timeout behaviour.
 
-## 6. Gate C — combined real-provider browser walkthrough (separate approval)
+## 6. Gate C — combined real-provider browser walkthrough (separate approval; NOT AUTHORIZED; depends on Gate B)
 
-Not run, not authorized. Request form: `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md` request C. Conditions: Gate A **and** Gate B each **REAL PASS** and independently reviewed; a **new** PayPal one-create permit is **not** implied (Gate B's single create is spent). Therefore Gate C is by default a walkthrough of the **real OpenAI parse + save + dashboard** plus **showing the already-created Gate B DRAFT state read-only**, with the create step labelled as recorded earlier (REAL, from the Gate B run) — it does **not** create another PayPal draft. A live second create would require a **third** explicit permit; the plan does not request one. Recording rules: `docs/NMI-DEMO-VIDEO-SCRIPT.md`. Until approved and executed: **PENDING**.
+### 6.1 Why the earlier sequence was wrong
+
+Gate B drops its disposable database. The Gate B invoice and its operation row therefore **no longer exist in any app database** afterwards, so a later walkthrough **cannot** reopen "the already-created Gate B invoice" in the app. Showing "PayPal draft created" on an app screen for it would need either a second create (not permitted) or a restored copy of the database (6.3). Nothing may be implied, faked or created to bridge that gap.
+
+### 6.2 Default (truthful) demonstration
+
+Preconditions: Gate A and Gate B each REAL PASS and independently reviewed (Gate B cannot pass until 5.0 is resolved). The walkthrough, on a **fresh** disposable database, shows:
+
+1. **LIVE (if authorized): real OpenAI parse** of one synthetic input from section 4.4 inside a **new**, separate Request A-type cap, then review, save, server-computed total and the dashboard. Each in-app invoice record created this way is listed in the Gate C request (name, currency, amount) so that **no invoice is created implicitly**; they are local PostgreSQL records only.
+2. **RECORDED EARLIER / read-only: the Gate B DRAFT shown in the PayPal Sandbox dashboard** (read-only, account details masked), labelled "created in run R1-B-…; **not linked to the app records shown in this recording**". The app screens in the recording must **not** claim "PayPal draft created" for the newly parsed invoice, and **no PayPal create or any PayPal request** is made by the recording.
+3. Everything not live is labelled SIMULATED or RECORDED EARLIER on screen and in the narration.
+
+### 6.3 Optional: preserve the Gate B database (needs its own owner decision, not requested by default)
+
+If the owner wants the app's own saved page and dashboard to show the real Gate B DRAFT state later, Request B must choose **preserve** instead of drop, with all of: a `pg_dump` of the disposable database taken **after** the read-only checks and before teardown; stored **encrypted, off the repository and off any synced/shared folder**, owner-controlled; the dump excluded from commits, screenshots and evidence; restored only into a **new disposable** database (runbook 3–4), after which the operator is **re-provisioned with a fresh random password** and all rows of `sessions` are deleted; PayPal credentials unset and `PAYPAL_DRAFTS_ENABLED=false` during any restored-database walkthrough, so the detail page re-reads the stored state only; the dump deleted after the recording; and the plan reviewed independently before use (it contains synthetic invoice data, an operator password hash and audit rows). Without this approved plan the default in 6.2 applies.
+
+### 6.4 Not covered
+
+A live **second** PayPal create (for example "so the video shows it"), any invoice created implicitly, upload, publishing and Devpost submission each need their own explicit permission and are **not requested**. Recording rules: `docs/NMI-DEMO-VIDEO-SCRIPT.md`. Until approved and executed: **PENDING**.
 
 ## 7. What changes in public wording after each outcome
 
@@ -177,7 +250,7 @@ Not run, not authorized. Request form: `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md` r
 | --- | --- | --- |
 | Nothing run (today) | "OpenAI parsing implemented, not verified live; one historical real Sandbox DRAFT (backend, USD 5.00); everything else simulated." | Any "works with OpenAI/PayPal live" claim |
 | Gate A REAL PASS | "Real parsing verified once with `gpt-6-luna` on two synthetic inputs (date)." | Accuracy, cost-at-scale, reliability claims |
-| Gate B REAL PASS | "One Sandbox DRAFT created through the browser path and verified (date)." | Sending, payment, reconciliation claims |
+| Gate B REAL PASS (only after 5.0 is resolved and a new Request B is answered) | "One Sandbox DRAFT created through the browser path and verified (date)." | Sending, payment, reconciliation claims |
 | Gate C REAL PASS | Walkthrough label as recorded, each step LIVE/SIMULATED | "Production ready", hosted, sponsor outcome |
 | Any REAL FAIL | State the failure plainly | Hiding or retrying silently |
 

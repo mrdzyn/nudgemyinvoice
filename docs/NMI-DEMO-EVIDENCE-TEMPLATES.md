@@ -10,7 +10,7 @@ Where a provider value cannot be observed (for example token usage not yet shown
 Run ID: R1-A-________            Authorization quoted (date/time, request id): ______
 Executed by: owner               Commit under test (git rev-parse HEAD): ______
 Model requested: ______          Model shown by provider usage page: ______  (PENDING if not visible)
-OPENAI_MAX_OUTPUT_TOKENS: ______  A-F1 choice: a/b   A-F2 choice: a/b   Provider-side limit set: yes/no (amount ____)
+OPENAI_MAX_OUTPUT_TOKENS: ______  Request-count path: A-strict (fix commit ____) / A-six   A-F2 choice: 4096-cap / code task   Provider-side limit set: yes/no (amount ____)
 Entitlement + price confirmed without a billable request: yes/no     Price seen (in/out per 1M): ____/____
 Environment: production server started (no SIMULATED banner): yes/no ; /health aiConfigured=true: yes/no
 PayPal credentials unset: yes/no ; PAYPAL_DRAFTS_ENABLED=false: yes/no ; paypal_draft_operations rows: __
@@ -19,7 +19,7 @@ Call  Input id  HTTP   Latency (DevTools)  Outcome (validated draft / clarificat
 A1    A1        ___    ___ ms              ______                                                               ____
 A2    A2        ___    ___ ms              ______                                                               ____
 A3    A3/skip   ___    ___ ms              ______                                                               ____
-Application parse calls used: _/3          Provider-reported requests: ___ (PENDING if not visible)
+Application parse attempts used: _/3       Provider-reported wire requests: ___ (limit: 3 under A-strict, 6 under A-six; PENDING if not visible)
 
 Field check A1 (observed vs expected): customer __ email __ currency __ qty/price __ tax __ due __
 Server total after save: USD ______ (expected 540.00)    Dashboard row seen: yes/no
@@ -37,7 +37,8 @@ Overall label: REAL PASS / REAL FAIL / PENDING     Notes: ______
 ## Template B — Gate B (PayPal Sandbox), one file per run
 
 ```
-Run ID: R1-B-________            Authorization quoted (date/time, request id): ______
+GATE B IS BLOCKED until the PayPal client never resends a create after 401 (acceptance doc 5.0). Do not fill this template before that fix is merged and audited.
+Run ID: R1-B-________            Authorization quoted (date/time, request id): ______   PayPal client fix commit: ______ (audited: yes/no)
 Executed by: owner               Commit under test: ______
 Sandbox mode and app NudgeMyBillsAI confirmed in the dashboard: yes/no ; no Live credential in use: yes/no
 Sandbox invoice count BEFORE (N): ____
@@ -46,13 +47,14 @@ OpenAI unset (aiConfigured=false): yes/no ; no SIMULATED banner: yes/no
 Pre-create DB: invoices __ (expect 0 before save) ; paypal_draft_operations __ (expect 0)
 Saved invoice (DB): currency ___ total_minor ____ due_date ______ (expect USD 54000 2030-01-15) ; saved page total ______
 Creates used: _/1 ; browser POST .../paypal-draft count (DevTools): __ (expect 1) ; second create attempted: yes/no
+PayPal create requests on the wire (counting transport / network evidence, NOT only database rows): __ (expect 1) ; evidence source: ______
 Operation row: state ______ attempts __ has_remote __ remote_tail ____ ; operation row count __ (expect 1)
 Invoice row linked to remote: yes/no
 PayPal Sandbox dashboard (read-only): invoice count AFTER (expect N+1) ____ ; status ______ (expect DRAFT) ; currency ___ ; total ______ ; due ______ ; number NMI-+20hex: yes/no
 App shows "PayPal draft created" on detail and dashboard: yes/no
 Unexpected states (rejected / unknown / mismatch / reconciliation): none / ______   Check status used (read-only): yes/no
 STOP condition triggered: none / ______
-Teardown (immediately): API stopped __:__ ; PAYPAL_DRAFTS_ENABLED false/unset: yes/no ; PAYPAL_* unset: yes/no ; secret rotated: yes/no/not needed ; database dropped: yes/no
+Teardown (immediately): API stopped __:__ ; PAYPAL_DRAFTS_ENABLED false/unset: yes/no ; PAYPAL_* unset: yes/no ; secret rotated: yes/no/not needed ; database dropped: yes/no OR preserved under the authorized retention plan (6.3): yes/no (encrypted dump location NOT recorded here)
 Secrets/ids review before sharing (owner initials): ____
 Overall label: REAL PASS / REAL FAIL / PENDING     Notes: ______
 ```
@@ -61,10 +63,14 @@ Overall label: REAL PASS / REAL FAIL / PENDING     Notes: ______
 
 ```
 Run ID: R1-C-________            Authorization quoted: ______    Gate A run: R1-A-____ (label ____)   Gate B run: R1-B-____ (label ____)
-New PayPal create performed: yes/no (must be no unless a separate Request C+ was answered YES)
-Segments (each labelled): real OpenAI parse LIVE/SIMULATED ; save + PostgreSQL LIVE ; dashboard LIVE ; PayPal DRAFT shown read-only (created in R1-B-____) ; any simulated stand-in: ____
+Database: fresh disposable / restored preserved Gate B database under the authorized retention plan
+New PayPal create or any PayPal request made by the recording: yes/no (must be no)
+In-app invoices created (must equal the list in the authorization): ______   Any other invoice created: yes/no (must be no)
+Segments (each labelled): real OpenAI parse LIVE/SIMULATED (attempts _/_ , wire requests _/_) ; save + PostgreSQL LIVE ; dashboard LIVE ;
+  Gate B DRAFT shown read-only in the PayPal Sandbox dashboard = RECORDED EARLIER (created in R1-B-____, not linked to the app records shown) ; any simulated stand-in: ____
+Screen claims "PayPal draft created" for an invoice that has no such state: yes/no (must be no)
 On-screen tag present for every non-live segment: yes/no ; narration says "simulated"/"recorded earlier" where applicable: yes/no
-Video length (exported file): __:__ (< 3:00) ; secrets/ids/URL bar/terminal visible: no / ______
+Video length (exported file): __:__ (< 3:00) ; secrets/ids/URL bar/terminal/PayPal account details visible: no / ______
 Not uploaded, not submitted by this authorization: confirmed
 Overall label: REAL PASS (walkthrough as recorded) / PENDING / SIMULATED
 ```
