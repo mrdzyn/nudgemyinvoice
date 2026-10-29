@@ -1482,4 +1482,42 @@ Targeted local-only tests, CI and documented negative controls; keep final statu
 - **NOT TESTED:** the full `provision-operator` CLI run via `PGPASSFILE` (only the driver path was exercised); pgpass support in `pg` is deprecated upstream (a DeprecationWarning is printed; runbook says to stop, not fall back to a URL password, if it fails); real Render behavior and external TLS.
 - **Gates:** merge, Render provisioning, secrets, sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
 
+## Handoff: NMI-RENDER-P1-PREFLIGHT-START
+
+- **From:** GPT-6 orchestration after owner squash merge of PR #21
+- **To:** Coding/test agent implementing and recording offline operator-CLI verification; then independent GPT-6 exact-head audit
+- **Base main:** `d13c0a6e28443642ce611ce459122b682c1de92f`
+- **Branch:** `docs/nmi-render-p1-operator-provision-preflight`; continue existing Draft PR; no new branch or PR
+- **Task:** `tasks/NMI-RENDER-P1-PREFLIGHT.md`
+- **State:** TASK STARTED; the full `provision-operator` CLI over temporary `PGPASSFILE` has NOT YET been tested in this phase; no Render resource is authorized.
+
+### Immediate instructions
+
+Read task, AGENTS, STATUS, project profile and only the relevant runbook/CLI/DB testing code. Use a disposable **SCRAM-enforcing** PostgreSQL 16 local fixture, never Render or real databases. Run the actual provisioning CLI with a 0600 password file, passwordless `DATABASE_URL`, and synthetic passwords (including `:` and `\\`); prove create and rotation, negative control with no password source, audit/hashed-password evidence and complete teardown. Preserve the genuine-login least-privilege work from PR #21. Record sanitized commands, environment, warnings, results and limitations in a new preflight evidence document. If the driver requires unsafe secrets handling, STOP and report rather than weakening the boundary. Limit code additions to test-only helpers where warranted, run required CI, append `NMI-RENDER-P1-PREFLIGHT-IMPL` when complete and ask for independent audit.
+
+### Boundaries
+
+No production code, database schema/grant, provider, UI or CI-policy changes without scope escalation. No merge, Render provisioning, billing, deployment, provider call, live judge login or publication. Gates A/B/C are NOT AUTHORIZED.
+
+## Handoff: NMI-RENDER-P1-PREFLIGHT-IMPL
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head evidence audit, then owner
+- **Branch / PR:** `docs/nmi-render-p1-operator-provision-preflight`, Draft PR #22 (no new branch/PR). Start HEAD `c9a9f99c6792b8970a264999448b284f7d1d3eba`.
+- **Scope:** offline verification only. Added `scripts/preflight-provision-operator.mjs` (test-only verifier) + `preflight:provision` script, `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`, task/STATUS/handoff updates. **No production code, schema, grants, UI or provider change**; the CLI ran unmodified.
+- **Result (agent-reported, local):** 36/36 checks against an isolated SCRAM-enforcing PostgreSQL 16.15: real CLI create and rotate over a 0600 `PGPASSFILE` + passwordless URL (password with `:` and `\`), hashed password, audit rows, session revocation, credential_version 1→2, three negative controls (missing, wrong, 0644 file) fail closed with no mutation, no secret in args/output/repo, full cleanup. `pg@8.23.1` deprecation warning observed and left visible.
+- **Review focus:** the verifier really enforces SCRAM (assertions on `pg_hba_file_rules`, stored verifier, no-password refusal); the CLI is invoked as a child process, not mocked; leak checks; honest limitations (sampled process table, no TLS, macOS only, no Render).
+- **NOT TESTED:** Render PostgreSQL/TLS (`sslmode=require`), Linux, `pg@9` behavior (would fail closed), hosted CI does not run the verifier.
+- **Gates:** merge, Render provisioning and sharing need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
+## Handoff: NMI-RENDER-P1-PREFLIGHT-FIX1
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head re-audit, then owner
+- **Branch / PR:** `docs/nmi-render-p1-operator-provision-preflight`, Draft PR #22. Audited start HEAD `e4fda9bfb9c0387bb73c56017dab095d5deb4253`; independent review `5698125509`.
+- **Changed (verifier and docs only):** `scripts/preflight-provision-operator.mjs` (strict negative-control verdict; fail-closed `teardown`; 18 fault-injection self-tests; version-banner crash fix), `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`, task, STATUS. No production code, schema, grants, UI or provider change.
+- **Result (agent-reported, local):** full disposable SCRAM PostgreSQL 16.15 run 54/54 (cleanup: stop exit 0, status = not running, pid gone, port refused, files absent); `PG_BIN=/nonexistent` injection exits 1 with `pg.init`/`pg.start` failing. Hosted CI run IDs are in the PR body.
+- **NOT TESTED:** unchanged (Render PostgreSQL/TLS, Linux, `pg@9`); teardown fault injection uses fake dependencies except the `PG_BIN` case.
+- **Gates:** Gates A/B/C NOT AUTHORIZED; no merge/provision/deploy.
+
 <!-- HANDOFF_ENTRIES_END -->

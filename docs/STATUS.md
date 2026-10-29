@@ -5,12 +5,12 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** NMI-RENDER-P1 — offline hosting-readiness implementation (Draft PR #21; implementation complete, review `5695189217` MAJOR-1/2 remediated in NMI-RENDER-P1-FIX1, **awaiting independent exact-head re-audit**). Code candidate for a single-origin, single-instance, provider-disabled Render staging demo. **Nothing is provisioned, deployed, shared or merged**; Gates A/B/C NOT AUTHORIZED. PR #20 (Gate B observer docs) is owner-merged on `main` (`451abc2`); Gate B still has no owner permit.
-- **Status:** Previously merged C1–C5, R0 #16, AG Grid Community #17, R1 docs #18, FIX-B1 #19 and Gate B egress-count documentation #20 remain on `main`. The P1 hosting-readiness implementation (single-origin Fastify+React serving, Render host/PORT, secure cookie/CSRF/Origin/CSP headers, POST search privacy transport, PostgreSQL runtime-role plan, provider-disabled staging, offline tests, runbook) is **complete on Draft PR #21 and awaits independent exact-head audit and then owner merge**. **No Render resource has been provisioned** and nothing is deployed; real Render behavior is NOT TESTED.
-- **Primary branch:** `main` at `451abc292737775f0c58458520b8f5bf004cd474` (PR #20 owner-authorized squash merge).
-- **Working branch:** `feat/nmi-render-p1-secure-staging` (Draft PR #21; infrastructure/transport only, UI unchanged; FIX1 and FIX2 documentation remediations applied).
-- **Active task:** `tasks/NMI-RENDER-P1-secure-staging.md`.
-- **Active handoff:** NMI-RENDER-P1-FIX2
+- **Current phase:** NMI-RENDER-P1-PREFLIGHT — **offline, disposable PostgreSQL credential/provisioning verification only**, following owner-approved squash merge of P1 PR #21. The actual `provision-operator` CLI over a 0600 `PGPASSFILE` + passwordless `DATABASE_URL` was verified offline (hardened per review `5698125509`: strict negative-control messages, fail-closed teardown, fault-injection self-tests) against a SCRAM-enforcing PostgreSQL 16 (54/54, agent-reported; `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`) and **awaits independent audit**. Render provisioning/deployment and Gates A/B/C remain NOT AUTHORIZED.
+- **Status:** NMI-RENDER-P1 implementation is independently audited PASS (review `5697419978`) and owner squash-merged in PR #21 at `d13c0a6e28443642ce611ce459122b682c1de92f`. Provider-disabled single-origin hosting, private search POST, proxy/session checks and least-privilege PostgreSQL plan are merged. The preflight verification is now run (agent-reported, 54/54, see evidence document) and awaits independent audit; it changed no production code. No cloud resources provisioned.
+- **Primary branch:** `main` at `d13c0a6e28443642ce611ce459122b682c1de92f` (owner-approved squash merge of audited PR #21).
+- **Working branch:** `docs/nmi-render-p1-operator-provision-preflight` (new Draft PR; offline verification/evidence only; no production changes expected).
+- **Active task:** `tasks/NMI-RENDER-P1-PREFLIGHT.md`.
+- **Active handoff:** NMI-RENDER-P1-PREFLIGHT-FIX1
 - **Render hosting opportunity:** Owner reports Render credits available (balance, expiry and coverage **unverified**). Option B has become more economically feasible and could support Render sponsor consideration **only after actual tool use**; however, the local judge runbook Option A remains valid. Render HTTPS/same-origin/static+API serving, single-operator demo access, `q` request-URL log redaction (Render HTTP request logs may include requested URL), paid database lifespan through Dec 15, provider-disabled public demo, and safe automatic-deploy controls are **NOT VERIFIED**. No Render provision/deploy authorized. See `docs/NMI-DEMO-DEPLOYMENT-DECISION.md`.
 - **Owner decisions:** D1a AG Studio/Enterprise remains deferred pending commercial license/trial review; D1b owner approved a bounded AG Grid **Community** replacement of the real dashboard invoice table for the hackathon; D2 no default browser persistence of unsaved customer data; D3 read-only owner-scoped list delivered in C4; D4 editing saved drafts deferred.
 
@@ -46,7 +46,8 @@
 - **Security finding (C4) resolved in C5-P0 and merged:** `createPayPalDraft` is operator-scoped (`getOwned`); a foreign, ownerless or unknown invoice is one identical `404 not_found` with no operation, audit row or provider call. C5-P1 relies on and re-tests this boundary.
 
 ## Next action
-1. **Independent GPT-6 exact-head re-audit** of Draft PR #21 (FIX1: runtime-role login proof, password-safe runbook) (NMI-RENDER-P1). Reproduce: `pnpm validate`; `TEST_DATABASE_URL=… REQUIRE_DB_TESTS=1 pnpm test:db` (disposable `nmi_test*` PostgreSQL); `node design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs` (macOS Chrome + PostgreSQL 16).
-2. After a PASS the owner decides whether to squash-merge. A merge is **not** authorization to create Render resources.
-3. Separate owner approvals, in order: provision staging (`docs/NMI-RENDER-P1-RUNBOOK.md` §3–6), live verification incl. platform request-log check, then judge access/sharing. Gates A/B/C remain separate and NOT AUTHORIZED.
-No real OpenAI/PayPal calls, budget reset, Render provisioning, deployment, merge, publication or Devpost submission occur in any of these steps without separate owner authorization.
+1. **Independent GPT-6 exact-head audit** of Draft PR #22: re-run `pnpm preflight:provision` (PostgreSQL 16 binaries required) and review `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`. The `pg@8.23.1` PGPASSFILE deprecation warning is expected and visible; `pg@9` removal needs a separate reviewed approach.
+2. Evidence recorded in `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`; hosted CI covers lint/format/typecheck only for the verifier.
+3. After a PASS, the owner separately decides whether to squash-merge, and **separately** whether to approve Render cost/resource provisioning. Live Render TLS/proxy/log/database/role QA and judge URL sharing remain additional explicit gates. All PayPal/OpenAI provider Gates A/B/C stay NOT AUTHORIZED.
+
+No real OpenAI/PayPal calls, budget reset, Render provisioning/deployment, merge, publication or Devpost submission is authorized by this task.
