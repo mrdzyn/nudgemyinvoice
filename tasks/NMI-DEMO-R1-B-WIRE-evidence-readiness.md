@@ -1,0 +1,52 @@
+# NMI-DEMO-R1-B-WIRE — Post-merge PayPal Gate B egress evidence readiness
+
+- **State:** PREPARATION / DOCS ONLY. No real provider request, trial, Sandbox create, budget reset, deployment, Render provisioning or publication authorized.
+- **Starting `main`:** `09bbe90a977516c27bc0715141e74e090b41fba5` — PR #19 owner-authorized squash merge of FIX-B1, independently audited PASS (review `5692753316`).
+- **Branch / PR:** `docs/nmi-demo-r1-b-wire-evidence` / one Draft PR; keep unmerged pending independent exact-head GPT-6 audit and owner decision.
+- **UI design gate:** Not applicable; no UI, product, API, auth, payment, database, dependency or CI implementation changes.
+- **Active handoff:** `NMI-DEMO-R1-B-WIRE-START`.
+- **Relevant source:** `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md` §5.0–5.4; `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md` Request B; `docs/NMI-DEMO-EVIDENCE-TEMPLATES.md` Template B; `packages/paypal/src/client.ts`, `packages/paypal/src/http.ts`, `apps/api/src/server.ts`, `apps/api/src/services/paypal-draft-service.ts`; `docs/NMI-DEMO-JUDGE-RUNBOOK.md`.
+
+## Objective
+
+Prepare an **independently inspectable, auditable and secret-safe** real Gate B procedure that (1) cites the actual merged FIX-B1 commit, and (2) can count **backend-to-PayPal** `POST /v2/invoicing/invoices` attempts during an owner-approved future live run. A browser `POST /api/invoice-drafts/:id/paypal-draft`, a PostgreSQL operation `attempts=1`, and an N→N+1 PayPal dashboard count **do not individually prove one egress HTTP POST**; avoid asserting otherwise.
+
+**No live Gate B permission arises from completing this task.** Gates A and C remain NOT AUTHORIZED; historical PayPal USD 5 one-create budget 1/1 exhausted. Only a **new, explicit** Request B after the readiness plan has independently passed and been owner-merged can authorize exactly one new synthetic USD 540.00 Sandbox draft.
+
+## Recommended observation method (must be verified OFFLINE before live authorization)
+
+For a local owner-run Node.js server (the actual production entry point `apps/api/src/server.ts` via `pnpm --filter @nmi/api start`), use an optional **out-of-repository, local-only, audited Node preload** to subscribe to the Undici `undici:client:sendHeaders` diagnostics-channel event. This is emitted immediately before outgoing HTTP request headers are written to a socket; for a request, use **only** `request.origin`, `request.method`, `request.path`, never the sensitive `headers`, body, cookies, OAuth credentials, query terms, raw `request` or entire event object. Count exact:
+
+- `POST https://api-m.sandbox.paypal.com/v2/invoicing/invoices` — **create attempt**, expected exactly 1 when create is authorized and actually dispatched.
+- `POST /v1/oauth2/token` — OAuth (allowed separate count).
+- `GET /v2/invoicing/invoices/<id>` — read-only show (record total only; omit id).
+- `POST /v2/invoicing/search-invoices` — logically read-only search (record total only).
+
+No hostname fallback, no `*.paypal.com` wildcard and **no Live PayPal origin**. Reject/count as unexpected any other method+path under the Sandbox origin. Store aggregate counts **in volatile memory**, output **only** a redacted summary at orderly process shutdown; no per-request headers, body, URL query or identifiers. Include one run ID and process ID/observer-active marker to reconcile multiple Node worker processes. Do not enable `NODE_DEBUG`, `curl -v`, packet dumping, TLS interception/proxying, raw request tracing, or broad log capture.
+
+Official reference: https://undici.nodejs.org/api/DiagnosticsChannel (experimental diagnostics-channel API, exact fields/event documented). **Key distinction:** `undici:request:create` is **before dispatch** and is not an egress wire count. `undici:client:sendHeaders` indicates an attempt at the socket-send boundary; it does **not** prove PayPal received/processed the request. Supplemental provider dashboard delta and strict draft verification are needed to prove the remote outcome. If the Node 24/tsx runtime does not emit this channel from the **actual production process**, mark the counter **UNVERIFIED/BLOCKED**, do not manufacture an observed 1.
+
+### Offline-only proof obligations before a future live run
+
+1. The coding agent may document pasteable, reviewable local preload and offline-only positive/negative test steps in `docs/NMI-DEMO-R1-B-WIRE-COUNT.md` (Markdown only; do not create executable scripts under `apps/`, `packages/`, `scripts/`, test suite, or the repository).
+2. The owner/auditor must review the exact preload contents before executing any live-credential process. Prefer running it from a temporary folder **outside the repository** with restrictive permissions, no network capabilities and no new dependency. A preloader must not print/read sensitive payloads, alter requests, change the global dispatcher, or cause unbounded output.
+3. Prove with a **loopback-only HTTP server/fake transport** that the listener sees an actual Undici send event (not just a published synthetic mock); separately test method+path allow-list using synthetic events, including two create attempts counting **2**, a single create counting **1**, reads not counting as creates, unknown paths triggering STOP. **No Sandbox host contact or key needed.**
+4. Validate on the actual approved Node major version and `pnpm --filter @nmi/api start` launch shape: `NODE_OPTIONS=--require <absolute audited preload>` must propagate to the server process. Prove the summary belongs to the API PID, not a package-manager helper or web process. No provider credential should be set in this validation; `PAYPAL_DRAFTS_ENABLED=false`.
+5. **STOP** if the observer does not attach, reports no identifiable server PID/summary, is silent after a known local event, sees unexpected paths, sees >1 create, cannot distinguish creates from OAuth/search/show, captures a secret, is ambiguous across worker processes, or its logs are incomplete. Do not try a real create just to test the counter.
+6. For the future separately authorized single live run only, **exact commit**, approved preload checksum/attestation and run ID recorded before start. Operator explicitly verifies counter 0/1 before click; no more than one browser confirmation; after read-only checks and API shutdown record aggregate create=1, OAuth/show/search totals, no unexpected calls, dashboard N+1 DRAFT, durable state `created`, one operation attempts=1 and no remote mismatch. If create count 0, >1, instrumentation missing, or dashboard/DB mismatch: **REAL FAIL or PENDING**, never REAL PASS. Do not click create again. This is a procedural limit rather than a production-enforced remote quota.
+7. The actual PayPal wire observation mechanism requires **independent review and a successful offline proof**. If this cannot be achieved without changes to the production entry point or new dependencies, record as BLOCKER and prepare a separate owner-approved narrowly scoped implementation PR; **do not silently alter the app in this docs-only PR**.
+
+## Documentation deliverables
+
+- `docs/NMI-DEMO-R1-B-WIRE-COUNT.md`: concrete operator-ready draft of the above, including safe setup/teardown, expected counters, experimental API limitations, safe negative control, honest proof strength, redaction/retention.
+- `docs/NMI-DEMO-PROVIDER-ACCEPTANCE.md`: update §5.0/5.2/5.4 to cite merged FIX-B1 SHA and point to observer procedure; clarify **create** no-retry vs read-only 401 refresh; no fake count or observed result.
+- `docs/NMI-DEMO-OWNER-AUTHORIZATIONS.md`: update **unanswered** Request B to cite merged FIX-B1 and explicitly require independently verified observer evidence and a **new future** owner-signed permit. Do **not** fill answer record or change A/C.
+- `docs/NMI-DEMO-EVIDENCE-TEMPLATES.md`: add blank fields for observer/run ID/approved checksum/process, expected count=1, actual count=PENDING, completeness, unexpected paths, and explicit browser/DB/PayPal triangulation. Do not prefill actuals.
+- `docs/NMI-DEMO-SUBMISSION-CHECKLIST.md`, `docs/STATUS.md`, this task and active handoff: current state, requirements and next steps; make no claims that live Gate B has passed. If an offline observer test has not actually been executed, clearly label it **NOT TESTED**.
+
+## Validation and prohibitions
+
+- **Allowed diff:** `docs/`, `tasks/` Markdown only; no production/test scripts/CI/code/schema/lockfile, no new dependencies, no payments/provider calls.
+- **Test objective:** Prove the docs do not mix provider vs browser counts, historical vs merged implementation, live vs fake evidence, and do not permit execution before observer validation and fresh owner authorization. Agent may run shell snippet tests **with dummy values / local loopback only**, never PayPal endpoint. Record actual steps and negative controls, not simulated provider results.
+- Required doc lint/format, project-profile validation and hosted PR checks; keep Draft, report exact HEAD and run IDs, request independent GPT-6 exact-head audit.
+- **Do not** enable `PAYPAL_DRAFTS_ENABLED=true`, access real credentials, reset exhausted one-create budget, run a real PayPal/OpenAI request, change billing, provision Render, deploy, upload, publish, submit to Devpost, or merge without explicit owner authorization.
