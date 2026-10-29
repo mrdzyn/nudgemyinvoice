@@ -11,6 +11,7 @@
 - **Working branch:** `docs/nmi-demo-r1-provider-acceptance` (preparation only; Draft PR; provider calls not authorized).
 - **Active task:** `tasks/NMI-DEMO-R1-provider-acceptance.md` — distinct owner-gated OpenAI/PayPal procedures. Preserve existing R0 and AG1 evidence.
 - **Active handoff:** NMI-DEMO-R1-START
+- **Render hosting opportunity:** Owner reports Render credits available (balance, expiry and coverage **unverified**). Option B has become more economically feasible and could support Render sponsor consideration **only after actual tool use**; however, the local judge runbook Option A remains valid. Render HTTPS/same-origin/static+API serving, single-operator demo access, `q` request-URL log redaction (Render HTTP request logs may include requested URL), paid database lifespan through Dec 15, provider-disabled public demo, and safe automatic-deploy controls are **NOT VERIFIED**. No Render provision/deploy authorized. See `docs/NMI-DEMO-DEPLOYMENT-DECISION.md`.
 - **Owner decisions:** D1a AG Studio/Enterprise remains deferred pending commercial license/trial review; D1b owner approved a bounded AG Grid **Community** replacement of the real dashboard invoice table for the hackathon; D2 no default browser persistence of unsaved customer data; D3 read-only owner-scoped list delivered in C4; D4 editing saved drafts deferred.
 
 ## Accepted evidence
