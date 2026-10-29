@@ -7,6 +7,7 @@
 - **Approved code candidate:** `main@652cf702fd93b05a9b9d64ee9b4c2151c30833b2` (owner squash merge of independently audited P1/preflight PR #22; original P1 implementation merged via PR #21).
 - **Render destination (user selected):** workspace name **Mrdzyn**, confirmed Render workspace ID `tea-dbgnjq1srm7s73ebcq2g`.
 - **Read-only Render inspection at preparation:** `list_workspaces` returned one workspace named Mrdzyn. `list_postgres_instances` said **No Postgres instances found**. `list_services` returned `null`, **not sufficient to prove zero services**. The connected tools do not expose workspace plan or billing forecasts. **Owner-supplied Render Billing screenshot (2026-10-29) confirms $50.00 Hackathon Participant promotional credit expiring 2027-10-01, no pending charges and no past invoices.** The owner now identifies the workspace as **Hobby** and provided its **Monthly Included Usage** screenshot (750 free instance-hours, 5 GB outbound bandwidth, two custom domains, 25 allowed services, 500 build pipeline minutes; all counters at zero). This supports a Hobby-first proposal; the screenshot itself is from Included Usage, not the Plan tab, so the plan should be rechecked at creation. Whether the promotion offsets Pro subscription/compute/storage remains **UNKNOWN**. **Do not claim credits will cover any specific charge.**
+- **Owner selection (2026-10-29):** **Hobby + Free web + Free PostgreSQL** is the preferred **$0-baseline staging configuration for hackathon judges**. This is a configuration preference only, **not** authorization to create resources, incur charges, trigger the initial deployment, waive security QA or share the judge URL. The existing owner requirement to approve actual costs before provisioning anything remains in force.
 - **Current approval scope:** PREPARE ONLY. The owner expressly requires separate review and written approval of **actual Mrdzyn charges** before provisioning anything. Proposed upper spending figures (including previously discussed $85) are **not** authorized and are **not enforceable automatic budget caps**.
 - **External/provider gates:** OpenAI Gate A, PayPal Gate B and combined Gate C are **NOT AUTHORIZED**. Historical one-create Sandbox smoke budget stays exhausted. No live provider access, credentials or calls.
 - **Authoritative implementation/ops:** `docs/NMI-RENDER-P1-RUNBOOK.md` and `docs/NMI-RENDER-P1-PREFLIGHT-EVIDENCE.md`; this packet adds specific cost/approval restrictions, and does not supersede security/runbook gates.
@@ -19,9 +20,9 @@
 | Workspace | Mrdzyn (`tea-dbgnjq1srm7s73ebcq2g`) | Same |
 | Region | Singapore | Singapore |
 | Resource type | Node.js web service | Managed Render PostgreSQL |
-| Plan ID | `0.5c-512mb` (512 MB, 0.5 CPU) | `0.1c-256mb` (256 MB, 0.1 CPU) |
+| Plan ID — selected, not provisioned | **`free`** web instance | **`free`** PostgreSQL 16 |
 | Database version | n/a | PostgreSQL **16** |
-| Storage | none | **1 GB** initial allocation; disable storage auto-scaling |
+| Storage | ephemeral local filesystem, no persistent disk | fixed **1 GB**, no managed backups, expires 30 days after creation |
 | Count | **1 instance**, no horizontal autoscaling | **1 database**, no replicas or additional disks |
 | Source | linked GitHub `mrdzyn/nudgemyinvoice`, branch `main` | Render-managed |
 | Auto deploy | **OFF**; no PR previews, no Blueprint | n/a |
@@ -48,7 +49,7 @@ Official sources checked 2026-10-29:
 | **Hobby + paid web + paid PostgreSQL** | **$13** ($7 + $6) | Avoids web cold starts and free DB expiration; platform HTTP-log gate unresolved |
 | **Pro + paid web + paid PostgreSQL** | **$38** ($25 + $7 + $6) | Can verify native platform HTTP request logs; promotion's applicability to Pro fee remains unverified |
 
-These are public *baseline* prices, **not Mrdzyn quotes**, and do not include usage overages, taxes, proration or additional storage. The included **750 hours are for Free web instances only**, not a subsidy for paid compute. The **25 services** allowance is a workspace limit, not 25 paid services free of charge. Render's free Postgres **30-day expiry makes it incompatible with the existing 2026-12-15 lifespan** unless an owner-approved upgrade, new disposable rebuild or shorter lifespan is selected. Free instances are not a production or guaranteed-uptime hosting model.
+These are public *baseline* prices, **not Mrdzyn quotes**, and do not include usage overages, taxes, proration or additional storage. The included **750 hours are for Free web instances only**, not a subsidy for paid compute. The **25 services** allowance is a workspace limit, not 25 paid services free of charge. The selected Free PG **expires 30 days after creation**; the previous target of 2026-12-15 for paid database lifespan **does not apply to the judges-only Free configuration**. Actual judging dates must be confirmed before any resource is created. Free instances are not a production or guaranteed-uptime hosting model.
 
 **Security trade-off / NON-WAIVER:** Hobby can run the application, but Render's native **platform HTTP request logs require Pro or higher**. App-origin logs plus an external HTTPS client probe can offer useful supporting evidence but **cannot prove what Render's own request-log pipeline records**. The current P1 runbook's native-log verification therefore remains **BLOCKED/NOT VERIFIED** on Hobby. Do not silently mark it PASS or share the judge URL under the old acceptance contract. Any revised Hobby acceptance must be a separate, explicitly owner-approved and independently reviewed evidence plan.
 
@@ -64,7 +65,7 @@ The user supplied a screenshot of **Mrdzyn → Billing → Credit Balance** show
 - **Invoice history:** no past invoices shown.
 - **Not shown in the screenshot:** **current workspace plan**, Pro subscription price on this account, whether promo credit applies to workspace fees, supported PostgreSQL backups/PITR, tax and other overage forecasts. All remain **unverified**.
 
-At published list prices, if a **new Pro** workspace ($25) plus web ($7) plus database ($6) are *all credit-eligible*, the simple steady-state baseline is **$38/month**; $50 then covers about **1.3 months**, before tax/overages/proration. The user has **not approved** that $38 plan, and credit use has **not** been proven for Pro. The owner identifies Mrdzyn as Hobby; on Hobby, **$0/month** Free web + Free PG is a valid **short-lived prototype** option subject to the 30-day PG deadline and Pro-only logging gap, whereas **$6/month** Free web + paid PG offers persistence without upgrading the workspace. Neither option has been selected or provisioned.
+At published list prices, if a **new Pro** workspace ($25) plus web ($7) plus database ($6) are *all credit-eligible*, the simple steady-state baseline is **$38/month**; $50 then covers about **1.3 months**, before tax/overages/proration. The user has **not approved** that $38 plan, and credit use has **not** been proven for Pro. The owner **selected Hobby Free web + Free PG for the judges' short-lived demo**, at a **$0 published compute baseline**. This does not guarantee zero overage charges or credit eligibility. Nothing has been provisioned; paid alternatives are not authorized.
 
 **Approval rule:** Do **not** upgrade the workspace or create paid resources until account-specific plan and credit coverage are confirmed and the owner approves the actual prospective charges and a bounded total spend. Only $50 in promotion is supported by evidence, not an $85 credit allowance.
 
@@ -72,8 +73,21 @@ At published list prices, if a **new Pro** workspace ($25) plus web ($7) plus da
 
 Owner identified **Mrdzyn as Hobby**, and supplied **Billing → Included Usage** showing 0 of 750 monthly Free instance-hours used, 0 of 5 GB bandwidth, 0 of 2 custom domains, 0 of 25 services and 0 of 500 pipeline minutes. This is a report of *usage and quotas*, **not** proof that any paid service compute or a Pro plan is included. The credit balance remains **US$50**, expiring **2027-10-01**.
 
-**Recommended next decision for the owner:** choose between (A) zero-baseline-cost temporary Hobby Free+Free test strictly for short-lived smoke QA with no native HTTP log PASS; (B) Hobby Free web + $6/month paid PG if persistent synthetic data is essential; (C) owner-approved Pro for the original native-log acceptance plan. Any plan choice requires an explicit approval before creating resources, even Free resources.
+**Selected option:** Hobby + Free web + Free PostgreSQL, for hackathon judges. Still requires separate owner permission to create even Free resources and deploy; Pro-only HTTP request logs are NOT VERIFIED under Hobby. No upgrade or paid plan selected.
 
+## Judges-only Free staging decision — selected, NOT provisioned or release-approved
+
+- **Purpose:** private owner QA first, then separately authorized authenticated access for PayPal hackathon judges. The Nov 12 noon PST submission deadline is not proof of the end of judging; confirm the evaluation window before creating the 30-day Free PG.
+- **Web service:** Free single-instance Node service in Singapore. Sleeps after 15 minutes idle and may take about a minute to wake. Judges must be warned of cold starts after owner approval; have an approved demo video fallback. No artificial uptime pings.
+- **Database:** Free PostgreSQL **16**, 1 GB, 30-day expiry, no managed backups, no pooling. Disposable synthetic records only; no production/customer data. Use replayable migrations and seed fixtures. Never claim backups or availability beyond the Free expiration. Require explicit owner acknowledgement of data-loss/rebuild risk.
+- **Judge identity:** single shared-operator MVP is NOT multi-judge isolation. Preserve authentication and CSRF protections, distribute judge credentials separately and securely only after owner release approval; do not publish passwords in source, Devpost or screenshots. Plan reset/password rotation between judging sessions or use supervised demos. No real PII.
+- **PayPal/OpenAI:** providers disabled, no keys, no network calls. Do not promise live AI or payment functionality in the judge-facing demo; make manual/offline path clear. Gates A/B/C stay NOT AUTHORIZED.
+- **Unresolved security gate:** Native Render platform HTTP request logs are **Pro-only**. The existing P1 live acceptance step cannot be marked PASS on Hobby. App logs, HTTPS browser probes and local edge simulations provide partial evidence, **not equivalent proof of Render's internal log contents**. Prepare a bounded alternate privacy-evidence contract for independent review and **separate explicit owner acceptance** before sharing any judge URL. Selection of Free hosting does NOT waive the old gate.
+- **Charges:** Free compute baseline is $0, but Hobby may bill for bandwidth/build overages if payment method exists. Check actual checkout plan labels and current quotas. Do not spend the $50 credits or incur any charge without separately approved amount and billing conditions. No Pro upgrade, paid compute, paid DB, add-ons, previews or additional services.
+- **Creation hazard:** Render web-service creation may start an initial build/deploy even with Auto-Deploy OFF. Do not call Render create tools until the owner approves the initial deploy procedure and pinned source SHA, and safe provider-disabled configuration is in place.
+- **Judge release:** real TLS, runtime DB least privilege, secure cookies/Origin/CSRF, provider isolation, privacy of search URLs, proxy hop checks, single-operator access/reset, availability window and cold start must pass owner-only live QA. Owner separately approves URL sharing; being selected for judges is not a publication authorization.
+
+**No resource creation, deployment, provider call, external sharing, waiver, or charge has been authorized by this decision.**
 ## 3. Owner must supply actual billing facts (no secret values)
 
 Open **Render Dashboard → select Mrdzyn workspace → Billing** and privately inspect the following; share only non-sensitive figures/plan names or a sanitized screenshot (no payment method, card digits, invoice addresses, tokens or passwords).
@@ -85,15 +99,15 @@ Open **Render Dashboard → select Mrdzyn workspace → Billing** and privately 
 | Eligible charges covered by this promotion (Pro plan vs compute/DB/storage) | **UNKNOWN** | Verify applicability with Render before approving a Pro upgrade or charges |
 | Billing screenshot's pending charges and invoice history | **No pending charges; no past invoices (as captured 2026-10-29)** | Check again immediately before any resource creation; other services still unconfirmed |
 | Estimated web compute, DB compute, storage, tax, bandwidth/build overages | **ESTIMATE ONLY** | Reconcile plan selection to live dashboard quote and billing basis |
-| Price exposure from provisioning date to teardown (target 2026-12-15) | **UNKNOWN** | Record full period and billing cycle boundaries; no auto-expiration assumption |
-| PostgreSQL backup/PITR, retention and access-level rights | **UNKNOWN** | Check plan support and who can create `LOGIN` roles; no superuser assumption |
+| Judges' staging lifetime and expiry | **30 days after Free PG creation; judge window TBD** | Provision near approved judge window, end and clean up before expiry; do not assume access through Dec 15 |
+| Free PG backups, retention and role rights | **No managed backups; expires after 30 days; custom LOGIN role rights NOT TESTED** | Synthetic data only; approve rebuild risk and stop if least-privilege roles unsupported |
 | User-approved total incremental budget and response if expected billing increases | **NOT GRANTED** | Specific upper bound and **STOP-before-spend** rule to be explicitly approved |
 
 If any necessary figure cannot be verified using the actual Mrdzyn billing dashboard and plan selection, **do not proceed**. Resource creation incurs costs; do not treat GitHub approval, connector installation or this packet as permission.
 
 ## 4. Prepared web service configuration (not submitted)
 
-**Important:** The table below is the earlier *paid-service/Pro-compatible* candidate, **NOT** a decision to purchase it. For a separately approved Hobby Free-web alternative, change web plan to `free` and, if short-lived disposable testing is accepted, DB plan to `free`. Those changes affect cold starts, 30-day database lifetime and the unresolved native-log gate; do not silently switch plans on creation.
+**Selected and unprovisioned:** Hobby Free web + Free PostgreSQL for the judges. The settings below describe that choice; no cloud action or spend is approved.
 
 | Setting | Proposed value |
 | --- | --- |
@@ -101,7 +115,7 @@ If any necessary figure cannot be verified using the actual Mrdzyn billing dashb
 | GitHub branch | `main` with **pin verified SHA** `652cf702fd93b05a9b9d64ee9b4c2151c30833b2` |
 | Region | `singapore` |
 | Runtime | `node` |
-| Instance | `0.5c-512mb` |
+| Instance | `free` (one instance, may spin down after 15 minutes idle) |
 | Build command | `pnpm install --frozen-lockfile --prod=false && pnpm --filter @nmi/web build` |
 | Start command | `pnpm --filter @nmi/api start` |
 | Auto-Deploy | **NO** |
@@ -140,13 +154,13 @@ Proposed **non-secret** environment names and safe values:
 
 Before an owner can grant a bounded next step, request confirmation of:
 
-- Mrdzyn is **owner-reported Hobby** with no workspace monthly fee. Should staging remain Hobby (with explicit disposition of the Pro-only native HTTP request-log gate), or should a separately approved `$25/month` Pro upgrade be considered?
+- **Hobby Free+Free selected**. A Pro upgrade is **not** approved. The Pro-only native HTTP log acceptance evidence gap requires an independently reviewed alternative and an explicit owner decision before sharing with judges.
 - Confirmed **$50 promotional credit expiring 2027-10-01**; still need what charge types it covers (particularly the $25 Pro subscription), and projected post-charge balance.
-- Choose Free web/Free PG vs Free web/paid PG vs paid web/paid PG on Hobby vs Pro; decide whether a short-lived 30-day Free DB window is acceptable or if persistence **through 2026-12-15** is required. Confirm the approved incremental ceiling for the chosen timeline, including taxes, storage, bandwidth, fees and a stop threshold.
+- Confirm judging window within 30-day Free PG lifetime, explicit tear-down cutoff, synthetic-only/no-backup risk, and permitted bandwidth/build overage exposure. Obtain separate written consent to create BOTH Free resources and initiate first deployment; December 15 persistence is no longer proposed.
 - Whether staged public HTTPS access is acceptable for *owner-only* authenticated QA; external sharing will be a later separate approval.
 
 Suggested written approval **only after** those values are filled and owner accepts:
-> I approve provisioning in the Mrdzyn Render workspace, limited to one Singapore Node web service (0.5c-512mb) and one Singapore PostgreSQL 16 database (0.1c-256mb, 1 GB, storage autoscaling off), with the *account-verified* monthly/incremental prices and a total approved incremental spend of [AMOUNT] through 2026-12-15. Any Pro upgrade [YES/NO] is separately approved in that amount. Stop before additional charges, changing plans, expanding storage, deploying different code or enabling providers. Staging is single-operator, synthetic-only, auto-deploy off, based on audited SHA 652cf702; do not share URLs or call OpenAI/PayPal. All additional provisioning operations require explicit step approval.
+> I separately authorize creation of exactly one Singapore Render **Free** web service and one Singapore **Free PostgreSQL 16** database (1 GB) in Mrdzyn, using the audited SHA 652cf702, provider-disabled, one operator, Auto-Deploy OFF. I have checked the actual Free checkout plan and overage/billing exposure and accept a maximum extra spend of **[APPROVED AMOUNT OR $0 WITH VERIFIED BILLING STOP]**. I understand the Free PG has no managed backups, expires after 30 days, and Free web sleeps on idle. Stop before any paid upgrade, new billable resource, unpinned initial deployment, provider call or public sharing. This does not approve an HTTP-request-log gate waiver or judge access; those remain separate.
 
 **Gate status:** No deployment/provisioning authorization; PayPal/OpenAI Gates A/B/C remain NOT AUTHORIZED; owner merge authorization for this docs-only PR is also separate.
 
