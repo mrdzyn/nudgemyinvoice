@@ -37,8 +37,8 @@ Overall label: REAL PASS / REAL FAIL / PENDING     Notes: ______
 ## Template B — Gate B (PayPal Sandbox), one file per run
 
 ```
-GATE B IS BLOCKED until the PayPal client never resends a create after 401 (acceptance doc 5.0). Do not fill this template before that fix is merged and audited.
-Run ID: R1-B-________            Authorization quoted (date/time, request id): ______   PayPal client fix commit: ______ (audited: yes/no)
+GATE B BLOCKED / NOT AUTHORIZED. FIX-B1 is independently audited and merged into main at 09bbe90a977516c27bc0715141e74e090b41fba5. Do not fill this template until a server-to-PayPal egress-send observer has passed offline verification, independent audit, owner merge, and a NEW written Request B is approved (acceptance doc 5.0; docs/NMI-DEMO-R1-B-WIRE-COUNT.md).
+Run ID: R1-B-________            Authorization quoted (date/time, request id): ______   PayPal client FIX-B1 merge: 09bbe90a977516c27bc0715141e74e090b41fba5 (audit 5692753316)
 Executed by: owner               Commit under test: ______
 Sandbox mode and app NudgeMyBillsAI confirmed in the dashboard: yes/no ; no Live credential in use: yes/no
 Sandbox invoice count BEFORE (N): ____
@@ -47,7 +47,12 @@ OpenAI unset (aiConfigured=false): yes/no ; no SIMULATED banner: yes/no
 Pre-create DB: invoices __ (expect 0 before save) ; paypal_draft_operations __ (expect 0)
 Saved invoice (DB): currency ___ total_minor ____ due_date ______ (expect USD 54000 2030-01-15) ; saved page total ______
 Creates used: _/1 ; browser POST .../paypal-draft count (DevTools): __ (expect 1) ; second create attempted: yes/no
-PayPal create requests on the wire (counting transport / network evidence, NOT only database rows): __ (expect 1) ; evidence source: ______
+Server-to-PayPal outbound create SEND ATTEMPTS (not guaranteed provider receipt): PENDING until observed; count ____ (expected exactly 1) ; source: exact Node/Undici observer only after verified/audited
+Observer procedure commit: PENDING ; audited preload SHA-256 (expected `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e`): PENDING ; offline validation (agent) recorded: yes/no ; independently audited/reproduced: PENDING ; `shasum` of the file used equals the audited hash: yes/no ; proxy variables unset: yes/no
+Listening PID (lsof): PENDING ; `NMI-WIRE ACTIVE entry=server.ts` PID equal to it: yes/no ; pre-click SIGUSR2 snapshot (complete=false) all counts 0: yes/no ; pre-click create sends: PENDING (expect 0)
+Final summary file of the listening PID (complete=true, signal ____): CREATE ____ (expect 1) OAuth ____ SHOW ____ SEARCH ____ UNEXPECTED ____ (expect 0) FOREIGN ____ (expect 0) events ____ ; STOP line printed: yes/no ; other processes' files all events=0: yes/no ; stopped with Ctrl-C: yes/no
+Observer summary complete and secrets/headers/body/id absent: yes/no ; observer failure/unknown count STOP: yes/no
+Corroboration: browser-to-API create POST count ____ (expect 1), DB attempts ____ (expect 1), Sandbox N->N+1 ____ (separate proof, not wire count)
 Operation row: state ______ attempts __ has_remote __ remote_tail ____ ; operation row count __ (expect 1)
 Invoice row linked to remote: yes/no
 PayPal Sandbox dashboard (read-only): invoice count AFTER (expect N+1) ____ ; status ______ (expect DRAFT) ; currency ___ ; total ______ ; due ______ ; number NMI-+20hex: yes/no

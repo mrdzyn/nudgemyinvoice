@@ -1369,4 +1369,65 @@ Stale current-tense statements ("the client can resend", "code not yet started",
 ### Re-audit focus
 No remaining statement presents the defect as the current state of the branch or the fix as unwritten/merged/audited; no authorization answer changed; the diff since `ad6de6c` is documentation only.
 
+## Handoff: NMI-DEMO-R1-B-WIRE-START
+
+- **Task:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md`; **procedure draft:** `docs/NMI-DEMO-R1-B-WIRE-COUNT.md`.
+- **From:** GPT-6 orchestrator after owner squash merge of independently audited FIX-B1 PR #19
+- **To:** Claude coding agent for **documentation-only completion and offline validation**, then independent GPT-6 exact-head audit
+- **Base main:** `09bbe90a977516c27bc0715141e74e090b41fba5`; **branch/PR:** `docs/nmi-demo-r1-b-wire-evidence` / existing Draft PR
+- **State:** PREPARATION ONLY; no provider calls, observer execution with real credentials, PayPal Sandbox draft, budget reset, deployment, merge, Render provisioning, video upload or Devpost submission. Gates A and C NOT AUTHORIZED; Gate B BLOCKED / NOT AUTHORIZED.
+
+### Goal
+
+Reconcile all outdated references to PR #19 being unmerged. Specify and offline validate a **secret-safe server-to-PayPal create egress counter**, not a browser-to-Fastify counter or PostgreSQL `attempts=1`. Recommended Node Undici `undici:client:sendHeaders` diagnostic event, exact Sandbox method/path allow-list, aggregate-only output, no logging headers or bodies, no proxy/MITM, outside-repo temporary owner-only preload. **The event occurs before socket write; it proves a local send attempt, NOT confirmed PayPal receipt.** Corroborate with the N→N+1 Sandbox DRAFT result and durable state. Provide offline loopback positive and double-send negative controls without a real PayPal request, and prove observer reaches the actual Fastify process started by pnpm/tsx; otherwise mark as still BLOCKED and propose separate approved implementation. Preserve `PAYPAL_DRAFTS_ENABLED=false` and the historical exhausted 1/1 create budget.
+
+Update acceptance §5.0–5.4, unanswered Request B, evidence Template B, checklist, task, STATUS, handoff and PR body as the real evidence becomes *prepared* (not real-PASS). Do not touch Gate A/C approval answers or execute Gate B. Run applicable doc checks and mandatory hosted CI. Report final HEAD, checks and limitations and request exact-head GPT-6 audit. Do not merge.
+
+### Security and scope
+
+No code, scripts, tests, dependencies, CI, schema, database, credentials, production runtime changes, API calls, deployment or billing work in this docs-only PR. If a trustworthy actual-process send count cannot be demonstrated without executable repo changes, stop and document that additional prerequisite rather than claiming readiness.
+
+## Handoff: NMI-DEMO-R1-B-WIRE-IMPL
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md` (section "Completion record")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head audit, then the owner's merge decision
+- **Branch / PR:** `docs/nmi-demo-r1-b-wire-evidence`, [Draft PR #20](https://github.com/mrdzyn/nudgemyinvoice/pull/20)
+- **State:** READY FOR INDEPENDENT AUDIT. Markdown only; no repository code, script, test, dependency, CI or schema change; no PayPal/OpenAI request; no credential; no budget reset; no merge, deployment, Render, upload or Devpost action. Gate B BLOCKED/NOT AUTHORIZED; Gates A/C NOT AUTHORIZED.
+
+### Audit focus
+1. The observer source in `docs/NMI-DEMO-R1-B-WIRE-COUNT.md` section 3: reads only `request.origin/method/path`; classification exactness; one origin literal; no env override; summary fields; signal handling; hash `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` (the code fence hashes to it; Prettier is bypassed for the fences).
+2. Reproduce `docs/NMI-DEMO-R1-B-WIRE-OFFLINE-TESTS.md` (`run-all.sh`) on the auditor's machine, especially T3/T4 (unmodified observer + production client at the wire), T5 negative control and T6 (actual pnpm/tsx server, three shutdown shapes).
+3. Operator blocks are shell-safe (no inline comments; bash/zsh script and interactive were executed from the document) and require: hash check, proxy check, listening-PID match, zero-count snapshot before the single click, Ctrl-C shutdown, per-PID summary reading.
+4. Honest limits: no real PayPal send witnessed; detection not prevention; experimental channel; macOS only; agent-run.
+5. No authorization answer changed; Gate B still blocked; browser/DB/dashboard counts not substituted.
+
+### Not verified
+Anything against the real PayPal Sandbox; Linux/Windows; other Node majors; independent reproduction.
+
+## Handoff: NMI-DEMO-R1-B-WIRE-R1
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md` (section "Audit remediation NMI-DEMO-R1-B-WIRE-R1")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit of Draft PR #20
+- **State:** READY FOR RE-AUDIT. Only the Markdown-embedded offline runner/tests and records changed; observer source and SHA-256 `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` unchanged; no repository code, script, test or authorization-answer change; no provider call; Gate B BLOCKED/NOT AUTHORIZED.
+
+### Re-audit focus
+1. Extract the files from `docs/NMI-DEMO-R1-B-WIRE-OFFLINE-TESTS.md` and the preload from the WIRE-COUNT document; confirm the hash; run `./run-all.sh` and `./runner-selftest.sh` (expected `ALL DONE (8 ...)` and `11/11`).
+2. Confirm every critical check is a hard failure: T0 hash and fixture, T1 `20/20`, T2 `EPERM`, T3/T3b/T4/T5 JSON assertions with the independent server witness and client outcome, T6 `N/N` and no `FAIL`, assertion-count guard, `set -euo pipefail`, no `${VAR:?}`.
+3. Review the 11 injections for realism (each changes the file it claims to) and try your own.
+
+### Not verified
+Real PayPal behaviour, other platforms, independent reproduction.
+
+## Handoff: NMI-DEMO-R1-B-WIRE-R2
+
+- **Task / phase:** `tasks/NMI-DEMO-R1-B-WIRE-evidence-readiness.md` (section "Audit remediation NMI-DEMO-R1-B-WIRE-R2")
+- **From:** Claude implementation agent (documentation only)
+- **To:** GPT-6 independent exact-head re-audit of Draft PR #20
+- **State:** READY FOR RE-AUDIT. Observer source and SHA-256 `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` unchanged; only the Markdown-embedded runner/self-test files (T2) and status wording changed; no repository code, script, test, dependency or authorization-answer change; Gate B BLOCKED / NOT AUTHORIZED.
+
+### Re-audit focus
+Runner T2 makes no probe outside the sandbox; S5 is the only unsandboxed run (one connect to non-routable `192.0.2.1`); Request B / acceptance banner no longer say "NOT OFFLINE VALIDATED / DRAFT" and state the true status; re-run `./run-all.sh` (8 assertions) and `./runner-selftest.sh` (11/11) from the extracted files.
+
 <!-- HANDOFF_ENTRIES_END -->
