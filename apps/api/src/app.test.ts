@@ -236,7 +236,12 @@ describe("config", () => {
   });
   it("marks cookies Secure for production or https origins and normalizes the web origin", () => {
     expect(loadConfig(baseEnv).cookieSecure).toBe(false);
-    expect(loadConfig({ ...baseEnv, NODE_ENV: "production" }).cookieSecure).toBe(true);
+    expect(
+      loadConfig({ ...baseEnv, NODE_ENV: "production", WEB_ORIGIN: "https://app.example.com" })
+        .cookieSecure,
+    ).toBe(true);
+    // hosted mode never runs on a plain-http origin (NMI-RENDER-P1)
+    expect(() => loadConfig({ ...baseEnv, NODE_ENV: "production" })).toThrow(/https WEB_ORIGIN/);
     const https = loadConfig({ ...baseEnv, WEB_ORIGIN: "https://app.example.com/some/path" });
     expect(https.cookieSecure).toBe(true);
     expect(https.webOrigin).toBe("https://app.example.com");

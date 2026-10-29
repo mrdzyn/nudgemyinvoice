@@ -1,6 +1,6 @@
 # NMI-RENDER-P1 — Secure staging and judge-demo hosting readiness
 
-**State:** ACTIVE IMPLEMENTATION TASK, Draft PR ONLY. This task authorizes **repository implementation and offline validation**, NOT a Render resource, external deployment, billable infrastructure, production release, provider request, or merging any PR.
+**State:** IMPLEMENTED OFFLINE — awaiting independent exact-head audit (Draft PR #21 ONLY; see `NMI-RENDER-P1-IMPL`). This task authorizes **repository implementation and offline validation**, NOT a Render resource, external deployment, billable infrastructure, production release, provider request, or merging any PR.
 
 - **Approved base `main`:** `451abc292737775f0c58458520b8f5bf004cd474` (owner squash-merged NMI-DEMO-R1-B-WIRE PR #20).
 - **Working branch:** `feat/nmi-render-p1-secure-staging`.
@@ -59,3 +59,9 @@ Follow `docs/TESTING.md`: smallest targeted source-backed automated objective an
 ## Delivery / handoff
 
 Continue on **the existing Draft PR opened for this phase**; do not create a second feature PR. After implementation, update STATUS and append `NMI-RENDER-P1-IMPL` handoff, record exact final HEAD, CI runs, scope, test evidence, blockers and release-gate truth. Keep owner separate merge and staging-provision decisions. `NMI-DEMO-R1-B-WIRE` is already merged on main, but **Gate B still has no owner permit**; Gates A and C also NOT AUTHORIZED.
+
+## Implementation record (NMI-RENDER-P1-IMPL)
+
+Delivered (all offline; nothing provisioned/deployed): `HOST`/`PORT` listen config (wildcard only with `NODE_ENV=production`); production fail-closed config (https `WEB_ORIGIN`, `TRUST_PROXY` hop count, never `true`); `plugins/web-static.ts` single-origin static + SPA fallback (startup file index, no request-built paths, symlinks/dotfiles/unknown types excluded); header CSP/HSTS/frame/referrer policy on every response; **`POST /api/invoice-drafts/search`** (body carries the whole query; web client switched; legacy `GET ?q=` refused) — an additive API change with the approved UI unchanged; `packages/db/ops/runtime-role.sql` least-privilege grants (found and documented one PostgreSQL requirement: `FOR UPDATE` on `operators` needs a column UPDATE grant, given on `created_at` only); `docs/NMI-RENDER-P1-RUNBOOK.md`.
+
+Acceptance A–F: tests `apps/api/src/hosting.test.ts`, `hosted-staging.pg.test.ts`, updated `invoice-list.pg.test.ts` and web `api.test.ts`/`boundaries.test.ts`, plus `design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs`. **Privacy (C): resolved in code and proven offline; real Render request-log behavior is NOT TESTED and is a live-verification gate.** Deployment itself remains gated by audit, merge and separate owner approvals. No provider client, OAuth, PayPal draft enablement, schema or migration change was made.

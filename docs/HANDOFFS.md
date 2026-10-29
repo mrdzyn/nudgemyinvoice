@@ -1447,4 +1447,17 @@ Read AGENTS.md, STATUS, project profile, the P1 task, and only relevant source/t
 
 Targeted local-only tests, CI and documented negative controls; keep final status honest about any untested proxy, PostgreSQL, browser or platform behavior. Do not connect/provision Render, create billable databases, deploy, edit/pay provider credentials, authorize PayPal Gate B, merge, upload a video or submit to Devpost. All gates A/B/C remain NOT AUTHORIZED. On completion append `NMI-RENDER-P1-IMPL` handoff and request independent exact-head re-audit.
 
+## Handoff: NMI-RENDER-P1-IMPL
+
+- **From:** Implementation agent (Claude)
+- **To:** Independent GPT-6 exact-head security/functional audit, then owner
+- **Branch / PR:** `feat/nmi-render-p1-secure-staging`, Draft PR #21 (no second branch/PR). Start HEAD `7b1a33e`.
+- **Scope:** `tasks/NMI-RENDER-P1-secure-staging.md` (implementation record at its end). UI design gate: Not applicable; approved UI unchanged.
+- **Changed:** `apps/api` (`config.ts` HOST/TRUST_PROXY/WEB_DIST_DIR + production guards; `app.ts` header policy, hop-count trust, static registration; `plugins/web-static.ts`; `routes/invoice-drafts.ts` POST search + GET `q` refusal; `server.ts` host); `apps/web` (`invoices/api.ts` list = CSRF POST, `RealApp.tsx`, tests); `packages/db/ops/runtime-role.sql`; `docs/NMI-RENDER-P1-RUNBOOK.md`; SECURITY/ARCHITECTURE/DEPLOYMENT-DECISION/Devpost/checklist wording; `.env.example`; `design/evidence/NMI-RENDER-P1/`.
+- **Not changed:** provider clients, OAuth/payment scope, PayPal enablement, schema/migrations, UI, authorization answers, merged PR #19/#20 content.
+- **Review focus:** (1) `web-static.ts` cannot serve outside `dist` or shadow `/api`/`/health`; (2) POST search keeps exactly the GET list's owner scoping/order and is CSRF/Origin protected; no path leaves `q` in a URL; (3) `TRUST_PROXY` hop semantics (`(addr, hop) => hop < n`); (4) `runtime-role.sql` completeness (the app works as that role; the `operators.created_at` UPDATE grant is only for `FOR UPDATE`); (5) the runbook's unverified Render assumptions.
+- **Evidence (agent-reported, local):** `pnpm validate` PASS; `pnpm test:db` PASS against disposable PostgreSQL; hosted browser QA 26/26 (headless Chrome, TLS proxy simulation, real production entry as the runtime role); exact HEAD and hosted CI run IDs are in the PR body and final report.
+- **NOT TESTED / residual:** real Render (TLS, `X-Forwarded-For` shape, request-log content for POST, Postgres roles/TLS/lifespan/cost); other browsers, assistive tech, touch; multi-instance behavior (unsupported); the historical NMI-AG1/C4 journeys that assert GET `q` were not re-run and are superseded for search.
+- **Gates:** merge, Render provisioning, secrets, URL sharing and judge access each need separate owner approval. Gates A/B/C NOT AUTHORIZED.
+
 <!-- HANDOFF_ENTRIES_END -->
