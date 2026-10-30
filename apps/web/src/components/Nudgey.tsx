@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type Ref } from "react";
 import { useApp } from "../demo/AppContext.js";
 import type { Action } from "../demo/appState.js";
 
@@ -22,7 +22,7 @@ export function NudgeyPanel({
   onChoose: (choice: NudgeyChoice) => void;
   onClose: () => void;
   titleId: string;
-  firstActionRef?: React.Ref<HTMLButtonElement>;
+  firstActionRef?: Ref<HTMLButtonElement>;
 }) {
   return (
     <>
@@ -126,7 +126,7 @@ export function Nudgey() {
         type="button"
         ref={trigger}
         className="nudgey-launcher"
-        aria-controls={panelId}
+        aria-controls={open ? panelId : undefined}
         aria-expanded={open}
         aria-label="Open Nudgey quick actions"
         onClick={() => setOpen((value) => !value)}
