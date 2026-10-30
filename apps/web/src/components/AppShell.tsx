@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useApp } from "../demo/AppContext.js";
 import { Notice } from "./Notice.js";
+import { Nudgey } from "./Nudgey.js";
 import type { Screen } from "../demo/appState.js";
 
 function NavButton({
@@ -104,6 +105,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         ) : null}
         {children}
       </main>
+      {session ? <Nudgey /> : null}
       {shell ? (
         <nav className="mobile-nav" aria-label="Main (mobile)">
           <button
