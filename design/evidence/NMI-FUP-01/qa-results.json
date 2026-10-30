@@ -1,0 +1,147 @@
+{
+  "task": "NMI-FUP-01",
+  "timezoneEmulated": "Asia/Manila",
+  "providersConfigured": false,
+  "passed": 23,
+  "total": 23,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated through the journal (incl. 0007) and the API is healthy behind the proxy with no provider configured",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "two synthetic invoices saved by the operator",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "operator signs in through the browser",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "nudgey",
+      "name": "Nudgey offers 'Schedule a follow-up' and shows real counts: 0 Due, 0 Upcoming",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "form",
+      "name": "the form lists the operator's saved invoices and states the browser time zone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "form",
+      "name": "choosing an invoice generates a polite local message (no provider call)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "exactly one POST /api/follow-ups (201) and the list now shows 1 Upcoming",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "persist",
+      "name": "the database stores the real UTC instant, the IANA zone, the note and the edited message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "persist",
+      "name": "the request body carries the UTC instant and zone, never a local wall time or the customer's text in the URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "nudgey",
+      "name": "the item displays its time with the zone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "duplicate",
+      "name": "a second active follow-up for the same invoice is refused with a clear message and nothing is added",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "detail",
+      "name": "the invoice page shows the scheduled follow-up with zone, note, message and the 'not sent' statement",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "due",
+      "name": "rescheduling to the current minute makes the server report it Due (1 Due, 0 Upcoming) and the launcher shows a badge",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "complete",
+      "name": "marking complete removes it from the list, counts return to 0/0, and the row is 'completed' with a timestamp",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "a second invoice can be scheduled (Vienna Cafe, EUR) and counts come from the database",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "cancel",
+      "name": "canceling removes it; the row is 'canceled' with a timestamp",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "restart",
+      "name": "the API process was restarted and the follow-up row is still in PostgreSQL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "restart",
+      "name": "after restart and reload Nudgey shows the saved follow-up again (1 Upcoming, 11:15 AM GMT+8)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser only used auth, invoice-list/detail and follow-up routes: never a parse, PayPal-draft or send route",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no request left the page origin (no PayPal, OpenAI, analytics)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no PayPal operation exists, no invoice has a PayPal id, no approval or webhook row",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "browser storage holds no follow-up data and no console errors or uncaught exceptions occurred",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the audit log has the follow-up events with no customer text",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

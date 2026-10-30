@@ -31,3 +31,6 @@
 - Manually inspect authenticated dashboard/composer, mobile layout, keyboard focus, and sign-out.
 - **Stop once these Nudgey objectives are verified.** No replay of Gate A/B provider acceptance, no PayPal/OpenAI API calls.
 - **Release boundary:** Draft PR only until independent review and explicit owner merge approval.
+
+## Update — NMI-FUP-01
+The "no new network request" statement above describes the original shortcuts. NMI-FUP-01 (`tasks/NMI-FUP-01-nudgey-followups.md`) adds a **Schedule a follow-up** action that talks only to the application's own authenticated API (local reminders; never a customer, PayPal or OpenAI). The three original shortcuts still make no request.

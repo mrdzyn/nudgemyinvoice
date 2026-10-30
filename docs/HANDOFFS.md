@@ -1555,4 +1555,13 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Changed:** `NMI-DEMO-OWNER-AUTHORIZATIONS` (R1-A executed/closed/consumed; B unsigned; C not authorized; ledger rows), `NMI-DEMO-PROVIDER-ACCEPTANCE` (title and execution-state paragraph), `STATUS` (phase, working branch, active task, truthful `main` head, Render P2 shown as parked, R1 status, next actions), `NMI-DEMO-SUBMISSION-CHECKLIST` (A provisional REAL PASS, PayPal 1/1 exhausted, observer audited+merged, B/C not authorized).
 - **Preserved:** Gate A sanitized evidence and PENDING fields, consumed Gate A authorization, unsigned Gate B, exhausted historical PayPal budget, Render and deployment boundaries, HPE-EDGE separation. No code, provider call, database deletion, merge or deployment.
 
+## Handoff: NMI-FUP-01
+
+- **From:** Implementation agent (Claude). **To:** Independent review, then owner. **Branch/PR:** `feat/nmi-ux02-nudgey`, Draft PR #26 (no new branch or PR); started from head `b5e122f` (NMI-UX-02, CI green).
+- **Scope:** `tasks/NMI-FUP-01-nudgey-followups.md`. Local follow-up scheduling only; customer notifications are deferred and unauthorized.
+- **Changed:** `packages/db` (schema + migration `0007` + `PostgresFollowUpStore`, audit actions, runtime-role grants), `apps/api` (`routes/follow-ups.ts`, wiring), `apps/web` (`followups/*`, Nudgey, saved-invoice card, session wiring, CSS), tests (api pg, runtime-role, db constraints, web unit/SSR/boundaries), `design/evidence/NMI-FUP-01/`, docs that counted seven migrations.
+- **Review focus:** ownership and CSRF/Origin on every route; the partial unique index and `409` handling; UTC-only instants and zone display; that no code path contacts a customer, PayPal or OpenAI; runtime-role grants (no DELETE); the new browser route allow-list in `boundaries.test.ts`; migration count updates.
+- **Found by the browser journey (fixed):** multi-line messages were rejected by the shared single-line text validator, and `Intl` refused `timeZoneName` combined with `dateStyle`/`timeStyle` (silently showing UTC).
+- **Not done:** no deployment, merge, provider call or Gate action. A hosted database must run migration `0007` and the new grants first.
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -1364,3 +1364,191 @@ dialog .actions {
     max-height: calc(100dvh - 164px);
   }
 }
+
+/* NMI-FUP-01 follow-up scheduling (inside Nudgey and on the saved-invoice page). Existing tokens only. */
+.nudgey-panel {
+  width: min(400px, calc(100vw - 32px));
+}
+.nudgey-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--err-bg);
+  color: var(--err-text);
+  border: 1px solid var(--err-border);
+  font-size: 12px;
+  font-weight: 800;
+}
+.followup-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.followup-title,
+.followup-form-title {
+  font-size: 15px;
+  font-weight: 750;
+}
+.followup-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.followup-count {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+}
+.followup-count-due {
+  border-color: var(--err-border);
+  background: var(--err-bg);
+  color: var(--err-text);
+}
+.followup-group-title {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-2);
+}
+.followup-items,
+.followup-history {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.followup-history {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.followup-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.followup-due {
+  border-color: var(--err-border);
+}
+.followup-upcoming {
+  border-color: var(--info-border);
+}
+.followup-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.followup-state {
+  font-size: 11.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.followup-when,
+.followup-inv,
+.followup-note {
+  margin-top: 2px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.followup-empty,
+.followup-hint,
+.followup-tz {
+  margin: 8px 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.followup-error {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--err-text);
+}
+.followup-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.followup-btn {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.followup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.followup-btn-primary {
+  border-color: transparent;
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+.followup-btn-danger {
+  border-color: var(--err-border);
+  color: var(--err-text);
+}
+.followup-form {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+}
+.followup-form label {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.followup-form input,
+.followup-form select,
+.followup-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.followup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.followup-fixed {
+  font-weight: 650;
+}
+.followup-message {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 13px;
+}
+.followup-card .followup-item {
+  max-width: 640px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .followup-btn {
+    transition: none;
+  }
+}

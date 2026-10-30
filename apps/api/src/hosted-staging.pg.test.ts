@@ -26,7 +26,7 @@ import { baseEnv } from "./test-support.js";
  *  - customer search text never appears in any request URL the proxy (= the host's HTTP request
  *    log) sees, nor in Fastify logs, including error and unauthorized cases;
  *  - providers are disabled: zero provider traffic, manual-entry fallback;
- *  - all seven migrations are applied in journal order by the owner and the app never changes schema;
+ *  - all eight migrations are applied in journal order by the owner and the app never changes schema;
  *  - the runtime role can do exactly what the API needs and nothing destructive.
  * Real Fastify + real PostgreSQL + loopback sockets only.
  */
@@ -242,7 +242,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     ...extra,
   });
 
-  it("applied exactly the seven committed migrations in journal order, before the app started", async () => {
+  it("applied exactly the eight committed migrations in journal order, before the app started", async () => {
     const journal = JSON.parse(
       readFileSync(
         join(
@@ -267,8 +267,9 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       "0004",
       "0005",
       "0006",
+      "0007",
     ]);
-    expect(migrationStatements().length).toBeGreaterThan(7);
+    expect(migrationStatements().length).toBeGreaterThan(8);
     const tables = (
       await owner(
         `SELECT table_name FROM information_schema.tables WHERE table_schema='${scratch.schema}' ORDER BY 1`,
@@ -277,6 +278,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     expect(tables).toEqual([
       "approvals",
       "audit_log",
+      "invoice_follow_ups",
       "invoice_items",
       "invoices",
       "operators",
@@ -419,6 +421,34 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     expect(detail.json().draft.customerName).toBe(NEEDLE_NAME);
   });
 
+  it("local follow-ups work through the least-privilege runtime role behind the proxy (schedule, read, complete) and contact no provider", async () => {
+    const found = await call("POST", "/api/invoice-drafts/search", { headers: auth(), body: {} });
+    const invoiceId = found.json().items[0].id as string;
+    const dueAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const made = await call("POST", "/api/follow-ups", {
+      headers: auth(),
+      body: { invoiceId, dueAt, timezone: "Asia/Manila", note: null, message: "Friendly reminder" },
+    });
+    expect(made.status, made.body).toBe(201);
+    expect(made.json()).toMatchObject({
+      status: "active",
+      state: "upcoming",
+      sentToCustomer: false,
+    });
+    const listed = await call("GET", "/api/follow-ups", { headers: { cookie } });
+    expect(listed.json().counts).toEqual({ due: 0, upcoming: 1 });
+    const done = await call("POST", `/api/follow-ups/${made.json().id}/complete`, {
+      headers: auth(),
+    });
+    expect(done.status, done.body).toBe(200);
+    expect((await call("GET", "/api/follow-ups", { headers: { cookie } })).json().counts).toEqual({
+      due: 0,
+      upcoming: 0,
+    });
+    // A follow-up never puts customer text in a request URL.
+    expect(edgeLog.some((l) => l.includes("Friendly reminder"))).toBe(false);
+  });
+
   it("providers are disabled: PayPal create is refused, parsing falls back to manual entry, zero provider traffic", async () => {
     const list = await call("POST", "/api/invoice-drafts/search", { headers: auth(), body: {} });
     const id = list.json().items[0].id as string;
@@ -505,6 +535,10 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       `UPDATE ${s}.invoices SET total_minor = 1`,
       `UPDATE ${s}.invoice_items SET description = 'x'`,
       `DELETE FROM ${s}.invoice_items`,
+      `DELETE FROM ${s}.invoice_follow_ups`,
+      `UPDATE ${s}.invoice_follow_ups SET operator_id = operator_id`,
+      `UPDATE ${s}.invoice_follow_ups SET invoice_id = invoice_id`,
+      `UPDATE ${s}.invoice_follow_ups SET created_at = now()`,
       `INSERT INTO ${s}.operators (username, password_hash) VALUES ('x','y')`,
       `UPDATE ${s}.operators SET password_hash = 'x'`,
       `UPDATE ${s}.operators SET credential_version = 9`,
