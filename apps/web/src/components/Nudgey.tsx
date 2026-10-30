@@ -83,7 +83,9 @@ export function NudgeyPanel({
           <span aria-hidden="true">›</span>
         </button>
       </div>
-      <p className="nudgey-footnote">You're in control. Nothing is sent automatically.</p>
+      <p className="nudgey-footnote">
+        You're in control. Nothing is sent automatically.
+      </p>
     </>
   );
 }
