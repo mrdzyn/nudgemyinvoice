@@ -132,9 +132,11 @@ export function Nudgey() {
   };
   const choose = (choice: NudgeyChoice) => {
     setOpen(false);
-    dispatch(nudgeyAction(choice)); // The existing unsaved-review guard still runs.
-    if (choice === "status")
-      announce("Choose an invoice and select View to check its PayPal Sandbox status.");
+    // The existing unsaved-review guard still runs.
+    dispatch(nudgeyAction(choice));
+    if (choice === "status") {
+      announce("Open an invoice and select View to check its PayPal status.");
+    }
   };
   return (
     <div className="nudgey" ref={root}>
