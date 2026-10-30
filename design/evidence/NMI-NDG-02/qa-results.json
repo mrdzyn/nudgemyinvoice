@@ -1,0 +1,183 @@
+{
+  "task": "NMI-NDG-02-C1",
+  "timezoneEmulated": "Asia/Manila",
+  "providersConfigured": false,
+  "passed": 29,
+  "total": 29,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated through the journal (incl. 0007) and the API is healthy behind the proxy with no provider configured",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "two synthetic invoices saved by the operator",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "one follow-up due now (Northwind) and one upcoming (Vienna Cafe) saved through the real API",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "operator signs in through the browser",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "entry",
+      "name": "Nudgey keeps its quick actions and the follow-up scheduler and adds 'Ask Nudgey'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "entry",
+      "name": "the Ask view shows five example chips, a labelled input limited to 200 characters, and focuses the input",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "entry",
+      "name": "an empty prompt cannot be submitted (Ask is disabled) and makes no request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "pending",
+      "name": "four bounded POST /api/invoice-drafts/search requests, one per PayPal draft group, each with status and limit 5 in the BODY",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "pending",
+      "name": "the real invoices appear under 'No PayPal draft' with their own currency and exact total; other groups say None; no payment claim",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "exactly one search POST whose BODY carries q='Northwind Studio'; the URL has no query string and the name appears in no URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "only the matching customer is shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "currency",
+      "name": "the currency is sent to the server as a filter (EUR) and only EUR records are shown with no cross-currency total",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "followups",
+      "name": "a fresh GET /api/follow-ups; the due follow-up (Northwind) is shown with its Manila time and zone, the upcoming one is not",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "followups",
+      "name": "it says a due follow-up does not mean the invoice is unpaid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "followups",
+      "name": "upcoming shows only Vienna Cafe",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "payment",
+      "name": "payment status is refused truthfully and offers saved/draft details instead",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "payment",
+      "name": "the refusal and an unknown request made zero network requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "stale",
+      "name": "asking again before the first answer replaces it: only the newer question remains and its USD-filtered answer is shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "navigate",
+      "name": "Open invoice opens the real saved-invoice page and closes Nudgey",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "reopening Nudgey shows an empty conversation (nothing kept after close)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "signing out removes the workspace and the whole conversation from the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "signing in again works",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "after sign-in the conversation is empty again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "narrow",
+      "name": "at 390px the panel is fully inside the viewport, above the mobile navigation, with no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "only auth, invoice search/detail and follow-up reads were used: never parse, PayPal-draft, a follow-up write, or any send route",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no request left the page origin and no URL contains customer text",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no PayPal operation, no PayPal id, no approval or webhook row; only the two seeded follow-ups exist (the chat wrote nothing)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "browser storage is empty, the page URL has no query or hash, and the only console errors are the pre-sign-in 401 session probes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the audit log has no free-text question or customer name",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

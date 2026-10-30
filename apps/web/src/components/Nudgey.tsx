@@ -18,6 +18,8 @@ import {
   type InvoiceOption,
 } from "../followups/FollowUpUi.js";
 import { browserTimeZone, formatInstant } from "../followups/schedule.js";
+import { ChatView } from "../nudgey/NudgeyChat.js";
+import { useNudgeyChat } from "../nudgey/useChat.js";
 
 export type NudgeyChoice = "create" | "browse" | "status";
 
@@ -35,6 +37,7 @@ export function NudgeyPanel({
   titleId,
   firstActionRef,
   onSchedule,
+  onAsk,
 }: {
   username: string;
   onChoose: (choice: NudgeyChoice) => void;
@@ -43,6 +46,8 @@ export function NudgeyPanel({
   firstActionRef?: Ref<HTMLButtonElement>;
   /** Present only in a real session: opens the local follow-up scheduler. */
   onSchedule?: () => void;
+  /** Present only in a real session: opens the read-only conversational lookup. */
+  onAsk?: () => void;
 }) {
   return (
     <>
@@ -97,6 +102,18 @@ export function NudgeyPanel({
           </span>
           <span aria-hidden="true">›</span>
         </button>
+        {onAsk ? (
+          <button type="button" className="nudgey-action" onClick={onAsk}>
+            <span aria-hidden="true" className="nudgey-action-icon">
+              💬
+            </span>
+            <span className="nudgey-action-copy">
+              <strong>Ask Nudgey</strong>
+              <small>Look up invoices and follow-ups (read-only)</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+        ) : null}
         {onSchedule ? (
           <button type="button" className="nudgey-action" onClick={onSchedule}>
             <span aria-hidden="true" className="nudgey-action-icon">
@@ -126,7 +143,11 @@ const NO_SNAPSHOT: FollowUpsSnapshot = {
 const noSubscribe = () => () => undefined;
 const emptySnapshot = () => NO_SNAPSHOT;
 
-type View = { kind: "home" } | { kind: "schedule" } | { kind: "reschedule"; item: FollowUpView };
+type View =
+  | { kind: "home" }
+  | { kind: "ask" }
+  | { kind: "schedule" }
+  | { kind: "reschedule"; item: FollowUpView };
 
 const MUTATION_MESSAGE: Partial<Record<MutationOutcome["kind"], string>> = {
   duplicate: "This invoice already has an active follow-up. Reschedule or complete it first.",
@@ -163,6 +184,8 @@ export function Nudgey() {
   const titleId = useId();
   const listInvoices = session?.listInvoices;
   const expired = session?.sessionExpired;
+  const chat = useNudgeyChat({ listInvoices, followUps, expired, announce });
+  const clearChat = useCallback(() => chat.session.clear(), [chat.session]);
 
   useEffect(() => {
     if (!open) return;
@@ -195,17 +218,18 @@ export function Nudgey() {
   useEffect(() => {
     if (!open) {
       work.current?.abort();
+      clearChat();
       setView({ kind: "home" });
       setFormError(null);
       setListError(null);
       setBusyId(null);
     }
-  }, [open]);
+  }, [open, clearChat]);
   useEffect(() => () => work.current?.abort(), []);
 
   // Saved invoices for the schedule form, loaded only while the form is open.
   useEffect(() => {
-    if (!open || view.kind === "home" || !listInvoices) return;
+    if (!open || (view.kind !== "schedule" && view.kind !== "reschedule") || !listInvoices) return;
     const ac = new AbortController();
     setInvoicesStatus("loading");
     void listInvoices(
@@ -294,9 +318,14 @@ export function Nudgey() {
       announce(what === "complete" ? "Follow-up marked complete." : "Follow-up canceled.");
     else if (r.kind !== "unauthorized") setListError(failMessage(r.kind));
   };
-  const openInvoice = (f: FollowUpView) => {
+  const openInvoiceById = (id: string) => {
     setOpen(false);
-    dispatch({ type: "open-saved", id: f.invoiceId, notice: "opened" });
+    dispatch({ type: "open-saved", id, notice: "opened" });
+  };
+  const openInvoice = (f: FollowUpView) => openInvoiceById(f.invoiceId);
+  const openDashboard = () => {
+    setOpen(false);
+    dispatch({ type: "navigate", screen: "dashboard" });
   };
   const due = snap.counts.due;
   return (
@@ -318,6 +347,7 @@ export function Nudgey() {
                 titleId={titleId}
                 firstActionRef={firstAction}
                 {...(followUps ? { onSchedule: () => setView({ kind: "schedule" }) } : {})}
+                {...(listInvoices ? { onAsk: () => setView({ kind: "ask" }) } : {})}
               />
               {followUps ? (
                 <div className="followup-section">
@@ -339,6 +369,38 @@ export function Nudgey() {
                   />
                 </div>
               ) : null}
+            </>
+          ) : view.kind === "ask" ? (
+            <>
+              <div className="nudgey-heading">
+                <h2 id={titleId} className="nudgey-title">
+                  Nudgey
+                </h2>
+                <button
+                  type="button"
+                  className="nudgey-close"
+                  aria-label="Close Nudgey"
+                  onClick={close}
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <ChatView
+                messages={chat.messages}
+                busy={chat.busy}
+                at={now}
+                onAsk={(t) => void chat.ask(t)}
+                onBack={() => {
+                  chat.clear();
+                  setView({ kind: "home" });
+                }}
+                onOpenInvoice={openInvoiceById}
+                onOpenDashboard={openDashboard}
+                onSchedule={() => {
+                  chat.clear();
+                  setView({ kind: "schedule" });
+                }}
+              />
             </>
           ) : (
             <>

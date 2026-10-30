@@ -181,3 +181,36 @@ describe("follow-up controller (every number comes from a server read)", () => {
     expect(slow.getSnapshot().status).toBe("loading");
   });
 });
+
+describe("controller.readFresh (the Nudgey lookup's own read)", () => {
+  it("is bound to the caller's signal, updates the shared snapshot, and ends the session on 401", async () => {
+    const server = { items: [view(1, "due")] };
+    const { api } = fakeApi(server);
+    const c = new FollowUpsController(api, "csrf", () => undefined, 0);
+    const ac = new AbortController();
+    const r = await c.readFresh(ac.signal);
+    expect(r).toMatchObject({ kind: "ok", counts: { due: 1, upcoming: 0 } });
+    expect(c.getSnapshot()).toMatchObject({ status: "ready", counts: { due: 1, upcoming: 0 } });
+    // aborted by the caller: the answer is dropped and the snapshot is untouched
+    const ac2 = new AbortController();
+    const slowApi: FollowUpApi = {
+      ...api,
+      list: async () => (
+        ac2.abort(),
+        { kind: "ok", now: "2026-10-30T12:00:00.000Z", counts: { due: 0, upcoming: 0 }, items: [] }
+      ),
+    };
+    const c2 = new FollowUpsController(slowApi, "csrf", () => undefined, 0);
+    expect(await c2.readFresh(ac2.signal)).toEqual({ kind: "aborted" });
+    expect(c2.getSnapshot().status).toBe("idle");
+    const expired = vi.fn();
+    const c3 = new FollowUpsController(
+      { ...api, list: async () => ({ kind: "unauthorized" }) },
+      "csrf",
+      expired,
+      0,
+    );
+    expect((await c3.readFresh(new AbortController().signal)).kind).toBe("unauthorized");
+    expect(expired).toHaveBeenCalledTimes(1);
+  });
+});

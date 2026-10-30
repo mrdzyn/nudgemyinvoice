@@ -1,5 +1,6 @@
 import type {
   FollowUpApi,
+  ListOutcome,
   FollowUpInputBody,
   FollowUpView,
   ForInvoiceOutcome,
@@ -94,6 +95,27 @@ export class FollowUpsController {
     } else {
       this.set({ status: this.snap.items.length ? "ready" : "error", error: r.kind });
     }
+  }
+
+  /**
+   * A fresh server read for a caller that needs the answer itself (the Nudgey lookup): it is bound to
+   * the CALLER's signal, updates the shared snapshot when it succeeds, and a 401 ends the session.
+   */
+  async readFresh(signal: AbortSignal): Promise<ListOutcome> {
+    const r = await this.api.list(signal);
+    if (signal.aborted || this.stopped) return { kind: "aborted" };
+    if (r.kind === "ok") {
+      this.set({
+        status: "ready",
+        error: null,
+        items: r.items,
+        counts: r.counts,
+        serverNow: r.now,
+      });
+    } else if (r.kind === "unauthorized") {
+      this.onExpired();
+    }
+    return r;
   }
 
   forInvoice(invoiceId: string, signal: AbortSignal): Promise<ForInvoiceOutcome> {

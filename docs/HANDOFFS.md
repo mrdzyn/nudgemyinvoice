@@ -1564,4 +1564,12 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Found by the browser journey (fixed):** multi-line messages were rejected by the shared single-line text validator, and `Intl` refused `timeZoneName` combined with `dateStyle`/`timeStyle` (silently showing UTC).
 - **Not done:** no deployment, merge, provider call or Gate action. A hosted database must run migration `0007` and the new grants first.
 
+## Handoff: NMI-NDG-02-C1
+
+- **From:** Implementation agent (Claude). **To:** Independent exact-HEAD review, then owner. **Branch/PR:** `feat/nmi-ndg02-conversational`, Draft PR #27, stacked on Draft PR #26 (`feat/nmi-ux02-nudgey`); started from `2ee1f19b2f888ff4054eed12f18a7b7efe61d300`.
+- **Scope:** `tasks/NMI-NDG-02-conversational-invoice-lookup.md` (C1 record at its end). Read-only lookup only.
+- **Changed:** `apps/web/src/nudgey/*` (intent, lookup, chat session, view), `components/Nudgey.tsx`, `followups/controller.ts` (`readFresh`), CSS, tests, `design/evidence/NMI-NDG-02/`, STATUS/task/handoff. No backend, schema, dependency or provider change.
+- **Review focus:** intent false positives (payment words vs customer names; write verbs never become actions); request shapes (status/currency/`q` in the POST body only, bounded pages, truncation wording); abort/stale handling and the 401 path; conversation lifetime (cleared on close, Back, sign-out); card labels (PayPal draft state is never presented as payment state); a11y of the log/announcements; the stacked-PR order (merge #26 before #27).
+- **Not done:** C2 (natural-language scheduling) and C3 (SMTP) are separate, unauthorized tasks. No deployment, merge, provider call or Gate action.
+
 <!-- HANDOFF_ENTRIES_END -->
