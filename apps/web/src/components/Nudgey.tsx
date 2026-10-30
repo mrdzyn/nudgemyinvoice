@@ -31,26 +31,55 @@ export function NudgeyPanel({
           <h2 id={titleId} className="nudgey-title">Nudgey</h2>
           <p className="nudgey-kicker">Your invoice companion</p>
         </div>
-        <button type="button" className="nudgey-close" aria-label="Close Nudgey" onClick={onClose}>
+        <button
+          type="button"
+          className="nudgey-close"
+          aria-label="Close Nudgey"
+          onClick={onClose}
+        >
           <span aria-hidden="true">×</span>
         </button>
       </div>
-      <p className="nudgey-greeting">Hi, {username}! <span aria-hidden="true">👋</span></p>
+      <p className="nudgey-greeting">
+        Hi, {username}! <span aria-hidden="true">👋</span>
+      </p>
       <p className="nudgey-question">What would you like to do today?</p>
       <div className="nudgey-actions">
-        <button ref={firstActionRef} type="button" className="nudgey-action" onClick={() => onChoose("create")}>
+        <button
+          ref={firstActionRef}
+          type="button"
+          className="nudgey-action"
+          onClick={() => onChoose("create")}
+        >
           <span aria-hidden="true" className="nudgey-action-icon">＋</span>
-          <span className="nudgey-action-copy"><strong>Create an invoice</strong><small>Use AI or enter it manually</small></span>
+          <span className="nudgey-action-copy">
+            <strong>Create an invoice</strong>
+            <small>Use AI or enter it manually</small>
+          </span>
           <span aria-hidden="true">›</span>
         </button>
-        <button type="button" className="nudgey-action" onClick={() => onChoose("browse")}>
+        <button
+          type="button"
+          className="nudgey-action"
+          onClick={() => onChoose("browse")}
+        >
           <span aria-hidden="true" className="nudgey-action-icon">▤</span>
-          <span className="nudgey-action-copy"><strong>View my invoices</strong><small>Browse your AG Grid dashboard</small></span>
+          <span className="nudgey-action-copy">
+            <strong>View my invoices</strong>
+            <small>Browse your AG Grid dashboard</small>
+          </span>
           <span aria-hidden="true">›</span>
         </button>
-        <button type="button" className="nudgey-action" onClick={() => onChoose("status")}>
+        <button
+          type="button"
+          className="nudgey-action"
+          onClick={() => onChoose("status")}
+        >
           <span aria-hidden="true" className="nudgey-action-icon">✓</span>
-          <span className="nudgey-action-copy"><strong>Check invoice status</strong><small>Open an invoice to see its PayPal status</small></span>
+          <span className="nudgey-action-copy">
+            <strong>Check invoice status</strong>
+            <small>Open an invoice to see its PayPal status</small>
+          </span>
           <span aria-hidden="true">›</span>
         </button>
       </div>
@@ -80,7 +109,8 @@ export function Nudgey() {
       }
     };
     const onOutside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
+      if (event.target instanceof Node && !root.current?.contains(event.target))
+        setOpen(false);
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onOutside);
@@ -101,7 +131,8 @@ export function Nudgey() {
   const choose = (choice: NudgeyChoice) => {
     setOpen(false);
     dispatch(nudgeyAction(choice)); // The existing unsaved-review guard still runs.
-    if (choice === "status") announce("Choose an invoice and select View to check its PayPal Sandbox status.");
+    if (choice === "status")
+      announce("Choose an invoice and select View to check its PayPal Sandbox status.");
   };
   return (
     <div className="nudgey" ref={root}>
