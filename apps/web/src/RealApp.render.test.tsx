@@ -25,6 +25,7 @@ describe("real app first paint", () => {
       "Acme Design",
       "DEMO / SYNTHETIC",
       "Signed in as",
+      "Open Nudgey quick actions",
     ])
       expect(html).not.toContain(protectedCopy);
   });
@@ -85,6 +86,7 @@ describe("real view while sign-out is pending", () => {
     const html = view(authed);
     expect(html).toContain("Invoice drafts");
     expect(html).toContain("Signed in as operator-x");
+    expect(html).toContain("Open Nudgey quick actions");
     expect(html).toContain("Sign out");
   });
 
@@ -95,6 +97,7 @@ describe("real view while sign-out is pending", () => {
       "New invoice",
       "Sign out",
       "Signed in as",
+      "Open Nudgey quick actions",
       "operator-x",
       "$702.00",
       "Acme Design",
