@@ -1549,4 +1549,10 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Content:** (1) Gate B documents reconciled to the independently source-audited (review `5693627000`) and owner-merged (PR #20, `451abc2`) observer; (2) sanitized Gate A record for run `R1-A-20261030-01` (provisional REAL PASS; 2 provider requests, 668 input tokens, USD 540.00 / EUR 599.97 verified in the disposable database, 0 PayPal operations; output tokens, HTTP status/latency, model-on-usage-page PENDING; org $0.01 not attributed); (3) unsigned Request B form with the merged observer commit and hash filled in.
 - **Open:** Gate A API stop is now VERIFIED (port 3001 closed, no server process); `OPENAI_*` unset and key revocation remain owner-reported; the disposable database `nmi_gate_a_20261030` (not dropped; owner approval). Gate A authorization is consumed. Gate B and Gate C remain NOT AUTHORIZED; no provider call, budget reset, merge or deploy occurred.
 
+## Handoff: NMI-GATE-A-CLOSE-FIX1
+
+- **From:** Implementation agent (Claude) — docs-only repair of review comment 6517996813 on Draft PR #25 (four stale-state findings).
+- **Changed:** `NMI-DEMO-OWNER-AUTHORIZATIONS` (R1-A executed/closed/consumed; B unsigned; C not authorized; ledger rows), `NMI-DEMO-PROVIDER-ACCEPTANCE` (title and execution-state paragraph), `STATUS` (phase, working branch, active task, truthful `main` head, Render P2 shown as parked, R1 status, next actions), `NMI-DEMO-SUBMISSION-CHECKLIST` (A provisional REAL PASS, PayPal 1/1 exhausted, observer audited+merged, B/C not authorized).
+- **Preserved:** Gate A sanitized evidence and PENDING fields, consumed Gate A authorization, unsigned Gate B, exhausted historical PayPal budget, Render and deployment boundaries, HPE-EDGE separation. No code, provider call, database deletion, merge or deployment.
+
 <!-- HANDOFF_ENTRIES_END -->
