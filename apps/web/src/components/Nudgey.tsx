@@ -31,18 +31,11 @@ export function NudgeyPanel({
           <h2 id={titleId} className="nudgey-title">Nudgey</h2>
           <p className="nudgey-kicker">Your invoice companion</p>
         </div>
-        <button
-          type="button"
-          className="nudgey-close"
-          aria-label="Close Nudgey"
-          onClick={onClose}
-        >
+        <button type="button" className="nudgey-close" aria-label="Close Nudgey" onClick={onClose}>
           <span aria-hidden="true">×</span>
         </button>
       </div>
-      <p className="nudgey-greeting">
-        Hi, {username}! <span aria-hidden="true">👋</span>
-      </p>
+      <p className="nudgey-greeting">Hi, {username}! <span aria-hidden="true">👋</span></p>
       <p className="nudgey-question">What would you like to do today?</p>
       <div className="nudgey-actions">
         <button
@@ -58,11 +51,7 @@ export function NudgeyPanel({
           </span>
           <span aria-hidden="true">›</span>
         </button>
-        <button
-          type="button"
-          className="nudgey-action"
-          onClick={() => onChoose("browse")}
-        >
+        <button type="button" className="nudgey-action" onClick={() => onChoose("browse")}>
           <span aria-hidden="true" className="nudgey-action-icon">▤</span>
           <span className="nudgey-action-copy">
             <strong>View my invoices</strong>
@@ -70,11 +59,7 @@ export function NudgeyPanel({
           </span>
           <span aria-hidden="true">›</span>
         </button>
-        <button
-          type="button"
-          className="nudgey-action"
-          onClick={() => onChoose("status")}
-        >
+        <button type="button" className="nudgey-action" onClick={() => onChoose("status")}>
           <span aria-hidden="true" className="nudgey-action-icon">✓</span>
           <span className="nudgey-action-copy">
             <strong>Check invoice status</strong>
@@ -83,9 +68,7 @@ export function NudgeyPanel({
           <span aria-hidden="true">›</span>
         </button>
       </div>
-      <p className="nudgey-footnote">
-        You're in control. Nothing is sent automatically.
-      </p>
+      <p className="nudgey-footnote">You're in control. Nothing is sent automatically.</p>
     </>
   );
 }
@@ -111,8 +94,7 @@ export function Nudgey() {
       }
     };
     const onOutside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !root.current?.contains(event.target))
-        setOpen(false);
+      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onOutside);
