@@ -29,7 +29,7 @@ Organisation October spend shows USD 0.01. That figure is NOT attributed to this
 Arithmetic bound only (not a measurement): input 668 x 0.10/1M = USD 0.0000668; output <= 2 x 4096 x 0.50/1M = USD 0.004096; total <= about USD 0.0042, consistent with a USD 0.00 project display and below the A-six worst case of USD 0.0126.
 Fallback on a real provider failure: n/a (no failure observed)
 STOP condition triggered: none observed
-Teardown: API stopped: owner-reported yes, BUT an agent check after that report (2026-10-30) still found the API serving on port 3001 with aiConfigured=true, so API stopped = PENDING (re-verify) ; OPENAI_* unset: PENDING ; dedicated key revoked: OWNER-reported yes (not independently verifiable) ; database dropped: no (not dropped; owner approval required)
+Teardown: API stopped: VERIFIED by agent on re-check 2026-10-30 (nothing listening on port 3001, health request refused, no `server.ts` process; an earlier check, before the owner stopped it, had found it still serving with aiConfigured=true) ; OPENAI_* unset: OWNER-reported yes (another terminal's environment cannot be inspected; no process retains it) ; dedicated key revoked: OWNER-reported yes (not independently verifiable) ; database dropped: no (not dropped; owner approval required)
 Secrets review before sharing (owner initials): ____
 Overall label: REAL PASS (provisional) — A1 and A2 produced validated drafts that saved with the expected server totals; 2 provider requests, no PayPal operation. Fields marked PENDING remain owner-confirmations.
 ```
