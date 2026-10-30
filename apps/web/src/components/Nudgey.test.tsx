@@ -21,7 +21,9 @@ describe("Nudgey quick actions (no provider calls)", () => {
         onClose={() => undefined}
         titleId="nudgey-title"
       />,
-    );
+    )
+      .replace(/<!-- -->/g, "")
+      .replace(/&#x27;/g, "\u0027");
     for (const text of [
       "Nudgey",
       "Hi, operator-x!",
