@@ -9,7 +9,7 @@
 | Claim | Status | Basis |
 | --- | --- | --- |
 | Real PayPal Sandbox OAuth, **one** create, one read-only show (USD 5.00, DRAFT), backend only, 2026-10-26 | **REAL PASS (historical)** | Owner-local sanitized evidence (`NMI-P2-I2-SANDBOX-SMOKE-01`). Its one-create budget is **1/1, exhausted**; nothing here resets it. |
-| Real OpenAI Responses parsing | **PENDING** (never executed) | Gate A |
+| Real OpenAI Responses parsing | **REAL PASS (provisional)**, run `R1-A-20261030-01`: two synthetic parses, 2 provider requests, USD 540.00 / EUR 599.97 saved, 0 PayPal operations | `docs/NMI-DEMO-R1-A-20261030-01-EVIDENCE.md`; PENDING fields remain; authorization consumed |
 | New PayPal Sandbox DRAFT (USD 540.00) through the browser path | **PENDING; Gate B BLOCKED** | Section 5.0 |
 | Complete real-provider browser walkthrough | **PENDING** | Gate C |
 | PayPal search / reconciliation / timeout / error paths against the real Sandbox | **NOT TESTED** | Fake transports + PostgreSQL tests only |

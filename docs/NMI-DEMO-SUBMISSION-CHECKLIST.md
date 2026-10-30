@@ -31,7 +31,7 @@
 
 | # | Item | Blocks | Status |
 | --- | --- | --- | --- |
-| 1 | Real OpenAI Responses call never executed | Any claim of real AI parsing | **Open** (Gate A) |
+| 1 | Real OpenAI Responses parsing: executed once (run `R1-A-20261030-01`, 2 synthetic parses, provisional REAL PASS) | Wording may say two synthetic parses worked once with `gpt-6-luna`; no accuracy/reliability/cost-at-scale claim | **Done (provisional)**; see `docs/NMI-DEMO-R1-A-20261030-01-EVIDENCE.md` |
 | 2 | No complete real-provider browser journey | Any claim "works end to end against real providers" | **Open** (Gates A+B) |
 | 3 | PayPal search/reconciliation/timeout/error paths never run against the real Sandbox | Claims about real error handling | **Open**; fake-transport + PostgreSQL tests only |
 | 4 | One-create PayPal Sandbox budget exhausted (1/1) | Any new real draft | **Open**; not reset by R1; only Request B (exactly one new create, separate permit) can authorize a new create |
