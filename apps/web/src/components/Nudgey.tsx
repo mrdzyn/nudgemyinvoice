@@ -28,14 +28,18 @@ export function NudgeyPanel({
     <>
       <div className="nudgey-heading">
         <div>
-          <h2 id={titleId} className="nudgey-title">Nudgey</h2>
+          <h2 id={titleId} className="nudgey-title">
+            Nudgey
+          </h2>
           <p className="nudgey-kicker">Your invoice companion</p>
         </div>
         <button type="button" className="nudgey-close" aria-label="Close Nudgey" onClick={onClose}>
           <span aria-hidden="true">×</span>
         </button>
       </div>
-      <p className="nudgey-greeting">Hi, {username}! <span aria-hidden="true">👋</span></p>
+      <p className="nudgey-greeting">
+        Hi, {username}! <span aria-hidden="true">👋</span>
+      </p>
       <p className="nudgey-question">What would you like to do today?</p>
       <div className="nudgey-actions">
         <button
@@ -44,7 +48,9 @@ export function NudgeyPanel({
           className="nudgey-action"
           onClick={() => onChoose("create")}
         >
-          <span aria-hidden="true" className="nudgey-action-icon">＋</span>
+          <span aria-hidden="true" className="nudgey-action-icon">
+            ＋
+          </span>
           <span className="nudgey-action-copy">
             <strong>Create an invoice</strong>
             <small>Use AI or enter it manually</small>
@@ -52,7 +58,9 @@ export function NudgeyPanel({
           <span aria-hidden="true">›</span>
         </button>
         <button type="button" className="nudgey-action" onClick={() => onChoose("browse")}>
-          <span aria-hidden="true" className="nudgey-action-icon">▤</span>
+          <span aria-hidden="true" className="nudgey-action-icon">
+            ▤
+          </span>
           <span className="nudgey-action-copy">
             <strong>View my invoices</strong>
             <small>Browse your AG Grid dashboard</small>
@@ -60,7 +68,9 @@ export function NudgeyPanel({
           <span aria-hidden="true">›</span>
         </button>
         <button type="button" className="nudgey-action" onClick={() => onChoose("status")}>
-          <span aria-hidden="true" className="nudgey-action-icon">✓</span>
+          <span aria-hidden="true" className="nudgey-action-icon">
+            ✓
+          </span>
           <span className="nudgey-action-copy">
             <strong>Check invoice status</strong>
             <small>Open an invoice to see its PayPal status</small>
@@ -148,7 +158,9 @@ export function Nudgey() {
         aria-label="Open Nudgey quick actions"
         onClick={() => setOpen((value) => !value)}
       >
-        <span aria-hidden="true" className="nudgey-sparkle">✦</span>
+        <span aria-hidden="true" className="nudgey-sparkle">
+          ✦
+        </span>
         <span>Nudgey</span>
       </button>
     </div>
