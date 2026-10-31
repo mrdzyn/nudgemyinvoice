@@ -2,9 +2,9 @@
 
 ## Automated component regression
 
-**Run status:** PASS — 24/24 focused tests across `localSpeech.test.ts` and `NudgeyChat.test.tsx`; exact remediation SHA will be recorded after the implementation commit.  
-**Environment:** Vitest + happy-dom; fake `SpeechRecognition`, no microphone or provider.  
-**Command:** `pnpm exec vitest run apps/web/src/nudgey/localSpeech.test.ts apps/web/src/nudgey/NudgeyChat.test.tsx`.  
+**Run status:** PASS — 24/24 focused tests across `localSpeech.test.ts` and `NudgeyChat.test.tsx` at implementation commit `71a3f0e99c5afbb071718edae5527bddc2a7b1e2`.
+**Environment:** Vitest + happy-dom; fake `SpeechRecognition`, no microphone or provider.
+**Command:** `pnpm exec vitest run apps/web/src/nudgey/localSpeech.test.ts apps/web/src/nudgey/NudgeyChat.test.tsx`.
 **Coverage:** local `processLocally` capability/start gate; final transcript inserted into the editable Ask field; transcript text does not call Ask, schedule/review callbacks, or `fetch`; explicit Ask sends only the edited text to the existing Ask callback; example Ask aborts recognition before calling Ask; captured late result cannot alter the new draft; unmount after Back, Close, sign-out, or session expiry (401) aborts and ignores queued late results.
 
 The component tests observe application requests with a `fetch` spy. They do not claim that browser-native speech networking was physically observed; that remains a manual Chrome gate below.

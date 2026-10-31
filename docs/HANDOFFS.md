@@ -1671,4 +1671,17 @@ Complete the evidence/docs commit on PR #29, verify both required hosted CI work
 - **Testing objective:** fake recognizer assertions that `processLocally=true` is checked before `start()`, no cloud fallback or auto Ask, no late callback after Stop/Close/signout. Required hosted CI and owner real Chrome mic QA remain separate gates.
 - **Boundaries:** Draft PR only; no merge/deploy, audio upload, telemetry, OpenAI STT, PayPal or SMTP calls, production databases or migrations.
 
+## Handoff: NMI-NDG-02-V1-REMEDIATION-REVIEW-01
+
+- **From:** Codex implementation remediation. **To:** independent exact-head reviewer and owner physical Chrome QA. **Draft PR:** #30, branch `feat/nmi-ndg02-v1-local-speech`. **Starting HEAD:** `5f7385670fd66ac8cee00e29ca95aab1269bbf7c`. **Implementation commit:** `71a3f0e99c5afbb071718edae5527bddc2a7b1e2`; final PR head also contains this handoff/evidence documentation.
+- **State:** source remediation and local validation complete. Required hosted Project Baseline and Stack workflows must be verified at the final pushed PR head; then stop for independent exact-head re-audit. Keep Draft PR #30 Draft.
+- **Corrections:** Prettier applied to all four flagged speech files. Example-question Ask now stops the local recognizer before invoking Ask; controller generation checks reject queued late results from changing the new draft. Added React DOM interaction tests using a fake recognizer and `fetch` spy for editable final transcript, explicit Ask/no auto-schedule, no recognition-originated fetch, example Ask cancellation, explicit Stop, and Back/Close/sign-out/401 unmount cleanup.
+- **Local validation at implementation commit:** 24/24 focused speech/Nudgey tests; `pnpm --filter @nmi/web typecheck`; `pnpm typecheck`; `pnpm lint`; `pnpm format:check`; `pnpm build`; `pnpm check:bundle`; `git diff --check` — PASS. The production bundle emitted the pre-existing large-chunk advisory; build succeeded. Focused evidence and the physical-QA checklist are in `design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`.
+- **Physical QA:** NOT RUN. The checklist documents the supported Chrome/macOS local `en-US` availability, permission, actual synthetic transcription, cancellation, auth/navigation cleanup and network observation required from the owner. Prior reported pack availability is not a physical microphone PASS.
+- **Boundaries:** no provider invocation, audio upload, owner database access, merge or deployment. Preserve `processLocally=true`, no cloud fallback and explicit operator Ask/Save.
+
+### Next action
+
+Verify both required hosted workflows on the final live PR #30 HEAD, then report that exact SHA and stop for independent re-audit. Owner Chrome mic execution remains a separate manual gate; do not claim it passed.
+
 <!-- HANDOFF_ENTRIES_END -->
