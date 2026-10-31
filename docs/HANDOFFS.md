@@ -1684,4 +1684,29 @@ Complete the evidence/docs commit on PR #29, verify both required hosted CI work
 
 Verify both required hosted workflows on the documentation follow-up's live PR #30 HEAD, then report that exact SHA and stop for independent re-audit. Owner Chrome mic execution remains a separate manual gate; do not claim it passed.
 
+## Handoff: NMI-NDG-02-V1-QA-CLOSE-01
+
+- **Task / phase:** `tasks/NMI-NDG-02-V1-on-device-voice.md`; physical QA closeout.
+- **From:** implementation/QA agent. **To:** independent exact-HEAD acceptance auditor.
+- **Branch:** `feat/nmi-ndg02-v1-local-speech`; **implementation head:** `a90a19b2ba912f4a0a85ef8ddbf389570090b992`.
+- **PR:** [Draft #30](https://github.com/mrdzyn/nudgemyinvoice/pull/30).
+- **State:** scoped physical Chrome QA PASS; documentation evidence is prepared for commit/push; required CI must pass at the resulting live PR head before audit. Keep Draft.
+
+### Completed
+- Recorded exact Chrome/macOS versions, direct local `en-US` availability and policy check, permission prompt/denial, Stop/Back/Close/Escape/navigation/sign-out/401 cleanup, and redacted Network observation in `design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`.
+- Preserved the owner's synthetic transcription/editability/no-app-egress report and clearly separated it from independent observations. No speech, transcript, screenshot, credential, or HAR was retained. No providers were called.
+
+### Validation
+- Physical scoped QA — PASS; local-model install and blocked-policy simulation — NOT RUN.
+- Application code unchanged; `git diff --check` — PASS.
+- Required hosted Project Baseline and Stack workflows — run on the pushed evidence/docs SHA before independent acceptance audit.
+
+### Continuation notes
+- Exact app SHA tested: `a90a19b2ba912f4a0a85ef8ddbf389570090b992`. Evidence contains owner-reported and independently observed results with explicit attribution.
+- Restore/reset localhost mic permission to Ask(default) after each check; it was restored. Disposable DB/API/Vite stack and synthetic credentials are shut down/removed before handoff.
+- No merge, deployment, provider call, customer data, or application-code change.
+
+### Next action
+Commit and push the QA evidence/docs to existing Draft PR #30, verify both required hosted checks at the new exact HEAD, then stop for independent acceptance re-audit.
+
 <!-- HANDOFF_ENTRIES_END -->

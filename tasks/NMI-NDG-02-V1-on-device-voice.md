@@ -1,6 +1,6 @@
 # NMI-NDG-02 V1 — Optional on-device voice transcription
 
-**State:** V1 implementation and remediation are on the separate Draft PR from owner-approved C2 main. Exact-HEAD independent audit and physical Chrome mic QA remain pending.
+**State:** V1 implementation/remediation remain on Draft PR #30 from owner-approved C2 main. Scoped physical Chrome QA passed at app SHA `a90a19b2ba912f4a0a85ef8ddbf389570090b992` using owner-reported and independently observed evidence, distinguished in the QA record. Exact-HEAD independent acceptance audit remains pending.
 **Prerequisite:** SATISFIED. C2 independently audited and owner squash-merged PR #29 into `main` at `139cdea0b14524ac3997c54f7cb4d9a6d9fe11e0`.  
 **Authority:** Owner decision recorded in PR #29 and `tasks/NMI-NDG-02-C2-natural-language-followup.md`.
 
@@ -58,10 +58,10 @@ The operator already approved strict on-device-only STT and verified desktop Chr
 
 **Implementation approach:** browser-only `LocalSpeechController` with a strict unprefixed `SpeechRecognition` feature gate, on-device language-pack availability and explicit install, an abort-and-dispose lifecycle, and final-only transcript callback; small `useLocalSpeech` React hook and optional inline control. Fallback is text only. English (`en-US`) is the only scope. No external API, new dependency, provider, database migration or device-speech fallback is permitted. No tests may claim actual mic QA based solely on fake recognizers or hosted CI.
 
-**QA handoff:** test local pack installed + no cloud fallback, mic permission denial, final-only recognition, stop/close/escape/sign-out/401 cleanup, prompt editability, explicit Ask and Save, 390px keyboard/VoiceOver. Required Chrome mic QA must be performed on the owner's actual supported Chrome profile after implementation checkout; do not assume test runners have an on-device pack.
+**QA handoff:** the scoped physical Chrome results and NOT RUN cases are recorded in [`design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`](../design/evidence/NMI-NDG-02-V1/QA-RESULTS.md). Independently observed checks include local pack availability, Permissions-Policy, prompt-after-Speak, denial fallback, Stop/Back/Close/Escape/navigation/sign-out/401 cleanup, and a redacted application-origin Network observation. The owner-reported synthetic transcription/editability/network PASS is preserved as an owner report. Local-model installation and blocked-policy simulation remain NOT RUN; exact-HEAD acceptance audit remains pending.
 
 ## Audit remediation record
 
 - Example-question Ask actions stop and invalidate active recognition before starting the new Ask draft. The same controller generation guard rejects any callback already queued by the browser.
 - React DOM component regressions use an injected fake local recognizer and application `fetch` spy. They verify transcript editability, no automatic Ask/schedule/review or request, explicit Ask behavior, example-Ask cancellation and stale-result rejection, plus cleanup after Back, Close, sign-out, and session expiry (401).
-- The physical Chrome procedure and an evidence template are maintained in [`design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`](../design/evidence/NMI-NDG-02-V1/QA-RESULTS.md). Physical mic, actual transcription, permission, and browser network QA remain **NOT RUN / PENDING** until performed on the supported owner device. Automated fake-recognizer tests do not satisfy that manual gate.
+- The physical Chrome results are maintained in [`design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`](../design/evidence/NMI-NDG-02-V1/QA-RESULTS.md). They combine owner-reported synthetic transcription results with independently observed environment, permission, lifecycle, 401, and network checks. Automated fake-recognizer tests remain separate evidence and do not replace the owner-reported transcription result. Acceptance audit and required CI at the new evidence/docs HEAD remain separate gates.
