@@ -1650,4 +1650,17 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 
 Independently audit the **current exact PR #29 head**, verify both required hosted CI checks are green at that head, and report PASS / PARTIAL / FIX REQUIRED. Do not merge or deploy.
 
+## Handoff: NMI-NDG-02-C2-P2-REVIEW-02
+
+- **Task:** remediate the two P2 findings from the independent review on existing Draft PR #29. **Branch:** `feat/nmi-ndg02-c2-scheduling`. **Code commit:** `848382cb7a346ab0b3f621123cba40b96868bf90`.
+- **State:** implementation and targeted no-provider browser evidence complete; final evidence/docs commit and required hosted CI are the remaining gates before the next independent exact-HEAD audit. Keep PR #29 Draft.
+- **P2-1:** schedule-prefill loading retains the server-verified candidate, reads up to 50 authenticated owner-scoped invoices, merges/deduplicates the list and leaves the candidate selected; alternatives can be chosen before Save. The prefill remains available if the list read fails. Effect cleanup suppresses stale completions and aborts the read; active 401 still expires the session.
+- **P2-2:** the C2-prefilled Save path resolves the operator's current edited date/time through the strict IANA wall-time resolver. DST gaps/overlaps and any mismatch with the existing host-zone UTC conversion fail closed. Existing explicit zone-change confirmation remains required; ordinary manual scheduler validation is unchanged.
+- **Evidence:** 28/28 targeted unit/component tests; disposable PostgreSQL 16 + synthetic-data Chrome run 50/50 at code commit above. Regression coverage includes candidate plus alternative selection, no Save before explicit operator action, New York overlap rejection, changed-zone confirmation and unique-time exact UTC save. See `design/evidence/NMI-NDG-02-C2/QA-RESULTS.md` and `qa-results.json`.
+- **Boundaries:** no provider tests/requests, no owner database access or migration rerun, no outbound notifications, voice implementation, merge or deployment. Preserve the local-only notification boundary and C1 protections.
+
+### Next action
+
+Complete the evidence/docs commit on PR #29, verify both required hosted CI workflows pass on its exact resulting SHA, then independently re-audit that live exact head. Do not merge or deploy.
+
 <!-- HANDOFF_ENTRIES_END -->

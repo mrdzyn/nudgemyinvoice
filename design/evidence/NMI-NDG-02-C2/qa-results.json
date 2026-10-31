@@ -1,11 +1,11 @@
 {
   "task": "NMI-NDG-02-C2",
-  "exactHead": "b590e16bd26ebcf172feb3f2c0fc8987a9a53b92",
+  "exactHead": "848382cb7a346ab0b3f621123cba40b96868bf90",
   "timezoneEmulated": "Asia/Manila",
   "providersConfigured": false,
   "disposablePostgres": true,
-  "passed": 46,
-  "total": 46,
+  "passed": 50,
+  "total": 50,
   "results": [
     {
       "group": "setup",
@@ -15,7 +15,7 @@
     },
     {
       "group": "setup",
-      "name": "three synthetic invoices, including two same-name invoices for disambiguation",
+      "name": "four synthetic invoices, including two same-name invoices and one unscheduled invoice for DST-save QA",
       "pass": true,
       "detail": ""
     },
@@ -206,6 +206,18 @@
       "detail": ""
     },
     {
+      "group": "schedule",
+      "name": "the verified candidate remains selected and other saved invoices are editable choices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "the operator can change the prefilled candidate to another owner-scoped invoice without losing the candidate option",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "group": "schedule-mobile",
       "name": "the editable prefilled scheduler fits the 390px viewport without horizontal overflow",
       "pass": true,
@@ -213,7 +225,7 @@
     },
     {
       "group": "schedule",
-      "name": "the verified candidate is available without a second general-list read and before explicit Save nothing is persisted",
+      "name": "the verified candidate remains available alongside one bounded authenticated general invoice-list read, with no write before Save",
       "pass": true,
       "detail": ""
     },
@@ -237,6 +249,18 @@
     },
     {
       "group": "schedule",
+      "name": "editing a proposal to the repeated New York DST hour fails closed before any local write",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "after explicit zone-change confirmation, a unique edited wall time saves the exact instant in the current IANA zone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
       "name": "ambiguous bare 9 is clarified locally and makes no invoice request",
       "pass": true,
       "detail": ""
@@ -255,7 +279,7 @@
     },
     {
       "group": "boundaries",
-      "name": "only auth, invoice search/detail, follow-up reads and exactly one explicit local follow-up write were used; never parse, PayPal-draft or send routes",
+      "name": "only auth, invoice search/detail, follow-up reads and two explicit local follow-up writes were used; never parse, PayPal-draft or send routes",
       "pass": true,
       "detail": ""
     },
@@ -267,7 +291,7 @@
     },
     {
       "group": "boundaries",
-      "name": "no PayPal operation, no PayPal id, no approval or webhook row; only two seeded reminders plus the one explicitly saved in C2 exist",
+      "name": "no PayPal operation, no PayPal id, no approval or webhook row; only two seeded reminders plus two explicitly saved local reminders exist",
       "pass": true,
       "detail": ""
     },
