@@ -13,6 +13,10 @@ export const AUDIT_ACTIONS = [
   "invoice.parse",
   "invoice.draft_save",
   "paypal.draft_create",
+  "followup.schedule",
+  "followup.reschedule",
+  "followup.complete",
+  "followup.cancel",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

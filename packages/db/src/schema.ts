@@ -303,3 +303,54 @@ export const sessions = pgTable(
     check("sessions_expiry_after_creation", sql`${t.expiresAt} > ${t.createdAt}`),
   ],
 );
+
+/**
+ * NMI-FUP-01: a LOCAL follow-up reminder for the operator about one saved invoice. It is never a
+ * sent message: nothing in the application emails a customer or contacts PayPal because of this row.
+ * `due_at` is the real scheduled instant (UTC); `timezone` is the IANA zone the operator picked it in
+ * and is kept only so the time can be displayed back unambiguously. "Due" is derived at read time
+ * (`status = 'active' AND due_at <= now`), never stored. At most ONE active follow-up per invoice.
+ */
+export const invoiceFollowUps = pgTable(
+  "invoice_follow_ups",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "restrict" }),
+    operatorId: uuid("operator_id")
+      .notNull()
+      .references(() => operators.id),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    timezone: text("timezone").notNull(),
+    note: text("note"),
+    message: text("message").notNull(),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
+  },
+  (t) => [
+    // Duplicate active schedules for one invoice are impossible at the database level.
+    uniqueIndex("invoice_follow_ups_one_active_uq")
+      .on(t.invoiceId)
+      .where(sql`${t.status} = 'active'`),
+    index("invoice_follow_ups_operator_idx").on(t.operatorId, t.status, t.dueAt),
+    index("invoice_follow_ups_invoice_idx").on(t.invoiceId),
+    check("invoice_follow_ups_status_chk", sql`${t.status} in ('active','completed','canceled')`),
+    check(
+      "invoice_follow_ups_closed_at_chk",
+      sql`(${t.status} = 'completed') = (${t.completedAt} is not null) and (${t.status} = 'canceled') = (${t.canceledAt} is not null)`,
+    ),
+    check(
+      "invoice_follow_ups_timezone_format",
+      sql`${t.timezone} ~ '^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+){0,2}$' and length(${t.timezone}) <= 64`,
+    ),
+    check(
+      "invoice_follow_ups_note_len",
+      sql`${t.note} is null or (length(${t.note}) between 1 and 500)`,
+    ),
+    check("invoice_follow_ups_message_len", sql`length(${t.message}) between 1 and 2000`),
+  ],
+);

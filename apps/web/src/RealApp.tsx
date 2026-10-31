@@ -8,6 +8,8 @@ import { LEAVE_COPY, mustConfirmLeave, type SaveGuard } from "./invoices/leaveGu
 import { Dialog } from "./components/Dialog.js";
 import { createInvoiceApi, type InvoiceApi, type ListQuery } from "./invoices/api.js";
 import { createParseApi, type ParseApi } from "./parse/api.js";
+import { createFollowUpApi, type FollowUpApi } from "./followups/api.js";
+import { FollowUpsController } from "./followups/controller.js";
 import { AppProvider } from "./demo/AppContext.js";
 import { initialState, reducer, type Action, type Screen, type Theme } from "./demo/appState.js";
 import type { InvoiceDraft } from "./domain/types.js";
@@ -17,6 +19,7 @@ import { CurrentScreen, SkipLink, TITLES } from "./screens.js";
 const defaultApi = createAuthApi();
 const defaultParseApi = createParseApi();
 const defaultInvoiceApi = createInvoiceApi();
+const defaultFollowUpApi = createFollowUpApi();
 
 function systemTheme(): Theme {
   return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
@@ -55,6 +58,7 @@ function Workspace({
   expire,
   parseApi,
   invoiceApi,
+  followUpApi,
   theme,
 }: {
   session: Session;
@@ -63,9 +67,21 @@ function Workspace({
   expire: () => void;
   parseApi: ParseApi;
   invoiceApi: InvoiceApi;
+  followUpApi: FollowUpApi;
   theme: Theme;
 }) {
   const csrfToken = session.csrfToken;
+  // One controller per signed-in workspace (the workspace is keyed by the auth epoch). It owns the
+  // real follow-up state; a 401 from any follow-up call ends the session like every other call.
+  const expireRef = useRef(expire);
+  expireRef.current = expire;
+  const [followUps] = useState(
+    () => new FollowUpsController(followUpApi, csrfToken, () => expireRef.current()),
+  );
+  useEffect(() => {
+    followUps.start();
+    return () => followUps.stop();
+  }, [followUps]);
   const save = useCallback(
     (draft: InvoiceDraft, key: string, signal: AbortSignal) =>
       invoiceApi.save(draft, key, csrfToken, signal),
@@ -147,6 +163,7 @@ function Workspace({
         listInvoices,
         createPayPalDraft,
         sessionExpired: expire,
+        followUps,
         setSaveGuard,
       }}
     >
@@ -185,6 +202,7 @@ export interface RealViewProps {
   expire?: (epoch: number) => void;
   parseApi?: ParseApi;
   invoiceApi?: InvoiceApi;
+  followUpApi?: FollowUpApi;
 }
 
 function StatusCard({ id, children }: { id: string; children: string }) {
@@ -213,6 +231,7 @@ export function RealView({
   expire = noopDispatch,
   parseApi = defaultParseApi,
   invoiceApi = defaultInvoiceApi,
+  followUpApi = defaultFollowUpApi,
 }: RealViewProps) {
   if (state.status === "authenticated") {
     const epoch = state.epoch;
@@ -225,6 +244,7 @@ export function RealView({
         expire={() => expire(epoch)}
         parseApi={parseApi}
         invoiceApi={invoiceApi}
+        followUpApi={followUpApi}
         theme={theme}
       />
     );
@@ -258,10 +278,12 @@ export function RealApp({
   api = defaultApi,
   parseApi = defaultParseApi,
   invoiceApi = defaultInvoiceApi,
+  followUpApi = defaultFollowUpApi,
 }: {
   api?: AuthApi;
   parseApi?: ParseApi;
   invoiceApi?: InvoiceApi;
+  followUpApi?: FollowUpApi;
 }) {
   const auth = useAuthController(api);
   const [theme] = useState(systemTheme);
@@ -290,6 +312,7 @@ export function RealApp({
       expire={auth.expire}
       parseApi={parseApi}
       invoiceApi={invoiceApi}
+      followUpApi={followUpApi}
     />
   );
 }

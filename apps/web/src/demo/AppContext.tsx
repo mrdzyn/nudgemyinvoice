@@ -19,6 +19,7 @@ import type {
 } from "../invoices/api.js";
 import type { InvoiceDraft } from "../domain/types.js";
 import type { ParseResult } from "../parse/api.js";
+import type { FollowUpsController } from "../followups/controller.js";
 
 /** Present only in real (server-authenticated) mode. */
 export interface SessionInfo {
@@ -37,6 +38,8 @@ export interface SessionInfo {
   createPayPalDraft?: (id: string, signal: AbortSignal) => Promise<PayPalDraftResult>;
   /** Real read-only detail (`GET /api/invoice-drafts/:id`). */
   getInvoice?: (id: string, signal: AbortSignal) => Promise<GetResult>;
+  /** Local follow-up reminders (NMI-FUP-01), CSRF bound in memory. Real mode only. */
+  followUps?: FollowUpsController;
   /** Review reports whether a save is unresolved so leaving the screen can ask first. */
   setSaveGuard?: (guard: SaveGuard) => void;
   /** The server said 401: end the whole session (and discard every in-memory draft). */

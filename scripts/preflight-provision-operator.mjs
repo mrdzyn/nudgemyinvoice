@@ -39,6 +39,7 @@ const MIGRATIONS = [
   "0004_zippy_namorita",
   "0005_glorious_giant_girl",
   "0006_known_colleen_wing",
+  "0007_perfect_doomsday",
 ];
 
 const rnd = (n) => randomBytes(n).toString("hex");
@@ -472,7 +473,7 @@ async function main() {
   }
   check(
     "migrate",
-    "seven committed migrations applied in journal order with psql + PGPASSFILE",
+    "eight committed migrations applied in journal order with psql + PGPASSFILE",
     migrated,
   );
   check("migrate.empty", "no operator before provisioning", snapshot(env).operators === 0);

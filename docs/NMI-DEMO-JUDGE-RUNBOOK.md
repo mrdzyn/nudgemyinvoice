@@ -54,12 +54,12 @@ export DATABASE_URL=postgres://nmi@127.0.0.1:54370/nmi_judge
 
 ## 4. Apply the migrations
 
-There is no `db:migrate` script. Apply the seven committed migrations in journal order (they are plain SQL):
+There is no `db:migrate` script. Apply the eight committed migrations in journal order (they are plain SQL):
 
 ```bash
 (
   tags="$(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join("\n"))')" || exit 1
-  [ "$(printf '%s\n' "$tags" | wc -l)" -eq 7 ] || { echo "expected 7 migrations in the journal" >&2; exit 1; }
+  [ "$(printf '%s\n' "$tags" | wc -l)" -eq 8 ] || { echo "expected 8 migrations in the journal" >&2; exit 1; }
   while IFS= read -r t; do
     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t: stopping" >&2; exit 1; }
     echo "applied $t"
@@ -67,14 +67,14 @@ There is no `db:migrate` script. Apply the seven committed migrations in journal
 )
 rc=$?
 if [ "$rc" -eq 0 ]; then
-  echo "all 7 migrations applied"
+  echo "all 8 migrations applied"
 else
   echo "SETUP INCOMPLETE: drop and recreate the database, fix the error, then start again" >&2
 fi
 (exit "$rc")
 ```
 
-Works in bash and zsh (no `#` comments inside the block, so it also pastes cleanly into an interactive zsh). The snippet's exit status is the migration result (0 only if all seven applied; nonzero otherwise): the final `(exit "$rc")` sets `$?` without closing an interactive shell. **Do not continue to step 5 unless it printed `all 7 migrations applied`.** Each `psql` call is checked explicitly (`ON_ERROR_STOP` plus `|| exit 1` inside a subshell, so your terminal is not closed), so the loop stops at the **first** failing migration and a later one never runs on a half-applied schema; if it fails, drop and recreate the database and start again. Migrations run in journal order. Expected: `applied 0000_…` through `applied 0006_…`, then `all 7 migrations applied`, and 8 tables in the `public` schema (`psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public'"`).
+Works in bash and zsh (no `#` comments inside the block, so it also pastes cleanly into an interactive zsh). The snippet's exit status is the migration result (0 only if all eight applied; nonzero otherwise): the final `(exit "$rc")` sets `$?` without closing an interactive shell. **Do not continue to step 5 unless it printed `all 8 migrations applied`.** Each `psql` call is checked explicitly (`ON_ERROR_STOP` plus `|| exit 1` inside a subshell, so your terminal is not closed), so the loop stops at the **first** failing migration and a later one never runs on a half-applied schema; if it fails, drop and recreate the database and start again. Migrations run in journal order. Expected: `applied 0000_…` through `applied 0006_…`, then `all 8 migrations applied`, and 8 tables in the `public` schema (`psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public'"`).
 
 ## 5. Provision the single operator
 

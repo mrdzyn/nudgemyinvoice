@@ -49,20 +49,20 @@ Full, tested instructions: **[docs/NMI-DEMO-JUDGE-RUNBOOK.md](docs/NMI-DEMO-JUDG
 
 Prerequisites: Node ≥ 22, pnpm 10, PostgreSQL 16, a random `SESSION_SECRET` (≥ 32 characters) and `DATABASE_URL`. No provider credentials are needed to run or evaluate the app: without them parsing falls back to manual entry, PayPal drafting is off, and a clearly labelled **SIMULATED evaluation mode** (test-only launcher, no provider requests) runs the whole workflow.
 
-Create a throw-away PostgreSQL database and set `DATABASE_URL` first (runbook section 3). The next block applies the seven migrations in journal order and, **only if all seven applied**, provisions the operator: a failed migration prints `MIGRATION FAILED`, the command exits nonzero (without closing your shell) and provisioning is never reached. (In an interactive zsh, run `setopt interactive_comments` before pasting blocks that contain `#` lines.)
+Create a throw-away PostgreSQL database and set `DATABASE_URL` first (runbook section 3). The next block applies the eight migrations in journal order and, **only if all eight applied**, provisions the operator: a failed migration prints `MIGRATION FAILED`, the command exits nonzero (without closing your shell) and provisioning is never reached. (In an interactive zsh, run `setopt interactive_comments` before pasting blocks that contain `#` lines.)
 
 ```bash
 git clone https://github.com/mrdzyn/nudgemyinvoice.git && cd nudgemyinvoice
 pnpm install --frozen-lockfile
 ( tags="$(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join("\n"))')" || exit 1
-  [ "$(printf '%s\n' "$tags" | wc -l)" -eq 7 ] || { echo "expected 7 migrations in the journal" >&2; exit 1; }
+  [ "$(printf '%s\n' "$tags" | wc -l)" -eq 8 ] || { echo "expected 8 migrations in the journal" >&2; exit 1; }
   while IFS= read -r t; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t" >&2; exit 1; }; echo "applied $t"; done <<< "$tags" ) \
   && { export NMI_OPERATOR_USERNAME=judge NMI_OPERATOR_PASSWORD="$(openssl rand -base64 18)"
        echo "Your sign-in password (generated now, keep it private, never commit it): $NMI_OPERATOR_PASSWORD"
        pnpm --filter @nmi/api provision-operator; }
 ```
 
-Only continue when the block above finished without `MIGRATION FAILED` (the operator is created only after all seven migrations succeed). Then start the API and the web app:
+Only continue when the block above finished without `MIGRATION FAILED` (the operator is created only after all eight migrations succeed). Then start the API and the web app:
 
 ```bash
 export SESSION_SECRET="$(openssl rand -base64 48)" WEB_ORIGIN=http://localhost:5173

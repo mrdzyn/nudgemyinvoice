@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { InvoiceFollowUpCard, type InvoiceFollowUpLoad } from "../../followups/FollowUpUi.js";
 import { PayPalStatusBadge } from "../../components/Badge.js";
 import type { PayPalDraftResult } from "../../invoices/api.js";
 import { PayPalDraftPanel, type RefreshOutcome } from "./PayPalDraftPanel.js";
@@ -42,6 +43,7 @@ export function SavedDetailView({
   onBack,
   headingRef,
   paypal,
+  followUp,
 }: {
   savedRef: SavedRef;
   load: SavedLoad;
@@ -50,6 +52,8 @@ export function SavedDetailView({
   headingRef?: React.Ref<HTMLHeadingElement>;
   /** Real PayPal Sandbox draft capability. Absent => the panel is read-only (state shown, no action). */
   paypal?: PayPalCapability;
+  /** The invoice's local follow-up reminder (real mode). Absent => no card. */
+  followUp?: InvoiceFollowUpLoad;
 }) {
   const inv = load.status === "ok" ? load.invoice : null;
   return (
@@ -114,12 +118,20 @@ export function SavedDetailView({
           </div>
         </Notice>
       ) : null}
-      {inv ? <SavedBody inv={inv} paypal={paypal} /> : null}
+      {inv ? <SavedBody inv={inv} paypal={paypal} followUp={followUp} /> : null}
     </section>
   );
 }
 
-function SavedBody({ inv, paypal }: { inv: ServerInvoice; paypal: PayPalCapability | undefined }) {
+function SavedBody({
+  inv,
+  paypal,
+  followUp,
+}: {
+  inv: ServerInvoice;
+  paypal: PayPalCapability | undefined;
+  followUp: InvoiceFollowUpLoad | undefined;
+}) {
   const d = inv.draft;
   const t = inv.totals;
   const c = d.currency;
@@ -169,6 +181,7 @@ function SavedBody({ inv, paypal }: { inv: ServerInvoice; paypal: PayPalCapabili
           </div>
         </section>
       )}
+      {followUp ? <InvoiceFollowUpCard load={followUp} at={new Date()} /> : null}
       <div className="card">
         <h2 className="card-title">Invoice</h2>
         <dl className="meta-list">
@@ -277,6 +290,9 @@ function SavedBody({ inv, paypal }: { inv: ServerInvoice; paypal: PayPalCapabili
   );
 }
 
+const noSubscribe = () => () => undefined;
+const zeroVersion = () => 0;
+
 /** Container: loads the record with GET /api/invoice-drafts/:id; cancels on unmount and drops stale answers. */
 export function SavedDetailScreen() {
   const { state, dispatch, session } = useApp();
@@ -288,6 +304,22 @@ export function SavedDetailScreen() {
   const createPayPalDraft = session?.createPayPalDraft;
   const expired = session?.sessionExpired;
   const id = savedRef?.id;
+  const followUps = session?.followUps;
+  const version = useSyncExternalStore(
+    followUps ? followUps.subscribe : noSubscribe,
+    followUps ? () => followUps.getSnapshot().version : zeroVersion,
+    zeroVersion,
+  );
+  const [followUp, setFollowUp] = useState<InvoiceFollowUpLoad>({ status: "loading" });
+  useEffect(() => {
+    if (!followUps || !id) return;
+    const ac = new AbortController();
+    void followUps.forInvoice(id, ac.signal).then((r) => {
+      if (ac.signal.aborted || r.kind === "aborted") return;
+      setFollowUp({ status: "done", ...r });
+    });
+    return () => ac.abort();
+  }, [followUps, id, version, tick]);
 
   useEffect(() => {
     if (!getInvoice || !id) return;
@@ -360,6 +392,7 @@ export function SavedDetailScreen() {
       onRetry={() => setTick((t) => t + 1)}
       onBack={() => dispatch({ type: "navigate", screen: "dashboard" })}
       headingRef={headingRef}
+      {...(followUps ? { followUp } : {})}
       {...(createPayPalDraft ? { paypal: { create, refresh, onExpired: () => expired?.() } } : {})}
     />
   );

@@ -50,6 +50,13 @@
       "when": 1792940086541,
       "tag": "0006_known_colleen_wing",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793373340831,
+      "tag": "0007_perfect_doomsday",
+      "breakpoints": true
     }
   ]
 }

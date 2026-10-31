@@ -8,6 +8,7 @@ import type { ScryptParams } from "./auth/password.js";
 import { registerAuth } from "./plugins/auth.js";
 import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
 import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-drafts.js";
+import { followUpRoutes } from "./routes/follow-ups.js";
 import type { InvoiceModelClient } from "@nmi/ai";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import { healthRoutes } from "./routes/health.js";
@@ -146,6 +147,7 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     clock: deps.clock,
     seams: deps.invoiceSeams,
   });
+  followUpRoutes(app, { db: deps.db, audit, clock: deps.clock });
   if (config.webDistDir) registerWebStatic(app, config.webDistDir);
   return app;
 }

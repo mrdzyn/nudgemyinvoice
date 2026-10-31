@@ -1,6 +1,6 @@
 -- NudgeMyInvoice runtime role: the ONLY database privileges the running API needs.
 --
--- Run once as the migration/owner role, AFTER migrations 0000-0006 have been applied. It changes
+-- Run once as the migration/owner role, AFTER migrations 0000-0007 have been applied. It changes
 -- privileges only (no table, column or constraint is created or altered). The role is created
 -- separately and WITHOUT a password in any statement, file or command line:
 --
@@ -39,3 +39,8 @@ GRANT SELECT, INSERT, UPDATE ON "public"."paypal_draft_operations" TO nmi_runtim
 
 -- Append-only audit trail: INSERT only (a trigger additionally rejects UPDATE/DELETE/TRUNCATE).
 GRANT INSERT ON "public"."audit_log" TO nmi_runtime;
+
+-- NMI-FUP-01 local follow-up reminders (migration 0007): the API creates rows and moves them between
+-- active / completed / canceled. It cannot delete them or change which invoice or operator owns one.
+GRANT SELECT, INSERT ON "public"."invoice_follow_ups" TO nmi_runtime;
+GRANT UPDATE ("due_at", "timezone", "note", "message", "status", "updated_at", "completed_at", "canceled_at") ON "public"."invoice_follow_ups" TO nmi_runtime;

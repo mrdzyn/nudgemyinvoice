@@ -1555,4 +1555,26 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Changed:** `NMI-DEMO-OWNER-AUTHORIZATIONS` (R1-A executed/closed/consumed; B unsigned; C not authorized; ledger rows), `NMI-DEMO-PROVIDER-ACCEPTANCE` (title and execution-state paragraph), `STATUS` (phase, working branch, active task, truthful `main` head, Render P2 shown as parked, R1 status, next actions), `NMI-DEMO-SUBMISSION-CHECKLIST` (A provisional REAL PASS, PayPal 1/1 exhausted, observer audited+merged, B/C not authorized).
 - **Preserved:** Gate A sanitized evidence and PENDING fields, consumed Gate A authorization, unsigned Gate B, exhausted historical PayPal budget, Render and deployment boundaries, HPE-EDGE separation. No code, provider call, database deletion, merge or deployment.
 
+## Handoff: NMI-FUP-01
+
+- **From:** Implementation agent (Claude). **To:** Independent review, then owner. **Branch/PR:** `feat/nmi-ux02-nudgey`, Draft PR #26 (no new branch or PR); started from head `b5e122f` (NMI-UX-02, CI green).
+- **Scope:** `tasks/NMI-FUP-01-nudgey-followups.md`. Local follow-up scheduling only; customer notifications are deferred and unauthorized.
+- **Changed:** `packages/db` (schema + migration `0007` + `PostgresFollowUpStore`, audit actions, runtime-role grants), `apps/api` (`routes/follow-ups.ts`, wiring), `apps/web` (`followups/*`, Nudgey, saved-invoice card, session wiring, CSS), tests (api pg, runtime-role, db constraints, web unit/SSR/boundaries), `design/evidence/NMI-FUP-01/`, docs that counted seven migrations.
+- **Review focus:** ownership and CSRF/Origin on every route; the partial unique index and `409` handling; UTC-only instants and zone display; that no code path contacts a customer, PayPal or OpenAI; runtime-role grants (no DELETE); the new browser route allow-list in `boundaries.test.ts`; migration count updates.
+- **Found by the browser journey (fixed):** multi-line messages were rejected by the shared single-line text validator, and `Intl` refused `timeZoneName` combined with `dateStyle`/`timeStyle` (silently showing UTC).
+- **Not done:** no deployment, merge, provider call or Gate action. A hosted database must run migration `0007` and the new grants first.
+
+## Handoff: NMI-FUP-01-FIX1
+
+- **From:** GPT-6 (GitHub connector backport). **To:** independent exact-HEAD re-audit, then owner. **Branch/PR:** `feat/nmi-ux02-nudgey`, Draft PR #26; base reviewed head `d6e9d7c5f17a230cf0f3b45ea5a9fca63e02ac4e`.
+- **Action:** backported the already source-audited shared follow-up read-generation guard plus focused tests from Draft PR #27 `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06` into #26. This includes the read-only `readFresh(signal)` method as a dependency for downstream C1; no conversational interface or other features transferred.
+- **Verification to complete:** hosted Project Baseline and Stack CI on new exact head; independent short re-audit of controller and test changes. No prior audit or CI of #26's old SHA substitutes for this gate.
+- **Boundaries:** both PRs remain Draft, no merge, provider call, deployment, migration, credential or external send. After owner authorization to merge #26, reconcile PR #27's stacked history/diff, rerun required checks and seek separate approval.
+
+## Handoff: NMI-FUP-01-FIX2
+
+- **From:** GPT-6, source remediation. **To:** Codex independent exact-HEAD re-audit; owner decision after a PASS. **PR:** #26, branch `feat/nmi-ux02-nudgey`; FIX1 audited SHA `1a8cfadd2e1ef2761f7cd25ce62d9c305da3f964` was FIX REQUIRED due to aborted refresh 401 suppression.
+- **Changes:** `apps/web/src/followups/controller.ts` now handles the returned 401 before ignoring an internally aborted ordinary result, without weakening the stopped-controller or read-generation boundaries; `controller.test.ts` adds a deterministic two-refresh abort-then-401 test. Task, STATUS and handoff updated; no new provider, API, schema or UI changes.
+- **Gates:** new exact-HEAD CI and independent re-audit required; no merge/deploy/provider calls. PR #27 remains Draft, stacked on #26; downstream reconciliation and separate owner merge approval remain mandatory.
+
 <!-- HANDOFF_ENTRIES_END -->

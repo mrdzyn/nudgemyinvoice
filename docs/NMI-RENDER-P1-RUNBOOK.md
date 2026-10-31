@@ -18,7 +18,7 @@
 | Header CSP (`frame-ancestors 'none'`), HSTS, `nosniff`, `X-Frame-Options`, `Referrer-Policy: no-referrer` on every response; CORS only for `WEB_ORIGIN` | `hosting.test.ts`, `hosted-staging.pg.test.ts` |
 | **Search text never appears in a request URL**: search is `POST /api/invoice-drafts/search` (JSON body); legacy `GET ...?q=` is refused with `400 search_requires_post`; a simulated edge request-line log and Fastify logs contain no term, including 401/403/400 cases | `hosted-staging.pg.test.ts` (with negative control), `invoice-list.pg.test.ts`, web `api.test.ts`/`boundaries.test.ts` |
 | Providers disabled: PayPal create → `503 paypal_disabled`; parse → manual-entry fallback; zero outbound `fetch` | `hosted-staging.pg.test.ts` |
-| Migrations `0000`–`0006` apply in journal order by the owner role; the app never changes schema; the runtime role cannot alter schema, delete, or touch the audit log | `hosted-staging.pg.test.ts`, `packages/db/ops/runtime-role.sql` |
+| Migrations `0000`–`0007` apply in journal order by the owner role; the app never changes schema; the runtime role cannot alter schema, delete, or touch the audit log | `hosted-staging.pg.test.ts`, `packages/db/ops/runtime-role.sql` |
 
 ## 2. What is NOT proven (do not claim)
 
@@ -60,7 +60,7 @@ The owner role's credential (migrations, provisioning) is used only from the ope
 
 ## 5. PostgreSQL: migration and least-privilege plan (owner-run, manual)
 
-No migration runs on app start. Migrations are forward-only plain SQL in journal order (`packages/db/migrations/meta/_journal.json`: `0000`–`0006`).
+No migration runs on app start. Migrations are forward-only plain SQL in journal order (`packages/db/migrations/meta/_journal.json`: `0000`–`0007`).
 
 1. Create the Render PostgreSQL instance (region = web service region; paid plan covering 2026-12-15; confirm backup/retention). Record plan/price privately.
 2. **Owner session setup (once per sitting, bash on the operator's machine).** The owner credential never appears in a command argument, a URL, shell history, a repository file or a log. Use only non-secret connection parameters (copy host, port, database and user from the Render dashboard's *external* connection details; they are not the password) and a temporary protected password file that `psql` and the Node `pg` driver both read through `PGPASSFILE`. Add the operator's IP to the allow list only for the duration.
@@ -78,7 +78,7 @@ No migration runs on app start. Migrations are forward-only plain SQL in journal
    Apply the migrations (take a backup/snapshot **before** this step):
    ```sh
    for f in 0000_young_mister_fear 0001_complete_spot 0002_light_proteus 0003_audit_log_immutable \
-            0004_zippy_namorita 0005_glorious_giant_girl 0006_known_colleen_wing; do
+            0004_zippy_namorita 0005_glorious_giant_girl 0006_known_colleen_wing 0007_perfect_doomsday; do
      psql -v ON_ERROR_STOP=1 -1 -f "packages/db/migrations/$f.sql" || break
    done
    ```

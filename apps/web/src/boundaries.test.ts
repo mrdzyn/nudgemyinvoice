@@ -30,7 +30,7 @@ const FORBIDDEN: [string, RegExp, string[]?][] = [
   [
     "fetch outside the auth transport",
     /\bfetch\s*\(/,
-    ["src/auth/api.ts", "src/parse/api.ts", "src/invoices/api.ts"],
+    ["src/auth/api.ts", "src/parse/api.ts", "src/invoices/api.ts", "src/followups/api.ts"],
   ],
   ["XMLHttpRequest", /XMLHttpRequest/],
   ["WebSocket/EventSource", /\bWebSocket\b|\bEventSource\b/],
@@ -59,15 +59,30 @@ describe("UI shell boundaries", () => {
     expect(hits).toEqual([]);
   });
 
-  it("only the auth, parse and saved-invoice transports call the network, each on its own routes", () => {
+  it("only the auth, parse, saved-invoice and local follow-up transports call the network, each on its own routes", () => {
     const hits = files.filter((f) => /\bfetch\s*\(/.test(read(f))).map((f) => relative(webRoot, f));
-    expect(hits.sort()).toEqual(["src/auth/api.ts", "src/invoices/api.ts", "src/parse/api.ts"]);
+    expect(hits.sort()).toEqual([
+      "src/auth/api.ts",
+      "src/followups/api.ts",
+      "src/invoices/api.ts",
+      "src/parse/api.ts",
+    ]);
     const routes = (f: string) =>
       [...read(join(root, f)).matchAll(/["'`](\/api\/[^"'`]*)["'`]/g)].map((m) => m[1]);
     expect(new Set(routes("auth/api.ts"))).toEqual(
       new Set(["/api/auth/session", "/api/auth/login", "/api/auth/logout"]),
     );
     expect(new Set(routes("parse/api.ts"))).toEqual(new Set(["/api/invoice-drafts/parse"]));
+    // Local follow-up reminders only: none of these routes can reach a customer, PayPal or OpenAI.
+    expect(new Set(routes("followups/api.ts"))).toEqual(
+      new Set([
+        "/api/follow-ups",
+        "/api/invoice-drafts/${invoiceId}/follow-ups",
+        "/api/follow-ups/${id}/reschedule",
+        "/api/follow-ups/${id}/complete",
+        "/api/follow-ups/${id}/cancel",
+      ]),
+    );
     expect(new Set(routes("invoices/api.ts"))).toEqual(
       new Set([
         "/api/invoice-drafts",
@@ -84,7 +99,7 @@ describe("UI shell boundaries", () => {
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?)?)$/.test(
+          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/follow-ups)?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?)$/.test(
             p,
           ),
       ),
