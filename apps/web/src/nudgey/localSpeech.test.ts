@@ -212,7 +212,9 @@ describe("V1 local-only speech recognition", () => {
     class DelayedSpeech extends FakeSpeech {
       static override async available(options: { langs: string[]; processLocally: true }) {
         FakeSpeech.checks.push(options);
-        return new Promise<LocalPackAvailability>((resolve) => { complete = resolve; });
+        return new Promise<LocalPackAvailability>((resolve) => {
+          complete = resolve;
+        });
       }
     }
     const { controller, states } = harness(() => DelayedSpeech);

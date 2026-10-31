@@ -6,11 +6,7 @@
 export const VOICE_LANG = "en-US";
 export const LOCAL_OPTIONS = { langs: [VOICE_LANG], processLocally: true } as const;
 
-export type LocalPackAvailability =
-  | "available"
-  | "downloadable"
-  | "downloading"
-  | "unavailable";
+export type LocalPackAvailability = "available" | "downloadable" | "downloading" | "unavailable";
 
 export interface LocalSpeechResult {
   isFinal: boolean;
@@ -80,17 +76,14 @@ export class LocalSpeechController {
   private constructorIfLocal(): LocalSpeechConstructor | null {
     try {
       const Ctor = this.getConstructor();
-      if (
-        !Ctor ||
-        typeof Ctor.available !== "function" ||
-        typeof Ctor.install !== "function"
-      ) return null;
+      if (!Ctor || typeof Ctor.available !== "function" || typeof Ctor.install !== "function")
+        return null;
       const probe = new Ctor();
-      return (
-        "processLocally" in probe &&
+      return "processLocally" in probe &&
         typeof probe.start === "function" &&
         typeof probe.abort === "function"
-      ) ? Ctor : null;
+        ? Ctor
+        : null;
     } catch {
       return null;
     }
@@ -115,13 +108,15 @@ export class LocalSpeechController {
         case "downloadable":
           this.set({
             kind: "downloadable",
-            message: "English (en-US) needs a one-time language-pack download. No microphone will start.",
+            message:
+              "English (en-US) needs a one-time language-pack download. No microphone will start.",
           });
           break;
         case "downloading":
           this.set({
             kind: "downloading",
-            message: "The English on-device language pack is downloading. Check again when complete.",
+            message:
+              "The English on-device language pack is downloading. Check again when complete.",
           });
           break;
         default:
@@ -133,7 +128,8 @@ export class LocalSpeechController {
     } catch {
       this.set({
         kind: "unavailable",
-        message: "Chrome could not verify local recognition (possibly blocked by browser policy). Type instead.",
+        message:
+          "Chrome could not verify local recognition (possibly blocked by browser policy). Type instead.",
       });
     }
   }
@@ -155,13 +151,19 @@ export class LocalSpeechController {
       const installed = await Ctor.install({ langs: [VOICE_LANG], processLocally: true });
       if (this.disposed || token !== this.generation) return;
       if (!installed) {
-        this.set({ kind: "error", message: "The local model could not be installed. Type instead." });
+        this.set({
+          kind: "error",
+          message: "The local model could not be installed. Type instead.",
+        });
         return;
       }
       await this.check();
     } catch {
       if (this.disposed || token !== this.generation) return;
-      this.set({ kind: "error", message: "Local model installation was blocked or failed. Type instead." });
+      this.set({
+        kind: "error",
+        message: "Local model installation was blocked or failed. Type instead.",
+      });
     }
   }
 
@@ -269,6 +271,7 @@ export class LocalSpeechController {
 /** Deliberately ignore prefixed Web Speech APIs: their local-only guarantees are not verified. */
 export function browserLocalSpeechConstructor(): LocalSpeechConstructor | null {
   if (typeof window === "undefined") return null;
-  const candidate: unknown = (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
+  const candidate: unknown = (window as unknown as { SpeechRecognition?: unknown })
+    .SpeechRecognition;
   return typeof candidate === "function" ? (candidate as LocalSpeechConstructor) : null;
 }

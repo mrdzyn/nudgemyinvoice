@@ -390,6 +390,12 @@ export function ChatView({
     onAsk(t);
     setText("");
   };
+  const askExample = (question: string) => {
+    // An example starts a new Ask draft. Invalidate speech callbacks before it can
+    // replace that draft, even if the browser has already queued a final result.
+    if (speech.state.kind === "listening") speech.stop();
+    onAsk(question);
+  };
   return (
     <section className="chat" aria-label="Ask Nudgey">
       <h3 className="followup-form-title">Ask Nudgey</h3>
@@ -399,7 +405,7 @@ export function ChatView({
       </p>
       <div className="chat-chips" role="group" aria-label="Example questions">
         {EXAMPLE_QUESTIONS.map((q) => (
-          <button key={q} type="button" className="chat-chip" onClick={() => onAsk(q)}>
+          <button key={q} type="button" className="chat-chip" onClick={() => askExample(q)}>
             {q}
           </button>
         ))}
@@ -471,7 +477,11 @@ export function ChatView({
             <button
               type="button"
               className="followup-btn"
-              aria-label={speech.state.kind === "listening" ? "Stop on-device voice input" : "Start on-device voice input in English"}
+              aria-label={
+                speech.state.kind === "listening"
+                  ? "Stop on-device voice input"
+                  : "Start on-device voice input in English"
+              }
               aria-pressed={speech.state.kind === "listening"}
               onClick={speech.state.kind === "listening" ? speech.stop : speech.start}
             >
@@ -487,7 +497,8 @@ export function ChatView({
             </button>
           ) : null}
           <p id={speechStatusId} className="chat-hint" role="status" aria-live="polite">
-            {speech.state.message} Your words stay editable until you press Ask. Voice never schedules or sends anything automatically.
+            {speech.state.message} Your words stay editable until you press Ask. Voice never
+            schedules or sends anything automatically.
           </p>
         </div>
         <div className="followup-buttons">

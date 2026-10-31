@@ -1,5 +1,8 @@
+// @vitest-environment happy-dom
 import { renderToString } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { act, useState } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { NudgeyPanel } from "../components/Nudgey.js";
 import type { ListItem } from "../domain/serverList.js";
 import type { FollowUpView } from "../followups/api.js";
@@ -69,6 +72,121 @@ const chat = (messages: ChatMessage[], busy = false) =>
     ),
   );
 
+class BrowserFakeSpeech {
+  static instances: BrowserFakeSpeech[] = [];
+  static async available(options: { langs: string[]; processLocally: true }) {
+    expect(options).toEqual({ langs: ["en-US"], processLocally: true });
+    return "available" as const;
+  }
+  static async install() {
+    throw new Error("The installed local pack should not need installation");
+  }
+  processLocally = false;
+  lang = "";
+  continuous = true;
+  interimResults = true;
+  maxAlternatives = 0;
+  onresult:
+    | ((event: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void)
+    | null = null;
+  onerror: ((event: { error: string }) => void) | null = null;
+  onend: (() => void) | null = null;
+  starts = 0;
+  aborts = 0;
+
+  constructor() {
+    BrowserFakeSpeech.instances.push(this);
+  }
+  start() {
+    this.starts++;
+  }
+  abort() {
+    this.aborts++;
+  }
+}
+
+let testRoot: Root | null = null;
+let testContainer: HTMLDivElement | null = null;
+let fetchSpy: { mockRestore: () => void } | null = null;
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+
+async function mountChat(onAsk = vi.fn(), onSchedule = vi.fn(), onReviewSchedule = vi.fn()) {
+  BrowserFakeSpeech.instances = [];
+  Object.defineProperty(window, "SpeechRecognition", {
+    configurable: true,
+    value: BrowserFakeSpeech,
+  });
+  fetchSpy = vi.spyOn(globalThis, "fetch");
+  testContainer = document.createElement("div");
+  document.body.append(testContainer);
+  testRoot = createRoot(testContainer);
+
+  function LifecycleHarness() {
+    const [mounted, setMounted] = useState(true);
+    return (
+      <>
+        {mounted ? (
+          <ChatView
+            messages={[]}
+            busy={false}
+            at={at}
+            onAsk={onAsk}
+            onBack={() => setMounted(false)}
+            onOpenInvoice={noop}
+            onOpenDashboard={noop}
+            onSchedule={onSchedule}
+            onSelectSchedule={noop}
+            onReviewSchedule={onReviewSchedule}
+            onRetrySchedule={noop}
+            onDraftChange={noop}
+          />
+        ) : (
+          <p>View closed</p>
+        )}
+        <button type="button" onClick={() => setMounted(false)}>
+          Close Nudgey
+        </button>
+        <button type="button" onClick={() => setMounted(false)}>
+          Sign out
+        </button>
+        <button type="button" onClick={() => setMounted(false)}>
+          Session expired (401)
+        </button>
+      </>
+    );
+  }
+
+  await act(async () => {
+    testRoot!.render(<LifecycleHarness />);
+    await Promise.resolve();
+  });
+  return {
+    onAsk,
+    onSchedule,
+    onReviewSchedule,
+    input: () =>
+      testContainer!.querySelector<HTMLInputElement>('input[aria-label="Ask Nudgey a question"]') ??
+      testContainer!.querySelector<HTMLInputElement>("input[type=text]"),
+    button: (name: string) =>
+      [...testContainer!.querySelectorAll("button")].find(
+        (element) =>
+          element.textContent?.trim() === name || element.getAttribute("aria-label") === name,
+      ),
+    form: () => testContainer!.querySelector("form")!,
+    speech: () => BrowserFakeSpeech.instances.find((instance) => instance.starts > 0)!,
+  };
+}
+
+afterEach(() => {
+  if (testRoot) act(() => testRoot!.unmount());
+  testRoot = null;
+  testContainer?.remove();
+  testContainer = null;
+  fetchSpy?.mockRestore();
+  fetchSpy = null;
+  delete (window as Window & { SpeechRecognition?: typeof BrowserFakeSpeech }).SpeechRecognition;
+});
+
 describe("Ask Nudgey entry (existing quick actions untouched)", () => {
   it("adds 'Ask Nudgey' only when a real session provides it and keeps every existing action and the no-send footnote", () => {
     const base = { username: "op", onChoose: noop, onClose: noop, titleId: "t" };
@@ -98,7 +216,6 @@ describe("conversation view", () => {
     expect(html).not.toContain("Speak on device");
     expect(html).toContain("Back");
   });
-
 
   it("presents every invoice as an explicit accessible radio choice and keeps review disabled until selection", () => {
     const proposal: ScheduleProposal = {
@@ -162,6 +279,97 @@ describe("conversation view", () => {
     expect(html).toContain("Looking that up");
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain("Ask (replaces the current lookup)");
+  });
+
+  it("keeps a final transcript editable and requires explicit Ask without voice-triggered requests or scheduling", async () => {
+    const view = await mountChat();
+    const speak = view.button("🎙 Speak on device")!;
+    act(() => speak.click());
+    const recognizer = view.speech();
+    expect(recognizer.processLocally).toBe(true);
+    expect(recognizer.starts).toBe(1);
+
+    act(() =>
+      recognizer.onresult?.({
+        results: [{ isFinal: true, 0: { transcript: "schedule a follow-up for Northwind" } }],
+      }),
+    );
+    expect(view.input()?.value).toBe("schedule a follow-up for Northwind");
+    expect(view.onAsk).not.toHaveBeenCalled();
+    expect(view.onSchedule).not.toHaveBeenCalled();
+    expect(view.onReviewSchedule).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    const input = view.input()!;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
+      input,
+      "edited transcript",
+    );
+    act(() => input.dispatchEvent(new Event("input", { bubbles: true })));
+    expect(view.input()?.value).toBe("edited transcript");
+    expect(view.onAsk).not.toHaveBeenCalled();
+    expect(view.onReviewSchedule).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    act(() => view.form().dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+    expect(view.onAsk).toHaveBeenCalledOnce();
+    expect(view.onAsk).toHaveBeenCalledWith("edited transcript");
+    expect(view.onSchedule).not.toHaveBeenCalled();
+    expect(view.onReviewSchedule).not.toHaveBeenCalled();
+  });
+
+  it("aborts before an example Ask and rejects a queued late transcript from the new draft", async () => {
+    const view = await mountChat();
+    act(() => view.button("🎙 Speak on device")!.click());
+    const recognizer = view.speech();
+    const queuedResult = recognizer.onresult;
+
+    act(() => view.button("What are my pending invoices?")!.click());
+    expect(recognizer.aborts).toBe(1);
+    expect(view.onAsk).toHaveBeenCalledOnce();
+    expect(view.onAsk).toHaveBeenCalledWith("What are my pending invoices?");
+    act(() => queuedResult?.({ results: [{ isFinal: true, 0: { transcript: "stale result" } }] }));
+    expect(view.input()?.value).toBe("");
+    expect(view.onAsk).toHaveBeenCalledOnce();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("Stop cancels capture and drops a final result already queued by the browser", async () => {
+    const view = await mountChat();
+    act(() => view.button("🎙 Speak on device")!.click());
+    const recognizer = view.speech();
+    const queuedResult = recognizer.onresult;
+    act(() => view.button("Stop listening")!.click());
+    expect(recognizer.aborts).toBe(1);
+    act(() =>
+      queuedResult?.({ results: [{ isFinal: true, 0: { transcript: "must be discarded" } }] }),
+    );
+    expect(view.input()?.value).toBe("");
+    expect(view.onAsk).not.toHaveBeenCalled();
+    expect(view.onSchedule).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("aborts and ignores late recognition after Back, Close and sign-out unmounts", async () => {
+    for (const exit of ["Back", "Close Nudgey", "Sign out", "Session expired (401)"]) {
+      const view = await mountChat();
+      act(() => view.button("🎙 Speak on device")!.click());
+      const recognizer = view.speech();
+      const queuedResult = recognizer.onresult;
+      act(() => view.button(exit)!.click());
+      expect(recognizer.aborts, exit).toBe(1);
+      act(() => queuedResult?.({ results: [{ isFinal: true, 0: { transcript: "after exit" } }] }));
+      expect(view.input(), exit).toBeNull();
+      expect(view.onAsk, exit).not.toHaveBeenCalled();
+      expect(view.onSchedule, exit).not.toHaveBeenCalled();
+      expect(fetchSpy, exit).not.toHaveBeenCalled();
+      act(() => testRoot!.unmount());
+      testRoot = null;
+      testContainer?.remove();
+      testContainer = null;
+      fetchSpy?.mockRestore();
+      fetchSpy = null;
+    }
   });
 });
 
