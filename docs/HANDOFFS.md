@@ -1618,4 +1618,11 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **State:** Docs-only Draft PR; design approval and then controlled implementation remain pending. No production code change, UI shell wiring, deployment, migration, real provider calls or merge.
 - **Next action:** Owner reviews/approves (or revises) the candidate, multi-match and prefilled-scheduler static screens; implementation agent then works on the same bounded scope with focused tests, hosted CI, browser QA and independent exact-HEAD audit.
 
+## Handoff: NMI-NDG-02-C2-IMPL-01
+
+- **From:** GPT-6, owner-approved design kickoff. **To:** C2 implementation agent and independent reviewer. **Draft PR:** #29; current source HEAD `4158bad54c3e435f9768ef267124c13584a8e330` before approval-status docs update; base main `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`.
+- **Owner approval:** C2 visual/flow approved 2026-10-31; deterministic command → verified invoice and date/time → explicit candidate selection → prefilled *editable* existing scheduler → manual Save only. No automatic writes, payment/send operations, cloud provider calls or deployment.
+- **Implementation next:** Follow `tasks/NMI-NDG-02-C2-natural-language-followup.md`, preserve C1 and PR #26/#28 protections, use existing server-scoped invoice search and manual scheduler; fail closed on ambiguity, unsupported date/time/zone and browser lifecycle changes. Focused tests → no-provider disposable DB browser QA → required hosted CI → independent exact-head audit → owner merge decision.
+- **Separate V1 decision:** Owner also approved *on-device-only* optional voice input, but it is a separate bounded follow-on **after** C2 functional acceptance. Never implement unverified/default browser cloud recognition, OpenAI STT, auto-submission or audio egress.
+
 <!-- HANDOFF_ENTRIES_END -->
