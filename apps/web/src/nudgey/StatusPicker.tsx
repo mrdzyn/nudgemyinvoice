@@ -52,6 +52,7 @@ function Option({
 export function StatusPicker({
   state,
   onSearch,
+  onTermChange,
   onSelect,
   onRetry,
   onOpen,
@@ -61,6 +62,8 @@ export function StatusPicker({
   state: StatusState;
   /** Called on entry (empty term) and, debounced, as the operator types. */
   onSearch: (term: string) => void;
+  /** Immediately clears old selectable results before the debounce schedules the next request. */
+  onTermChange: (term: string) => void;
   onSelect: (id: string | null) => void;
   onRetry: () => void;
   onOpen: (id: string) => void;
@@ -103,7 +106,10 @@ export function StatusPicker({
         maxLength={STATUS_MAX_TERM}
         placeholder="Customer name or email"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          onTermChange(e.target.value);
+          setText(e.target.value);
+        }}
       />
       <div className="status-results" aria-busy={state.phase === "loading" ? true : undefined}>
         {state.phase === "idle" || (state.phase === "loading" && state.items.length === 0) ? (

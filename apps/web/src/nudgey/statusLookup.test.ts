@@ -114,19 +114,60 @@ describe("'Check invoice status' is a read-only selector, not a duplicate dashbo
     expect(s.getSnapshot().term).toBe("Vienna");
   });
 
+  it("an internally aborted old search still expires the active session on HTTP 401", async () => {
+    const { s, gates, expired } = make();
+    const first = s.search("North");
+    const second = s.search("Vienna");
+    expect(gates[0]?.signal.aborted).toBe(true);
+    gates[1]?.resolve(ok([item(2, { customerName: "Vienna Cafe" })]));
+    await second;
+    expect(s.getSnapshot().items.map((i) => i.customerName)).toEqual(["Vienna Cafe"]);
+    gates[0]?.resolve({ kind: "unauthorized" });
+    await first;
+    expect(expired).toHaveBeenCalledTimes(1);
+    expect(s.getSnapshot()).toMatchObject({ phase: "idle", items: [], selectedId: null });
+  });
+
+  it("clears old invoices synchronously while the debounced term is waiting to be sent", async () => {
+    let result = ok([item(1), item(2)]);
+    const { s, queries } = make(() => result);
+    await s.search("");
+    s.select(item(2).id);
+    expect(s.getSnapshot().selectedId).toBe(item(2).id);
+
+    // StatusPicker calls prepareSearch from the input event; no 250 ms timer or second request has
+    // fired yet, but old rows and the previously actionable selection are already gone.
+    s.prepareSearch("Customer 1");
+    expect(s.getSnapshot()).toMatchObject({
+      phase: "loading",
+      term: "Customer 1",
+      items: [],
+      more: false,
+      selectedId: null,
+    });
+    expect(queries).toHaveLength(1);
+
+    result = ok([item(1)]);
+    await s.search("Customer 1");
+    expect(queries).toHaveLength(2);
+    expect(s.getSnapshot().items.map((i) => i.id)).toEqual([item(1).id]);
+  });
+
   it("reset() (panel closed / Back / sign-out) aborts, forgets and drops the late answer; dispose() likewise", async () => {
-    const { s, gates } = make();
+    const { s, gates, expired } = make();
     const p = s.search("");
     s.reset();
     expect(gates[0]?.signal.aborted).toBe(true);
-    gates[0]?.resolve(ok([item(1)]));
+    gates[0]?.resolve({ kind: "unauthorized" });
     await p;
     expect(s.getSnapshot()).toMatchObject({ phase: "idle", items: [] });
+    expect(expired).not.toHaveBeenCalled();
     const q = s.search("");
     s.dispose();
-    gates[1]?.resolve(ok([item(2)]));
+    gates[1]?.resolve({ kind: "unauthorized" });
     await q;
     expect(s.getSnapshot().items).toEqual([]);
+    expect(expired).not.toHaveBeenCalled();
     s.attach(); // StrictMode remount
     const r = s.search("");
     gates[2]?.resolve(ok([item(3)]));
@@ -152,7 +193,7 @@ describe("'Check invoice status' is a read-only selector, not a duplicate dashbo
     expect(s.getSnapshot().invalidTerm).toBe(false);
   });
 
-  it("selection only accepts a loaded invoice and is dropped when a new search no longer contains it", async () => {
+  it("selection only accepts a loaded invoice and is cleared as soon as a new search starts", async () => {
     let answer = ok([item(1), item(2)]);
     const { s } = make(() => answer);
     await s.search("");
@@ -162,7 +203,7 @@ describe("'Check invoice status' is a read-only selector, not a duplicate dashbo
     expect(s.getSnapshot().selectedId).toBe(item(2).id);
     answer = ok([item(2)]); // still contains the selection
     await s.search("Customer 2");
-    expect(s.getSnapshot().selectedId).toBe(item(2).id);
+    expect(s.getSnapshot().selectedId).toBeNull(); // a different term always requires a fresh selection
     answer = ok([item(1)]); // no longer contains it
     await s.search("Customer 1");
     expect(s.getSnapshot().selectedId).toBeNull();

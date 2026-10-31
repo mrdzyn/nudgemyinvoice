@@ -36,6 +36,7 @@ const view = (state: StatusState) =>
       <StatusPicker
         state={state}
         onSearch={noop}
+        onTermChange={noop}
         onSelect={noop}
         onRetry={noop}
         onOpen={noop}
@@ -63,6 +64,14 @@ describe("Nudgey home: the status action is its own, distinct entry", () => {
 });
 
 describe("status selector states", () => {
+  it("invalidates old actionable results in the input event before the 250 ms request debounce", () => {
+    const source = readFileSync(join(import.meta.dirname, "StatusPicker.tsx"), "utf8");
+    expect(source).toMatch(
+      /onChange=\{\(e\) => \{\s*onTermChange\(e\.target\.value\);\s*setText\(e\.target\.value\);\s*\}\}/,
+    );
+    expect(source).toMatch(/setTimeout\(\(\) => onSearch\(text\), SEARCH_DEBOUNCE_MS\)/);
+  });
+
   it("loading: an honest loading message (not an empty list), a labelled search box and Back", () => {
     for (const s of [st({ phase: "idle" }), st({ phase: "loading" })]) {
       const html = view(s);
@@ -169,6 +178,7 @@ describe("status selector states", () => {
         <StatusPicker
           state={state}
           onSearch={noop}
+          onTermChange={noop}
           onSelect={noop}
           onRetry={noop}
           onOpen={noop}

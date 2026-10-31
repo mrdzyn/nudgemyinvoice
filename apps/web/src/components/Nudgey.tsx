@@ -385,6 +385,7 @@ export function Nudgey() {
               <StatusPicker
                 state={status.state}
                 onSearch={(t) => void statusLookup.search(t)}
+                onTermChange={(t) => statusLookup.prepareSearch(t)}
                 onSelect={(id) => statusLookup.select(id)}
                 onRetry={() => void statusLookup.retry()}
                 onOpen={openStatusInvoice}

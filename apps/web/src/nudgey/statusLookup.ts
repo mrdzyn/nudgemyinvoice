@@ -61,6 +61,8 @@ export class StatusLookup {
   private readonly listeners = new Set<() => void>();
   private work: AbortController | null = null;
   private disposed = false;
+  /** Reset/disposal cancels pending results; a newer search alone does not cancel a 401. */
+  private lifecycle = 0;
   private lastRaw = "";
 
   constructor(private deps: StatusDeps) {}
@@ -84,12 +86,14 @@ export class StatusLookup {
   }
   dispose(): void {
     this.disposed = true;
+    this.lifecycle++;
     this.work?.abort();
     this.work = null;
   }
 
   /** Forget everything (panel closed, Back, sign-out) and end any request in flight. */
   reset(): void {
+    this.lifecycle++;
     this.work?.abort();
     this.work = null;
     this.lastRaw = "";
@@ -107,27 +111,39 @@ export class StatusLookup {
     return this.search(this.lastRaw);
   }
 
+  /** Immediately invalidate old actionable results while the UI waits for the search debounce. */
+  prepareSearch(raw: string): void {
+    if (this.disposed) return;
+    this.abortSuperseded();
+    this.lastRaw = raw;
+    const invalidTerm = hasControl(raw) || raw.trim().length > STATUS_MAX_TERM;
+    const term = raw.replace(/\s+/g, " ").trim();
+    this.set({
+      phase: invalidTerm ? "ready" : "loading",
+      term,
+      items: [],
+      more: false,
+      failure: null,
+      invalidTerm,
+      selectedId: null,
+    });
+  }
+
+  private abortSuperseded(): void {
+    if (!this.work) return;
+    this.work.abort();
+    this.work = null;
+  }
+
   /** One bounded page for `raw` (empty = every invoice). Ends the previous request on EVERY call. */
   async search(raw: string): Promise<void> {
-    this.work?.abort();
-    this.work = null;
-    this.lastRaw = raw;
-    if (hasControl(raw) || raw.trim().length > STATUS_MAX_TERM) {
-      // Nothing is sent: a bad term never reaches the server and never shows stale matches.
-      this.set({
-        phase: "ready",
-        items: [],
-        more: false,
-        failure: null,
-        invalidTerm: true,
-        selectedId: null,
-      });
-      return;
-    }
+    if (this.disposed) return;
+    this.prepareSearch(raw);
+    if (this.st.invalidTerm) return;
     const term = raw.replace(/\s+/g, " ").trim();
     const ac = new AbortController();
     this.work = ac;
-    this.set({ phase: "loading", term, failure: null, invalidTerm: false });
+    const lifecycle = this.lifecycle;
     const { listInvoices, expired } = this.deps;
     const r: ListResult = listInvoices
       ? await listInvoices(
@@ -135,13 +151,22 @@ export class StatusLookup {
           ac.signal,
         )
       : { kind: "unavailable" };
-    if (ac.signal.aborted || r.kind === "aborted" || this.disposed) return; // stale: never shown
-    this.work = null;
     if (r.kind === "unauthorized") {
+      if (this.disposed || lifecycle !== this.lifecycle) return;
+      if (this.work === ac) this.work = null;
       this.reset();
       expired?.();
       return;
     }
+    if (
+      ac.signal.aborted ||
+      r.kind === "aborted" ||
+      this.disposed ||
+      lifecycle !== this.lifecycle ||
+      this.work !== ac
+    )
+      return; // stale: never shown
+    this.work = null;
     if (r.kind !== "ok") {
       this.set({ phase: "error", items: [], more: false, failure: r.kind, selectedId: null });
       return;
