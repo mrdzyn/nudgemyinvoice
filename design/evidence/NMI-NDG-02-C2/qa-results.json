@@ -1,0 +1,311 @@
+{
+  "task": "NMI-NDG-02-C2",
+  "exactHead": "848382cb7a346ab0b3f621123cba40b96868bf90",
+  "timezoneEmulated": "Asia/Manila",
+  "providersConfigured": false,
+  "disposablePostgres": true,
+  "passed": 50,
+  "total": 50,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated through the journal (incl. 0007) and the API is healthy behind the proxy with no provider configured",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "four synthetic invoices, including two same-name invoices and one unscheduled invoice for DST-save QA",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "one follow-up due now (Northwind) and one upcoming (Vienna Cafe) saved through the real API",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "operator signs in through the browser",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "entry",
+      "name": "Nudgey keeps its quick actions and the follow-up scheduler and adds 'Ask Nudgey'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "entry",
+      "name": "the Ask view shows five example chips, a labelled input limited to 200 characters, and focuses the input",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "entry",
+      "name": "an empty prompt cannot be submitted (Ask is disabled) and makes no request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "pending",
+      "name": "four bounded POST /api/invoice-drafts/search requests, one per PayPal draft group, each with status and limit 5 in the BODY",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "pending",
+      "name": "the real invoices appear under 'No PayPal draft' with their own currency and exact total; other groups say None; no payment claim",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "exactly one search POST whose BODY carries q='Northwind Studio'; the URL has no query string and the name appears in no URL",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "only the matching customer is shown",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "currency",
+      "name": "the currency is sent to the server as a filter (EUR) and only EUR records are shown with no cross-currency total",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "followups",
+      "name": "a fresh GET /api/follow-ups; the due follow-up (Northwind) is shown with its Manila time and zone, the upcoming one is not",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "followups",
+      "name": "it says a due follow-up does not mean the invoice is unpaid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "followups",
+      "name": "upcoming shows only Vienna Cafe",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "payment",
+      "name": "payment status is refused truthfully and offers saved/draft details instead",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "payment",
+      "name": "the refusal and an unknown request made zero network requests",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "stale",
+      "name": "the first search was held until replacement, then canceled; only the newer question and USD-filtered answer remain",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "navigate",
+      "name": "Open invoice opens the real saved-invoice page and closes Nudgey",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "reopening Nudgey shows an empty conversation (nothing kept after close)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "signing out removes the workspace and the whole conversation from the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "signing in again works",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "after sign-in the conversation is empty again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "narrow",
+      "name": "at 390px the panel is fully inside the viewport, above the mobile navigation, with no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "a supported command becomes a proposal only and makes one bounded authenticated invoice search with the name in the POST body",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "same-name invoices are presented separately and none is preselected",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "the proposal is explicitly marked as local-only with a zone-safe date and time",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "typing a different prompt immediately removes the stale proposal and candidate choices without a request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "a fresh scheduling command creates a fresh proposal and requires a new invoice choice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "no follow-up is written by asking or showing candidates",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule-mobile",
+      "name": "the C2 candidate, close heading and first invoice choice are visible in the 390px panel without horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "keyboard Space selects only the focused exact invoice and enables review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "selected candidate prefills the existing create-mode scheduler with its exact invoice, local fields and an editable draft",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "the verified candidate remains selected and other saved invoices are editable choices",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "the operator can change the prefilled candidate to another owner-scoped invoice without losing the candidate option",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule-mobile",
+      "name": "the editable prefilled scheduler fits the 390px viewport without horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "the verified candidate remains available alongside one bounded authenticated general invoice-list read, with no write before Save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "Back returns to Ask and discards the candidate without writing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "only explicit Save sends one local follow-up POST with the reviewed date, current zone and edited fields",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "the existing server persists exactly one operator-local reminder for the selected invoice; no PayPal/SMTP route is called",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "editing a proposal to the repeated New York DST hour fails closed before any local write",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "after explicit zone-change confirmation, a unique edited wall time saves the exact instant in the current IANA zone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "ambiguous bare 9 is clarified locally and makes no invoice request",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "Back aborts the in-flight candidate lookup and its late response cannot restore an actionable card",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "schedule",
+      "name": "HTTP 401 during candidate lookup expires the active session and removes the proposal UI",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "only auth, invoice search/detail, follow-up reads and two explicit local follow-up writes were used; never parse, PayPal-draft or send routes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no request left the page origin and no URL contains customer text",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no PayPal operation, no PayPal id, no approval or webhook row; only two seeded reminders plus two explicitly saved local reminders exist",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "browser storage is empty, the page URL has no query or hash, and console errors are limited to the expected auth and injected candidate-401 responses",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the audit log has no free-text question or customer name",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

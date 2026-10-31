@@ -1611,4 +1611,56 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Change scope:** deterministic browser harness/evidence and task/status/handoff notes only. At the audited head, required hosted CI was green; this evidence update requires CI on the resulting PR head. No migration was rerun; owner's local `0007` remains applied after a verified backup.
 - **Not done:** no provider tests, merge, deployment, or outbound notification authorization.
 
+## Handoff: NMI-NDG-02-C2-DESIGN-01
+
+- **From:** GPT-6, design-first C2 kickoff. **To:** Product owner for flow/visual approval; then implementation agent. **Base:** `main` `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`, after C1 PR #27 squash-merge.
+- **Scope:** Task `tasks/NMI-NDG-02-C2-natural-language-followup.md` and static preview `design/mockups/NMI-NDG-02-C2-scheduling.html`. Parse candidate customer/clock/zone, disambiguate exact existing operator-owned invoice, then prefill existing ScheduleForm; only manual Save may create a local follow-up. No C3 SMTP or provider tests.
+- **State:** Docs-only Draft PR; design approval and then controlled implementation remain pending. No production code change, UI shell wiring, deployment, migration, real provider calls or merge.
+- **Next action:** Owner reviews/approves (or revises) the candidate, multi-match and prefilled-scheduler static screens; implementation agent then works on the same bounded scope with focused tests, hosted CI, browser QA and independent exact-HEAD audit.
+
+## Handoff: NMI-NDG-02-C2-IMPL-01
+
+- **From:** GPT-6, owner-approved design kickoff. **To:** C2 implementation agent and independent reviewer. **Draft PR:** #29; current source HEAD `4158bad54c3e435f9768ef267124c13584a8e330` before approval-status docs update; base main `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`.
+- **Owner approval:** C2 visual/flow approved 2026-10-31; deterministic command → verified invoice and date/time → explicit candidate selection → prefilled *editable* existing scheduler → manual Save only. No automatic writes, payment/send operations, cloud provider calls or deployment.
+- **Implementation next:** Follow `tasks/NMI-NDG-02-C2-natural-language-followup.md`, preserve C1 and PR #26/#28 protections, use existing server-scoped invoice search and manual scheduler; fail closed on ambiguity, unsupported date/time/zone and browser lifecycle changes. Focused tests → no-provider disposable DB browser QA → required hosted CI → independent exact-head audit → owner merge decision.
+- **Separate V1 decision:** Owner also approved *on-device-only* optional voice input, but it is a separate bounded follow-on **after** C2 functional acceptance. Never implement unverified/default browser cloud recognition, OpenAI STT, auto-submission or audio egress.
+
+## Handoff: NMI-NDG-02-C2-REVIEW-01
+
+- **From:** Codex, C2 implementation. **To:** independent exact-head reviewer. **Draft PR:** #29, `feat/nmi-ndg02-c2-scheduling`. **Code implementation head:** `b590e16bd26ebcf172feb3f2c0fc8987a9a53b92`; the evidence/handoff documentation commit follows it, so review the live PR head and its current checks.
+- **State:** READY FOR INDEPENDENT EXACT-HEAD AUDIT; keep PR #29 Draft. The owner-approved C2 design is implemented.
+
+### Delivered
+
+- Narrow deterministic schedule-command parsing with injected clock, IANA-zone wall-time resolution, and fail-closed handling for ambiguous times, DST gaps/overlaps, invalid zones, past dates and unsupported commands.
+- Bounded authenticated invoice search through the existing session reader; candidates remain ephemeral, stale candidates disappear when a different prompt is typed, one/many matches require explicit accessible radio selection, and no-match/truncated/error states offer a manual route.
+- The chosen invoice and local date/time prefill the existing editable create-mode ScheduleForm. Only the existing operator Save sends the local follow-up POST. The verified invoice is included without a second/general first-50 read.
+- Preserved C1 Ask Nudgey, status selection, auth/session expiry, cancellation and late-401 behavior, Back/Close/sign-out clearing, unsaved-review navigation guards and local-only notification boundaries.
+- Prepared the separate, unimplemented V1 follow-on contract at `tasks/NMI-NDG-02-V1-on-device-voice.md`. C2 contains no microphone, speech-recognition or cloud-STT path.
+
+### Validation evidence
+
+- 44/44 focused tests; web typecheck/build; changed-file ESLint; Prettier check; `git diff --check` — PASS.
+- Disposable PostgreSQL 16 and synthetic-data no-provider browser QA at code commit `b590e16bd26ebcf172feb3f2c0fc8987a9a53b92`: 46/46 checks on Chrome 156.0.8078.80, desktop 1100×900 and mobile 390×844, with `Asia/Manila` emulation. Evidence: `design/evidence/NMI-NDG-02-C2/QA-RESULTS.md`, `qa-results.json`, and its screenshots.
+- Hosted Project Baseline CI passed at code commit `b590e16bd26ebcf172feb3f2c0fc8987a9a53b92`: [run 41192885259](https://github.com/mrdzyn/nudgemyinvoice/actions/runs/41192885259).
+- Hosted Stack CI (including unit tests, disposable PostgreSQL tests, build, bundle check, migration sync and production dependency audit) passed at the same code commit: [run 41192885066](https://github.com/mrdzyn/nudgemyinvoice/actions/runs/41192885066). The reviewer must verify both required checks at the live PR head after this documentation/evidence handoff commit.
+- No owner database operation, migration rerun, provider test, OpenAI, PayPal, SMTP, production data, merge or deployment. Disposable database migrations were applied only to the newly created browser-test database.
+
+### Next action
+
+Independently audit the **current exact PR #29 head**, verify both required hosted CI checks are green at that head, and report PASS / PARTIAL / FIX REQUIRED. Do not merge or deploy.
+
+## Handoff: NMI-NDG-02-C2-P2-REVIEW-02
+
+- **Task:** remediate the two P2 findings from the independent review on existing Draft PR #29. **Branch:** `feat/nmi-ndg02-c2-scheduling`. **Code commit:** `848382cb7a346ab0b3f621123cba40b96868bf90`.
+- **State:** implementation and targeted no-provider browser evidence complete; final evidence/docs commit and required hosted CI are the remaining gates before the next independent exact-HEAD audit. Keep PR #29 Draft.
+- **P2-1:** schedule-prefill loading retains the server-verified candidate, reads up to 50 authenticated owner-scoped invoices, merges/deduplicates the list and leaves the candidate selected; alternatives can be chosen before Save. The prefill remains available if the list read fails. Effect cleanup suppresses stale completions and aborts the read; active 401 still expires the session.
+- **P2-2:** the C2-prefilled Save path resolves the operator's current edited date/time through the strict IANA wall-time resolver. DST gaps/overlaps and any mismatch with the existing host-zone UTC conversion fail closed. Existing explicit zone-change confirmation remains required; ordinary manual scheduler validation is unchanged.
+- **Evidence:** 28/28 targeted unit/component tests; disposable PostgreSQL 16 + synthetic-data Chrome run 50/50 at code commit above. Regression coverage includes candidate plus alternative selection, no Save before explicit operator action, New York overlap rejection, changed-zone confirmation and unique-time exact UTC save. See `design/evidence/NMI-NDG-02-C2/QA-RESULTS.md` and `qa-results.json`.
+- **Boundaries:** no provider tests/requests, no owner database access or migration rerun, no outbound notifications, voice implementation, merge or deployment. Preserve the local-only notification boundary and C1 protections.
+
+### Next action
+
+Complete the evidence/docs commit on PR #29, verify both required hosted CI workflows pass on its exact resulting SHA, then independently re-audit that live exact head. Do not merge or deploy.
+
 <!-- HANDOFF_ENTRIES_END -->

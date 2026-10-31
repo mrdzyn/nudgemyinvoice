@@ -5,6 +5,7 @@ import type { ListItem } from "../domain/serverList.js";
 import { EXAMPLE_QUESTIONS, MAX_PROMPT_CHARS } from "./intent.js";
 import { statusLabel, type Failure, type InvoiceGroup, type LookupResult } from "./lookup.js";
 import type { ChatMessage } from "./chatSession.js";
+import type { ScheduleCandidateState } from "./scheduleCandidate.js";
 
 export const DRAFT_STATE_NOTE =
   "PayPal draft state is not payment status: nothing here says whether an invoice has been paid.";
@@ -87,6 +88,151 @@ function Group({ g, onOpen }: { g: InvoiceGroup; onOpen: (id: string) => void })
         <p className="chat-hint">
           Showing up to {g.items.length} records; more exist. Open the dashboard to see them all.
         </p>
+      ) : null}
+    </section>
+  );
+}
+
+const displayTime = (time: string) => {
+  const [hour, minute] = time.split(":").map(Number);
+  const h = hour! % 12 || 12;
+  return `${h}:${String(minute).padStart(2, "0")} ${hour! < 12 ? "AM" : "PM"}`;
+};
+
+export function ScheduleCandidateView({
+  state,
+  at,
+  onSelect,
+  onReview,
+  onRetry,
+  onManual,
+}: {
+  state: ScheduleCandidateState;
+  at: Date;
+  onSelect: (id: string) => void;
+  onReview: () => void;
+  onRetry: () => void;
+  onManual: () => void;
+}) {
+  if (state.kind === "idle") return null;
+  if (state.kind === "reconfirm")
+    return (
+      <div className="schedule-candidate" role="group" aria-label="Follow-up proposal needs review">
+        <p className="followup-error" role="alert">
+          {state.message}
+        </p>
+        <button type="button" className="followup-btn" onClick={onManual}>
+          Schedule manually
+        </button>
+      </div>
+    );
+  const proposal = state.proposal;
+  return (
+    <section className="schedule-candidate" aria-label="Follow-up proposal">
+      <h4>Review this follow-up proposal</h4>
+      <p className="schedule-candidate-badge">Proposal only — nothing scheduled</p>
+      <p className="chat-hint">
+        Proposed: {formatDateOnly(proposal.date)} · {displayTime(proposal.time)} ·{" "}
+        {proposal.timeZone} (
+        {describeZone(proposal.timeZone, at).split(" (")[1]?.replace(/\)$/, "") ??
+          proposal.timeZone}
+        )
+      </p>
+      {state.kind === "loading" ? (
+        <p className="chat-hint">Searching your saved invoices…</p>
+      ) : null}
+      {state.kind === "ready" ? (
+        <>
+          <p className="chat-hint">
+            Choose the exact saved invoice. No match is selected automatically.
+          </p>
+          <ul className="chat-cards schedule-candidate-list">
+            {state.items.map((item) => (
+              <li key={item.id}>
+                <label
+                  className={`schedule-candidate-option${state.selectedId === item.id ? " is-selected" : ""}`}
+                  aria-label={`${item.customerName}, ${item.currency} ${item.total}, invoice due ${formatDateOnly(item.dueDate)}, ${statusLabel(item.paypalState)}`}
+                >
+                  <input
+                    type="radio"
+                    name="nudgey-schedule-candidate"
+                    value={item.id}
+                    checked={state.selectedId === item.id}
+                    onChange={() => onSelect(item.id)}
+                  />
+                  <span className="schedule-candidate-option-head">
+                    <strong>{item.customerName}</strong>
+                    <span>
+                      {item.currency} {item.total}
+                    </span>
+                  </span>
+                  <span className="chat-card-meta">
+                    Invoice due {formatDateOnly(item.dueDate)} · {statusLabel(item.paypalState)}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <p className="chat-hint">
+            The PayPal draft state is not payment status. This is a local reminder for you.
+          </p>
+          <div className="followup-buttons">
+            <button
+              type="button"
+              className="followup-btn followup-btn-primary"
+              disabled={!state.selectedId}
+              onClick={onReview}
+            >
+              Review in scheduler
+            </button>
+            <button type="button" className="followup-btn" onClick={onManual}>
+              Schedule manually
+            </button>
+          </div>
+        </>
+      ) : null}
+      {state.kind === "empty" ? (
+        <>
+          <p>
+            No saved invoices matched “{proposal.term}”. Refine the customer name or choose manual
+            entry.
+          </p>
+          <button type="button" className="followup-btn" onClick={onManual}>
+            Schedule manually
+          </button>
+        </>
+      ) : null}
+      {state.kind === "truncated" ? (
+        <>
+          <p>
+            More than 20 invoices matched “{proposal.term}”. Refine the search so the exact invoice
+            can be verified, or choose manual entry.
+          </p>
+          <button type="button" className="followup-btn" onClick={onManual}>
+            Schedule manually
+          </button>
+        </>
+      ) : null}
+      {state.kind === "error" ? (
+        <>
+          <p className="followup-error" role="alert">
+            {state.failure === "offline"
+              ? "I couldn't reach the server to verify an invoice."
+              : state.failure === "forbidden"
+                ? "The server did not accept this lookup. Reload and try again."
+                : state.failure === "rejected"
+                  ? "The server rejected this invoice search. Refine the customer name."
+                  : "The invoice lookup could not be completed safely. Try again or use the manual scheduler."}
+          </p>
+          <div className="followup-buttons">
+            <button type="button" className="followup-btn" onClick={onRetry}>
+              Try again
+            </button>
+            <button type="button" className="followup-btn" onClick={onManual}>
+              Schedule manually
+            </button>
+          </div>
+        </>
       ) : null}
     </section>
   );
@@ -194,6 +340,10 @@ export function ChatView({
   onOpenInvoice,
   onOpenDashboard,
   onSchedule,
+  onSelectSchedule,
+  onReviewSchedule,
+  onRetrySchedule,
+  onDraftChange,
 }: {
   messages: ChatMessage[];
   busy: boolean;
@@ -203,11 +353,22 @@ export function ChatView({
   onOpenInvoice: (id: string) => void;
   onOpenDashboard: () => void;
   onSchedule: () => void;
+  onSelectSchedule: (id: string) => void;
+  onReviewSchedule: () => void;
+  onRetrySchedule: () => void;
+  onDraftChange: () => void;
 }) {
   const inputId = useId();
   const input = useRef<HTMLInputElement>(null);
+  const log = useRef<HTMLDivElement>(null);
   const [text, setText] = useState("");
   useEffect(() => input.current?.focus(), []);
+  useEffect(() => {
+    if (!log.current) return;
+    log.current.scrollTop = log.current.scrollHeight;
+    const panel = log.current.closest(".nudgey-panel");
+    if (panel instanceof HTMLElement) panel.scrollTop = panel.scrollHeight;
+  }, [messages]);
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const t = text.trim();
@@ -232,7 +393,13 @@ export function ChatView({
           Schedule a follow-up
         </button>
       </div>
-      <div className="chat-log" role="log" aria-live="off" aria-label="Conversation with Nudgey">
+      <div
+        ref={log}
+        className="chat-log"
+        role="log"
+        aria-live="off"
+        aria-label="Conversation with Nudgey"
+      >
         {messages.length === 0 ? (
           <p className="chat-hint">Ask a question or pick an example above.</p>
         ) : null}
@@ -255,6 +422,16 @@ export function ChatView({
                   onOpenDashboard={onOpenDashboard}
                 />
               ) : null}
+              {m.schedule ? (
+                <ScheduleCandidateView
+                  state={m.schedule}
+                  at={at}
+                  onSelect={onSelectSchedule}
+                  onReview={onReviewSchedule}
+                  onRetry={onRetrySchedule}
+                  onManual={onSchedule}
+                />
+              ) : null}
             </div>
           ),
         )}
@@ -268,7 +445,10 @@ export function ChatView({
           autoComplete="off"
           maxLength={MAX_PROMPT_CHARS}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            if (e.target.value.trim()) onDraftChange();
+            setText(e.target.value);
+          }}
           placeholder="What are my pending invoices?"
         />
         <div className="followup-buttons">

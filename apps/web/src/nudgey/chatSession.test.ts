@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ListQuery, ListResult } from "../invoices/api.js";
 import type { ListItem } from "../domain/serverList.js";
 import { ChatSession, MAX_MESSAGES, type ChatDeps } from "./chatSession.js";
+import { ScheduleCandidateController } from "./scheduleCandidate.js";
 
 const item = (n: number): ListItem => ({
   id: `00000000-0000-4000-8000-00000000000${n}`,
@@ -118,6 +119,76 @@ describe("Nudgey chat session (in memory only)", () => {
     expect(gates).toEqual([]);
     const results = s.getSnapshot().flatMap((m) => (m.result ? [m.result] : []));
     expect(results.map((r) => (r.kind === "message" ? r.tone : r.kind))).toEqual(["limit", "info"]);
+  });
+
+  it("routes a supported scheduling command only to the authenticated invoice reader and shows a proposal, never saving", async () => {
+    const gates: { resolve: (r: ListResult) => void; query: ListQuery; signal: AbortSignal }[] = [];
+    const listInvoices = (query: ListQuery, signal: AbortSignal) =>
+      new Promise<ListResult>((resolve) => gates.push({ resolve, query, signal }));
+    const create = vi.fn();
+    const candidates = new ScheduleCandidateController({
+      listInvoices,
+      expired: vi.fn(),
+      now: () => new Date("2026-10-31T04:00:00.000Z"),
+      timeZone: () => "Asia/Manila",
+    });
+    const s = new ChatSession({
+      listInvoices,
+      followUps: { readFresh: async () => ({ kind: "unavailable" }) },
+      expired: vi.fn(),
+      announce: vi.fn(),
+      scheduleCandidates: candidates,
+      now: () => new Date("2026-10-31T04:00:00.000Z"),
+      timeZone: () => "Asia/Manila",
+    });
+    const pending = s.ask("Remind me to follow up with Northwind Studio tomorrow at 9 AM");
+    expect(gates[0]?.query).toEqual({
+      limit: 20,
+      cursor: null,
+      currency: null,
+      status: null,
+      q: "Northwind Studio",
+    });
+    expect(gates[0]?.signal.aborted).toBe(false);
+    expect(create).not.toHaveBeenCalled();
+    gates[0]?.resolve(ok([item(1), item(2)]));
+    await pending;
+    expect(s.getSnapshot().at(-1)?.schedule).toMatchObject({ kind: "ready", selectedId: null });
+    expect(s.getSnapshot().some((m) => m.pending)).toBe(false);
+  });
+
+  it("typing a replacement prompt immediately removes old candidate actions while a late 401 still expires the session", async () => {
+    let finish!: (result: ListResult) => void;
+    let signal!: AbortSignal;
+    const expired = vi.fn();
+    const listInvoices = (_query: ListQuery, requestSignal: AbortSignal) => {
+      signal = requestSignal;
+      return new Promise<ListResult>((resolve) => (finish = resolve));
+    };
+    const candidates = new ScheduleCandidateController({
+      listInvoices,
+      expired,
+      now: () => new Date("2026-10-31T04:00:00.000Z"),
+      timeZone: () => "Asia/Manila",
+    });
+    const s = new ChatSession({
+      listInvoices,
+      followUps: undefined,
+      expired,
+      announce: vi.fn(),
+      scheduleCandidates: candidates,
+      now: () => new Date("2026-10-31T04:00:00.000Z"),
+      timeZone: () => "Asia/Manila",
+    });
+    const request = s.ask("Remind me to follow up with Northwind Studio tomorrow at 9 AM");
+    expect(s.getSnapshot().some((message) => message.schedule)).toBe(true);
+    s.replaceScheduleCandidate(); // called synchronously by Ask input on the first replacement character
+    expect(signal.aborted).toBe(true);
+    expect(s.getSnapshot().some((message) => message.schedule)).toBe(false);
+    finish({ kind: "unauthorized" });
+    await request;
+    expect(expired).toHaveBeenCalledTimes(1);
+    expect(s.getSnapshot()).toEqual([]);
   });
 
   it("keeps at most the last messages and writes nothing to browser storage", async () => {

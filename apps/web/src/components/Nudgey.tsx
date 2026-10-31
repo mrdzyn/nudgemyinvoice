@@ -17,7 +17,7 @@ import {
   ScheduleForm,
   type InvoiceOption,
 } from "../followups/FollowUpUi.js";
-import { browserTimeZone, formatInstant } from "../followups/schedule.js";
+import { browserTimeZone, buildFollowUpMessage, formatInstant } from "../followups/schedule.js";
 import { StatusPicker } from "../nudgey/StatusPicker.js";
 import { statusOpenAction } from "../nudgey/statusLookup.js";
 import { useStatusLookup } from "../nudgey/useStatusLookup.js";
@@ -159,7 +159,19 @@ type View =
   | { kind: "home" }
   | { kind: "status" }
   | { kind: "ask" }
-  | { kind: "schedule" }
+  | {
+      kind: "schedule";
+      prefill?: {
+        invoiceId: string;
+        date: string;
+        time: string;
+        timeZone: string;
+        message: string;
+        invoice: InvoiceOption;
+        generation: number;
+      };
+      fromAsk?: boolean;
+    }
   | { kind: "reschedule"; item: FollowUpView };
 
 const MUTATION_MESSAGE: Partial<Record<MutationOutcome["kind"], string>> = {
@@ -247,27 +259,43 @@ export function Nudgey() {
   useEffect(() => {
     if (!open || (view.kind !== "schedule" && view.kind !== "reschedule") || !listInvoices) return;
     const ac = new AbortController();
+    const candidate = view.kind === "schedule" ? view.prefill : undefined;
+    if (candidate) {
+      setInvoices([candidate.invoice]);
+    }
     setInvoicesStatus("loading");
+    let active = true;
     void listInvoices(
       { limit: 50, cursor: null, currency: null, status: null, q: null },
       ac.signal,
     ).then((r) => {
-      if (ac.signal.aborted || r.kind === "aborted") return;
+      if (!active || r.kind === "aborted") return;
       if (r.kind === "unauthorized") return expired?.();
       if (r.kind !== "ok") return setInvoicesStatus("error");
-      setInvoices(
-        r.page.items.map((i) => ({
-          id: i.id,
-          customerName: i.customerName,
-          currency: i.currency,
-          total: i.total,
-          dueDate: i.dueDate,
-        })),
-      );
+      const loaded = r.page.items.map((i) => ({
+        id: i.id,
+        customerName: i.customerName,
+        currency: i.currency,
+        total: i.total,
+        dueDate: i.dueDate,
+      }));
+      const merged = candidate
+        ? [candidate.invoice, ...loaded.filter((item) => item.id !== candidate.invoice.id)]
+        : loaded;
+      setInvoices(merged);
       setInvoicesStatus("ready");
     });
-    return () => ac.abort();
-  }, [open, view.kind, listInvoices, expired]);
+    return () => {
+      active = false;
+      ac.abort();
+    };
+  }, [
+    open,
+    view.kind,
+    view.kind === "schedule" ? view.prefill?.invoiceId : null,
+    listInvoices,
+    expired,
+  ]);
 
   const run = useCallback(
     async (id: string | null, task: (signal: AbortSignal) => Promise<MutationOutcome>) => {
@@ -314,11 +342,12 @@ export function Nudgey() {
   const submit = async (s: {
     invoiceId: string;
     dueAt: string;
+    timezone: string;
     note: string | null;
     message: string;
   }) => {
     if (!followUps) return;
-    const body = { dueAt: s.dueAt, timezone: timeZone, note: s.note, message: s.message };
+    const body = { dueAt: s.dueAt, timezone: s.timezone, note: s.note, message: s.message };
     const r = await run(null, (signal) =>
       view.kind === "reschedule"
         ? followUps.reschedule(view.item.id, body, signal)
@@ -326,6 +355,7 @@ export function Nudgey() {
     );
     if (!r) return;
     if (r.kind === "ok") {
+      if (view.kind === "schedule" && view.fromAsk) chat.session.discardScheduleCandidate();
       setView({ kind: "home" });
       announce(
         `Follow-up saved for ${formatInstant(r.followUp.dueAt, r.followUp.timezone)}. It is a reminder for you; nothing was sent to the customer.`,
@@ -450,8 +480,42 @@ export function Nudgey() {
                 onOpenInvoice={openInvoiceById}
                 onOpenDashboard={openDashboard}
                 onSchedule={() => {
-                  chat.clear();
+                  chat.session.discardScheduleCandidate();
                   setView({ kind: "schedule" });
+                }}
+                onSelectSchedule={(id) => chat.session.selectScheduleCandidate(id)}
+                onRetrySchedule={() => void chat.session.retryScheduleCandidates()}
+                onDraftChange={() => chat.session.replaceScheduleCandidate()}
+                onReviewSchedule={() => {
+                  const selected = chat.session.confirmScheduleCandidate();
+                  if (!selected) return;
+                  const item = selected.invoice;
+                  const invoice = {
+                    id: item.id,
+                    customerName: item.customerName,
+                    currency: item.currency,
+                    total: item.total,
+                    dueDate: item.dueDate,
+                  };
+                  setInvoices([invoice]);
+                  setView({
+                    kind: "schedule",
+                    fromAsk: true,
+                    prefill: {
+                      invoiceId: item.id,
+                      date: selected.proposal.date,
+                      time: selected.proposal.time,
+                      timeZone: selected.proposal.timeZone,
+                      message: buildFollowUpMessage({
+                        customerName: item.customerName,
+                        currency: item.currency,
+                        total: item.total,
+                        dueDate: item.dueDate,
+                      }),
+                      invoice,
+                      generation: selected.generation,
+                    },
+                  });
                 }}
               />
             </>
@@ -471,7 +535,15 @@ export function Nudgey() {
                 </button>
               </div>
               <ScheduleForm
-                key={view.kind === "reschedule" ? view.item.id : "new"}
+                key={
+                  view.kind === "reschedule"
+                    ? view.item.id
+                    : view.kind === "schedule"
+                      ? view.prefill
+                        ? `${view.prefill.invoiceId}:${view.prefill.generation}`
+                        : "new"
+                      : "new"
+                }
                 mode={view.kind === "reschedule" ? "reschedule" : "create"}
                 invoices={
                   view.kind === "reschedule" && !invoices.some((o) => o.id === view.item.invoiceId)
@@ -499,6 +571,17 @@ export function Nudgey() {
                       },
                     }
                   : {})}
+                {...(view.kind === "schedule" && view.prefill
+                  ? {
+                      prefill: {
+                        invoiceId: view.prefill.invoiceId,
+                        date: view.prefill.date,
+                        time: view.prefill.time,
+                        timeZone: view.prefill.timeZone,
+                        message: view.prefill.message,
+                      },
+                    }
+                  : {})}
                 busy={busyId !== null}
                 error={formError}
                 now={now}
@@ -506,7 +589,10 @@ export function Nudgey() {
                 onSubmit={(s) => void submit(s)}
                 onBack={() => {
                   setFormError(null);
-                  setView({ kind: "home" });
+                  if (view.kind === "schedule" && view.fromAsk) {
+                    chat.session.discardScheduleCandidate();
+                    setView({ kind: "ask" });
+                  } else setView({ kind: "home" });
                 }}
               />
             </>
