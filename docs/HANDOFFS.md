@@ -1604,4 +1604,11 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Gates pending:** both hosted CI checks at reconciled HEAD; exact-HEAD combined behavior and security audit; targeted combined no-provider browser QA before owner merge approval. Original C1 and selector browser evidence runs were on separate builds.
 - **No merge/deployment/provider action authorized.** Local migration 0007 has already been applied by owner after a verified backup and must not be rerun on that local database.
 
+## Handoff: NMI-NDG-02-C1-COMBINED-QA-1
+
+- **From:** GPT-6, exact-head browser QA. **To:** Independent combined-code re-audit; owner merge decision after that review. **PR #27 target:** `4a974943cdd81ef5a2fc757a36a2ccaf8a2f6005`.
+- **Evidence:** `design/evidence/NMI-NDG-02/combined/README.md` and reports: Ask Nudgey 29/29, status selector 26/26 (including synthetic browser HTTP 401 session expiry), follow-up scheduler 23/23, unresolved-save browser guards 117/117 (including status-selector “Open invoice details”). Chrome production-preview journeys used synthetic records and disposable PostgreSQL only; no external provider traffic. No product defect found.
+- **Change scope:** deterministic browser harness/evidence and task/status/handoff notes only. At the audited head, required hosted CI was green; this evidence update requires CI on the resulting PR head. No migration was rerun; owner's local `0007` remains applied after a verified backup.
+- **Not done:** no provider tests, merge, deployment, or outbound notification authorization.
+
 <!-- HANDOFF_ENTRIES_END -->

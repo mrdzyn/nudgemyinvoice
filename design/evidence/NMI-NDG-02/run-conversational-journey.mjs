@@ -111,6 +111,7 @@ const ws = new WebSocket(targetInfo.webSocketDebuggerUrl);
 await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
 let nextId = 1;
 const pending = new Map();
+let staleGate = null;
 const consoleMsgs = [];
 const foreign = [];
 const netLog = [];
@@ -125,6 +126,20 @@ ws.onmessage = (m) => {
     if (u.startsWith(ORIGIN + "/")) netLog.push({ method: msg.params.request.method, path: u.slice(ORIGIN.length), id: msg.params.requestId, body: msg.params.request.postData ?? null });
     else if (!/^(about:|data:|blob:)/.test(u)) foreign.push(u);
   } else if (msg.method === "Network.responseReceived") { const e = netLog.find((n) => n.id === msg.params.requestId); if (e) e.status = msg.params.response.status; }
+  else if (msg.method === "Network.loadingFailed") { const e = netLog.find((n) => n.id === msg.params.requestId); if (e) e.failure = msg.params.errorText; }
+  else if (msg.method === "Fetch.requestPaused") {
+    if (staleGate && msg.params.request.url.includes("/api/invoice-drafts/search")) {
+      if (!staleGate.held) {
+        staleGate.held = msg.params.requestId;
+        staleGate.holdResolve();
+      } else {
+        const old = staleGate.held;
+        staleGate = null;
+        send("Fetch.failRequest", { requestId: old, errorReason: "Aborted" }).catch(() => {});
+        send("Fetch.continueRequest", { requestId: msg.params.requestId }).catch(() => {});
+      }
+    } else send("Fetch.continueRequest", { requestId: msg.params.requestId }).catch(() => {});
+  }
 };
 const send = (method, params = {}) => new Promise((res, rej) => { const id = nextId++; pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params })); });
 for (const d of ["Page", "Runtime", "Log", "Network"]) await send(d + ".enable");
@@ -243,13 +258,22 @@ await waitBotDone();
 check("payment", "the refusal and an unknown request made zero network requests", netLog.length === m && (await lastBot()).includes("I can look things up read-only"));
 await shot("02-conversation.jpg");
 
-// 6 a newer question replaces an unanswered older one
+// 6 a newer question replaces an unanswered older one. Hold the first HTTP request at the browser
+// boundary so the replacement is deterministic even when the local API responds very quickly.
 m = netLog.length;
+let releaseStaleGate;
+const staleHeld = new Promise((resolve) => { releaseStaleGate = resolve; });
+staleGate = { held: null, holdResolve: releaseStaleGate };
+await send("Fetch.enable", { patterns: [{ urlPattern: "*/api/invoice-drafts/search", requestStage: "Request" }] });
 await ev(`(() => { const form = document.querySelector('.chat-form'); const e = form.querySelector('input'); const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; set.call(e, 'Show my invoices'); e.dispatchEvent(new Event('input', { bubbles: true })); form.requestSubmit(); })()`);
+await Promise.race([staleHeld, sleep(5000).then(() => { throw new Error("first stale-test request was not held"); })]);
 await ask("Show my USD invoices");
 await waitBotDone();
+await send("Fetch.disable");
 const ub = await userBubbles();
-check("stale", "asking again before the first answer replaces it: only the newer question remains and its USD-filtered answer is shown", ub.at(-1) === "Show my USD invoices" && !ub.slice(-2).includes("Show my invoices") && (await lastBot()).includes("USD invoices") && !(await lastBot()).includes("Vienna Cafe"), JSON.stringify(ub.slice(-3)));
+const staleBot = await lastBot();
+const staleCalls = searchCalls(m);
+check("stale", "the first search was held until replacement, then canceled; only the newer question and USD-filtered answer remain", ub.at(-1) === "Show my USD invoices" && !ub.slice(-2).includes("Show my invoices") && staleBot.includes("USD invoices") && !staleBot.includes("Vienna Cafe") && staleCalls.length === 2 && staleCalls.some((n) => n.failure), JSON.stringify({ users: ub.slice(-3), answer: staleBot, requests: staleCalls.map((n) => ({ status: n.status, failure: n.failure, body: n.body })) }));
 
 // 7 open an invoice from a card through the real navigation
 await ask("Find invoices for Northwind Studio");

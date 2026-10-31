@@ -109,7 +109,7 @@
     },
     {
       "group": "stale",
-      "name": "asking again before the first answer replaces it: only the newer question remains and its USD-filtered answer is shown",
+      "name": "the first search was held until replacement, then canceled; only the newer question and USD-filtered answer remain",
       "pass": true,
       "detail": ""
     },

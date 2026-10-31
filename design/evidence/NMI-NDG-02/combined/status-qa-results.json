@@ -1,0 +1,166 @@
+{
+  "task": "NMI-NDG-03",
+  "timezoneEmulated": "Asia/Manila",
+  "providersConfigured": false,
+  "simulatedDraftRow": true,
+  "passed": 26,
+  "total": 26,
+  "results": [
+    {
+      "group": "setup",
+      "name": "disposable PostgreSQL 16 migrated through the journal (incl. 0007) and the API is healthy behind the proxy with no provider configured",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "two synthetic invoices saved by the operator",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "setup",
+      "name": "one invoice has a SIMULATED 'created' operation row, the other has none",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "operator signs in through the browser and lands on the dashboard",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "defect",
+      "name": "on the dashboard, Check invoice status opens the status selector inside Nudgey (the panel stays open and the page did not change)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "defect",
+      "name": "the search box has focus and the initial load is one bounded POST (limit 20, no term) to the existing search route",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "states",
+      "name": "both saved invoices are listed with their own currency and total, and the SIMULATED draft row shows as 'PayPal draft created' while the other shows 'No PayPal draft'",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "states",
+      "name": "the draft-only disclaimer is shown and nothing claims paid, unpaid, overdue or settled",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "search",
+      "name": "typing a customer name sends ONE debounced POST whose body carries q; no URL contains the name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "select",
+      "name": "selecting an invoice shows its customer, amount and draft state, with Open invoice details",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "empty",
+      "name": "a search with no match says so plainly and clears the selection",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "error",
+      "name": "when the server cannot be reached the selector shows an honest offline error with Try again, never an empty-account message",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "error",
+      "name": "Try again repeats the same search and shows the matching invoice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "navigate",
+      "name": "Open invoice details opens the existing saved-invoice page for that invoice and closes Nudgey",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "an HTTP 401 from a status search expires the session and removes the selector and prior invoice results",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "the operator can sign back in after the 401 session expiry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "unchanged",
+      "name": "View my invoices still navigates straight to the dashboard and closes the panel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "back",
+      "name": "Back returns to the Nudgey home actions",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "back",
+      "name": "reopening the selector starts clean: nothing is selected and the search box is empty",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "narrow",
+      "name": "at 390px the selector panel is inside the viewport, above the mobile navigation, with no horizontal overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "keyboard",
+      "name": "Escape closes Nudgey and focus returns to the launcher",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "signing out removes the workspace, the selector and every invoice name from the page",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "only auth, invoice search (POST), the invoice detail read, its follow-up read and the follow-up list were used: never parse, PayPal-draft, a follow-up write or a send",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no request left the page origin and no URL carries customer text",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the only PayPal row is the SIMULATED one inserted for the label test; nothing was created, no approvals or webhooks, no follow-up written",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "browser storage is empty and the only console errors are the expected pre-sign-in/session-expiry 401 probes and deliberately blocked search",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

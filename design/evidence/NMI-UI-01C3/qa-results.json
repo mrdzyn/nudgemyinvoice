@@ -1,6 +1,6 @@
 {
-  "chrome": "Chrome/156.0.8078.74",
-  "passed": 116,
+  "chrome": "Chrome/156.0.8078.80",
+  "passed": 117,
   "failed": 0,
   "results": [
     {
@@ -485,6 +485,12 @@
     },
     {
       "group": "REAL leaving an unresolved save (server commits, response lost)",
+      "name": "Check invoice status → Open invoice details asks before abandoning the unresolved save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "REAL leaving an unresolved save (server commits, response lost)",
       "name": "header brand: asks first (uncertain wording, duplicate warning) and does not navigate",
       "pass": true,
       "detail": ""
@@ -665,7 +671,7 @@
     },
     {
       "group": "Global invariants",
-      "name": "the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts/:id, parse and (since C4) the read-only list",
+      "name": "the browser used only auth, invoice save/detail/parse and the existing read-only invoice/follow-up routes",
       "pass": true,
       "detail": ""
     },
