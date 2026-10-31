@@ -1586,4 +1586,15 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Diagnosis recorded, not acted on:** the follow-ups load failure on the owner's local database is a missing migration `0007`, not SMTP; the migration was not run by the agent.
 - **Not done:** no merge, deployment, provider call, migration, or change to PR #27.
 
+## Handoff: NMI-NDG-03-P2-REVIEW-1
+
+- **From:** Implementation agent. **To:** Independent exact-HEAD re-audit, then owner. **Branch/PR:** `fix/nmi-nudgey-status-selector`, existing Draft PR #28 against `main`.
+- **Start / implementation:** exact starting head `53b154a31567c1185ce30391bdf5df1d9775a6d5`; implementation commit `03a34d7ccde8a08788c17c82e3271cd7fe429a3f` (this handoff record is the following documentation commit; audit the resulting branch tip).
+- **Scope:** remediate both P2 findings in review `5721936401` only.
+- **Changed:** status lookup lifecycle for internally aborted 401 handling while preserving reset/disposal and stale-result cancellation; immediate invalidation of old rows and selected invoice on term input before the existing debounce; deterministic status lookup and input-wiring regression tests; task/status/judge-runbook migration note.
+- **Validation:** focused Vitest 42/42, `@nmi/web` typecheck, changed-file Prettier check and `git diff --check` passed. Hosted CI is required on the resulting exact PR head.
+- **Database/provider boundary:** owner reports migration `0007` was applied successfully to the local database after a verified backup; this agent did not run or rerun it. No PayPal, OpenAI or SMTP calls; PR #27 was not changed.
+- **Review focus:** old active search returns 401 after a newer search starts; old non-401 remains ignored; reset/dispose suppress late results; new term clears selectable results before 250 ms; exact starting-head preservation; no layout/design changes.
+- **Not done:** no merge, deployment or provider tests. PR #28 remains Draft pending independent re-audit and owner approval.
+
 <!-- HANDOFF_ENTRIES_END -->
