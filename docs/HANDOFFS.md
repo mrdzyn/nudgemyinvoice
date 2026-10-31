@@ -1571,4 +1571,10 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Verification to complete:** hosted Project Baseline and Stack CI on new exact head; independent short re-audit of controller and test changes. No prior audit or CI of #26's old SHA substitutes for this gate.
 - **Boundaries:** both PRs remain Draft, no merge, provider call, deployment, migration, credential or external send. After owner authorization to merge #26, reconcile PR #27's stacked history/diff, rerun required checks and seek separate approval.
 
+## Handoff: NMI-FUP-01-FIX2
+
+- **From:** GPT-6, source remediation. **To:** Codex independent exact-HEAD re-audit; owner decision after a PASS. **PR:** #26, branch `feat/nmi-ux02-nudgey`; FIX1 audited SHA `1a8cfadd2e1ef2761f7cd25ce62d9c305da3f964` was FIX REQUIRED due to aborted refresh 401 suppression.
+- **Changes:** `apps/web/src/followups/controller.ts` now handles the returned 401 before ignoring an internally aborted ordinary result, without weakening the stopped-controller or read-generation boundaries; `controller.test.ts` adds a deterministic two-refresh abort-then-401 test. Task, STATUS and handoff updated; no new provider, API, schema or UI changes.
+- **Gates:** new exact-HEAD CI and independent re-audit required; no merge/deploy/provider calls. PR #27 remains Draft, stacked on #26; downstream reconciliation and separate owner merge approval remain mandatory.
+
 <!-- HANDOFF_ENTRIES_END -->
