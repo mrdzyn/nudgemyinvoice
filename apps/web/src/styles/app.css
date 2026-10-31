@@ -1552,3 +1552,73 @@ dialog .actions {
     transition: none;
   }
 }
+
+/* Nudgey "Check invoice status" selector (existing tokens only). */
+.status-picker {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+}
+.status-picker label {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.status-picker input[type="search"] {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.status-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 34dvh;
+  overflow-y: auto;
+}
+.status-option {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.status-option[aria-pressed="true"] {
+  border: 2px solid var(--focus);
+  background: var(--info-bg);
+}
+.status-option-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.status-option-meta {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.status-selected {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.status-selected p {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}

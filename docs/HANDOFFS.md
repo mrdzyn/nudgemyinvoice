@@ -1577,4 +1577,13 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Changes:** `apps/web/src/followups/controller.ts` now handles the returned 401 before ignoring an internally aborted ordinary result, without weakening the stopped-controller or read-generation boundaries; `controller.test.ts` adds a deterministic two-refresh abort-then-401 test. Task, STATUS and handoff updated; no new provider, API, schema or UI changes.
 - **Gates:** new exact-HEAD CI and independent re-audit required; no merge/deploy/provider calls. PR #27 remains Draft, stacked on #26; downstream reconciliation and separate owner merge approval remain mandatory.
 
+## Handoff: NMI-NDG-03
+
+- **From:** Implementation agent (Claude). **To:** Independent review and owner visual approval. **Branch/PR:** `fix/nmi-nudgey-status-selector`, new Draft PR against `main` (PR #26 is merged; Draft PR #27 untouched).
+- **Scope:** `tasks/NMI-NDG-03-invoice-status-selector.md`. Fixes the duplicate "Check invoice status" action with a read-only selector inside Nudgey; closes a latent guard gap (`open-saved` "opened" now counts as leaving an unresolved save).
+- **Changed:** `components/Nudgey.tsx`, `nudgey/{statusLookup,useStatusLookup}.ts`, `nudgey/StatusPicker.tsx`, `invoices/leaveGuard.ts`, CSS, tests, `design/evidence/NMI-NDG-03/`, judge-runbook troubleshooting, STATUS/task.
+- **Review focus:** that "status" has no navigation action while "browse" is unchanged; request shape and abort handling; draft-state wording (never payment state); the guard change and its effect on follow-up and dashboard opens; overlap with PR #27 in `Nudgey.tsx`.
+- **Diagnosis recorded, not acted on:** the follow-ups load failure on the owner's local database is a missing migration `0007`, not SMTP; the migration was not run by the agent.
+- **Not done:** no merge, deployment, provider call, migration, or change to PR #27.
+
 <!-- HANDOFF_ENTRIES_END -->
