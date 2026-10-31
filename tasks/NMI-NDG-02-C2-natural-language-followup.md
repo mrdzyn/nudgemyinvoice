@@ -1,6 +1,6 @@
 # NMI-NDG-02 C2 — Natural-language follow-up scheduling
 
-**State:** Product-owner flow/design **APPROVED**; C2 functional implementation is in progress on the existing Draft PR #29 and is pending hosted CI and independent exact-head audit.
+**State:** Product-owner flow/design **APPROVED**; C2 functional implementation is complete on the existing Draft PR #29 at code commit `b590e16bd26ebcf172feb3f2c0fc8987a9a53b92`. Focused checks, no-provider browser QA and both required hosted workflows passed; independent exact-head audit is next.
 **Base:** `main` at `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35` after independently audited and owner-approved PR #27.  
 **Scope authority:** Owner instruction "start NMI-NDG-02 C2".  
 **Design preview:** [Nudgey C2 scheduling states](../design/mockups/NMI-NDG-02-C2-scheduling.html).  
@@ -57,7 +57,7 @@ Preview includes: (A) proposal and exact selection; (B) several matching invoice
 
 ## Current gate
 
-This PR began **design/spec only**; the owner subsequently approved the flow on 2026-10-31. The deterministic parser, owner-scoped invoice candidate lookup and editable scheduler prefill are now wired on Draft PR #29, with focused tests and disposable-database browser QA in progress. No merge/deployment permission follows from approval. No OpenAI/PayPal/SMTP requests, email, provider tests, production database operation, deployment or release is authorized. C3 outbound messaging remains separate and unapproved.
+This PR began **design/spec only**; the owner subsequently approved the flow on 2026-10-31. The deterministic parser, owner-scoped invoice candidate lookup and editable scheduler prefill are wired on Draft PR #29. Focused tests and disposable-database browser QA passed at code commit `b590e16bd26ebcf172feb3f2c0fc8987a9a53b92`; both required hosted workflows passed on that commit. See `design/evidence/NMI-NDG-02-C2/QA-RESULTS.md`. The PR remains Draft for independent exact-head audit. No merge/deployment permission follows from approval. No OpenAI/PayPal/SMTP requests, email, provider tests, production database operation, deployment or release is authorized. C3 outbound messaging remains separate and unapproved.
 
 ## V1 on-device speech input — separately approved but NOT part of C2 wiring
 
