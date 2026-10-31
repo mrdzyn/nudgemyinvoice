@@ -12,9 +12,12 @@ const leaving: Action[] = [
   { type: "navigate", screen: "composer" },
   { type: "navigate", screen: "composer", resetComposer: true },
   { type: "discard-review" },
+  // Choosing another saved invoice (Nudgey status selector / follow-up list / dashboard) leaves Review too.
+  { type: "open-saved", id: "0b0e7a52-8f73-4b1c-9c64-3a1d2f5a8e11", notice: "opened" },
 ];
 const free: Action[] = [
   { type: "open-saved", id: "0b0e7a52-8f73-4b1c-9c64-3a1d2f5a8e11", notice: "created" },
+  { type: "open-saved", id: "0b0e7a52-8f73-4b1c-9c64-3a1d2f5a8e11", notice: "replayed" },
   { type: "set-theme", theme: "dark" },
   { type: "set-offline", offline: true },
   { type: "composer", patch: { text: "x" } },

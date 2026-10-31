@@ -109,7 +109,15 @@ export class FollowUpsController {
     const gen = ++this.readGen;
     if (this.snap.status === "idle") this.set({ status: "loading" });
     const r = await this.api.list(ac.signal);
-    if (ac.signal.aborted || this.stopped || r.kind === "aborted") return;
+    if (this.stopped) return;
+    // Authentication is authoritative even when another refresh has aborted this request.
+    // An HTTP 401 must expire the active session; only non-401 aborted results are discarded.
+    if (r.kind === "unauthorized") {
+      if (this.reads === ac) this.reads = null;
+      this.apply(gen, r);
+      return;
+    }
+    if (ac.signal.aborted || r.kind === "aborted") return;
     if (this.reads === ac) this.reads = null;
     this.apply(gen, r);
   }

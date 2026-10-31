@@ -48,3 +48,17 @@ Strict zod bodies (unknown keys refused, UTC `Z` instants only, validated IANA z
 
 ## Boundaries kept
 No change to the PayPal or OpenAI clients, approvals, authentication, sessions, billing or deployment; no new dependency; the unsaved-invoice navigation guard still wraps "Open invoice"; the panel closes on navigation. Draft PR only: no merge, no deployment.
+
+## Independent audit FIX1 — shared read ordering
+
+- **Reason:** independent review of Draft PR #26 requested the read-order guard and focused regression coverage already implemented downstream on Draft PR #27. Backport only `apps/web/src/followups/controller.ts` and `apps/web/src/followups/controller.test.ts` from independently audited PR #27 at `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06`. The new `readFresh(signal)` is a read-only, unused-by-#26 hook that will be consumed by the downstream conversational PR; no chat UI or provider features move into #26.
+- **Behavior:** both periodic `refresh()` and caller-initiated `readFresh()` carry monotonically increasing read generations. An older finishing response cannot overwrite newer-applied counts/items/errors. Active 401 responses still expire the session, and aborted/stopped requests do not apply.
+- **Focused evidence:** four deferred-order/late-failure/401/abort regression cases come with the controller from the audited downstream code. Required hosted CI and an independent **new exact-HEAD** re-audit are pending at the time of this documentation. Do not call this PASS solely because PR #27 passed.
+- **Scope:** no database, migration, runtime-role, auth, PayPal, OpenAI, SMTP, customer notification, deployment or merge change. PRs #26 and #27 stay Draft; PR #27 must be reconciled to the eventual merged #26 before its own merge.
+
+## Independent audit FIX2 — aborted refresh 401 handling
+
+- **Finding:** the FIX1 exact-HEAD re-audit at `1a8cfadd2e1ef2761f7cd25ce62d9c305da3f964` found that a later `refresh()` could internally abort an earlier one before its response was processed. If the earlier response nevertheless returned `unauthorized` (HTTP 401), the `ac.signal.aborted` guard skipped session expiry.
+- **Remediation:** after the API returns, `refresh()` ignores results after `stop()`, but on an active controller forwards `unauthorized` through the existing `apply(gen, r)` handler **before** ignoring canceled non-401 replies. This preserves the shared read-generation guard and the session-expiration policy. No other controller method or API changes.
+- **Regression:** deferred two-refresh test: refresh B internally aborts refresh A; B succeeds and updates counts, A later returns `unauthorized`; `onExpired` runs once and the newest count remains unchanged. The test fails on the pre-fix code. Focused tests/hosted CI and independent re-audit on the new exact HEAD remain release gates; no provider or live test is required.
+- **Boundaries:** Nudgey remains a local-only reminder; no outbound messages, PayPal/OpenAI calls, SMTP integration, migrations or deployment. Draft PR #27 remains stacked and needs reconciliation once #26 is merged under owner approval.

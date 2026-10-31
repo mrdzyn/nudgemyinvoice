@@ -292,6 +292,28 @@ describe("out-of-order reads never rewind newer state (review M1)", () => {
     expect(expired).toHaveBeenCalledTimes(1);
   });
 
+  it("an internally aborted refresh still honors a late 401 without rewinding newer data", async () => {
+    const expired = vi.fn();
+    const { api, gates } = deferred();
+    const c = new FollowUpsController(api, "csrf", expired, 0);
+    const oldRead = c.refresh();
+    const newRead = c.refresh(); // cancels the first request
+    expect(gates[0]?.signal.aborted).toBe(true);
+
+    // Newer success is already reflected in the shared snapshot.
+    gates[1]?.resolve(okList(1, [view(1, "due")]));
+    await newRead;
+    expect(c.getSnapshot().counts).toEqual({ due: 1, upcoming: 0 });
+
+    // The transport can still deliver an HTTP 401 despite its aborted signal.
+    // Authentication revocation must win over the abort and stale-generation guard.
+    gates[0]?.resolve({ kind: "unauthorized" });
+    await oldRead;
+    expect(expired).toHaveBeenCalledTimes(1);
+    // A late unauthorized result must not overwrite the last valid server-backed counts.
+    expect(c.getSnapshot().counts).toEqual({ due: 1, upcoming: 0 });
+  });
+
   it("abort semantics are unchanged: an aborted caller gets 'aborted' and the snapshot is untouched", async () => {
     const { api, gates } = deferred();
     const c = new FollowUpsController(api, "csrf", () => undefined, 0);

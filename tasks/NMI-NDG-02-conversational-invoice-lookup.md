@@ -83,3 +83,10 @@ SMTP integration needs a separate decision on whose address is notified (operato
 - **M3 — spoken summary on partial failure:** `summarizeForAnnouncement` no longer says "No saved invoices found" when a PayPal draft group failed to load; it says some groups could not be loaded (and how many), and reports "no saved invoices" only when every group answered empty.
 - **Minor — control characters:** `parseIntent` checks the raw input for control characters before whitespace normalisation, so a tab or line break is refused instead of silently becoming a space; ordinary spaces are still collapsed.
 - **Regression tests (each fails on the pre-fix code and passes now):** deferred out-of-order reads in both directions plus stale failure / 401 / abort (4 controller tests), rejected-replacement cancellation and late-401 (2 session tests), partial-failure announcements (1), raw tab/newline rejection (1). Web suite 662/662; the 29-check browser walkthrough was re-run on the fixed code (29/29). No provider, Gate A/B, OAuth, schema, dependency or design change.
+
+## Branch reconciliation with merged status selector
+
+- Source C1 audited PASS at `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06`; merged main includes #26 FIX2 and #28 status selector at `567e1d92fc689a2eb38b0a9e989326ddeb72459b`.
+- Combined `Nudgey.tsx` preserves Ask Nudgey and Check invoice status together. The later #26 controller/401 fix and #28 status-debounce/leave-guard fixes remain from `main`, not overwritten by the older feature branch.
+- Original C1 chat-only sources/tests and synthetic browser evidence carried forward; original chat styles appended after existing status styles; no API, schema, provider or SMTP change.
+- Required: new exact-HEAD hosted CI, independent combined-code re-audit, targeted no-provider combined browser QA, and separate owner squash-merge authorization. Previous audits on separate branch heads do not substitute for these gates.

@@ -1564,19 +1564,44 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Found by the browser journey (fixed):** multi-line messages were rejected by the shared single-line text validator, and `Intl` refused `timeZoneName` combined with `dateStyle`/`timeStyle` (silently showing UTC).
 - **Not done:** no deployment, merge, provider call or Gate action. A hosted database must run migration `0007` and the new grants first.
 
-## Handoff: NMI-NDG-02-C1
+## Handoff: NMI-FUP-01-FIX1
 
-- **From:** Implementation agent (Claude). **To:** Independent exact-HEAD review, then owner. **Branch/PR:** `feat/nmi-ndg02-conversational`, Draft PR #27, stacked on Draft PR #26 (`feat/nmi-ux02-nudgey`); started from `2ee1f19b2f888ff4054eed12f18a7b7efe61d300`.
-- **Scope:** `tasks/NMI-NDG-02-conversational-invoice-lookup.md` (C1 record at its end). Read-only lookup only.
-- **Changed:** `apps/web/src/nudgey/*` (intent, lookup, chat session, view), `components/Nudgey.tsx`, `followups/controller.ts` (`readFresh`), CSS, tests, `design/evidence/NMI-NDG-02/`, STATUS/task/handoff. No backend, schema, dependency or provider change.
-- **Review focus:** intent false positives (payment words vs customer names; write verbs never become actions); request shapes (status/currency/`q` in the POST body only, bounded pages, truncation wording); abort/stale handling and the 401 path; conversation lifetime (cleared on close, Back, sign-out); card labels (PayPal draft state is never presented as payment state); a11y of the log/announcements; the stacked-PR order (merge #26 before #27).
-- **Not done:** C2 (natural-language scheduling) and C3 (SMTP) are separate, unauthorized tasks. No deployment, merge, provider call or Gate action.
+- **From:** GPT-6 (GitHub connector backport). **To:** independent exact-HEAD re-audit, then owner. **Branch/PR:** `feat/nmi-ux02-nudgey`, Draft PR #26; base reviewed head `d6e9d7c5f17a230cf0f3b45ea5a9fca63e02ac4e`.
+- **Action:** backported the already source-audited shared follow-up read-generation guard plus focused tests from Draft PR #27 `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06` into #26. This includes the read-only `readFresh(signal)` method as a dependency for downstream C1; no conversational interface or other features transferred.
+- **Verification to complete:** hosted Project Baseline and Stack CI on new exact head; independent short re-audit of controller and test changes. No prior audit or CI of #26's old SHA substitutes for this gate.
+- **Boundaries:** both PRs remain Draft, no merge, provider call, deployment, migration, credential or external send. After owner authorization to merge #26, reconcile PR #27's stacked history/diff, rerun required checks and seek separate approval.
 
-## Handoff: NMI-NDG-02-C1-FIX1
+## Handoff: NMI-FUP-01-FIX2
 
-- **From:** Implementation agent (Claude). **To:** Independent re-audit of the changed lines (short), then owner. **Branch/PR:** `feat/nmi-ndg02-conversational`, Draft PR #27 (stacked on Draft PR #26). Audited start HEAD `89c5f22ef0419c09e0fffdc3e2e6bd11749a1518`; independent review `5715391500` (PARTIAL / FIX REQUIRED, localized).
-- **Changed (source):** `followups/controller.ts` (read generation guard, M1), `nudgey/chatSession.ts` (abort on every attempt, M2), `nudgey/lookup.ts` (partial-failure announcement, M3), `nudgey/intent.ts` (raw-input control-character check). Tests added next to each. Task record updated.
-- **Not changed:** the approved conversational design, any API, backend, schema, dependency, provider or SMTP code. The earlier approval of search-first handling of customer names containing payment words is kept.
-- **Open:** merge order is #26 before #27; both stay Draft; no deployment. C2/C3 remain separate and unauthorized.
+- **From:** GPT-6, source remediation. **To:** Codex independent exact-HEAD re-audit; owner decision after a PASS. **PR:** #26, branch `feat/nmi-ux02-nudgey`; FIX1 audited SHA `1a8cfadd2e1ef2761f7cd25ce62d9c305da3f964` was FIX REQUIRED due to aborted refresh 401 suppression.
+- **Changes:** `apps/web/src/followups/controller.ts` now handles the returned 401 before ignoring an internally aborted ordinary result, without weakening the stopped-controller or read-generation boundaries; `controller.test.ts` adds a deterministic two-refresh abort-then-401 test. Task, STATUS and handoff updated; no new provider, API, schema or UI changes.
+- **Gates:** new exact-HEAD CI and independent re-audit required; no merge/deploy/provider calls. PR #27 remains Draft, stacked on #26; downstream reconciliation and separate owner merge approval remain mandatory.
+
+## Handoff: NMI-NDG-03
+
+- **From:** Implementation agent (Claude). **To:** Independent review and owner visual approval. **Branch/PR:** `fix/nmi-nudgey-status-selector`, new Draft PR against `main` (PR #26 is merged; Draft PR #27 untouched).
+- **Scope:** `tasks/NMI-NDG-03-invoice-status-selector.md`. Fixes the duplicate "Check invoice status" action with a read-only selector inside Nudgey; closes a latent guard gap (`open-saved` "opened" now counts as leaving an unresolved save).
+- **Changed:** `components/Nudgey.tsx`, `nudgey/{statusLookup,useStatusLookup}.ts`, `nudgey/StatusPicker.tsx`, `invoices/leaveGuard.ts`, CSS, tests, `design/evidence/NMI-NDG-03/`, judge-runbook troubleshooting, STATUS/task.
+- **Review focus:** that "status" has no navigation action while "browse" is unchanged; request shape and abort handling; draft-state wording (never payment state); the guard change and its effect on follow-up and dashboard opens; overlap with PR #27 in `Nudgey.tsx`.
+- **Diagnosis recorded, not acted on:** the follow-ups load failure on the owner's local database is a missing migration `0007`, not SMTP; the migration was not run by the agent.
+- **Not done:** no merge, deployment, provider call, migration, or change to PR #27.
+
+## Handoff: NMI-NDG-03-P2-REVIEW-1
+
+- **From:** Implementation agent. **To:** Independent exact-HEAD re-audit, then owner. **Branch/PR:** `fix/nmi-nudgey-status-selector`, existing Draft PR #28 against `main`.
+- **Start / implementation:** exact starting head `53b154a31567c1185ce30391bdf5df1d9775a6d5`; implementation commit `03a34d7ccde8a08788c17c82e3271cd7fe429a3f` (this handoff record is the following documentation commit; audit the resulting branch tip).
+- **Scope:** remediate both P2 findings in review `5721936401` only.
+- **Changed:** status lookup lifecycle for internally aborted 401 handling while preserving reset/disposal and stale-result cancellation; immediate invalidation of old rows and selected invoice on term input before the existing debounce; deterministic status lookup and input-wiring regression tests; task/status/judge-runbook migration note.
+- **Validation:** focused Vitest 42/42, `@nmi/web` typecheck, changed-file Prettier check and `git diff --check` passed. Hosted CI is required on the resulting exact PR head.
+- **Database/provider boundary:** owner reports migration `0007` was applied successfully to the local database after a verified backup; this agent did not run or rerun it. No PayPal, OpenAI or SMTP calls; PR #27 was not changed.
+- **Review focus:** old active search returns 401 after a newer search starts; old non-401 remains ignored; reset/dispose suppress late results; new term clears selectable results before 250 ms; exact starting-head preservation; no layout/design changes.
+- **Not done:** no merge, deployment or provider tests. PR #28 remains Draft pending independent re-audit and owner approval.
+
+## Handoff: NMI-NDG-02-C1-RECON-1
+
+- **From:** GPT-6, branch-only reconciliation. **To:** Independent exact-HEAD audit; owner decision. **Source PR #27:** `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06`; **new main base:** `567e1d92fc689a2eb38b0a9e989326ddeb72459b` after PR #28.
+- **Integration:** Add previously audited read-only Ask Nudgey C1 alongside PR #28's status selector, preserve original #26 follow-up FIX2, original status-search protections, and unresolved-save leave guard. Source chat features and tests are retained; CSS chat styles appended. Includes small cross-feature regression test.
+- **Gates pending:** both hosted CI checks at reconciled HEAD; exact-HEAD combined behavior and security audit; targeted combined no-provider browser QA before owner merge approval. Original C1 and selector browser evidence runs were on separate builds.
+- **No merge/deployment/provider action authorized.** Local migration 0007 has already been applied by owner after a verified backup and must not be rerun on that local database.
 
 <!-- HANDOFF_ENTRIES_END -->
