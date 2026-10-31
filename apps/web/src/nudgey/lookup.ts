@@ -185,6 +185,12 @@ export function summarizeForAnnouncement(r: LookupResult): string {
   switch (r.kind) {
     case "overview": {
       const shown = r.groups.reduce((n, g) => n + g.items.length, 0);
+      const failedGroups = r.groups.filter((g) => g.failed).length;
+      // A group that could not be loaded is never reported as empty: say so instead of "no invoices".
+      if (failedGroups > 0)
+        return shown === 0
+          ? "Some PayPal draft groups could not be loaded, so I can't say whether you have saved invoices."
+          : `Showing ${shown} saved invoices; ${failedGroups} PayPal draft group${failedGroups === 1 ? "" : "s"} could not be loaded.`;
       return shown === 0
         ? "No saved invoices found."
         : `Showing ${shown} saved invoices in ${r.groups.filter((g) => g.items.length).length} PayPal draft groups.`;

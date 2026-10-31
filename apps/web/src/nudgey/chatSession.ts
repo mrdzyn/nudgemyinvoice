@@ -83,6 +83,10 @@ export class ChatSession {
   }
 
   async ask(raw: string): Promise<void> {
+    // EVERY new attempt (even one that is rejected below) ends the lookup still in flight, so its late
+    // answer can never render, announce or end the session on behalf of a question that was replaced.
+    this.work?.abort();
+    this.work = null;
     const parsed = parseIntent(raw);
     if (!parsed.ok) {
       const add: ChatMessage[] = [];
@@ -92,7 +96,6 @@ export class ChatSession {
       this.set([...this.dropPending(), ...add]);
       return;
     }
-    this.work?.abort();
     const ac = new AbortController();
     this.work = ac;
     const userId = this.nextId++;

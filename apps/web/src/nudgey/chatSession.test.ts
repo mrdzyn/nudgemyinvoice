@@ -150,4 +150,31 @@ describe("Nudgey chat session (in memory only)", () => {
     await p2;
     expect(s.getSnapshot().some((m) => m.result)).toBe(true);
   });
+
+  it("a REJECTED replacement question still cancels the lookup in flight (review M2)", async () => {
+    for (const bad of ["x".repeat(500), "bad\u0000input", "tab\there", "   "]) {
+      const { s, gates, announced, expired } = make();
+      const a = s.ask("Show my invoices");
+      expect(gates[0]?.signal.aborted).toBe(false);
+      await s.ask(bad); // invalid, over-long or empty: no new request, but the old one must end
+      expect(gates[0]?.signal.aborted, JSON.stringify(bad.slice(0, 10))).toBe(true);
+      expect(gates).toHaveLength(1);
+      gates[0]?.resolve(ok([item(1)])); // the late answer for the replaced question
+      await a;
+      expect(announced).toEqual([]);
+      expect(expired).not.toHaveBeenCalled();
+      expect(s.getSnapshot().some((m) => m.result || m.pending)).toBe(false);
+      expect(JSON.stringify(s.getSnapshot())).not.toContain("Customer 1");
+    }
+  });
+
+  it("a late 401 for a replaced (rejected-over) question does not end the session or clear the new state", async () => {
+    const { s, gates, expired } = make();
+    const a = s.ask("Show my invoices");
+    await s.ask("x".repeat(500));
+    gates[0]?.resolve({ kind: "unauthorized" });
+    await a;
+    expect(expired).not.toHaveBeenCalled();
+    expect(s.getSnapshot().some((m) => m.text?.includes("under 200 characters"))).toBe(true);
+  });
 });

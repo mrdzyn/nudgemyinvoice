@@ -58,10 +58,12 @@ const currencyIn = (lower: string): CurrencyCode | null => {
 };
 
 export function parseIntent(input: string): ParseOutcome {
+  // Raw input is checked BEFORE whitespace is normalised: a tab or line break typed or pasted into the
+  // one-line box is a control character and is refused, not silently turned into a space.
+  if (input.length > MAX_PROMPT_CHARS) return { ok: false, reason: "too-long" };
+  if (hasControl(input)) return { ok: false, reason: "control-characters" };
   const text = input.replace(/\s+/g, " ").trim();
   if (text.length === 0) return { ok: false, reason: "empty" };
-  if (input.length > MAX_PROMPT_CHARS) return { ok: false, reason: "too-long" };
-  if (hasControl(text)) return { ok: false, reason: "control-characters" };
   const lower = text
     .toLowerCase()
     .replace(/[?.!]+$/g, "")

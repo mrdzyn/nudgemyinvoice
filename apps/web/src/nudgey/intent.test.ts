@@ -139,6 +139,27 @@ describe("Nudgey intent recognition (deterministic, no model)", () => {
     });
   });
 
+  it("refuses tabs and line breaks in the RAW input instead of normalising them to spaces", () => {
+    for (const q of [
+      "show my\tinvoices",
+      "show my\ninvoices",
+      "show my invoices\n",
+      "\tshow my invoices",
+      "show\r\nmy invoices",
+      "\n",
+      "\t",
+    ])
+      expect(parseIntent(q), JSON.stringify(q)).toEqual({
+        ok: false,
+        reason: "control-characters",
+      });
+    // Ordinary spaces (even repeated or padded) remain fine and are collapsed.
+    expect(parseIntent("  show   my    invoices  ")).toEqual({
+      ok: true,
+      intent: { kind: "list", currency: null, status: null },
+    });
+  });
+
   it("keeps search terms within the server's bound and refuses unusable terms", () => {
     expect(intent("find invoices for " + "x".repeat(101)).kind).toBe("help");
     expect(intent("find invoices for " + "x".repeat(100))).toMatchObject({ kind: "search" });

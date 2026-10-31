@@ -1572,4 +1572,11 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Review focus:** intent false positives (payment words vs customer names; write verbs never become actions); request shapes (status/currency/`q` in the POST body only, bounded pages, truncation wording); abort/stale handling and the 401 path; conversation lifetime (cleared on close, Back, sign-out); card labels (PayPal draft state is never presented as payment state); a11y of the log/announcements; the stacked-PR order (merge #26 before #27).
 - **Not done:** C2 (natural-language scheduling) and C3 (SMTP) are separate, unauthorized tasks. No deployment, merge, provider call or Gate action.
 
+## Handoff: NMI-NDG-02-C1-FIX1
+
+- **From:** Implementation agent (Claude). **To:** Independent re-audit of the changed lines (short), then owner. **Branch/PR:** `feat/nmi-ndg02-conversational`, Draft PR #27 (stacked on Draft PR #26). Audited start HEAD `89c5f22ef0419c09e0fffdc3e2e6bd11749a1518`; independent review `5715391500` (PARTIAL / FIX REQUIRED, localized).
+- **Changed (source):** `followups/controller.ts` (read generation guard, M1), `nudgey/chatSession.ts` (abort on every attempt, M2), `nudgey/lookup.ts` (partial-failure announcement, M3), `nudgey/intent.ts` (raw-input control-character check). Tests added next to each. Task record updated.
+- **Not changed:** the approved conversational design, any API, backend, schema, dependency, provider or SMTP code. The earlier approval of search-first handling of customer names containing payment words is kept.
+- **Open:** merge order is #26 before #27; both stay Draft; no deployment. C2/C3 remain separate and unauthorized.
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -5,6 +5,7 @@ import type { ListQuery, ListResult } from "../invoices/api.js";
 import { parseIntent, type Intent } from "./intent.js";
 import {
   CHAT_PAGE,
+  GROUPS,
   OVERVIEW_PAGE,
   runLookup,
   summarizeForAnnouncement,
@@ -295,5 +296,42 @@ describe("Nudgey lookup: read-only requests to the existing APIs", () => {
     const s = summarizeForAnnouncement(r);
     expect(s).toBe("Showing 2 invoices, more are available in the dashboard.");
     expect(s).not.toContain("Customer");
+  });
+
+  it("the spoken summary never calls the account empty when a group could not be loaded (review M3)", async () => {
+    const mk = (failed: (string | null)[], counts: number[]) => ({
+      kind: "overview" as const,
+      groups: GROUPS.map((g, i) => ({
+        ...g,
+        items: Array.from({ length: counts[i] ?? 0 }, (_, n) => item(n + 1)),
+        more: false,
+        failed: (failed[i] ?? null) as "unavailable" | null,
+      })),
+    });
+    // genuinely empty: every group answered and was empty
+    expect(summarizeForAnnouncement(mk([null, null, null, null], [0, 0, 0, 0]))).toBe(
+      "No saved invoices found.",
+    );
+    // all zero rows, but one group failed: must NOT say there are no invoices
+    const partialEmpty = summarizeForAnnouncement(
+      mk([null, null, "unavailable", null], [0, 0, 0, 0]),
+    );
+    expect(partialEmpty).toBe(
+      "Some PayPal draft groups could not be loaded, so I can't say whether you have saved invoices.",
+    );
+    expect(partialEmpty).not.toMatch(/no saved invoices/i);
+    // some rows and one failure
+    expect(summarizeForAnnouncement(mk(["unavailable", null, null, null], [0, 0, 2, 0]))).toBe(
+      "Showing 2 saved invoices; 1 PayPal draft group could not be loaded.",
+    );
+    expect(
+      summarizeForAnnouncement(mk(["unavailable", "unavailable", null, null], [0, 0, 1, 0])),
+    ).toBe("Showing 1 saved invoices; 2 PayPal draft groups could not be loaded.");
+    // and the lookup itself produces exactly that shape for a partial failure
+    const { d } = deps({
+      list: (q) => (q.status === "attention" ? { kind: "unavailable" } : page([])),
+    });
+    const r = await runLookup(intent("pending invoices"), d, sig());
+    expect(summarizeForAnnouncement(r)).not.toMatch(/no saved invoices/i);
   });
 });
