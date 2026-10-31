@@ -1577,4 +1577,24 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Changes:** `apps/web/src/followups/controller.ts` now handles the returned 401 before ignoring an internally aborted ordinary result, without weakening the stopped-controller or read-generation boundaries; `controller.test.ts` adds a deterministic two-refresh abort-then-401 test. Task, STATUS and handoff updated; no new provider, API, schema or UI changes.
 - **Gates:** new exact-HEAD CI and independent re-audit required; no merge/deploy/provider calls. PR #27 remains Draft, stacked on #26; downstream reconciliation and separate owner merge approval remain mandatory.
 
+## Handoff: NMI-NDG-03
+
+- **From:** Implementation agent (Claude). **To:** Independent review and owner visual approval. **Branch/PR:** `fix/nmi-nudgey-status-selector`, new Draft PR against `main` (PR #26 is merged; Draft PR #27 untouched).
+- **Scope:** `tasks/NMI-NDG-03-invoice-status-selector.md`. Fixes the duplicate "Check invoice status" action with a read-only selector inside Nudgey; closes a latent guard gap (`open-saved` "opened" now counts as leaving an unresolved save).
+- **Changed:** `components/Nudgey.tsx`, `nudgey/{statusLookup,useStatusLookup}.ts`, `nudgey/StatusPicker.tsx`, `invoices/leaveGuard.ts`, CSS, tests, `design/evidence/NMI-NDG-03/`, judge-runbook troubleshooting, STATUS/task.
+- **Review focus:** that "status" has no navigation action while "browse" is unchanged; request shape and abort handling; draft-state wording (never payment state); the guard change and its effect on follow-up and dashboard opens; overlap with PR #27 in `Nudgey.tsx`.
+- **Diagnosis recorded, not acted on:** the follow-ups load failure on the owner's local database is a missing migration `0007`, not SMTP; the migration was not run by the agent.
+- **Not done:** no merge, deployment, provider call, migration, or change to PR #27.
+
+## Handoff: NMI-NDG-03-P2-REVIEW-1
+
+- **From:** Implementation agent. **To:** Independent exact-HEAD re-audit, then owner. **Branch/PR:** `fix/nmi-nudgey-status-selector`, existing Draft PR #28 against `main`.
+- **Start / implementation:** exact starting head `53b154a31567c1185ce30391bdf5df1d9775a6d5`; implementation commit `03a34d7ccde8a08788c17c82e3271cd7fe429a3f` (this handoff record is the following documentation commit; audit the resulting branch tip).
+- **Scope:** remediate both P2 findings in review `5721936401` only.
+- **Changed:** status lookup lifecycle for internally aborted 401 handling while preserving reset/disposal and stale-result cancellation; immediate invalidation of old rows and selected invoice on term input before the existing debounce; deterministic status lookup and input-wiring regression tests; task/status/judge-runbook migration note.
+- **Validation:** focused Vitest 42/42, `@nmi/web` typecheck, changed-file Prettier check and `git diff --check` passed. Hosted CI is required on the resulting exact PR head.
+- **Database/provider boundary:** owner reports migration `0007` was applied successfully to the local database after a verified backup; this agent did not run or rerun it. No PayPal, OpenAI or SMTP calls; PR #27 was not changed.
+- **Review focus:** old active search returns 401 after a newer search starts; old non-401 remains ignored; reset/dispose suppress late results; new term clears selectable results before 250 ms; exact starting-head preservation; no layout/design changes.
+- **Not done:** no merge, deployment or provider tests. PR #28 remains Draft pending independent re-audit and owner approval.
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -18,14 +18,26 @@ import {
   type InvoiceOption,
 } from "../followups/FollowUpUi.js";
 import { browserTimeZone, formatInstant } from "../followups/schedule.js";
+import { StatusPicker } from "../nudgey/StatusPicker.js";
+import { statusOpenAction } from "../nudgey/statusLookup.js";
+import { useStatusLookup } from "../nudgey/useStatusLookup.js";
 
 export type NudgeyChoice = "create" | "browse" | "status";
 
-/** Shortcuts only: no network request, generated text, invoice mutation or PayPal operation. */
-export function nudgeyAction(choice: NudgeyChoice): Action {
-  return choice === "create"
-    ? { type: "navigate", screen: "composer", resetComposer: true }
-    : { type: "navigate", screen: "dashboard" };
+/**
+ * Navigation shortcuts only: no network request, generated text, invoice mutation or PayPal operation.
+ * "status" is NOT a navigation: it opens the invoice-status selector inside Nudgey, so it has no
+ * action here (it used to duplicate "browse" and did nothing visible on the dashboard).
+ */
+export function nudgeyAction(choice: NudgeyChoice): Action | null {
+  switch (choice) {
+    case "create":
+      return { type: "navigate", screen: "composer", resetComposer: true };
+    case "browse":
+      return { type: "navigate", screen: "dashboard" };
+    case "status":
+      return null;
+  }
 }
 
 export function NudgeyPanel({
@@ -93,7 +105,7 @@ export function NudgeyPanel({
           </span>
           <span className="nudgey-action-copy">
             <strong>Check invoice status</strong>
-            <small>Open an invoice to see its PayPal status</small>
+            <small>Pick an invoice to see its PayPal draft state</small>
           </span>
           <span aria-hidden="true">›</span>
         </button>
@@ -126,7 +138,11 @@ const NO_SNAPSHOT: FollowUpsSnapshot = {
 const noSubscribe = () => () => undefined;
 const emptySnapshot = () => NO_SNAPSHOT;
 
-type View = { kind: "home" } | { kind: "schedule" } | { kind: "reschedule"; item: FollowUpView };
+type View =
+  | { kind: "home" }
+  | { kind: "status" }
+  | { kind: "schedule" }
+  | { kind: "reschedule"; item: FollowUpView };
 
 const MUTATION_MESSAGE: Partial<Record<MutationOutcome["kind"], string>> = {
   duplicate: "This invoice already has an active follow-up. Reschedule or complete it first.",
@@ -163,6 +179,8 @@ export function Nudgey() {
   const titleId = useId();
   const listInvoices = session?.listInvoices;
   const expired = session?.sessionExpired;
+  const status = useStatusLookup({ listInvoices, expired });
+  const statusLookup = status.lookup;
 
   useEffect(() => {
     if (!open) return;
@@ -195,17 +213,18 @@ export function Nudgey() {
   useEffect(() => {
     if (!open) {
       work.current?.abort();
+      statusLookup.reset();
       setView({ kind: "home" });
       setFormError(null);
       setListError(null);
       setBusyId(null);
     }
-  }, [open]);
+  }, [open, statusLookup]);
   useEffect(() => () => work.current?.abort(), []);
 
   // Saved invoices for the schedule form, loaded only while the form is open.
   useEffect(() => {
-    if (!open || view.kind === "home" || !listInvoices) return;
+    if (!open || (view.kind !== "schedule" && view.kind !== "reschedule") || !listInvoices) return;
     const ac = new AbortController();
     setInvoicesStatus("loading");
     void listInvoices(
@@ -251,12 +270,20 @@ export function Nudgey() {
     trigger.current?.focus();
   };
   const choose = (choice: NudgeyChoice) => {
+    if (choice === "status" && listInvoices) {
+      // A dedicated read-only selector inside Nudgey; the panel stays open.
+      setView({ kind: "status" });
+      return;
+    }
     setOpen(false);
     // The existing unsaved-review guard still runs.
-    dispatch(nudgeyAction(choice));
-    if (choice === "status") {
-      announce("Open an invoice and select View to check its PayPal status.");
-    }
+    const action = nudgeyAction(choice);
+    dispatch(action ?? { type: "navigate", screen: "dashboard" });
+  };
+  const openStatusInvoice = (id: string) => {
+    setOpen(false);
+    // The same guarded real-mode navigation the dashboard uses (leave guards apply).
+    dispatch(statusOpenAction(id));
   };
   const timeZone = browserTimeZone();
   const now = new Date();
@@ -339,6 +366,35 @@ export function Nudgey() {
                   />
                 </div>
               ) : null}
+            </>
+          ) : view.kind === "status" ? (
+            <>
+              <div className="nudgey-heading">
+                <h2 id={titleId} className="nudgey-title">
+                  Nudgey
+                </h2>
+                <button
+                  type="button"
+                  className="nudgey-close"
+                  aria-label="Close Nudgey"
+                  onClick={close}
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <StatusPicker
+                state={status.state}
+                onSearch={(t) => void statusLookup.search(t)}
+                onTermChange={(t) => statusLookup.prepareSearch(t)}
+                onSelect={(id) => statusLookup.select(id)}
+                onRetry={() => void statusLookup.retry()}
+                onOpen={openStatusInvoice}
+                onBack={() => {
+                  statusLookup.reset();
+                  setView({ kind: "home" });
+                }}
+                onCreate={() => choose("create")}
+              />
             </>
           ) : (
             <>

@@ -4,11 +4,17 @@ import type { Action } from "../demo/appState.js";
 export type SaveGuard = "none" | "pending" | "uncertain";
 
 /**
- * Actions that take the operator OFF the Review screen by their own choice. `open-saved` is not one
- * of them: it is the confirmed outcome of the save itself.
+ * Actions that take the operator OFF the Review screen by their own choice. `open-saved` with notice
+ * `created` or `replayed` is not one of them: it is the confirmed outcome of the save itself. But
+ * `open-saved` with notice `opened` is the operator choosing ANOTHER saved invoice (from Nudgey's
+ * status selector, its follow-up list or the dashboard), which would abandon an unresolved save.
  */
 export function isLeavingAction(a: Action): boolean {
-  return a.type === "navigate" || a.type === "discard-review";
+  return (
+    a.type === "navigate" ||
+    a.type === "discard-review" ||
+    (a.type === "open-saved" && a.notice === "opened")
+  );
 }
 
 /** Leaving is allowed straight away only when no save is unresolved. */

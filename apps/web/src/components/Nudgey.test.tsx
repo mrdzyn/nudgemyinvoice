@@ -10,7 +10,9 @@ describe("Nudgey quick actions (no provider calls)", () => {
       resetComposer: true,
     });
     expect(nudgeyAction("browse")).toEqual({ type: "navigate", screen: "dashboard" });
-    expect(nudgeyAction("status")).toEqual({ type: "navigate", screen: "dashboard" });
+    // "Check invoice status" is NOT a navigation any more: it opens the in-panel status selector.
+    expect(nudgeyAction("status")).toBeNull();
+    expect(nudgeyAction("status")).not.toEqual(nudgeyAction("browse"));
   });
 
   it("renders personalized, bounded shortcuts and clear no-send copy", () => {
