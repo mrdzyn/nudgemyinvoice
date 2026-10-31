@@ -3,8 +3,8 @@
   "timezoneEmulated": "Asia/Manila",
   "providersConfigured": false,
   "simulatedDraftRow": true,
-  "passed": 24,
-  "total": 24,
+  "passed": 26,
+  "total": 26,
   "results": [
     {
       "group": "setup",
@@ -91,6 +91,18 @@
       "detail": ""
     },
     {
+      "group": "auth",
+      "name": "an HTTP 401 from a status search expires the session and removes the selector and prior invoice results",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "the operator can sign back in after the 401 session expiry",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "group": "unchanged",
       "name": "View my invoices still navigates straight to the dashboard and closes the panel",
       "pass": true,
@@ -146,7 +158,7 @@
     },
     {
       "group": "boundaries",
-      "name": "browser storage is empty and the only console errors are the pre-sign-in 401 probe and the deliberately blocked search",
+      "name": "browser storage is empty and the only console errors are the expected pre-sign-in/session-expiry 401 probes and deliberately blocked search",
       "pass": true,
       "detail": ""
     }

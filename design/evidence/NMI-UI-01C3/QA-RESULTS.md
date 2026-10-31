@@ -1,10 +1,10 @@
 # NMI-UI-01C3 browser save/detail journey
 
-Chrome: Chrome/156.0.8078.74 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
+Chrome: Chrome/156.0.8078.80 (headless). PostgreSQL: postgres (PostgreSQL) 16.15 (Homebrew) (disposable cluster, destroyed after the run).
 Groups tagged REAL exercise the real Vite-preview proxy, Fastify server and PostgreSQL. Groups tagged SIMULATED force a server outcome with Chrome request interception and never reach the server.
-Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment; no model client exists in this journey (parsing is not used); the invoices are created by manual entry.
+Credentials: random per run, never printed or stored. No OpenAI or PayPal configuration exists in this environment. Invoice save and navigation checks use manual entry; one separate parser regression uses the deterministic in-process fake model (no external provider request).
 
-**116/116 checks passed.**
+**117/117 checks passed.**
 
 | Result | Group | Check | Detail |
 | --- | --- | --- | --- |
@@ -88,6 +88,7 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | REAL 390px mobile and dark theme | no horizontal overflow at 390px (saved page) |  |
 | PASS | REAL 390px mobile and dark theme | saved-page contrast >= WCAG AA (dark, 390px) |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | setup: the server committed one invoice but the browser is in the uncertain state |  |
+| PASS | REAL leaving an unresolved save (server commits, response lost) | Check invoice status → Open invoice details asks before abandoning the unresolved save |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | header brand: asks first (uncertain wording, duplicate warning) and does not navigate |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | header brand: 'Stay and retry' keeps the form, the uncertain notice and the retry key |  |
 | PASS | REAL leaving an unresolved save (server commits, response lost) | desktop nav: Invoice drafts: asks first (uncertain wording, duplicate warning) and does not navigate |  |
@@ -118,7 +119,7 @@ Credentials: random per run, never printed or stored. No OpenAI or PayPal config
 | PASS | Global invariants | no localStorage/sessionStorage/IndexedDB/Cache entries |  |
 | PASS | Global invariants | no script-readable cookie and no invoice data or id in the URL |  |
 | PASS | Global invariants | no request left the app origin (no PayPal/OpenAI/foreign host) |  |
-| PASS | Global invariants | the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts/:id, parse and (since C4) the read-only list |  |
+| PASS | Global invariants | the browser used only auth, invoice save/detail/parse and the existing read-only invoice/follow-up routes |  |
 | PASS | Global invariants | no PayPal-draft request was made in this journey (the list exists since C4 and is read-only) |  |
 | PASS | Global invariants | no PayPal operations or approvals exist; only the test-only fake model ran, exactly once (AI-path regression) |  |
 | PASS | Global invariants | every invoice has exactly one currency and non-negative consistent minor totals |  |

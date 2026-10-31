@@ -107,6 +107,7 @@ const ws = new WebSocket(targetInfo.webSocketDebuggerUrl);
 await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
 let nextId = 1;
 let failRule = null;
+let unauthorizedRule = null;
 const pending = new Map();
 const consoleMsgs = [];
 const foreign = [];
@@ -123,7 +124,8 @@ ws.onmessage = (m) => {
     else if (!/^(about:|data:|blob:)/.test(u)) foreign.push(u);
   } else if (msg.method === "Fetch.requestPaused") {
     const id = msg.params.requestId;
-    if (failRule && failRule(msg.params)) send("Fetch.failRequest", { requestId: id, errorReason: "InternetDisconnected" }).catch(() => {});
+    if (unauthorizedRule && unauthorizedRule(msg.params)) send("Fetch.fulfillRequest", { requestId: id, responseCode: 401, responseHeaders: [{ name: "content-type", value: "application/json" }], body: Buffer.from('{"error":"unauthorized"}').toString("base64") }).catch(() => {});
+    else if (failRule && failRule(msg.params)) send("Fetch.failRequest", { requestId: id, errorReason: "InternetDisconnected" }).catch(() => {});
     else send("Fetch.continueRequest", { requestId: id }).catch(() => {});
   } else if (msg.method === "Network.responseReceived") { const e = netLog.find((n) => n.id === msg.params.requestId); if (e) e.status = msg.params.response.status; }
 };
@@ -228,6 +230,21 @@ await ev("document.querySelector('.status-selected .followup-btn-primary').click
 await waitFor("!!document.getElementById('saved-id')");
 check("navigate", "Open invoice details opens the existing saved-invoice page for that invoice and closes Nudgey", (await ev("document.getElementById('saved-id')?.textContent")) === INV1 && !(await ev("!!document.querySelector('.nudgey-panel')")) && (await bodyText()).includes("PayPal Sandbox draft"));
 
+// 4b a server 401 revokes the active workspace even when the selector had prior results.
+await openNudgey();
+await clickAction("Check invoice status");
+await waitFor("document.querySelectorAll('.status-option').length === 2");
+unauthorizedRule = (p) => p.request.url.includes("/api/invoice-drafts/search");
+await send("Fetch.enable", { patterns: [{ urlPattern: "*/api/invoice-drafts/search" }] });
+await setSearch("Vienna");
+await waitFor("!!document.getElementById('login-username')");
+const unauthorizedCalls = searchCalls(0).filter((n) => n.status === 401);
+check("auth", "an HTTP 401 from a status search expires the session and removes the selector and prior invoice results", unauthorizedCalls.length === 1 && !(await ev("!!document.querySelector('.status-picker') || !!document.querySelector('.nudgey-panel')")) && !(await bodyText()).includes("Northwind"), `${JSON.stringify(unauthorizedCalls.map((n) => n.status))} ${await bodyText()}`);
+unauthorizedRule = null;
+await send("Fetch.disable");
+check("auth", "the operator can sign back in after the 401 session expiry", await signIn());
+await waitFor("!!document.querySelector('.nudgey-launcher')");
+
 // 5 the dashboard shortcut is unchanged
 await openNudgey();
 await clickAction("View my invoices");
@@ -274,7 +291,7 @@ const apiPaths = netLog.filter((n) => n.path.startsWith("/api/"));
 check("boundaries", "only auth, invoice search (POST), the invoice detail read, its follow-up read and the follow-up list were used: never parse, PayPal-draft, a follow-up write or a send", apiPaths.every((n) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts\/search|invoice-drafts\/[0-9a-f-]{36}(\/follow-ups)?|follow-ups)$/.test(n.path)) && apiPaths.filter((n) => n.method !== "GET").every((n) => n.path === "/api/invoice-drafts/search" || n.path.startsWith("/api/auth/")), [...new Set(apiPaths.map((n) => n.method + " " + n.path))].join(","));
 check("boundaries", "no request left the page origin and no URL carries customer text", foreign.length === 0 && !netLog.some((n) => /Northwind|Vienna|Zzz/i.test(n.path)), foreign.join(","));
 check("boundaries", "the only PayPal row is the SIMULATED one inserted for the label test; nothing was created, no approvals or webhooks, no follow-up written", sql("SELECT (SELECT count(*) FROM paypal_draft_operations) || ',' || (SELECT count(*) FROM approvals) || ',' || (SELECT count(*) FROM paypal_webhook_events) || ',' || (SELECT count(*) FROM invoice_follow_ups)") === "1,0,0,0");
-check("boundaries", "browser storage is empty and the only console errors are the pre-sign-in 401 probe and the deliberately blocked search", (await ev("localStorage.length + sessionStorage.length")) === 0 && consoleMsgs.filter((x) => !/status of 401 .*\/api\/auth\/session|ERR_INTERNET_DISCONNECTED|Failed to fetch/.test(x)).length === 0, consoleMsgs.join(" | "));
+check("boundaries", "browser storage is empty and the only console errors are the expected pre-sign-in/session-expiry 401 probes and deliberately blocked search", (await ev("localStorage.length + sessionStorage.length")) === 0 && consoleMsgs.filter((x) => !/status of 401 .*\/api\/(auth\/session|invoice-drafts\/search)|ERR_INTERNET_DISCONNECTED|Failed to fetch/.test(x)).length === 0, consoleMsgs.join(" | "));
 
 const failed = results.filter((r) => !r.pass).length;
 writeFileSync(join(here, "qa-results.json"), JSON.stringify({ task: "NMI-NDG-03", timezoneEmulated: ZONE, providersConfigured: false, simulatedDraftRow: true, passed: results.length - failed, total: results.length, results }, null, 2) + "\n");

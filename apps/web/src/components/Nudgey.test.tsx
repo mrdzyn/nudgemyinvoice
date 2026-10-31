@@ -39,6 +39,25 @@ describe("Nudgey quick actions (no provider calls)", () => {
     expect(html).not.toMatch(/paypal-draft|createPayPalDraft|href=/);
   });
 
+  it("shows Ask Nudgey without losing the status selector or follow-up action", () => {
+    const html = renderToString(
+      <NudgeyPanel
+        username="operator-x"
+        onChoose={() => undefined}
+        onClose={() => undefined}
+        titleId="nudgey-title"
+        onAsk={() => undefined}
+        onSchedule={() => undefined}
+      />,
+    );
+    expect(html).toContain("Check invoice status");
+    expect(html).toContain("Pick an invoice to see its PayPal draft state");
+    expect(html).toContain("Ask Nudgey");
+    expect(html).toContain("Look up invoices and follow-ups (read-only)");
+    expect(html).toContain("Schedule a follow-up");
+    expect(nudgeyAction("status")).toBeNull();
+  });
+
   it("escapes the supplied username instead of treating it as HTML", () => {
     const html = renderToString(
       <NudgeyPanel

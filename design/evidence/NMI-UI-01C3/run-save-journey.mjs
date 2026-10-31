@@ -636,6 +636,19 @@ try {
     const dialogText = () => ev("document.querySelector('dialog[open]')?.innerText.replace(/\\s+/g, ' ') ?? ''");
     const stay = () => ev("[...document.querySelectorAll('dialog[open] button')].find((b) => /^Stay/.test(b.textContent)).click()");
     const stillOnReview = async () => (await onReview()) && (await ev("document.getElementById('f-customerName').value")) === "Nav Guard Ltd" && (await ev("!!document.getElementById('save-uncertain')"));
+    // The status selector's explicit open-saved action must pass through the same workspace leave guard.
+    await ev("document.querySelector('.nudgey-launcher').click()");
+    await ev("[...document.querySelectorAll('.nudgey-action')].find((b) => b.textContent.includes('Check invoice status')).click()");
+    await waitFor("document.querySelectorAll('.status-option').length > 0", 4000);
+    await ev("document.querySelector('.status-option').click()");
+    await waitFor("!!document.querySelector('.status-selected .followup-btn-primary')", 3000);
+    await ev("document.querySelector('.status-selected .followup-btn-primary').click()");
+    const statusOpenDialog = await waitFor("!!document.querySelector('dialog[open]')", 2000);
+    check(g, "Check invoice status → Open invoice details asks before abandoning the unresolved save", statusOpenDialog && /This save is unconfirmed/.test(await dialogText()) && await stillOnReview());
+    await shot("12-status-open-save-guard.jpg");
+    await stay();
+    await waitFor("!document.querySelector('dialog[open]')", 1500);
+    await ev("document.querySelector('.nudgey-launcher').click()");
     const paths = [
       ["header brand", "document.querySelector('.brand-button').click()"],
       ["desktop nav: Invoice drafts", "[...document.querySelectorAll('.app-nav button')].find((b) => b.textContent.includes('Invoice drafts')).click()"],
@@ -774,7 +787,7 @@ try {
     check(g, "no script-readable cookie and no invoice data or id in the URL", s.cookie === "" && !/Quill|Ltd|@/.test(s.href) && !/[0-9a-f]{8}-[0-9a-f]{4}-/.test(s.href), s.href);
     check(g, "no request left the app origin (no PayPal/OpenAI/foreign host)", foreign.length === 0, JSON.stringify(foreign));
     const paths = new Set(netLog.filter((n) => n.path.startsWith("/api/")).map((n) => n.path.replace(/[0-9a-f-]{36}/, ":id")));
-    check(g, "the browser used only auth, POST /api/invoice-drafts, GET /api/invoice-drafts/:id, parse and (since C4) the read-only list", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/:id|\?limit=\d+)?)$/.test(p)), [...paths].join(","));
+    check(g, "the browser used only auth, invoice save/detail/parse and the existing read-only invoice/follow-up routes", [...paths].every((p) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/search|\/:id(\/follow-ups)?|\?limit=\d+)?|follow-ups)$/.test(p)), [...paths].join(","));
     check(g, "no PayPal-draft request was made in this journey (the list exists since C4 and is read-only)", ![...paths].some((p) => /paypal/.test(p)) && !netLog.some((n) => /\/paypal-draft/.test(n.path)));
     check(g, "no PayPal operations or approvals exist; only the test-only fake model ran, exactly once (AI-path regression)", Number(sql("SELECT count(*) FROM paypal_draft_operations")) === 0 && Number(sql("SELECT count(*) FROM approvals")) === 0 && modelCalls() === 1, String(modelCalls()));
     check(g, "every invoice has exactly one currency and non-negative consistent minor totals", sql("SELECT count(*) FROM invoices WHERE total_minor <> subtotal_minor - discount_minor + tax_minor") === "0");
