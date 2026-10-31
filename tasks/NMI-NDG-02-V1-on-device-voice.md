@@ -1,7 +1,7 @@
 # NMI-NDG-02 V1 — Optional on-device voice transcription
 
-**State:** Separately owner-approved direction (2026-10-31); bounded follow-on contract prepared after C2 implementation. Not part of PR #29 C2 and not implemented here.  
-**Prerequisite:** C2 functional acceptance and independent exact-head audit. Start a separate Draft PR/branch from the owner-approved C2 result.  
+**State:** V1 implementation/remediation remain on Draft PR #30 from owner-approved C2 main. Scoped physical Chrome QA passed at app SHA `a90a19b2ba912f4a0a85ef8ddbf389570090b992` using owner-reported and independently observed evidence, distinguished in the QA record. Exact-HEAD independent acceptance audit remains pending.
+**Prerequisite:** SATISFIED. C2 independently audited and owner squash-merged PR #29 into `main` at `139cdea0b14524ac3997c54f7cb4d9a6d9fe11e0`.  
 **Authority:** Owner decision recorded in PR #29 and `tasks/NMI-NDG-02-C2-natural-language-followup.md`.
 
 ## Objective
@@ -49,3 +49,19 @@ These official references were checked on 2026-10-31; recheck at implementation 
 - Current Edge guidance reports the local model limited to Edge Canary/Dev 150.0.4076 or later, requiring explicit enablement and a one-time model download; this is not sufficient evidence that the owner's target production browser supports V1: [Microsoft Edge local SpeechRecognition guide](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/speech-recognition-api).
 
 **Required implementation note:** Browser support and available languages are unstable. Record the actual tested browser/version, operating system, language, local model availability state, and Permissions-Policy in the follow-on QA evidence. If the target browser cannot prove that processing remains on-device, keep the microphone disabled.
+
+## V1 implementation decision — small additive control
+
+The operator already approved strict on-device-only STT and verified desktop Chrome on macOS: `en-US` model installation returned `true`, and `SpeechRecognition.available({langs:["en-US"],processLocally:true})` returned `available`. This confirms **model availability only**, not a working mic or correct transcription.
+
+**UI design gate:** This is a low-risk additive button plus inline status in the already owner-approved Ask Nudgey field, not a new screen or flow; preserve the existing input, transcript editability and explicit Ask/Save boundaries. Approval to add optional voice, with no changes to existing navigation, provides the design direction; new shell visual states remain subject to owner's physical browser inspection before merge.
+
+**Implementation approach:** browser-only `LocalSpeechController` with a strict unprefixed `SpeechRecognition` feature gate, on-device language-pack availability and explicit install, an abort-and-dispose lifecycle, and final-only transcript callback; small `useLocalSpeech` React hook and optional inline control. Fallback is text only. English (`en-US`) is the only scope. No external API, new dependency, provider, database migration or device-speech fallback is permitted. No tests may claim actual mic QA based solely on fake recognizers or hosted CI.
+
+**QA handoff:** the scoped physical Chrome results and NOT RUN cases are recorded in [`design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`](../design/evidence/NMI-NDG-02-V1/QA-RESULTS.md). Independently observed checks include local pack availability, Permissions-Policy, prompt-after-Speak, denial fallback, Stop/Back/Close/Escape/navigation/sign-out/401 cleanup, and a redacted application-origin Network observation. The owner-reported synthetic transcription/editability/network PASS is preserved as an owner report. Local-model installation and blocked-policy simulation remain NOT RUN; exact-HEAD acceptance audit remains pending.
+
+## Audit remediation record
+
+- Example-question Ask actions stop and invalidate active recognition before starting the new Ask draft. The same controller generation guard rejects any callback already queued by the browser.
+- React DOM component regressions use an injected fake local recognizer and application `fetch` spy. They verify transcript editability, no automatic Ask/schedule/review or request, explicit Ask behavior, example-Ask cancellation and stale-result rejection, plus cleanup after Back, Close, sign-out, and session expiry (401).
+- The physical Chrome results are maintained in [`design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`](../design/evidence/NMI-NDG-02-V1/QA-RESULTS.md). They combine owner-reported synthetic transcription results with independently observed environment, permission, lifecycle, 401, and network checks. Automated fake-recognizer tests remain separate evidence and do not replace the owner-reported transcription result. Acceptance audit and required CI at the new evidence/docs HEAD remain separate gates.

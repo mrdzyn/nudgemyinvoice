@@ -1663,4 +1663,50 @@ Independently audit the **current exact PR #29 head**, verify both required host
 
 Complete the evidence/docs commit on PR #29, verify both required hosted CI workflows pass on its exact resulting SHA, then independently re-audit that live exact head. Do not merge or deploy.
 
+## Handoff: NMI-NDG-02-V1-IMPLEMENT-01
+
+- **From:** GPT-6 V1 implementation. **To:** independent exact-head audit and owner Chrome QA. **Base:** `main` `139cdea0b14524ac3997c54f7cb4d9a6d9fe11e0` after owner-approved C2 merge. **Working branch:** `feat/nmi-ndg02-v1-local-speech`.
+- **Owner authority:** Start V1, strict on-device-only English speech; owner explicitly installed `en-US` pack and saw Chrome local capability `available`. Native microphone accuracy and privacy behavior are NOT yet physical-device verified.
+- **Implementation:** fail-closed unprefixed browser `SpeechRecognition` check + local language pack, explicit install by user gesture, on-device-only mic start, final text into existing editable Ask, no auto submit or Save, proper request/lifecycle abort. Existing C1/C2, status picker and manual follow-up remain unchanged.
+- **Testing objective:** fake recognizer assertions that `processLocally=true` is checked before `start()`, no cloud fallback or auto Ask, no late callback after Stop/Close/signout. Required hosted CI and owner real Chrome mic QA remain separate gates.
+- **Boundaries:** Draft PR only; no merge/deploy, audio upload, telemetry, OpenAI STT, PayPal or SMTP calls, production databases or migrations.
+
+## Handoff: NMI-NDG-02-V1-REMEDIATION-REVIEW-01
+
+- **From:** Codex implementation remediation. **To:** independent exact-head reviewer and owner physical Chrome QA. **Draft PR:** #30, branch `feat/nmi-ndg02-v1-local-speech`. **Starting HEAD:** `5f7385670fd66ac8cee00e29ca95aab1269bbf7c`. **Implementation commit:** `71a3f0e99c5afbb071718edae5527bddc2a7b1e2`; final PR head also contains this handoff/evidence documentation.
+- **State:** source remediation and local validation complete. Both required hosted workflows passed at `d350d3741a08c885293888905e2f9bf4116cfce6`; a documentation follow-up commit records the evidence, so verify both checks again at that resulting PR HEAD before stopping for independent exact-head re-audit. Keep Draft PR #30 Draft.
+- **Corrections:** Prettier applied to all four flagged speech files. Example-question Ask now stops the local recognizer before invoking Ask; controller generation checks reject queued late results from changing the new draft. Added React DOM interaction tests using a fake recognizer and `fetch` spy for editable final transcript, explicit Ask/no auto-schedule, no recognition-originated fetch, example Ask cancellation, explicit Stop, and Back/Close/sign-out/401 unmount cleanup.
+- **Local validation at implementation commit:** 24/24 focused speech/Nudgey tests; `pnpm --filter @nmi/web typecheck`; `pnpm typecheck`; `pnpm lint`; `pnpm format:check`; `pnpm build`; `pnpm check:bundle`; `git diff --check` — PASS. The production bundle emitted the large-chunk advisory; build succeeded. Hosted Project Baseline passed (run [41210442032](https://github.com/mrdzyn/nudgemyinvoice/actions/runs/41210442032)) and Stack validation passed (run [41210442014](https://github.com/mrdzyn/nudgemyinvoice/actions/runs/41210442014)) on exact SHA `d350d3741a08c885293888905e2f9bf4116cfce6`. Focused evidence and the physical-QA checklist are in `design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`.
+- **Physical QA:** NOT RUN. The checklist documents the supported Chrome/macOS local `en-US` availability, permission, actual synthetic transcription, cancellation, auth/navigation cleanup and network observation required from the owner. Prior reported pack availability is not a physical microphone PASS.
+- **Boundaries:** no provider invocation, audio upload, owner database access, merge or deployment. Preserve `processLocally=true`, no cloud fallback and explicit operator Ask/Save.
+
+### Next action
+
+Verify both required hosted workflows on the documentation follow-up's live PR #30 HEAD, then report that exact SHA and stop for independent re-audit. Owner Chrome mic execution remains a separate manual gate; do not claim it passed.
+
+## Handoff: NMI-NDG-02-V1-QA-CLOSE-01
+
+- **Task / phase:** `tasks/NMI-NDG-02-V1-on-device-voice.md`; physical QA closeout.
+- **From:** implementation/QA agent. **To:** independent exact-HEAD acceptance auditor.
+- **Branch:** `feat/nmi-ndg02-v1-local-speech`; **implementation head:** `a90a19b2ba912f4a0a85ef8ddbf389570090b992`.
+- **PR:** [Draft #30](https://github.com/mrdzyn/nudgemyinvoice/pull/30).
+- **State:** scoped physical Chrome QA PASS; documentation evidence is prepared for commit/push; required CI must pass at the resulting live PR head before audit. Keep Draft.
+
+### Completed
+- Recorded exact Chrome/macOS versions, direct local `en-US` availability and policy check, permission prompt/denial, Stop/Back/Close/Escape/navigation/sign-out/401 cleanup, and redacted Network observation in `design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`.
+- Preserved the owner's synthetic transcription/editability/no-app-egress report and clearly separated it from independent observations. No speech, transcript, screenshot, credential, or HAR was retained. No providers were called.
+
+### Validation
+- Physical scoped QA — PASS; local-model install and blocked-policy simulation — NOT RUN.
+- Application code unchanged; `git diff --check` — PASS.
+- Required hosted Project Baseline and Stack workflows — run on the pushed evidence/docs SHA before independent acceptance audit.
+
+### Continuation notes
+- Exact app SHA tested: `a90a19b2ba912f4a0a85ef8ddbf389570090b992`. Evidence contains owner-reported and independently observed results with explicit attribution.
+- Restore/reset localhost mic permission to Ask(default) after each check; it was restored. Disposable DB/API/Vite stack and synthetic credentials are shut down/removed before handoff.
+- No merge, deployment, provider call, customer data, or application-code change.
+
+### Next action
+Commit and push the QA evidence/docs to existing Draft PR #30, verify both required hosted checks at the new exact HEAD, then stop for independent acceptance re-audit.
+
 <!-- HANDOFF_ENTRIES_END -->

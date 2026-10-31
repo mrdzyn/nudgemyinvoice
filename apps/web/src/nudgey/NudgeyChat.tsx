@@ -6,6 +6,7 @@ import { EXAMPLE_QUESTIONS, MAX_PROMPT_CHARS } from "./intent.js";
 import { statusLabel, type Failure, type InvoiceGroup, type LookupResult } from "./lookup.js";
 import type { ChatMessage } from "./chatSession.js";
 import type { ScheduleCandidateState } from "./scheduleCandidate.js";
+import { useLocalSpeech } from "./useLocalSpeech.js";
 
 export const DRAFT_STATE_NOTE =
   "PayPal draft state is not payment status: nothing here says whether an invoice has been paid.";
@@ -359,9 +360,21 @@ export function ChatView({
   onDraftChange: () => void;
 }) {
   const inputId = useId();
+  const speechStatusId = useId();
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const [text, setText] = useState("");
+  const speech = useLocalSpeech((transcript) => {
+    if (!transcript.trim()) return;
+    // A new transcript is a new draft: invalidate any old actionable C2 candidate first.
+    onDraftChange();
+    setText((current) => {
+      const prefix = current.trimEnd();
+      const combined = prefix ? `${prefix} ${transcript.trim()}` : transcript.trim();
+      return combined.slice(0, MAX_PROMPT_CHARS);
+    });
+    input.current?.focus();
+  });
   useEffect(() => input.current?.focus(), []);
   useEffect(() => {
     if (!log.current) return;
@@ -373,8 +386,15 @@ export function ChatView({
     e.preventDefault();
     const t = text.trim();
     if (!t) return;
+    if (speech.state.kind === "listening") speech.stop();
     onAsk(t);
     setText("");
+  };
+  const askExample = (question: string) => {
+    // An example starts a new Ask draft. Invalidate speech callbacks before it can
+    // replace that draft, even if the browser has already queued a final result.
+    if (speech.state.kind === "listening") speech.stop();
+    onAsk(question);
   };
   return (
     <section className="chat" aria-label="Ask Nudgey">
@@ -385,7 +405,7 @@ export function ChatView({
       </p>
       <div className="chat-chips" role="group" aria-label="Example questions">
         {EXAMPLE_QUESTIONS.map((q) => (
-          <button key={q} type="button" className="chat-chip" onClick={() => onAsk(q)}>
+          <button key={q} type="button" className="chat-chip" onClick={() => askExample(q)}>
             {q}
           </button>
         ))}
@@ -450,7 +470,37 @@ export function ChatView({
             setText(e.target.value);
           }}
           placeholder="What are my pending invoices?"
+          aria-describedby={speechStatusId}
         />
+        <div className="chat-voice-controls">
+          {speech.state.kind === "ready" || speech.state.kind === "listening" ? (
+            <button
+              type="button"
+              className="followup-btn"
+              aria-label={
+                speech.state.kind === "listening"
+                  ? "Stop on-device voice input"
+                  : "Start on-device voice input in English"
+              }
+              aria-pressed={speech.state.kind === "listening"}
+              onClick={speech.state.kind === "listening" ? speech.stop : speech.start}
+            >
+              {speech.state.kind === "listening" ? "Stop listening" : "🎙 Speak on device"}
+            </button>
+          ) : speech.state.kind === "downloadable" ? (
+            <button type="button" className="followup-btn" onClick={speech.install}>
+              Install English voice pack
+            </button>
+          ) : speech.state.kind === "downloading" || speech.state.kind === "error" ? (
+            <button type="button" className="followup-btn" onClick={speech.check}>
+              Check local voice again
+            </button>
+          ) : null}
+          <p id={speechStatusId} className="chat-hint" role="status" aria-live="polite">
+            {speech.state.message} Your words stay editable until you press Ask. Voice never
+            schedules or sends anything automatically.
+          </p>
+        </div>
         <div className="followup-buttons">
           <button
             type="submit"
