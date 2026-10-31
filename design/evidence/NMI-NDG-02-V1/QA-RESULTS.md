@@ -9,6 +9,8 @@
 
 The component tests observe application requests with a `fetch` spy. They do not claim that browser-native speech networking was physically observed; that remains a manual Chrome gate below.
 
+**Hosted CI:** Project Baseline and Stack validation both passed on PR head `d350d3741a08c885293888905e2f9bf4116cfce6` (runs [41210442032](https://github.com/mrdzyn/nudgemyinvoice/actions/runs/41210442032), [41210442014](https://github.com/mrdzyn/nudgemyinvoice/actions/runs/41210442014)). This evidence is for that exact commit; the later documentation-only handoff commit must be checked independently.
+
 ## Physical Chrome microphone QA — owner execution required
 
 **Status: NOT RUN / PENDING.** The owner's earlier report that the Chrome `en-US` pack is installed and `available` establishes pack availability only. It does not establish actual microphone capture/transcription or runtime network behavior. Do not mark this section PASS based on fake recognition or CI.
