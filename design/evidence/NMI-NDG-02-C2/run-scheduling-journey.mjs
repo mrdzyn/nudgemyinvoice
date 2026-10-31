@@ -14,13 +14,14 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../..");
-const ORIGIN = "http://localhost:4153";
-const API_PORT = 3153;
+const WEB_PORT = Number(process.env.NMI_QA_WEB_PORT || 4153);
+const ORIGIN = `http://localhost:${WEB_PORT}`;
+const API_PORT = Number(process.env.NMI_QA_API_PORT || 3153);
 const API = `http://127.0.0.1:${API_PORT}`;
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const PG_BIN = process.env.PG_BIN || "/opt/homebrew/opt/postgresql@16/bin";
-const PG_PORT = 54353;
-const DEBUG_PORT = 9353;
+const PG_PORT = Number(process.env.NMI_QA_PG_PORT || 54353);
+const DEBUG_PORT = Number(process.env.NMI_QA_DEBUG_PORT || 9353);
 const DB = "nmi_test_ndg02_c2_journey";
 const ZONE = "Asia/Manila";
 const SHOTS = join(here, "screenshots");
@@ -75,7 +76,7 @@ async function stopApi() {
   for (let i = 0; i < 80; i++) { try { await fetch(API + "/health"); await sleep(100); } catch { break; } }
 }
 const previewLog = join(work, "preview.log");
-const preview = spawn("pnpm", ["--filter", "@nmi/web", "exec", "vite", "preview", "--host", "localhost", "--port", "4153", "--strictPort"], { cwd: root, stdio: ["ignore", openSync(previewLog, "a"), openSync(previewLog, "a")], env: { ...process.env, NMI_API_ORIGIN: API }, detached: true });
+const preview = spawn("pnpm", ["--filter", "@nmi/web", "exec", "vite", "preview", "--host", "localhost", "--port", String(WEB_PORT), "--strictPort"], { cwd: root, stdio: ["ignore", openSync(previewLog, "a"), openSync(previewLog, "a")], env: { ...process.env, NMI_API_ORIGIN: API }, detached: true });
 children.push(preview);
 await startApi();
 let previewReady = false;
@@ -94,7 +95,8 @@ async function seed(name, email, currency, unit, due, n) {
 const INV1 = await seed("Northwind Studio", "ap@northwind.example", "USD", "250.00", "2030-01-15", 1);
 const INV2 = await seed("Vienna Cafe", "cafe@vienna.example", "EUR", "199.99", "2030-03-01", 2);
 const INV3 = await seed("Northwind Studio", "billing@northwind.example", "GBP", "99.50", "2030-02-20", 3);
-check("setup", "three synthetic invoices, including two same-name invoices for disambiguation", Boolean(INV1 && INV2 && INV3 && INV1 !== INV3));
+const INV4 = await seed("Acme Studio", "billing@acme.example", "USD", "149.00", "2030-04-12", 4);
+check("setup", "four synthetic invoices, including two same-name invoices and one unscheduled invoice for DST-save QA", Boolean(INV1 && INV2 && INV3 && INV4 && INV1 !== INV3));
 async function seedFollowUp(invoiceId, whenMs, message) {
   const login = await fetch(API + "/api/auth/login", { method: "POST", headers: { origin: ORIGIN, "content-type": "application/json" }, body: JSON.stringify({ username: USER, password: PASSWORD }) });
   const cookie = login.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
@@ -224,7 +226,7 @@ await waitBotDone();
 const overview = await lastBot();
 const calls1 = searchCalls(m);
 check("pending", "four bounded POST /api/invoice-drafts/search requests, one per PayPal draft group, each with status and limit 5 in the BODY", calls1.length === 4 && ["none", "progress", "created", "attention"].every((s) => calls1.some((c) => bodyOf(c).status === s && bodyOf(c).limit === 5)) && calls1.every((c) => c.path === "/api/invoice-drafts/search"), JSON.stringify(calls1.map(bodyOf)));
-check("pending", "the real invoices appear under 'No PayPal draft' with their own currency and exact total; other groups say None; no payment claim", overview.includes("No PayPal draft (3)") && overview.includes("Northwind Studio") && overview.includes("USD 540.00") && overview.includes("GBP 214.92") && overview.includes("Vienna Cafe") && overview.includes("EUR 431.98") && (overview.match(/None\./g) ?? []).length === 3 && overview.includes("PayPal draft state is not payment status") && !/unpaid|overdue|has been paid/i.test(overview.replace("nothing here says whether an invoice has been paid", "")), overview);
+check("pending", "the real invoices appear under 'No PayPal draft' with their own currency and exact total; other groups say None; no payment claim", overview.includes("No PayPal draft (4)") && overview.includes("Northwind Studio") && overview.includes("USD 540.00") && overview.includes("GBP 214.92") && overview.includes("Vienna Cafe") && overview.includes("EUR 431.98") && (overview.match(/None\./g) ?? []).length === 3 && overview.includes("PayPal draft state is not payment status") && !/unpaid|overdue|has been paid/i.test(overview.replace("nothing here says whether an invoice has been paid", "")), overview);
 await shot("01-pending-invoices.jpg");
 
 // 2 customer search: the term is only in the POST body
@@ -357,12 +359,17 @@ check("schedule", "keyboard Space selects only the focused exact invoice and ena
 await clickText("button", "Review in scheduler");
 await waitFor("!!document.querySelector('.followup-form')");
 check("schedule", "selected candidate prefills the existing create-mode scheduler with its exact invoice, local fields and an editable draft", await ev("document.querySelector('.followup-form')?.getAttribute('aria-label') === 'Schedule a follow-up'") && await getField("Saved invoice") === INV1 && await getField("Date") === "2027-01-15" && await getField("Time") === "21:30" && (await getField("Follow-up message")).includes("Northwind Studio") && await ev("!!document.querySelector('.followup-form textarea:not([readonly])')") && (await bodyText()).includes("Proposed from your question"));
+const scheduleInvoiceChoices = await ev("[...document.querySelectorAll('.followup-form select option')].map((o) => o.value)");
+check("schedule", "the verified candidate remains selected and other saved invoices are editable choices", scheduleInvoiceChoices.includes(INV1) && scheduleInvoiceChoices.includes(INV3) && await getField("Saved invoice") === INV1);
+await setField("Saved invoice", INV3);
+check("schedule", "the operator can change the prefilled candidate to another owner-scoped invoice without losing the candidate option", await getField("Saved invoice") === INV3 && (await ev(`!![...document.querySelectorAll('.followup-form select option')].find((o) => o.value === ${JSON.stringify(INV1)})`)));
+await setField("Saved invoice", INV1);
 await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
 const formGeo = await ev("(() => { const p = document.querySelector('.nudgey-panel').getBoundingClientRect(); const f = document.querySelector('.followup-form').getBoundingClientRect(); return { panel: { left: p.left, right: p.right }, form: { left: f.left, right: f.right }, width: innerWidth, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth }; })()");
 check("schedule-mobile", "the editable prefilled scheduler fits the 390px viewport without horizontal overflow", formGeo.panel.left >= 0 && formGeo.panel.right <= formGeo.width && formGeo.form.left >= formGeo.panel.left && formGeo.form.right <= formGeo.panel.right && formGeo.overflow <= 1, JSON.stringify(formGeo));
 await shot("07-prefill-mobile.jpg");
 await send("Emulation.setDeviceMetricsOverride", { width: 1100, height: 900, deviceScaleFactor: 1, mobile: false });
-check("schedule", "the verified candidate is available without a second general-list read and before explicit Save nothing is persisted", scheduleCount() === beforeSchedule && !netLog.slice(m).some((n) => n.path === "/api/follow-ups" && n.method === "POST") && searchCalls(m).length === 1);
+check("schedule", "the verified candidate remains available alongside one bounded authenticated general invoice-list read, with no write before Save", scheduleCount() === beforeSchedule && !netLog.slice(m).some((n) => n.path === "/api/follow-ups" && n.method === "POST") && searchCalls(m).filter((n) => bodyOf(n).q === "Northwind Studio").length === 1 && searchCalls(m).filter((n) => bodyOf(n).limit === 50 && bodyOf(n).q === undefined).length === 1, JSON.stringify(searchCalls(m).map((n) => bodyOf(n))));
 await shot("05-editable-prefill.jpg");
 await clickText(".followup-form button", "Back");
 await waitFor("!!document.querySelector('.chat-form input')");
@@ -387,6 +394,33 @@ for (let i = 0; i < 40 && scheduleCount() === beforeSchedule; i++) await sleep(5
 check("schedule", "only explicit Save sends one local follow-up POST with the reviewed date, current zone and edited fields", savedPosts.length === 1 && savedPosts[0]?.status === 201 && savedBody.invoiceId === INV3 && savedBody.timezone === ZONE && savedBody.dueAt === "2027-01-15T13:30:00.000Z" && savedBody.message === "Reviewed local reminder for Northwind Studio" && savedBody.note === "Operator edited this draft", JSON.stringify({ posts: savedPosts.map((p) => ({ status: p.status, ...bodyOf(p) })), INV1, INV3 }));
 check("schedule", "the existing server persists exactly one operator-local reminder for the selected invoice; no PayPal/SMTP route is called", scheduleCount() === beforeSchedule + 1 && Number(sql("SELECT count(*) FROM invoice_follow_ups WHERE invoice_id='" + INV3 + "' AND message='Reviewed local reminder for Northwind Studio' AND timezone='Asia/Manila'")) === 1 && !netLog.slice(m).some((n) => /paypal|smtp|send|email/i.test(n.path)), `follow-ups=${scheduleCount()} / invoice=${INV3} / posts=${JSON.stringify(savedPosts.map((p) => ({ status: p.status, body: bodyOf(p) })))}`);
 
+// An edited Nudgey proposal must reject DST-overlap wall times and preserve exact zone resolution.
+await openNudgey();
+await waitFor("!!document.querySelector('.nudgey-action')");
+await clickText(".nudgey-action", "Ask Nudgey");
+await waitFor("!!document.querySelector('.chat-form input')");
+await send("Emulation.setTimezoneOverride", { timezoneId: "America/New_York" });
+const dstCommand = "Schedule a follow-up for Acme Studio on 2026-11-01 at 3:30 AM";
+m = netLog.length;
+const beforeDstSchedule = scheduleCount();
+await ask(dstCommand);
+await waitBotDone();
+await ev(`document.querySelector('.schedule-candidate-option input[value="${INV4}"]')?.click()`);
+await clickText("button", "Review in scheduler");
+await waitFor("!!document.querySelector('.followup-form')");
+await setField("Time", "01:30");
+await clickText(".followup-form button[type=submit]", "Save follow-up");
+check("schedule", "editing a proposal to the repeated New York DST hour fails closed before any local write", await ev("document.querySelector('.followup-form [role=alert]')?.textContent.includes('occurs twice')") && scheduleCount() === beforeDstSchedule && !netLog.slice(m).some((n) => n.path === "/api/follow-ups" && n.method === "POST"));
+await send("Emulation.setTimezoneOverride", { timezoneId: ZONE });
+// The zone changed, so explicitly confirm the browser's restored zone before the form can save.
+await setField("Time", "03:30");
+await clickText(".followup-form button", "Confirm date and time");
+await clickText(".followup-form button[type=submit]", "Save follow-up");
+await waitFor("!document.querySelector('.followup-form')");
+const dstPosts = netLog.slice(m).filter((n) => n.path === "/api/follow-ups" && n.method === "POST");
+check("schedule", "after explicit zone-change confirmation, a unique edited wall time saves the exact instant in the current IANA zone", dstPosts.length === 1 && bodyOf(dstPosts[0]).invoiceId === INV4 && bodyOf(dstPosts[0]).timezone === ZONE && bodyOf(dstPosts[0]).dueAt === "2026-10-31T19:30:00.000Z" && scheduleCount() === beforeDstSchedule + 1, JSON.stringify(dstPosts.map((p) => bodyOf(p))));
+await send("Emulation.setTimezoneOverride", { timezoneId: ZONE });
+
 // A new non-scheduling question replaces the proposal context; it cannot retain actionable results.
 await openNudgey();
 await waitFor("!!document.querySelector('.nudgey-action')");
@@ -410,7 +444,7 @@ await ev("[...document.querySelectorAll('.chat-form button')].find((b) => b.text
 await send("Fetch.failRequest", { requestId: cancelGate.held, errorReason: "Aborted" }).catch(() => undefined);
 await send("Fetch.disable");
 await waitFor("!!document.querySelector('.nudgey-action')");
-check("schedule", "Back aborts the in-flight candidate lookup and its late response cannot restore an actionable card", await ev("!document.querySelector('.schedule-candidate') && !document.querySelector('.chat-log')") && scheduleCount() === beforeSchedule + 1);
+check("schedule", "Back aborts the in-flight candidate lookup and its late response cannot restore an actionable card", await ev("!document.querySelector('.schedule-candidate') && !document.querySelector('.chat-log')") && scheduleCount() === beforeSchedule + 2);
 
 // Session-expiry response on an active candidate lookup clears the authenticated workspace.
 let unauthorizedPaused;
@@ -431,9 +465,9 @@ check("schedule", "HTTP 401 during candidate lookup expires the active session a
 
 // boundaries
 const apiPaths = netLog.filter((n) => n.path.startsWith("/api/"));
-check("boundaries", "only auth, invoice search/detail, follow-up reads and exactly one explicit local follow-up write were used; never parse, PayPal-draft or send routes", apiPaths.every((n) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts\/search|invoice-drafts\/[0-9a-f-]{36}(\/follow-ups)?|follow-ups)$/.test(n.path)) && apiPaths.filter((n) => n.method !== "GET").every((n) => n.path === "/api/invoice-drafts/search" || n.path.startsWith("/api/auth/") || (n.path === "/api/follow-ups" && n.method === "POST")) && apiPaths.filter((n) => n.path === "/api/follow-ups" && n.method === "POST").length === 1, [...new Set(apiPaths.map((n) => n.method + " " + n.path))].join(","));
+check("boundaries", "only auth, invoice search/detail, follow-up reads and two explicit local follow-up writes were used; never parse, PayPal-draft or send routes", apiPaths.every((n) => /^\/api\/(auth\/(session|login|logout)|invoice-drafts\/search|invoice-drafts\/[0-9a-f-]{36}(\/follow-ups)?|follow-ups)$/.test(n.path)) && apiPaths.filter((n) => n.method !== "GET").every((n) => n.path === "/api/invoice-drafts/search" || n.path.startsWith("/api/auth/") || (n.path === "/api/follow-ups" && n.method === "POST")) && apiPaths.filter((n) => n.path === "/api/follow-ups" && n.method === "POST").length === 2, [...new Set(apiPaths.map((n) => n.method + " " + n.path))].join(","));
 check("boundaries", "no request left the page origin and no URL contains customer text", foreign.length === 0 && !netLog.some((n) => /Northwind|Vienna|pending/i.test(n.path)), foreign.join(","));
-check("boundaries", "no PayPal operation, no PayPal id, no approval or webhook row; only two seeded reminders plus the one explicitly saved in C2 exist", sql("SELECT (SELECT count(*) FROM paypal_draft_operations) || ',' || (SELECT count(*) FROM invoices WHERE paypal_invoice_id IS NOT NULL) || ',' || (SELECT count(*) FROM approvals) || ',' || (SELECT count(*) FROM paypal_webhook_events) || ',' || (SELECT count(*) FROM invoice_follow_ups) || ',' || (SELECT count(*) FROM invoices)") === "0,0,0,0,3,3");
+check("boundaries", "no PayPal operation, no PayPal id, no approval or webhook row; only two seeded reminders plus two explicitly saved local reminders exist", sql("SELECT (SELECT count(*) FROM paypal_draft_operations) || ',' || (SELECT count(*) FROM invoices WHERE paypal_invoice_id IS NOT NULL) || ',' || (SELECT count(*) FROM approvals) || ',' || (SELECT count(*) FROM paypal_webhook_events) || ',' || (SELECT count(*) FROM invoice_follow_ups) || ',' || (SELECT count(*) FROM invoices)") === "0,0,0,0,4,4");
 check("boundaries", "browser storage is empty, the page URL has no query or hash, and console errors are limited to the expected auth and injected candidate-401 responses", (await ev("localStorage.length + sessionStorage.length")) === 0 && (await ev("location.search + location.hash")) === "" && consoleMsgs.filter((x) => !/status of 401 .*\/api\/(?:auth\/session|invoice-drafts\/search)/.test(x)).length === 0, consoleMsgs.join(" | "));
 check("boundaries", "the audit log has no free-text question or customer name", !/Northwind|Vienna|pending invoices|joke/i.test(sql("SELECT coalesce(string_agg(detail::text || action, ' '), '') FROM audit_log")));
 

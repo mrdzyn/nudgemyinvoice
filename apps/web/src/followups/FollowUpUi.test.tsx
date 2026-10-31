@@ -279,6 +279,37 @@ describe("schedule form", () => {
     expect(html).toContain('role="alert"');
     expect(html).not.toContain("<b>bad");
   });
+
+  it("keeps the verified Ask Nudgey candidate actionable while owner-scoped invoice choices load", () => {
+    const candidate = props.invoices[0]!;
+    const alternate = {
+      id: "10000000-0000-4000-8000-000000000003",
+      customerName: "Vienna Cafe",
+      currency: "EUR",
+      total: "215.99",
+      dueDate: "2030-03-01",
+    };
+    const html = clean(
+      renderToString(
+        <ScheduleForm
+          mode="create"
+          {...props}
+          invoices={[candidate, alternate]}
+          invoicesStatus="loading"
+          prefill={{
+            invoiceId: candidate.id,
+            date: "2027-01-15",
+            time: "21:30",
+            timeZone: "Asia/Manila",
+            message: "Reviewed candidate",
+          }}
+        />,
+      ),
+    );
+    expect(html).toContain(`value="${candidate.id}" selected=""`);
+    expect(html).toContain(`value="${alternate.id}"`);
+    expect(html).not.toMatch(/<select[^>]*disabled=""/);
+  });
 });
 
 describe("invoice detail follow-up card", () => {

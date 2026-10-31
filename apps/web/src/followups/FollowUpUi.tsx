@@ -5,6 +5,7 @@ import {
   MAX_MESSAGE,
   MAX_NOTE,
   buildFollowUpMessage,
+  checkPrefilledSchedule,
   checkSchedule,
   defaultFollowUpFields,
   describeZone,
@@ -251,7 +252,10 @@ export function ScheduleForm({
         `Your time zone changed. Review the date and time in ${liveZone}, then choose Save follow-up again.`,
       );
     }
-    const c = checkSchedule({ date, time, note, message }, new Date());
+    const input = { date, time, note, message };
+    const c = prefill
+      ? checkPrefilledSchedule(input, new Date(), liveZone!)
+      : checkSchedule(input, new Date());
     if (!c.ok) return setLocal(c.error);
     setLocal(null);
     onSubmit({
@@ -313,7 +317,7 @@ export function ScheduleForm({
           id={ids.inv}
           value={invoiceId}
           onChange={(e) => pick(e.target.value)}
-          disabled={busy || invoicesStatus !== "ready"}
+          disabled={busy || (invoicesStatus !== "ready" && !(prefill && invoices.length > 0))}
         >
           <option value="">
             {invoicesStatus === "loading"

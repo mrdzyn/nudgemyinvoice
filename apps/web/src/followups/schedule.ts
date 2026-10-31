@@ -1,3 +1,5 @@
+import { resolveWallTime } from "../nudgey/scheduleIntent.js";
+
 /**
  * Pure helpers for local follow-up scheduling. No network, no storage, no clock reads except where a
  * `now` is passed in. The scheduled time is picked in the operator's BROWSER time zone, converted to
@@ -132,6 +134,29 @@ export const PAST_GRACE_MS = 5 * 60 * 1000;
 
 export type FormCheck =
   { ok: true; dueAt: string; note: string | null; message: string } | { ok: false; error: string };
+
+/** Strict validation for an Ask Nudgey prefill after the operator edits its local wall time. */
+export function checkPrefilledSchedule(
+  input: { date: string; time: string; note: string; message: string },
+  now: Date,
+  timeZone: string,
+): FormCheck {
+  const wall = resolveWallTime(input.date, input.time, timeZone);
+  if (wall.kind === "gap")
+    return { ok: false, error: "That local time does not exist. Choose another date or time." };
+  if (wall.kind === "overlap")
+    return {
+      ok: false,
+      error: "That local time occurs twice because of a clock change. Choose another time.",
+    };
+  if (wall.kind === "invalid-zone")
+    return { ok: false, error: "I can't verify this time zone. Nothing was saved." };
+  const checked = checkSchedule(input, now);
+  if (!checked.ok) return checked;
+  if (checked.dueAt !== wall.dueAt)
+    return { ok: false, error: "I couldn't verify this local time. Choose another date or time." };
+  return checked;
+}
 
 /** Client-side validation of the schedule form (the server validates again, strictly). */
 export function checkSchedule(

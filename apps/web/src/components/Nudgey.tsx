@@ -262,15 +262,14 @@ export function Nudgey() {
     const candidate = view.kind === "schedule" ? view.prefill : undefined;
     if (candidate) {
       setInvoices([candidate.invoice]);
-      setInvoicesStatus("ready");
-      return () => ac.abort();
     }
     setInvoicesStatus("loading");
+    let active = true;
     void listInvoices(
       { limit: 50, cursor: null, currency: null, status: null, q: null },
       ac.signal,
     ).then((r) => {
-      if (ac.signal.aborted || r.kind === "aborted") return;
+      if (!active || r.kind === "aborted") return;
       if (r.kind === "unauthorized") return expired?.();
       if (r.kind !== "ok") return setInvoicesStatus("error");
       const loaded = r.page.items.map((i) => ({
@@ -280,10 +279,16 @@ export function Nudgey() {
         total: i.total,
         dueDate: i.dueDate,
       }));
-      setInvoices(loaded);
+      const merged = candidate
+        ? [candidate.invoice, ...loaded.filter((item) => item.id !== candidate.invoice.id)]
+        : loaded;
+      setInvoices(merged);
       setInvoicesStatus("ready");
     });
-    return () => ac.abort();
+    return () => {
+      active = false;
+      ac.abort();
+    };
   }, [
     open,
     view.kind,

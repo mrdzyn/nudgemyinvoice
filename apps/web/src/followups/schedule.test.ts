@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   buildFollowUpMessage,
+  checkPrefilledSchedule,
   checkSchedule,
   defaultFollowUpFields,
   describeZone,
@@ -124,5 +125,54 @@ describe("schedule form validation", () => {
     expect(checkSchedule({ ...good, message: "   " }, now)).toMatchObject({ ok: false });
     expect(checkSchedule({ ...good, message: "x".repeat(2001) }, now)).toMatchObject({ ok: false });
     expect(checkSchedule({ ...good, note: "n".repeat(501) }, now)).toMatchObject({ ok: false });
+  });
+});
+
+describe("Ask Nudgey prefilled schedule validation", () => {
+  const now = new Date("2026-10-31T12:00:00Z");
+  const base = { date: "2026-11-02", time: "09:30", note: "", message: "Reviewed draft" };
+
+  it("rejects edited wall times in a DST gap or overlap instead of selecting an instant implicitly", () => {
+    expect(
+      checkPrefilledSchedule(
+        { ...base, date: "2026-11-01", time: "01:30" },
+        now,
+        "America/New_York",
+      ),
+    ).toEqual({
+      ok: false,
+      error: "That local time occurs twice because of a clock change. Choose another time.",
+    });
+    expect(
+      checkPrefilledSchedule(
+        { ...base, date: "2027-03-14", time: "02:30" },
+        now,
+        "America/New_York",
+      ),
+    ).toEqual({
+      ok: false,
+      error: "That local time does not exist. Choose another date or time.",
+    });
+  });
+
+  it("accepts a unique wall time only when host conversion matches the current IANA zone", () => {
+    withTz("America/New_York");
+    expect(
+      checkPrefilledSchedule(
+        { ...base, date: "2026-11-01", time: "03:30" },
+        now,
+        "America/New_York",
+      ),
+    ).toEqual({
+      ok: true,
+      dueAt: "2026-11-01T08:30:00.000Z",
+      note: null,
+      message: "Reviewed draft",
+    });
+    withTz("Asia/Manila");
+    expect(checkPrefilledSchedule(base, now, "America/New_York")).toMatchObject({
+      ok: false,
+      error: "I couldn't verify this local time. Choose another date or time.",
+    });
   });
 });
