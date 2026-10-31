@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nudgey C2 — Natural-language scheduling concept (STATIC PREVIEW)</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#15213a;background:#f3f6fa;font-size:14px}
+*{box-sizing:border-box}body{margin:0;padding:24px}.wrap{max-width:1220px;margin:auto}
+.banner{padding:10px 16px;border-radius:10px;background:#e6efff;border:1px solid #b3ccff;color:#173e99;margin-bottom:18px;font-weight:600}
+h1{font-size:24px;margin:0 0 5px}.lead{color:#526581;margin:0 0 20px}.screens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.scene-name{font-weight:700;margin:0 0 10px;color:#2d4671}.panel{background:white;border:1.5px solid #889bb6;box-shadow:0 18px 28px #101b2a15;border-radius:22px;padding:20px;min-height:600px;max-width:420px}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #dbe3f0;padding-bottom:14px;margin-bottom:16px}
+.logo{font-size:22px;font-weight:800}.muted{color:#61708b;font-size:12px}.cross{border-radius:50%;background:#f2f5f9;width:37px;height:37px;display:grid;place-items:center;font-size:23px;border:1px solid #d8e0e8}
+.chat{background:#eef3fa;padding:12px;border-radius:12px;line-height:1.5;margin:10px 0}.reply{border:1px solid #dce4f0;border-radius:14px;padding:14px;margin-top:15px}
+h2{font-size:17px;margin:0 0 9px}.tag{color:#124db9;font-weight:700;font-size:12px}.notice{padding:9px;border:1px solid #c4d7fb;background:#eef5ff;color:#163e8f;border-radius:10px;font-size:12px;margin:11px 0}
+.item{border:1px solid #dce5f1;border-radius:12px;padding:12px;margin:9px 0;background:#f7f9fc}.item strong{display:block;margin-bottom:5px}.item small{display:block;color:#526581;margin-top:3px}.selected{border:2px solid #2c62e4;background:#f0f5ff}
+button{background:#205be3;border:0;color:white;font-weight:700;border-radius:10px;padding:12px 14px;width:100%;margin-top:12px;font:inherit;font-weight:700;cursor:default}
+.secondary{color:#173e83;background:#f1f5fc;border:1px solid #c8d5e9}.disabled{background:#afbdd6}
+label{display:block;font-weight:650;margin:12px 0 5px}input,textarea{display:block;width:100%;border:1px solid #aab9cc;background:white;border-radius:9px;padding:10px;font:inherit;color:#15213a}textarea{height:72px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}.twocol>div{min-width:0}.foot{margin:14px 0 0;color:#63738a;font-size:12px;line-height:1.4}
+@media(max-width:900px){.screens{grid-template-columns:1fr}.panel{min-height:auto;max-width:390px}.wrap{max-width:540px}}
+@media(prefers-color-scheme:dark){:root{color:#eaf0ff;background:#111c2d}.panel{color:#14213a}.scene-name,.lead{color:#b6c6e2}}
+</style></head>
+<body><div class="wrap">
+<div class="banner">DESIGN ONLY · Synthetic Northwind examples · No API calls, stored data, or working controls</div>
+<h1>NMI-NDG-02 C2 — Nudgey scheduling</h1><p class="lead">Review the candidate, disambiguation and existing edit-before-save flow. No customer email is sent.</p>
+<div class="screens">
+<section aria-label="Proposed follow-up"><p class="scene-name">A — A proposed date and time</p><div class="panel">
+<div class="top"><div><div class="logo">Nudgey</div><div class="muted">Your invoice companion</div></div><div class="cross" aria-hidden="true">×</div></div>
+<div class="chat">You: Remind me to follow up with Northwind tomorrow at 9 AM</div>
+<div class="reply"><h2>Review this follow-up proposal</h2><div class="tag">Proposal only — nothing scheduled</div>
+<div class="item selected"><strong>Northwind Studio</strong><small>Invoice 5400-01 · USD 540.00</small><small>Due Jan 15, 2030 · PayPal draft: none</small></div>
+<label>Proposed reminder</label><strong>Nov 1, 2026 · 9:00 AM</strong><p class="muted">Asia/Manila (GMT+8) · Example date only</p>
+<button>Review in scheduler</button><button class="secondary">Back to Ask Nudgey</button>
+<p class="foot">The next screen is editable. Only “Save follow-up” creates a local reminder.</p></div>
+</div></section>
+<section aria-label="Multiple invoice candidates"><p class="scene-name">B — More than one invoice matches</p><div class="panel">
+<div class="top"><div><div class="logo">Nudgey</div><div class="muted">Your invoice companion</div></div><div class="cross" aria-hidden="true">×</div></div>
+<div class="chat">You: Schedule a follow-up for Northwind on 2026-11-04 at 14:30</div>
+<div class="reply"><h2>Which invoice?</h2><p class="muted">Two saved invoices match “Northwind”. Choose one; nothing is selected automatically.</p>
+<div class="item"><strong>◯ Northwind Studio</strong><small>Invoice 5400-01 · USD 540.00</small><small>Due Jan 15, 2030</small></div>
+<div class="item selected"><strong>◉ Northwind Studio</strong><small>Invoice 5400-02 · EUR 199.00</small><small>Due Nov 30, 2026</small></div>
+<div class="notice">Proposed: Nov 4, 2026 · 2:30 PM · Asia/Manila</div>
+<button>Review selected invoice</button><button class="secondary">Refine search instead</button>
+<p class="foot">Unclear or truncated search results must never trigger silent first-match selection.</p></div>
+</div></section>
+<section aria-label="Editable scheduler prefill"><p class="scene-name">C — Existing scheduler, prefilled</p><div class="panel">
+<div class="top"><div><div class="logo">Nudgey</div><div class="muted">Your invoice companion</div></div><div class="cross" aria-hidden="true">×</div></div>
+<h2>Schedule a follow-up</h2><div class="notice">Proposed from your question — review every field before saving.</div>
+<p class="muted">A reminder for you, not a message to the customer.</p>
+<label>Saved invoice</label><input value="Northwind Studio · USD 540.00" readonly>
+<div class="twocol"><div><label>Date</label><input value="2026-11-01" readonly></div><div><label>Time</label><input value="09:00" readonly></div></div>
+<p class="muted">Your time zone: Asia/Manila (GMT+8)</p>
+<label>Note (optional)</label><input placeholder="Add a private note" readonly>
+<label>Follow-up message (editable draft)</label><textarea readonly>Hi Northwind Studio, this is a friendly reminder about your invoice...</textarea>
+<button>Save follow-up</button><button class="secondary">Back without saving</button>
+<p class="foot">Illustrative static fields. In the real scheduler the invoice, date, time, note and message remain editable. A separate Save click is required.</p>
+</div></section>
+</div></div></body></html>

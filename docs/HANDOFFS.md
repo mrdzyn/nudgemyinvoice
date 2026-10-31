@@ -1611,4 +1611,11 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Change scope:** deterministic browser harness/evidence and task/status/handoff notes only. At the audited head, required hosted CI was green; this evidence update requires CI on the resulting PR head. No migration was rerun; owner's local `0007` remains applied after a verified backup.
 - **Not done:** no provider tests, merge, deployment, or outbound notification authorization.
 
+## Handoff: NMI-NDG-02-C2-DESIGN-01
+
+- **From:** GPT-6, design-first C2 kickoff. **To:** Product owner for flow/visual approval; then implementation agent. **Base:** `main` `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`, after C1 PR #27 squash-merge.
+- **Scope:** Task `tasks/NMI-NDG-02-C2-natural-language-followup.md` and static preview `design/mockups/NMI-NDG-02-C2-scheduling.html`. Parse candidate customer/clock/zone, disambiguate exact existing operator-owned invoice, then prefill existing ScheduleForm; only manual Save may create a local follow-up. No C3 SMTP or provider tests.
+- **State:** Docs-only Draft PR; design approval and then controlled implementation remain pending. No production code change, UI shell wiring, deployment, migration, real provider calls or merge.
+- **Next action:** Owner reviews/approves (or revises) the candidate, multi-match and prefilled-scheduler static screens; implementation agent then works on the same bounded scope with focused tests, hosted CI, browser QA and independent exact-HEAD audit.
+
 <!-- HANDOFF_ENTRIES_END -->
