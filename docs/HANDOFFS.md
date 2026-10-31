@@ -1564,4 +1564,11 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 - **Found by the browser journey (fixed):** multi-line messages were rejected by the shared single-line text validator, and `Intl` refused `timeZoneName` combined with `dateStyle`/`timeStyle` (silently showing UTC).
 - **Not done:** no deployment, merge, provider call or Gate action. A hosted database must run migration `0007` and the new grants first.
 
+## Handoff: NMI-FUP-01-FIX1
+
+- **From:** GPT-6 (GitHub connector backport). **To:** independent exact-HEAD re-audit, then owner. **Branch/PR:** `feat/nmi-ux02-nudgey`, Draft PR #26; base reviewed head `d6e9d7c5f17a230cf0f3b45ea5a9fca63e02ac4e`.
+- **Action:** backported the already source-audited shared follow-up read-generation guard plus focused tests from Draft PR #27 `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06` into #26. This includes the read-only `readFresh(signal)` method as a dependency for downstream C1; no conversational interface or other features transferred.
+- **Verification to complete:** hosted Project Baseline and Stack CI on new exact head; independent short re-audit of controller and test changes. No prior audit or CI of #26's old SHA substitutes for this gate.
+- **Boundaries:** both PRs remain Draft, no merge, provider call, deployment, migration, credential or external send. After owner authorization to merge #26, reconcile PR #27's stacked history/diff, rerun required checks and seek separate approval.
+
 <!-- HANDOFF_ENTRIES_END -->

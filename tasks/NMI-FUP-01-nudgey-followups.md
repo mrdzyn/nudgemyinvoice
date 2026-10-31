@@ -48,3 +48,10 @@ Strict zod bodies (unknown keys refused, UTC `Z` instants only, validated IANA z
 
 ## Boundaries kept
 No change to the PayPal or OpenAI clients, approvals, authentication, sessions, billing or deployment; no new dependency; the unsaved-invoice navigation guard still wraps "Open invoice"; the panel closes on navigation. Draft PR only: no merge, no deployment.
+
+## Independent audit FIX1 — shared read ordering
+
+- **Reason:** independent review of Draft PR #26 requested the read-order guard and focused regression coverage already implemented downstream on Draft PR #27. Backport only `apps/web/src/followups/controller.ts` and `apps/web/src/followups/controller.test.ts` from independently audited PR #27 at `ed2274c7c71b62f5f38d6aca41f0d23a4326fa06`. The new `readFresh(signal)` is a read-only, unused-by-#26 hook that will be consumed by the downstream conversational PR; no chat UI or provider features move into #26.
+- **Behavior:** both periodic `refresh()` and caller-initiated `readFresh()` carry monotonically increasing read generations. An older finishing response cannot overwrite newer-applied counts/items/errors. Active 401 responses still expire the session, and aborted/stopped requests do not apply.
+- **Focused evidence:** four deferred-order/late-failure/401/abort regression cases come with the controller from the audited downstream code. Required hosted CI and an independent **new exact-HEAD** re-audit are pending at the time of this documentation. Do not call this PASS solely because PR #27 passed.
+- **Scope:** no database, migration, runtime-role, auth, PayPal, OpenAI, SMTP, customer notification, deployment or merge change. PRs #26 and #27 stay Draft; PR #27 must be reconciled to the eventual merged #26 before its own merge.

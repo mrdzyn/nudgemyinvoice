@@ -1,5 +1,6 @@
 import type {
   FollowUpApi,
+  ListOutcome,
   FollowUpInputBody,
   FollowUpView,
   ForInvoiceOutcome,
@@ -38,6 +39,9 @@ export class FollowUpsController {
   private reads: AbortController | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private stopped = false;
+  /** Start order of reads, and the newest start order whose answer has been applied. */
+  private readGen = 0;
+  private appliedGen = 0;
 
   constructor(
     private readonly api: FollowUpApi,
@@ -73,14 +77,18 @@ export class FollowUpsController {
     this.timer = null;
   }
 
-  async refresh(): Promise<void> {
-    this.reads?.abort();
-    const ac = new AbortController();
-    this.reads = ac;
-    if (this.snap.status === "idle") this.set({ status: "loading" });
-    const r = await this.api.list(ac.signal);
-    if (ac.signal.aborted || this.stopped || r.kind === "aborted") return;
-    if (this.reads === ac) this.reads = null;
+  /**
+   * Apply a finished read to the shared snapshot ONLY if it started after every read already applied.
+   * Reads can finish out of order (the 60 s refresh, a read after a change, the Nudgey lookup); an
+   * older answer must never rewind a newer count or item list. A 401 always ends the session.
+   */
+  private apply(gen: number, r: ListOutcome): void {
+    if (r.kind === "unauthorized") {
+      this.onExpired();
+      return;
+    }
+    if (gen < this.appliedGen) return; // an older read finishing late: ignored
+    this.appliedGen = gen;
     if (r.kind === "ok") {
       this.set({
         status: "ready",
@@ -89,11 +97,34 @@ export class FollowUpsController {
         counts: r.counts,
         serverNow: r.now,
       });
-    } else if (r.kind === "unauthorized") {
-      this.onExpired();
-    } else {
+    } else if (r.kind !== "aborted") {
       this.set({ status: this.snap.items.length ? "ready" : "error", error: r.kind });
     }
+  }
+
+  async refresh(): Promise<void> {
+    this.reads?.abort();
+    const ac = new AbortController();
+    this.reads = ac;
+    const gen = ++this.readGen;
+    if (this.snap.status === "idle") this.set({ status: "loading" });
+    const r = await this.api.list(ac.signal);
+    if (ac.signal.aborted || this.stopped || r.kind === "aborted") return;
+    if (this.reads === ac) this.reads = null;
+    this.apply(gen, r);
+  }
+
+  /**
+   * A fresh server read for a caller that needs the answer itself (the Nudgey lookup): it is bound to
+   * the CALLER's signal, updates the shared snapshot when it succeeds and is the newest read, and a
+   * 401 ends the session. The caller always gets its own answer back.
+   */
+  async readFresh(signal: AbortSignal): Promise<ListOutcome> {
+    const gen = ++this.readGen;
+    const r = await this.api.list(signal);
+    if (signal.aborted || this.stopped) return { kind: "aborted" };
+    this.apply(gen, r);
+    return r;
   }
 
   forInvoice(invoiceId: string, signal: AbortSignal): Promise<ForInvoiceOutcome> {
