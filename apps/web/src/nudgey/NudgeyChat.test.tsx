@@ -89,6 +89,17 @@ describe("Ask Nudgey entry (existing quick actions untouched)", () => {
 });
 
 describe("conversation view", () => {
+  it("keeps typed Ask available and no mic start before local-only voice capability is confirmed", () => {
+    const html = chat([]);
+    expect(html).toContain("Ask Nudgey a question");
+    expect(html).toContain('type="text"');
+    expect(html).toContain("Checking local voice support");
+    expect(html).toContain("Your words stay editable until you press Ask");
+    expect(html).not.toContain("Speak on device");
+    expect(html).toContain("Back");
+  });
+
+
   it("presents every invoice as an explicit accessible radio choice and keeps review disabled until selection", () => {
     const proposal: ScheduleProposal = {
       term: "Northwind Studio",

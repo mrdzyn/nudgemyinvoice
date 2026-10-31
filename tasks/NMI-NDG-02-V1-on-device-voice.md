@@ -1,7 +1,7 @@
 # NMI-NDG-02 V1 — Optional on-device voice transcription
 
-**State:** Separately owner-approved direction (2026-10-31); bounded follow-on contract prepared after C2 implementation. Not part of PR #29 C2 and not implemented here.  
-**Prerequisite:** C2 functional acceptance and independent exact-head audit. Start a separate Draft PR/branch from the owner-approved C2 result.  
+**State:** V1 implementation started on separate Draft PR from owner-approved C2 main; native local-only recognition, edit-before-Ask and fail-closed browser checks under review. Independent audit and physical Chrome mic QA pending.  
+**Prerequisite:** SATISFIED. C2 independently audited and owner squash-merged PR #29 into `main` at `139cdea0b14524ac3997c54f7cb4d9a6d9fe11e0`.  
 **Authority:** Owner decision recorded in PR #29 and `tasks/NMI-NDG-02-C2-natural-language-followup.md`.
 
 ## Objective
@@ -49,3 +49,13 @@ These official references were checked on 2026-10-31; recheck at implementation 
 - Current Edge guidance reports the local model limited to Edge Canary/Dev 150.0.4076 or later, requiring explicit enablement and a one-time model download; this is not sufficient evidence that the owner's target production browser supports V1: [Microsoft Edge local SpeechRecognition guide](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/speech-recognition-api).
 
 **Required implementation note:** Browser support and available languages are unstable. Record the actual tested browser/version, operating system, language, local model availability state, and Permissions-Policy in the follow-on QA evidence. If the target browser cannot prove that processing remains on-device, keep the microphone disabled.
+
+## V1 implementation decision — small additive control
+
+The operator already approved strict on-device-only STT and verified desktop Chrome on macOS: `en-US` model installation returned `true`, and `SpeechRecognition.available({langs:["en-US"],processLocally:true})` returned `available`. This confirms **model availability only**, not a working mic or correct transcription.
+
+**UI design gate:** This is a low-risk additive button plus inline status in the already owner-approved Ask Nudgey field, not a new screen or flow; preserve the existing input, transcript editability and explicit Ask/Save boundaries. Approval to add optional voice, with no changes to existing navigation, provides the design direction; new shell visual states remain subject to owner's physical browser inspection before merge.
+
+**Implementation approach:** browser-only `LocalSpeechController` with a strict unprefixed `SpeechRecognition` feature gate, on-device language-pack availability and explicit install, an abort-and-dispose lifecycle, and final-only transcript callback; small `useLocalSpeech` React hook and optional inline control. Fallback is text only. English (`en-US`) is the only scope. No external API, new dependency, provider, database migration or device-speech fallback is permitted. No tests may claim actual mic QA based solely on fake recognizers or hosted CI.
+
+**QA handoff:** test local pack installed + no cloud fallback, mic permission denial, final-only recognition, stop/close/escape/sign-out/401 cleanup, prompt editability, explicit Ask and Save, 390px keyboard/VoiceOver. Required Chrome mic QA must be performed on the owner's actual supported Chrome profile after implementation checkout; do not assume test runners have an on-device pack.

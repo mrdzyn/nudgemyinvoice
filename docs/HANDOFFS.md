@@ -1663,4 +1663,12 @@ Independently audit the **current exact PR #29 head**, verify both required host
 
 Complete the evidence/docs commit on PR #29, verify both required hosted CI workflows pass on its exact resulting SHA, then independently re-audit that live exact head. Do not merge or deploy.
 
+## Handoff: NMI-NDG-02-V1-IMPLEMENT-01
+
+- **From:** GPT-6 V1 implementation. **To:** independent exact-head audit and owner Chrome QA. **Base:** `main` `139cdea0b14524ac3997c54f7cb4d9a6d9fe11e0` after owner-approved C2 merge. **Working branch:** `feat/nmi-ndg02-v1-local-speech`.
+- **Owner authority:** Start V1, strict on-device-only English speech; owner explicitly installed `en-US` pack and saw Chrome local capability `available`. Native microphone accuracy and privacy behavior are NOT yet physical-device verified.
+- **Implementation:** fail-closed unprefixed browser `SpeechRecognition` check + local language pack, explicit install by user gesture, on-device-only mic start, final text into existing editable Ask, no auto submit or Save, proper request/lifecycle abort. Existing C1/C2, status picker and manual follow-up remain unchanged.
+- **Testing objective:** fake recognizer assertions that `processLocally=true` is checked before `start()`, no cloud fallback or auto Ask, no late callback after Stop/Close/signout. Required hosted CI and owner real Chrome mic QA remain separate gates.
+- **Boundaries:** Draft PR only; no merge/deploy, audio upload, telemetry, OpenAI STT, PayPal or SMTP calls, production databases or migrations.
+
 <!-- HANDOFF_ENTRIES_END -->

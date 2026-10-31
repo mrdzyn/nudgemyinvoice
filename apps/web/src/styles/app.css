@@ -1814,3 +1814,18 @@ dialog .actions {
   color: var(--text);
   font: inherit;
 }
+/* NMI-NDG-02 V1: small progressive enhancement of the approved Ask text field. */
+.chat-voice-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.chat-voice-controls .followup-btn {
+  min-height: 40px;
+}
+.chat-voice-controls .chat-hint {
+  flex: 1 1 100%;
+  margin: 0;
+}
