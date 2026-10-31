@@ -73,6 +73,45 @@ describe("Nudgey follow-up UI", () => {
     expect(err).not.toMatch(/<strong>0<\/strong>/);
   });
 
+  it("renders an Ask Nudgey proposal as an editable prefill and names the explicit Save boundary", () => {
+    const html = clean(
+      renderToString(
+        <ScheduleForm
+          mode="create"
+          invoices={[
+            {
+              id: fu().invoiceId,
+              customerName: "Northwind Studio",
+              currency: "USD",
+              total: "540.00",
+              dueDate: "2030-01-15",
+            },
+          ]}
+          invoicesStatus="ready"
+          prefill={{
+            invoiceId: fu().invoiceId,
+            date: "2026-11-01",
+            time: "09:00",
+            timeZone: "Asia/Manila",
+            message: "Hi Northwind Studio",
+          }}
+          busy={false}
+          error={null}
+          now={at}
+          timeZone="Asia/Manila"
+          onSubmit={noop}
+          onBack={noop}
+        />,
+      ),
+    );
+    expect(html).toContain("Proposed from your question");
+    expect(html).toContain('value="2026-11-01"');
+    expect(html).toContain('value="09:00"');
+    expect(html).toContain("Hi Northwind Studio");
+    expect(html).toContain("Save follow-up");
+    expect(html).toContain("nothing is scheduled until you choose Save follow-up.");
+  });
+
   it("groups real items into Due and Upcoming with time, zone, note and every action", () => {
     const html = clean(
       renderToString(

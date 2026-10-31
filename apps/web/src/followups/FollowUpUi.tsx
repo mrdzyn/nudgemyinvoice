@@ -27,6 +27,17 @@ export const LOCAL_ONLY_COPY =
 const optionLabel = (o: InvoiceOption) =>
   `${o.customerName} · ${o.currency} ${o.total} · due ${o.dueDate}`;
 
+function currentBrowserZone(): string | null {
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!zone) return null;
+    new Intl.DateTimeFormat("en", { timeZone: zone }).format();
+    return zone;
+  } catch {
+    return null;
+  }
+}
+
 /** Due / Upcoming counts as read from the server. Never a local guess. */
 export function FollowUpSummary({ snap }: { snap: FollowUpsSnapshot }) {
   if (snap.status === "idle" || (snap.status === "loading" && snap.serverNow === null))
@@ -149,6 +160,7 @@ export function FollowUpList({
 export interface ScheduleSubmit {
   invoiceId: string;
   dueAt: string;
+  timezone: string;
   note: string | null;
   message: string;
 }
@@ -159,6 +171,7 @@ export function ScheduleForm({
   invoices,
   invoicesStatus,
   initial,
+  prefill,
   busy,
   error,
   now,
@@ -175,6 +188,14 @@ export function ScheduleForm({
     note: string | null;
     message: string;
     timezone: string;
+  };
+  /** A reviewed, explicit candidate proposal from Ask Nudgey; never a saved schedule. */
+  prefill?: {
+    invoiceId: string;
+    date: string;
+    time: string;
+    timeZone: string;
+    message: string;
   };
   busy: boolean;
   error: string | null;
@@ -193,12 +214,14 @@ export function ScheduleForm({
     tz: useId(),
   };
   const start = initial ? toLocalFields(new Date(initial.dueAt)) : defaultFollowUpFields(now);
-  const [invoiceId, setInvoiceId] = useState(initial?.invoiceId ?? "");
-  const [date, setDate] = useState(start.date);
-  const [time, setTime] = useState(start.time);
+  const [invoiceId, setInvoiceId] = useState(initial?.invoiceId ?? prefill?.invoiceId ?? "");
+  const [date, setDate] = useState(prefill?.date ?? start.date);
+  const [time, setTime] = useState(prefill?.time ?? start.time);
   const [note, setNote] = useState(initial?.note ?? "");
-  const [message, setMessage] = useState(initial?.message ?? "");
+  const [message, setMessage] = useState(initial?.message ?? prefill?.message ?? "");
   const [edited, setEdited] = useState(Boolean(initial));
+  const [confirmedZone, setConfirmedZone] = useState(prefill?.timeZone ?? timeZone);
+  const currentZone = currentBrowserZone();
   const [local, setLocal] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -220,10 +243,24 @@ export function ScheduleForm({
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!invoiceId) return setLocal("Choose a saved invoice.");
-    const c = checkSchedule({ date, time, note, message }, now);
+    const liveZone = currentBrowserZone();
+    if (prefill && !liveZone)
+      return setLocal("I can't verify the current browser time zone. Nothing was saved.");
+    if (prefill && confirmedZone !== liveZone) {
+      return setLocal(
+        `Your time zone changed. Review the date and time in ${liveZone}, then choose Save follow-up again.`,
+      );
+    }
+    const c = checkSchedule({ date, time, note, message }, new Date());
     if (!c.ok) return setLocal(c.error);
     setLocal(null);
-    onSubmit({ invoiceId, dueAt: c.dueAt, note: c.note, message: c.message });
+    onSubmit({
+      invoiceId,
+      dueAt: c.dueAt,
+      timezone: liveZone ?? timeZone,
+      note: c.note,
+      message: c.message,
+    });
   };
   const copy = async () => {
     try {
@@ -234,6 +271,7 @@ export function ScheduleForm({
     }
   };
   const shown = local ?? error;
+  const zoneChanged = Boolean(prefill && currentZone && confirmedZone !== currentZone);
   return (
     <form
       className="followup-form"
@@ -244,6 +282,30 @@ export function ScheduleForm({
       <h3 className="followup-form-title">
         {mode === "create" ? "Schedule a follow-up" : "Reschedule follow-up"}
       </h3>
+      {prefill ? (
+        <>
+          <p className="followup-hint" role="status">
+            Proposed from your question. Review and edit every field; nothing is scheduled until you
+            choose Save follow-up.
+          </p>
+          {zoneChanged ? (
+            <div className="followup-error" role="alert">
+              Your time zone changed from {prefill.timeZone}. Confirm the proposed date and time in{" "}
+              {currentZone ?? timeZone} before saving.
+              <button
+                type="button"
+                className="followup-btn"
+                onClick={() => {
+                  const liveZone = currentBrowserZone();
+                  if (liveZone) setConfirmedZone(liveZone);
+                }}
+              >
+                Confirm date and time
+              </button>
+            </div>
+          ) : null}
+        </>
+      ) : null}
       <p className="followup-hint">{LOCAL_ONLY_COPY}</p>
       <label htmlFor={ids.inv}>Saved invoice</label>
       {mode === "create" ? (
@@ -354,7 +416,11 @@ export function ScheduleForm({
         </p>
       ) : null}
       <div className="followup-buttons">
-        <button type="submit" className="followup-btn followup-btn-primary" disabled={busy}>
+        <button
+          type="submit"
+          className="followup-btn followup-btn-primary"
+          disabled={busy || zoneChanged}
+        >
           {busy ? "Saving…" : mode === "create" ? "Save follow-up" : "Save new time"}
         </button>
         <button type="button" className="followup-btn" onClick={onBack} disabled={busy}>

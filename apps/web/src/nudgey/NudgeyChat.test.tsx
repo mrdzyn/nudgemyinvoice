@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { NudgeyPanel } from "../components/Nudgey.js";
 import type { ListItem } from "../domain/serverList.js";
 import type { FollowUpView } from "../followups/api.js";
-import { ChatView, DRAFT_STATE_NOTE, ResultView } from "./NudgeyChat.js";
+import { ChatView, DRAFT_STATE_NOTE, ResultView, ScheduleCandidateView } from "./NudgeyChat.js";
+import type { ScheduleProposal } from "./scheduleIntent.js";
 import type { ChatMessage } from "./chatSession.js";
 import { GROUPS, type LookupResult } from "./lookup.js";
 
@@ -60,6 +61,10 @@ const chat = (messages: ChatMessage[], busy = false) =>
         onOpenInvoice={noop}
         onOpenDashboard={noop}
         onSchedule={noop}
+        onSelectSchedule={noop}
+        onReviewSchedule={noop}
+        onRetrySchedule={noop}
+        onDraftChange={noop}
       />,
     ),
   );
@@ -84,6 +89,33 @@ describe("Ask Nudgey entry (existing quick actions untouched)", () => {
 });
 
 describe("conversation view", () => {
+  it("presents every invoice as an explicit accessible radio choice and keeps review disabled until selection", () => {
+    const proposal: ScheduleProposal = {
+      term: "Northwind Studio",
+      date: "2026-11-01",
+      time: "09:00",
+      timeZone: "Asia/Manila",
+      dueAt: "2026-11-01T01:00:00.000Z",
+    };
+    const html = clean(
+      renderToString(
+        <ScheduleCandidateView
+          state={{ kind: "ready", proposal, items: [item(1), item(2)], selectedId: null }}
+          at={at}
+          onSelect={noop}
+          onReview={noop}
+          onRetry={noop}
+          onManual={noop}
+        />,
+      ),
+    );
+    expect((html.match(/type="radio"/g) ?? []).length).toBe(2);
+    expect((html.match(/checked=""/g) ?? []).length).toBe(0);
+    expect(html).toContain("Review in scheduler");
+    expect(html).toContain('disabled=""');
+    expect(html).toContain("Proposal only — nothing scheduled");
+  });
+
   it("offers the five example questions, a labelled bounded input, Ask and Back, and states it is read-only", () => {
     const html = chat([]);
     for (const q of [

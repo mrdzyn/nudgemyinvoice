@@ -1266,12 +1266,16 @@ dialog .actions {
   box-shadow: 0 12px 44px rgba(15, 23, 42, 0.25);
 }
 .nudgey-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 .nudgey-title {
   font-size: 17px;
@@ -1724,6 +1728,73 @@ dialog .actions {
   margin: 2px 0 4px;
   color: var(--text-2);
   font-size: 12.5px;
+}
+.schedule-candidate {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.schedule-candidate h4 {
+  margin: 0;
+  font-size: 13px;
+}
+.schedule-candidate-badge {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--info-border);
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.schedule-candidate-list li {
+  min-width: 0;
+}
+.schedule-candidate-option {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.schedule-candidate-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--action-bg);
+  grid-row: span 2;
+}
+.schedule-candidate-option.is-selected {
+  border-color: var(--action-bg);
+  box-shadow: 0 0 0 2px var(--action-bg);
+}
+.schedule-candidate-option-head {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.schedule-candidate-option .chat-card-meta {
+  grid-column: 2;
+}
+.schedule-candidate .followup-error {
+  overflow-wrap: anywhere;
+}
+.schedule-candidate .followup-error .followup-btn {
+  display: block;
+  margin-top: 8px;
 }
 .chat-form {
   display: grid;

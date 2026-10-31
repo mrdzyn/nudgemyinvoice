@@ -1,6 +1,6 @@
 # NMI-NDG-02 C2 — Natural-language follow-up scheduling
 
-**State:** Product-owner flow/design **APPROVED**; implementation ready to begin on the existing Draft PR. No functional C2 code has been delivered yet.  
+**State:** Product-owner flow/design **APPROVED**; C2 functional implementation is in progress on the existing Draft PR #29 and is pending hosted CI and independent exact-head audit.
 **Base:** `main` at `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35` after independently audited and owner-approved PR #27.  
 **Scope authority:** Owner instruction "start NMI-NDG-02 C2".  
 **Design preview:** [Nudgey C2 scheduling states](../design/mockups/NMI-NDG-02-C2-scheduling.html).  
@@ -57,8 +57,8 @@ Preview includes: (A) proposal and exact selection; (B) several matching invoice
 
 ## Current gate
 
-This PR began **design/spec only**; the owner subsequently approved the flow on 2026-10-31. Implementation may proceed as separately reviewed commits on this Draft PR (or a bounded successor), preserving the approved static UI contract. No merge/deployment permission follows from approval. No OpenAI/PayPal/SMTP requests, email, provider tests, database migration, deployment or release is authorized. C3 outbound messaging remains separate and unapproved.
+This PR began **design/spec only**; the owner subsequently approved the flow on 2026-10-31. The deterministic parser, owner-scoped invoice candidate lookup and editable scheduler prefill are now wired on Draft PR #29, with focused tests and disposable-database browser QA in progress. No merge/deployment permission follows from approval. No OpenAI/PayPal/SMTP requests, email, provider tests, production database operation, deployment or release is authorized. C3 outbound messaging remains separate and unapproved.
 
 ## V1 on-device speech input — separately approved but NOT part of C2 wiring
 
-The owner approved optional voice entry on 2026-10-31 with a **strict on-device-only transcription** requirement. Delivery is a separate bounded post-C2 follow-on task/PR: check native browser support for `SpeechRecognition.processLocally`, `available({ langs, processLocally:true })`, local language packs and user-gesture consent; if local processing cannot be guaranteed, disable the mic and retain typed input. A one-time language-pack download may require explicit operator consent; never use cloud fallback, OpenAI STT, raw audio upload, transcript storage, automatic Ask submission, or auto-schedule. Preserve 401/session/Close/Back cleanup. See owner decision on PR #29. **Do not expand C2 implementation or mandatory test scope to V1 silently.**
+The owner approved optional voice entry on 2026-10-31 with a **strict on-device-only transcription** requirement. Delivery is a separate bounded post-C2 task in [`NMI-NDG-02-V1-on-device-voice.md`](NMI-NDG-02-V1-on-device-voice.md), after C2 functional acceptance; it is not wired in this PR. Check current native browser support for `SpeechRecognition.processLocally`, `available({ langs, processLocally: true })`, local language packs and user-gesture consent. If local processing cannot be guaranteed, disable the mic and retain typed input. A one-time language-pack download may require explicit operator consent; never use cloud fallback, OpenAI STT, raw audio upload, transcript storage, automatic Ask submission, or auto-schedule. Preserve 401/session/Close/Back cleanup. **Do not expand C2 implementation or validation to V1.**
