@@ -160,6 +160,31 @@ If an existing repository already has a handoff/continuation mechanism:
 <!-- HANDOFF_ENTRIES_START -->
 <!-- Append project handoff sections before HANDOFF_ENTRIES_END. -->
 
+## Handoff: NMI-PROTOTYPE-10D-DOCS-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D.md`
+- **From:** implementation / architecture planning
+- **To:** independent architecture reviewer
+- **Branch:** `docs/nmi-prototype-10d`
+- **Implementation head:** `bd975de962e01bfc7d5dbf39cce47d646d304530` (plan/task/status; handoff-only docs commit follows)
+- **PR:** [Draft #31](https://github.com/mrdzyn/nudgemyinvoice/pull/31)
+- **State:** Docs-only architecture plan ready for independent review; keep Draft.
+
+### Completed
+- Defined AG Studio, PayPal defect investigation, Render Workflow/Blueprint, 10-day workplan, acceptance gates and cut-line fallback in `docs/NMI-PROTOTYPE-10D-PLAN.md`.
+- Reconciled current STATUS against GitHub; PR #30 merged at current main SHA. No runtime changes or provider/resource operations.
+
+### Validation
+- Official AG Studio, PayPal Toolkit and Render docs checked 2026-11-02 — PASS; account license/pricing checks remain unverified.
+- Markdown format and `git diff --check` — PASS; hosted CI — pending on final PR SHA.
+
+### Continuation notes
+- Existing Render Free plan selection expires before Dec 15; proposed paid PostgreSQL/Blueprint direction needs independent review and explicit owner approval. No charges or resources authorized.
+- AG Studio commercial trial/license is not activated. PayPal real one-create budget remains exhausted. No providers or MCP were called.
+
+### Next action
+Independently review the exact live PR head, then wait for explicit owner approval before implementation.
+
 ## Handoff: NMI-P0-C1
 
 - **Task / phase:** `tasks/NMI-P0-bootstrap.md`
