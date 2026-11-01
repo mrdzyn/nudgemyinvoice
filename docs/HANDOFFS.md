@@ -176,7 +176,7 @@ If an existing repository already has a handoff/continuation mechanism:
 
 ### Validation
 - Official AG Studio, PayPal Toolkit and Render docs checked 2026-11-02 — PASS; account license/pricing checks remain unverified.
-- Markdown format and `git diff --check` — PASS; hosted CI — pending on final PR SHA.
+- Markdown format and `git diff --check` — PASS. Project Baseline and Stack CI passed at prior PR head `9450c8e69ca901b61aa8009a352673892196242a`; recheck required on the final pushed handoff head before audit.
 
 ### Continuation notes
 - Existing Render Free plan selection expires before Dec 15; proposed paid PostgreSQL/Blueprint direction needs independent review and explicit owner approval. No charges or resources authorized.
