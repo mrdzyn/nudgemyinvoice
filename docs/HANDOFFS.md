@@ -1767,4 +1767,16 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Out of scope:** AG Studio shell/UI, report persistence, Render resources/workflows, trial key, PayPal Toolkit MCP, OpenAI/PayPal requests, judge access, main merge and deployment. Payment test budget remains exhausted.
 - **Next:** open Draft PR, verify required CI and independently review exact source/tests; separate owner approval before merge. UI design and AG Studio license gate remain ahead.
 
+## Handoff: NMI-PROTOTYPE-10D-A2-IMPL-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D-A2-dashboard-integration.md`
+- **From:** implementation agent. **To:** independent exact-head correctness/security reviewer.
+- **Branch:** `feat/nmi-proto-analytics-02`; **implementation commit:** `64bba258a47517c0184395034172fbcb637d2b34` (from exact `main@7f87ca80e61b3c418c9b596b39cbb6b4bebb99bc`).
+- **PR:** Draft [#33](https://github.com/mrdzyn/nudgemyinvoice/pull/33).
+- **State:** implementation, focused local validation and synthetic local browser QA complete. A follow-up documentation commit points STATUS to this handoff; verify hosted checks against the current live PR head, not only the implementation commit. Keep Draft.
+- **Completed:** authenticated full-population summary integration; exact currency totals; synchronized server filters and local-date half-open bounds; strict DTO parsing, epoch/cancellation/401 handling, owner scoping and fail-closed fixture isolation. No schema/migration change. Evidence: `design/evidence/NMI-PROTOTYPE-10D-A2/QA-RESULTS.md`.
+- **Validation:** 207 focused web/Nudgey tests passed; 96 disposable PostgreSQL list/store/analytics tests passed; 12/12 local Chrome checks passed; lint, format, typecheck, build, bundle secret scan and diff check passed. Vite reported a non-failing large-chunk advisory. Both newly created `nmi_test_a2_*` databases were dropped; the owner's databases were not accessed. Required Project Baseline and Stack CI are pending on the final PR head.
+- **Continuation notes:** no provider calls; PayPal draft creation disabled during browser QA, OpenAI unconfigured and SMTP absent. No Render/AG Studio work, migration, merge or deployment. PayPal one-create authorization remains exhausted; OpenAI Gate A remains consumed.
+- **Next action:** verify Project Baseline and Stack CI pass on the current PR #33 head, then stop for independent exact-head audit.
+
 <!-- HANDOFF_ENTRIES_END -->
