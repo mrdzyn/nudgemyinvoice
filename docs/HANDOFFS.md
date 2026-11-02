@@ -1756,4 +1756,15 @@ Verify both required hosted workflows on the documentation follow-up's live PR #
 ### Next action
 Commit and push the QA evidence/docs to existing Draft PR #30, verify both required hosted checks at the new exact HEAD, then stop for independent acceptance re-audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A1-IMPLEMENT-01
+
+- **Phase:** `tasks/NMI-PROTOTYPE-10D-A1-analytics-contract.md`; parent architecture PR #31 accepted and owner merged at `main@9cf6f4ebf169e8a0c18cef106a741c2c9320df0f`.
+- **From:** GPT-6 implementation. **To:** CI and independent exact-HEAD implementation reviewer.
+- **Branch:** `feat/nmi-proto-analytics-01` (new Draft PR pending creation at handoff authoring).
+- **Scope:** source + integration tests for strict `POST /api/analytics/summary`; parameterized all-owned-row aggregates in PostgreSQL, currency-safe integer totals, per-day IANA buckets, CSRF/Origin/401 and owner-only read boundary. Reuses existing status/currency enums, no migrations or provider calls.
+- **Implementation decision:** both UTC date bounds and IANA timezone required for A1; malformed/partial/oversized ranges fail closed. Existing currencies have 0/2 minor digits; three-decimal currency (KWD) not yet supported and excluded, not silently introduced.
+- **Validation objective:** hosted Project Baseline and Stack checks, especially focused real PostgreSQL integration tests. Any failures require correction on same branch and new exact-HEAD check before re-audit.
+- **Out of scope:** AG Studio shell/UI, report persistence, Render resources/workflows, trial key, PayPal Toolkit MCP, OpenAI/PayPal requests, judge access, main merge and deployment. Payment test budget remains exhausted.
+- **Next:** open Draft PR, verify required CI and independently review exact source/tests; separate owner approval before merge. UI design and AG Studio license gate remain ahead.
+
 <!-- HANDOFF_ENTRIES_END -->

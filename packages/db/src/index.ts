@@ -4,6 +4,7 @@ export * from "./approval-store.js";
 export * from "./auth-store.js";
 export * from "./invoice-draft-store.js";
 export * from "./invoice-list-store.js";
+export * from "./invoice-analytics-store.js";
 export * from "./paypal-operation-store.js";
 export * from "./audit.js";
 export * from "./approval-audit.js";

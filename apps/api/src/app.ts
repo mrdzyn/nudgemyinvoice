@@ -9,6 +9,7 @@ import { registerAuth } from "./plugins/auth.js";
 import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
 import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-drafts.js";
 import { followUpRoutes } from "./routes/follow-ups.js";
+import { analyticsRoutes } from "./routes/analytics.js";
 import type { InvoiceModelClient } from "@nmi/ai";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import { healthRoutes } from "./routes/health.js";
@@ -148,6 +149,7 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     seams: deps.invoiceSeams,
   });
   followUpRoutes(app, { db: deps.db, audit, clock: deps.clock });
+  analyticsRoutes(app, deps.db);
   if (config.webDistDir) registerWebStatic(app, config.webDistDir);
   return app;
 }
