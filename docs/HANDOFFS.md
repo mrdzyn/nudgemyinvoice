@@ -1779,4 +1779,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Continuation notes:** no provider calls; PayPal draft creation disabled during browser QA, OpenAI unconfigured and SMTP absent. No Render/AG Studio work, migration, merge or deployment. PayPal one-create authorization remains exhausted; OpenAI Gate A remains consumed.
 - **Next action:** verify Project Baseline and Stack CI pass on the current PR #33 head, then stop for independent exact-head audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A2-CI-RECHECK-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D-A2-dashboard-integration.md`
+- **From:** implementation agent. **To:** independent exact-head correctness/security reviewer.
+- **Branch / PR:** `feat/nmi-proto-analytics-02`; Draft [#33](https://github.com/mrdzyn/nudgemyinvoice/pull/33).
+- **Correction:** Stack CI failed at `650e8b9d6bea89762fbe5a8eeb2eaa7299866b05` because old boundary tests rejected the new same-origin analytics route and first-party analytics code. The boundary test now allows `/api/analytics/summary` and specifically checks for third-party analytics SDKs. No production behavior changed.
+- **Local validation:** boundary suite 28/28; combined focused web/Nudgey suite 235/235; lint, format, typecheck and `git diff --check` passed after correction. Prior disposable PostgreSQL integration 96/96 and local synthetic Chrome QA 12/12 remain valid; browser/application code did not change in this correction.
+- **Safety:** no provider calls, migration, owner database operation, Render/AG Studio work, merge or deployment. Existing PayPal/OpenAI boundaries remain as documented.
+- **Final SHA / hosted CI:** to be filled after pushing this documentation and verifying both required workflows at the exact final PR head.
+- **Next action:** confirm the live PR head and both required hosted checks pass at that exact SHA; then stop for independent exact-head audit.
+
 <!-- HANDOFF_ENTRIES_END -->
