@@ -1800,4 +1800,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no provider calls, database operations, migration, merge, deployment, or scope expansion.
 - **Next action:** confirm both Project Baseline CI and Stack CI pass on the final live PR head, then stop for independent exact-head audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A3-OFFLINE-INVESTIGATION-01
+
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A3-paypal-offline-investigation.md`; report: `docs/NMI-PROTOTYPE-10D-A3-PAYPAL-OFFLINE-REPORT.md`.
+- **From / to:** offline investigator → independent exact-HEAD reviewer.
+- **Base / branch:** `main@dd6d5723eadba5c55afe9d0a6912f1510b2bb9de`; `docs/nmi-prototype-10d-a3-paypal-offline`.
+- **Draft PR:** #34. Verify the live PR HEAD and both required hosted checks before review.
+- **State:** docs-only investigation complete. Verdict **DEFECT REPRODUCED** for the offline-confirmed search pagination request-location mismatch against PayPal Invoicing v2 OpenAPI 2.6. No application/payment code changed.
+- **Evidence:** 106/106 deterministic PayPal package tests; 9/9 create-401 PostgreSQL tests and 53/53 invoice-drafts PostgreSQL tests on a fresh disposable PostgreSQL 16 cluster; PayPal package typecheck passed. Full evidence and dated source refs are in the task/report.
+- **Boundaries:** no provider, OpenAI, SMTP, MCP, owner DB, migration, or Render activity. `PAYPAL_DRAFTS_ENABLED=false`; historical one-create budget remains exhausted.
+- **Next:** confirm final exact SHA and green Project Baseline + Stack checks, then stop for independent review. Remediation needs its own task; no PayPal provider probe without new explicit owner authorization.
+
 <!-- HANDOFF_ENTRIES_END -->
