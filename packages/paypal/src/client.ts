@@ -3,6 +3,7 @@ import { isSupportedCurrency, parseMoney, type CurrencyCode } from "@nmi/shared"
 import {
   guardRequest,
   fetchTransport,
+  PAYPAL_INVOICE_SEARCH_QUERY,
   TransportError,
   type HttpResponse,
   type HttpTransport,
@@ -88,61 +89,14 @@ const STATUSES: ReadonlySet<string> = new Set([
 
 const searchItem = z.object({
   id: z.string().regex(REMOTE_ID),
-  detail: z
-    .object({
-      invoice_number: z.string().optional(),
-    })
-    .optional(),
+  detail: z.object({ invoice_number: z.string().min(1).max(25) }),
 });
-const searchResponse = z
-  .object({
-    total_items: z.number().int().nonnegative().optional(),
-    total_pages: z.number().int().nonnegative().optional(),
-    items: z.array(searchItem).optional(),
-    links: z.array(z.unknown()).optional(),
-  })
-  .superRefine((data, ctx) => {
-    // Both items and total_items missing => unrecognized / malformed payload (e.g. {} or error object)
-    if (data.items === undefined && data.total_items === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Search response must include items array or total_items",
-      });
-      return;
-    }
-    // If total_items > 0, items array must be present and non-empty
-    if (
-      data.total_items !== undefined &&
-      data.total_items > 0 &&
-      (!data.items || data.items.length === 0)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "total_items > 0 but items array is missing or empty",
-      });
-    }
-    // If total_items === 0 and items is present, items must be empty
-    if (data.total_items === 0 && data.items && data.items.length > 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "total_items is 0 but items array is not empty",
-      });
-    }
-    // If total_pages === 0 and items is present, items must be empty
-    if (data.total_pages === 0 && data.items && data.items.length > 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "total_pages is 0 but items array is not empty",
-      });
-    }
-    // If total_items is 0 but total_pages > 0
-    if (data.total_items === 0 && data.total_pages !== undefined && data.total_pages > 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "total_items is 0 but total_pages > 0",
-      });
-    }
-  });
+const searchResponse = z.object({
+  total_items: z.number().int().nonnegative().max(2_147_483_647),
+  total_pages: z.number().int().nonnegative().max(2_147_483_647),
+  items: z.array(searchItem).max(20),
+  links: z.array(z.object({ href: z.string().max(20_000), rel: z.string().max(100) })).optional(),
+});
 
 /**
  * PayPal REST SANDBOX client for exactly four operations: OAuth token, create DRAFT invoice, show
@@ -307,13 +261,8 @@ export class PayPalSandboxClient {
     try {
       res = await this.call(
         "POST",
-        "/v2/invoicing/search-invoices",
-        {
-          invoice_number: invoiceNumber,
-          page: 1,
-          page_size: 20,
-          total_required: true,
-        },
+        `/v2/invoicing/search-invoices?${PAYPAL_INVOICE_SEARCH_QUERY}`,
+        { invoice_number: invoiceNumber },
         "read",
       );
     } catch (e) {
@@ -323,24 +272,26 @@ export class PayPalSandboxClient {
     const parsed = searchResponse.safeParse(safeJson(res.body));
     if (!parsed.success) throw new PayPalOutcomeUnknownError("response_unparseable");
 
-    const totalPages = parsed.data.total_pages;
-    const totalItems = parsed.data.total_items;
-    const items = parsed.data.items ?? [];
+    const { total_items: totalItems, total_pages: totalPages, items } = parsed.data;
+    const expectedPages = totalItems === 0 ? 0 : Math.ceil(totalItems / 20);
+    const relations = parsed.data.links?.map((link) => link.rel.trim().toLowerCase()) ?? [];
 
-    // Any incomplete or multi-page search fails closed as search_incomplete.
-    // NEVER return pseudo-identifiers or synthetic strings in the invoice ID list.
-    if (totalPages !== undefined && totalPages > 1) {
+    // Only a complete single-page result can resolve an ambiguous create. Missing fields are
+    // rejected by the schema; contradictory, truncated, oversized, or paginated sets fail closed.
+    // The request is fixed to page 1, so next/previous links contradict a complete result set.
+    if (
+      totalItems > 20 ||
+      totalPages !== expectedPages ||
+      totalPages > 1 ||
+      items.length !== totalItems ||
+      items.some((item) => item.detail.invoice_number !== invoiceNumber) ||
+      relations.includes("next") ||
+      relations.includes("prev")
+    ) {
       throw new PayPalOutcomeUnknownError("search_incomplete");
     }
-    if (totalItems !== undefined && totalItems > items.length) {
-      throw new PayPalOutcomeUnknownError("search_incomplete");
-    }
 
-    const matchingIds = items
-      .filter((i) => !i.detail?.invoice_number || i.detail.invoice_number === invoiceNumber)
-      .map((i) => i.id);
-
-    return matchingIds;
+    return items.map((item) => item.id);
   }
 }
 
