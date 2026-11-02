@@ -108,10 +108,11 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
               (NULL, 'Ownerless Synthetic', 'ownerless@example.test', 'USD', 8888, 8888, '2030-01-01', '2026-11-03T12:00:00Z')`,
       [ownerB],
     );
-    const special = (await query(
-      "SELECT id FROM invoices WHERE created_by=$1 AND currency='USD' LIMIT 1",
-      [ownerA],
-    ))[0].id as string;
+    const special = (
+      await query("SELECT id FROM invoices WHERE created_by=$1 AND currency='USD' LIMIT 1", [
+        ownerA,
+      ])
+    )[0].id as string;
     await query(
       `INSERT INTO paypal_draft_operations
        (invoice_id, created_by, state, invoice_number, payload_digest)
@@ -156,7 +157,10 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
     const data = r.json() as {
       version: number;
       currencies: Array<{
-        currency: string; exponent: number; invoiceCount: number; totalMinor: string;
+        currency: string;
+        exponent: number;
+        invoiceCount: number;
+        totalMinor: string;
         stateCounts: Record<string, number>;
       }>;
       days: Array<{ day: string; currency: string; invoiceCount: number; totalMinor: string }>;
@@ -167,20 +171,31 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
     expect(data.version).toBe(1);
     expect(data.currencies).toEqual([
       {
-        currency: "EUR", exponent: 2, invoiceCount: 1, totalMinor: "2500",
+        currency: "EUR",
+        exponent: 2,
+        invoiceCount: 1,
+        totalMinor: "2500",
         stateCounts: { none: 1, progress: 0, created: 0, attention: 0 },
       },
       {
-        currency: "JPY", exponent: 0, invoiceCount: 3, totalMinor: "450",
+        currency: "JPY",
+        exponent: 0,
+        invoiceCount: 3,
+        totalMinor: "450",
         stateCounts: { none: 3, progress: 0, created: 0, attention: 0 },
       },
       {
-        currency: "USD", exponent: 2, invoiceCount: 57, totalMinor: "5700",
+        currency: "USD",
+        exponent: 2,
+        invoiceCount: 57,
+        totalMinor: "5700",
         stateCounts: { none: 56, progress: 0, created: 0, attention: 1 },
       },
     ]);
     expect(data.days.find((x) => x.currency === "USD")).toMatchObject({
-      day: "2026-11-03", invoiceCount: 57, totalMinor: "5700",
+      day: "2026-11-03",
+      invoiceCount: 57,
+      totalMinor: "5700",
     });
     expect(r.body).not.toMatch(/customerName|customerEmail|@example|paypalInvoiceId|payloadDigest/);
     const grid = await app.inject({
@@ -195,15 +210,21 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
   it("applies identical owner/currency/status/text filters independent of pagination", async () => {
     const attention = await post(authA, { ...period, status: "attention", currency: "USD" });
     expect(attention.statusCode).toBe(200);
-    expect((attention.json() as { currencies: Array<{ invoiceCount: number }> }).currencies[0]?.invoiceCount).toBe(1);
+    expect(
+      (attention.json() as { currencies: Array<{ invoiceCount: number }> }).currencies[0]
+        ?.invoiceCount,
+    ).toBe(1);
     const search = await post(authA, { ...period, q: "alpha", currency: "USD" });
     expect(search.statusCode).toBe(200);
-    expect((search.json() as { currencies: Array<{ invoiceCount: number }> }).currencies[0]?.invoiceCount).toBe(57);
+    expect(
+      (search.json() as { currencies: Array<{ invoiceCount: number }> }).currencies[0]
+        ?.invoiceCount,
+    ).toBe(57);
     const foreign = await post(authB, period);
     expect(foreign.statusCode).toBe(200);
-    expect((foreign.json() as { currencies: Array<{ totalMinor: string }> }).currencies).toMatchObject([
-      { totalMinor: "9999" },
-    ]);
+    expect(
+      (foreign.json() as { currencies: Array<{ totalMinor: string }> }).currencies,
+    ).toMatchObject([{ totalMinor: "9999" }]);
   });
 
   it("rejects invalid or unbounded ranges, timezone, unexpected keys and unsupported currencies", async () => {
@@ -240,8 +261,9 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
       currency: "USD",
     });
     expect(r.statusCode).toBe(200);
-    expect((r.json() as { days: Array<{ day: string; totalMinor: string; invoiceCount: number }> }).days)
-      .toMatchObject([{ day: "2026-03-08", totalMinor: "102", invoiceCount: 1 }]);
+    expect(
+      (r.json() as { days: Array<{ day: string; totalMinor: string; invoiceCount: number }> }).days,
+    ).toMatchObject([{ day: "2026-03-08", totalMinor: "102", invoiceCount: 1 }]);
     const noRows = await post(authA, {
       fromInclusive: "2026-03-08T06:00:00.000Z",
       toExclusive: "2026-03-08T06:30:00.000Z",
@@ -253,9 +275,11 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
 
   it("does not create operations, follow-ups or invoices when reading analytics", async () => {
     const snapshot = async () =>
-      (await query(
-        "SELECT (SELECT count(*)::int FROM invoices) invoices, (SELECT count(*)::int FROM paypal_draft_operations) paypal, (SELECT count(*)::int FROM invoice_follow_ups) reminders",
-      ))[0];
+      (
+        await query(
+          "SELECT (SELECT count(*)::int FROM invoices) invoices, (SELECT count(*)::int FROM paypal_draft_operations) paypal, (SELECT count(*)::int FROM invoice_follow_ups) reminders",
+        )
+      )[0];
     const before = await snapshot();
     await post(authA, period);
     await post(authA, { ...period, q: "Alpha", status: "none" });

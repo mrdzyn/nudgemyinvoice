@@ -31,14 +31,11 @@ export const analyticsBody = z
     status: z.enum(PAYPAL_STATUS_GROUPS).optional(),
     q: z.string().trim().min(1).max(LIST_MAX_SEARCH).optional(),
   })
-  .refine(
-    (v) => {
-      const from = Date.parse(v.fromInclusive);
-      const to = Date.parse(v.toExclusive);
-      return to > from && to - from <= 366 * 86_400_000;
-    },
-    "invalid or oversized date range",
-  );
+  .refine((v) => {
+    const from = Date.parse(v.fromInclusive);
+    const to = Date.parse(v.toExclusive);
+    return to > from && to - from <= 366 * 86_400_000;
+  }, "invalid or oversized date range");
 
 /** Read-only SQL aggregation over ALL matching owned records, independent of grid pagination. */
 export function analyticsRoutes(app: FastifyInstance, db: Db): void {

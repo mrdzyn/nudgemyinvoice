@@ -114,12 +114,18 @@ export class PostgresInvoiceAnalyticsStore {
       // for SELECT and GROUP BY even when Drizzle allocates distinct bind positions.
       .groupBy(sql`1, 2, 3`);
 
-    const currencies = new Map<CurrencyCode, {
-      count: number;
-      total: bigint;
-      states: Record<PayPalStatusGroup, number>;
-    }>();
-    const days = new Map<string, { day: string; currency: CurrencyCode; count: number; total: bigint }>();
+    const currencies = new Map<
+      CurrencyCode,
+      {
+        count: number;
+        total: bigint;
+        states: Record<PayPalStatusGroup, number>;
+      }
+    >();
+    const days = new Map<
+      string,
+      { day: string; currency: CurrencyCode; count: number; total: bigint }
+    >();
     for (const r of rows) {
       if (!isSupportedCurrency(r.currency) || !PAYPAL_STATUS_GROUPS.includes(r.state)) {
         throw new Error("unexpected stored aggregate dimension");
@@ -145,13 +151,15 @@ export class PostgresInvoiceAnalyticsStore {
       days.set(key, d);
     }
     return {
-      currencies: [...currencies].sort(([a], [b]) => a.localeCompare(b)).map(([currency, v]) => ({
-        currency,
-        exponent: currencyExponent(currency),
-        invoiceCount: v.count,
-        totalMinor: v.total.toString(),
-        stateCounts: v.states,
-      })),
+      currencies: [...currencies]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([currency, v]) => ({
+          currency,
+          exponent: currencyExponent(currency),
+          invoiceCount: v.count,
+          totalMinor: v.total.toString(),
+          stateCounts: v.states,
+        })),
       days: [...days.values()]
         .sort((a, b) => a.day.localeCompare(b.day) || a.currency.localeCompare(b.currency))
         .map((d) => ({
