@@ -1790,4 +1790,14 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Pre-documentation correction SHA / hosted CI:** `3669a3063f5b8f77f3f896c4613338f456541f18`; Project Baseline passed. Stack CI first timed out in an existing fake-adapter concurrent PayPal-draft PostgreSQL test, then the failed job rerun passed all steps including PostgreSQL tests. The documentation update in this handoff changes the PR head, so both workflows must be checked once more at the live exact head.
 - **Next action:** confirm the live PR head and both required hosted checks pass at that exact SHA; then stop for independent exact-head audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A2-MINOR-1-REMEDIATION-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D-A2-dashboard-integration.md`, independent audit MINOR-1.
+- **From:** remediation implementation. **To:** independent exact-head re-auditor.
+- **Branch / PR:** `feat/nmi-proto-analytics-02`; existing Draft [#33](https://github.com/mrdzyn/nudgemyinvoice/pull/33), starting/audited head `e29596618304017587548bb06fc92b1409df4616`.
+- **Change:** the shared list/analytics request budget now covers HTTP headers and complete success JSON body consumption. Timeout and parent abort race body consumption; 401 remains authoritative when returned after internal timeout/cancellation. Existing stale-response generation protections are unchanged.
+- **Validation:** `apps/web/src/invoices/api.test.ts` 142/142; web typecheck; changed-file ESLint and Prettier; `git diff --check`. Tests cover stalled body timeout for both endpoints, parent abort during body consumption, late 401 after timeout, and successful 200 body parsing. Read-only candidate review reported no concrete surviving bypass or behavior regression.
+- **Safety:** no provider calls, database operations, migration, merge, deployment, or scope expansion.
+- **Next action:** confirm both Project Baseline CI and Stack CI pass on the final live PR head, then stop for independent exact-head audit.
+
 <!-- HANDOFF_ENTRIES_END -->

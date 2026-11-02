@@ -75,7 +75,12 @@ export type AnalyticsResult =
   | { kind: "aborted" };
 
 type BoundedFetchResult =
-  { kind: "response"; response: Response } | { kind: "offline" | "timeout" | "aborted" };
+  | {
+      kind: "response";
+      response: Response;
+      json?: { kind: "parsed"; value: unknown } | { kind: "invalid" };
+    }
+  | { kind: "offline" | "timeout" | "aborted" };
 
 async function boundedFetch(
   doFetch: FetchLike,
@@ -87,20 +92,45 @@ async function boundedFetch(
   if (parent.aborted) return { kind: "aborted" };
   const controller = new AbortController();
   let timedOut = false;
-  const abortFromParent = () => controller.abort();
+  let stopRequest!: (reason: "timeout" | "aborted") => void;
+  const stopped = new Promise<"timeout" | "aborted">((resolve) => {
+    stopRequest = resolve;
+  });
+  const abortFromParent = () => {
+    controller.abort();
+    stopRequest("aborted");
+  };
   parent.addEventListener("abort", abortFromParent, { once: true });
   const timer = setTimeout(() => {
     timedOut = true;
     controller.abort();
+    stopRequest("timeout");
   }, timeoutMs);
   try {
     const response = await doFetch(path, { ...init, signal: controller.signal });
     // A response that proves session expiry is authoritative even if this request was internally
-    // superseded or its timeout controller fired while the server was returning the response.
+    // superseded or its timeout controller fired while the server was returning the response. A
+    // 401 is determined from headers and does not require consuming an error body.
     if (response.status === 401) return { kind: "response", response };
     if (parent.aborted) return { kind: "aborted" };
     if (timedOut) return { kind: "timeout" };
-    return { kind: "response", response };
+    if (response.status !== 200) return { kind: "response", response };
+
+    // Keep the same deadline and cancellation listener alive through full body consumption. Race
+    // the read as well as aborting fetch: test doubles and some body readers may not honor signal.
+    const bodyRead = response.json().then(
+      (value: unknown) => ({ kind: "parsed" as const, value }),
+      () => ({ kind: "invalid" as const }),
+    );
+    const body = await Promise.race([
+      bodyRead,
+      stopped.then((reason) =>
+        reason === "timeout" ? { kind: "timeout" as const } : { kind: "aborted" as const },
+      ),
+    ]);
+    if (body.kind === "aborted" || parent.aborted) return { kind: "aborted" };
+    if (body.kind === "timeout" || timedOut) return { kind: "timeout" };
+    return { kind: "response", response, json: body };
   } catch {
     if (parent.aborted) return { kind: "aborted" };
     return timedOut ? { kind: "timeout" } : { kind: "offline" };
@@ -337,7 +367,8 @@ export function createInvoiceApi(
       switch (res.status) {
         case 200:
           try {
-            const page = parseListPage(await res.json(), query.limit, query.cursor);
+            if (fetched.json?.kind !== "parsed") return { kind: "malformed" };
+            const page = parseListPage(fetched.json.value, query.limit, query.cursor);
             if (signal.aborted) return { kind: "aborted" };
             return page ? { kind: "ok", page } : { kind: "malformed" };
           } catch {
@@ -385,7 +416,8 @@ export function createInvoiceApi(
       switch (res.status) {
         case 200:
           try {
-            const summary = parseAnalyticsSummary(await res.json(), {
+            if (fetched.json?.kind !== "parsed") return { kind: "malformed" };
+            const summary = parseAnalyticsSummary(fetched.json.value, {
               ...query,
               ...(q ? { q } : {}),
             });

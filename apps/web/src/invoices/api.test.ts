@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createInvoiceApi, saveBody, type ListQuery } from "./api.js";
 import { IDEMPOTENCY_KEY, newIdempotencyKey } from "./idempotency.js";
 import type { InvoiceDraft } from "../domain/types.js";
@@ -40,6 +40,13 @@ const detail = (over: Record<string, unknown> = {}) =>
   record({ paypal: { state: "none", paypalInvoiceId: null, lastErrorCode: null }, ...over });
 const reply = (status: number, body?: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 const KEY = "key_ABCDEFGH12345678";
 const sig = () => new AbortController().signal;
 const save = (res: () => Response | Promise<Response>, signal = sig()) =>
@@ -373,6 +380,73 @@ describe("list request and results", () => {
   const list = (res: () => Response | Promise<Response>, query = q, signal = sig()) =>
     createInvoiceApi(async () => res()).list(query, CSRF, signal);
 
+  it("applies the request deadline through a stalled JSON body and ignores its late completion", async () => {
+    vi.useFakeTimers();
+    const body = deferred<unknown>();
+    const started = deferred<void>();
+    const request = { signal: null as AbortSignal | null };
+    try {
+      const response = reply(200);
+      response.json = () => {
+        started.resolve();
+        return body.promise;
+      };
+      const pending = createInvoiceApi(async (_url, init) => {
+        request.signal = init.signal as AbortSignal;
+        return response;
+      }, 15_000).list(q, CSRF, sig());
+      await started.promise;
+      await vi.advanceTimersByTimeAsync(15_000);
+      await expect(pending).resolves.toEqual({ kind: "timeout" });
+      expect(request.signal?.aborted).toBe(true);
+      body.resolve(page([row(1)]));
+      await Promise.resolve();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("honors parent cancellation during JSON consumption and accepts a valid delayed 200 body", async () => {
+    const cancelledBody = deferred<unknown>();
+    const cancelStarted = deferred<void>();
+    const controller = new AbortController();
+    const cancelledRequest = { signal: null as AbortSignal | null };
+    const cancelledResponse = reply(200);
+    cancelledResponse.json = () => {
+      cancelStarted.resolve();
+      return cancelledBody.promise;
+    };
+    const cancelled = createInvoiceApi(async (_url, init) => {
+      cancelledRequest.signal = init.signal as AbortSignal;
+      return cancelledResponse;
+    }).list(q, CSRF, controller.signal);
+    await cancelStarted.promise;
+    controller.abort();
+    await expect(cancelled).resolves.toEqual({ kind: "aborted" });
+    expect(cancelledRequest.signal?.aborted).toBe(true);
+    cancelledBody.resolve(page([]));
+
+    vi.useFakeTimers();
+    const successBody = deferred<unknown>();
+    const successStarted = deferred<void>();
+    try {
+      const response = reply(200);
+      response.json = () => {
+        successStarted.resolve();
+        return successBody.promise;
+      };
+      const valid = createInvoiceApi(async () => response, 15_000).list(q, CSRF, sig());
+      await successStarted.promise;
+      successBody.resolve(page([row(1)]));
+      await expect(valid).resolves.toMatchObject({
+        kind: "ok",
+        page: { items: [{ id: row(1).id }] },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("is a credentialed, no-store, CSRF-protected POST whose URL is fixed and whose body carries the whole query", async () => {
     let seen: { url: string; init: RequestInit } | undefined;
     const r = await createInvoiceApi(
@@ -594,6 +668,53 @@ describe("full-population analytics transport", () => {
     ],
   };
   const CSRF = "volatile-csrf-token";
+
+  it("keeps the analytics deadline active until its full JSON body arrives", async () => {
+    vi.useFakeTimers();
+    const body = deferred<unknown>();
+    const started = deferred<void>();
+    const request = { signal: null as AbortSignal | null };
+    try {
+      const response = reply(200);
+      response.json = () => {
+        started.resolve();
+        return body.promise;
+      };
+      const pending = createInvoiceApi(async (_url, init) => {
+        request.signal = init.signal as AbortSignal;
+        return response;
+      }, 15_000).analytics(query, CSRF, sig());
+      await started.promise;
+      await vi.advanceTimersByTimeAsync(15_000);
+      await expect(pending).resolves.toEqual({ kind: "timeout" });
+      expect(request.signal?.aborted).toBe(true);
+      body.resolve(summary);
+      await Promise.resolve();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("expires on an HTTP 401 returned after the request timeout aborted its controller", async () => {
+    vi.useFakeTimers();
+    const response = deferred<Response>();
+    const started = deferred<void>();
+    const request = { signal: null as AbortSignal | null };
+    try {
+      const pending = createInvoiceApi(async (_url, init) => {
+        request.signal = init.signal as AbortSignal;
+        started.resolve();
+        return response.promise;
+      }, 15_000).analytics(query, CSRF, sig());
+      await started.promise;
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(request.signal?.aborted).toBe(true);
+      response.resolve(reply(401));
+      await expect(pending).resolves.toEqual({ kind: "unauthorized" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it("uses only the fixed same-origin POST, volatile CSRF and strict no-store response contract", async () => {
     let seen: { url: string; init: RequestInit } | undefined;
