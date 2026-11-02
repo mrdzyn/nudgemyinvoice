@@ -95,7 +95,7 @@ const searchResponse = z.object({
   total_items: z.number().int().nonnegative().max(2_147_483_647),
   total_pages: z.number().int().nonnegative().max(2_147_483_647),
   items: z.array(searchItem).max(20),
-  links: z.array(z.unknown()).optional(),
+  links: z.array(z.object({ href: z.string().max(20_000), rel: z.string().max(100) })).optional(),
 });
 
 /**
@@ -274,15 +274,19 @@ export class PayPalSandboxClient {
 
     const { total_items: totalItems, total_pages: totalPages, items } = parsed.data;
     const expectedPages = totalItems === 0 ? 0 : Math.ceil(totalItems / 20);
+    const relations = parsed.data.links?.map((link) => link.rel.trim().toLowerCase()) ?? [];
 
     // Only a complete single-page result can resolve an ambiguous create. Missing fields are
     // rejected by the schema; contradictory, truncated, oversized, or paginated sets fail closed.
+    // The request is fixed to page 1, so next/previous links contradict a complete result set.
     if (
       totalItems > 20 ||
       totalPages !== expectedPages ||
       totalPages > 1 ||
       items.length !== totalItems ||
-      items.some((item) => item.detail.invoice_number !== invoiceNumber)
+      items.some((item) => item.detail.invoice_number !== invoiceNumber) ||
+      relations.includes("next") ||
+      relations.includes("prev")
     ) {
       throw new PayPalOutcomeUnknownError("search_incomplete");
     }

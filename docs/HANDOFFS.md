@@ -1822,4 +1822,14 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** create is still fenced and never automatically resent; search is read-only; query allowlist only permits fixed pagination values on the existing Sandbox search route. `PAYPAL_DRAFTS_ENABLED=false`; historical one-create authorization remains exhausted.
 - **Next:** this PR-number documentation follow-up advances the head beyond implementation commit `ecee331`; run required hosted Project Baseline and Stack workflows on the final PR SHA, confirm it remains Draft, then stop for independent review. No merge/deploy/provider activity.
 
+## Handoff: NMI-PROTOTYPE-10D-A3-FIX1-MINOR1-REMEDIATION-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A3-FIX1-paypal-search-contract.md`; existing Draft [#35](https://github.com/mrdzyn/nudgemyinvoice/pull/35).
+- **From / to:** MINOR-1 remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `b2e84c1503a0bd1cc3fb60eb8632ccfe2ab17553`; branch `fix/nmi-proto-a3-paypal-search-contract`.
+- **Correction:** complete search results now fail closed when HATEOAS links claim `next` or `prev` despite the fixed page-1 single-page result; standard `self` link remains accepted. Restored malformed remote-ID regression.
+- **Validation:** focused PayPal tests **136/136** across 4 files; `pnpm --filter @nmi/paypal typecheck`; Prettier and `git diff --check` passed. All tests use deterministic fakes; no provider or database calls.
+- **Safety:** exact Sandbox allowlist unchanged; reconciliation remains read-only; create remains fenced and at most once. `PAYPAL_DRAFTS_ENABLED=false`; one-create authorization exhausted.
+- **Next:** run both required hosted workflows on the final PR SHA, confirm PR #35 remains Draft, and stop for independent exact-HEAD re-audit. No provider, migration, deployment, or merge.
+
 <!-- HANDOFF_ENTRIES_END -->

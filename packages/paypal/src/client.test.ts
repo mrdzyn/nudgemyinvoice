@@ -404,6 +404,40 @@ describe("read operations", () => {
     );
   });
 
+  it("accepts a complete single-page result with a non-pagination HATEOAS link", async () => {
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_items: 1,
+          total_pages: 1,
+          items: [{ id: "INV2-A", detail: { invoice_number: "NMI-x" } }],
+          links: [{ href: `${BASE}/v2/invoicing/search-invoices`, rel: "self", method: "POST" }],
+        }),
+    });
+    await expect(client(f.transport).findInvoiceIdsByNumber("NMI-x")).resolves.toEqual(["INV2-A"]);
+  });
+
+  it.each(["next", "prev"])(
+    "rejects a contradictory %s HATEOAS pagination link on a complete first-page result",
+    async (rel) => {
+      const f = fake({
+        "POST /v1/oauth2/token": () => tokenOk,
+        "POST /v2/invoicing/search-invoices": () =>
+          ok({
+            total_items: 1,
+            total_pages: 1,
+            items: [{ id: "INV2-A", detail: { invoice_number: "NMI-x" } }],
+            links: [{ href: `${BASE}/v2/invoicing/search-invoices?page=2`, rel }],
+          }),
+      });
+      await expect(client(f.transport).findInvoiceIdsByNumber("NMI-x")).rejects.toMatchObject({
+        name: "PayPalOutcomeUnknownError",
+        code: "search_incomplete",
+      });
+    },
+  );
+
   it.each([
     ["missing all metadata", {}],
     ["missing total_items", { total_pages: 0, items: [] }],
@@ -483,6 +517,22 @@ describe("read operations", () => {
     });
     expect(f.calls.filter((request) => request.url.includes("/search-invoices?"))).toHaveLength(1);
     expect(f.calls.some((request) => request.url.endsWith("/invoicing/invoices"))).toBe(false);
+  });
+
+  it("rejects a malformed remote invoice ID even in complete search metadata", async () => {
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "POST /v2/invoicing/search-invoices": () =>
+        ok({
+          total_items: 1,
+          total_pages: 1,
+          items: [{ id: "bad_remote_id_with_underscores", detail: { invoice_number: "NMI-x" } }],
+        }),
+    });
+    await expect(client(f.transport).findInvoiceIdsByNumber("NMI-x")).rejects.toMatchObject({
+      name: "PayPalOutcomeUnknownError",
+      code: "response_unparseable",
+    });
   });
 
   it("fails closed on provider 5xx after the one allowed read refresh", async () => {

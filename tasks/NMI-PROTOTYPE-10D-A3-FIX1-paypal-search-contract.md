@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A3-FIX1 — PayPal Search Contract Remediation
 
-- **Status:** Implementation and focused local validation complete; Draft PR #35 is open, awaiting required CI and independent exact-HEAD review.
+- **Status:** FIX1 implementation complete; independent audit MINOR-1 pagination-link follow-up is on existing Draft PR #35, awaiting final CI and exact-HEAD re-audit.
 - **Base:** `main@816efcd9449b2fcfc00628123ded99cc4c62526a`.
 - **Branch:** `fix/nmi-proto-a3-paypal-search-contract`.
 - **Source finding:** A3 offline investigation, PR #34; report `docs/NMI-PROTOTYPE-10D-A3-PAYPAL-OFFLINE-REPORT.md`.
@@ -20,18 +20,22 @@ Required behavior:
 4. Deterministic tests cover empty, one-match and multiple-match complete result sets; missing/inconsistent metadata; truncation and pagination/oversize; timeouts and search 401; and invalid/duplicate/unexpected URL queries before transport.
 5. Preserve search as read-only, exact remote draft verification, owner scoping, durable operation fencing, and the at-most-one create POST behavior. Defer invoice-date verification.
 
+## Independent audit MINOR-1 follow-up
+
+On the audited PR #35 head `b2e84c1503a0bd1cc3fb60eb8632ccfe2ab17553`, the reviewer noted that complete-result metadata could still contradict a HATEOAS pagination link. The client now validates link `href`/`rel` fields and refuses `next` or `prev` relations for the fixed page-1 complete-result query. Tests accept a normal `self` link and reject contradictory `next`/`prev` links. The previously removed malformed remote-ID regression is restored.
+
 ## Prohibited
 
 No PayPal/OpenAI/SMTP requests, credentials, MCP, owner database, migration, Render resource, deployment, merge, feature-flag change, or provider-budget reset. Keep `PAYPAL_DRAFTS_ENABLED=false`; the one-create authorization remains exhausted. Do not broaden the operation allowlist.
 
 ## Validation evidence
 
-- `pnpm exec vitest run packages/paypal/src/client.test.ts packages/paypal/src/http.test.ts packages/paypal/src/mapping.test.ts packages/paypal/src/index.test.ts` — 132 passed across 4 files.
-- `pnpm --filter @nmi/paypal typecheck` — passed.
+- `pnpm exec vitest run packages/paypal/src/client.test.ts packages/paypal/src/http.test.ts packages/paypal/src/mapping.test.ts packages/paypal/src/index.test.ts` — 136 passed across 4 files after MINOR-1.
+- `pnpm --filter @nmi/paypal typecheck` — passed after MINOR-1.
 - Workspace `pnpm typecheck`, `pnpm lint`, and `pnpm format:check` — passed.
 - `apps/api/src/paypal-create-401.pg.test.ts` and `apps/api/src/invoice-drafts.pg.test.ts` — 62 passed on a freshly initialized disposable PostgreSQL 16 cluster named `nmi_test_a3fix1`; temporary cluster removed after the run.
 - The focused HTTP suite verifies the exact fixed search query is the sole query-enabled operation and keeps unsupported methods, hosts, paths, duplicate/extra/malformed query strings denied before transport.
-- `git diff --check` passed after the final source/doc edits. Both required hosted workflows must still pass on the final exact PR HEAD; record their results in the handoff.
+- Original FIX1 hosted Project Baseline and Stack workflows passed at PR #35 SHA `b2e84c1503a0bd1cc3fb60eb8632ccfe2ab17553`. MINOR-1 changes require both workflows to pass again on the new exact PR HEAD; record final results in the handoff.
 
 ## Delivery
 
