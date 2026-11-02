@@ -3,10 +3,9 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Objective: statically guarantee the web app can talk ONLY to the three same-origin operator-auth
- * routes (never a provider, never an invoice route) and cannot persist credentials or unsaved
- * invoice data, so the C1 phase boundary cannot regress silently.
- * The Chrome QA harness proves the same at runtime (zero requests, empty storage).
+ * Objective: statically guarantee the web app can talk only to the existing same-origin operator
+ * APIs (including the first-party aggregate route), never a provider, and cannot persist credentials
+ * or unsaved invoice data. The browser QA harness also observes that all requests remain local.
  */
 const root = join(import.meta.dirname, ".");
 const webRoot = join(root, "..");
@@ -43,7 +42,10 @@ const FORBIDDEN: [string, RegExp, string[]?][] = [
   ["inline style props", /\bstyle=\{\{/],
   ["raw HTML injection", /dangerouslySetInnerHTML|\.innerHTML\s*=/],
   ["external URLs", /https?:\/\/(?!(?:www\.)?w3\.org)/],
-  ["analytics", /gtag|analytics|segment\.|mixpanel|sentry/i],
+  [
+    "third-party analytics SDKs",
+    /gtag|googletagmanager|segment\.|mixpanel|sentry|posthog|amplitude/i,
+  ],
 ];
 
 describe("UI shell boundaries", () => {
@@ -59,7 +61,7 @@ describe("UI shell boundaries", () => {
     expect(hits).toEqual([]);
   });
 
-  it("only the auth, parse, saved-invoice and local follow-up transports call the network, each on its own routes", () => {
+  it("only the auth, parse, saved-invoice/aggregate and local follow-up transports call the network, each on its own routes", () => {
     const hits = files.filter((f) => /\bfetch\s*\(/.test(read(f))).map((f) => relative(webRoot, f));
     expect(hits.sort()).toEqual([
       "src/auth/api.ts",
@@ -89,6 +91,7 @@ describe("UI shell boundaries", () => {
         "/api/invoice-drafts/search",
         "/api/invoice-drafts/${id}",
         "/api/invoice-drafts/${id}/paypal-draft",
+        "/api/analytics/summary",
       ]),
     );
   });
@@ -99,7 +102,7 @@ describe("UI shell boundaries", () => {
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/follow-ups)?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?)$/.test(
+          !/^\/api\/(auth\/(session|login|logout)|analytics\/summary|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/follow-ups)?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?)$/.test(
             p,
           ),
       ),
