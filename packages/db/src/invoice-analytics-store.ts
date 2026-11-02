@@ -110,7 +110,9 @@ export class PostgresInvoiceAnalyticsStore {
       .from(invoices)
       .leftJoin(paypalDraftOperations, eq(paypalDraftOperations.invoiceId, invoices.id))
       .where(and(...where))
-      .groupBy(day, invoices.currency, state);
+      // Group by SELECT ordinals so the parameterized timezone expression is identical
+      // for SELECT and GROUP BY even when Drizzle allocates distinct bind positions.
+      .groupBy(sql`1, 2, 3`);
 
     const currencies = new Map<CurrencyCode, {
       count: number;
