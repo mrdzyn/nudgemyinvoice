@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D — Prototype sprint architecture gate
 
-- **Status:** Draft, architecture review pending
+- **Status:** Draft, remediation of independent architecture review `5731373684` at `308e24aeb87e2875169aecb42a1dbf2d59f18244`; awaiting exact-HEAD re-audit
 - **Owner/orchestrator:** Project owner
 - **Implementation agent:** Unassigned; this PR is docs-only
 - **Target branch:** `main`
@@ -17,7 +17,7 @@ The canonical design, task schedule, source checks and constraints are in [NMI-P
 - GitHub `main` at the supplied starting SHA `3d4c6308dd1f7263ebd7bb79920ba4c9b70ab998`; verified 2026-11-02.
 - PR #30 merged into `main` at the same SHA. `docs/STATUS.md` was stale and is reconciled in this PR.
 - PR #30 V1 physical Chrome QA was scoped PASS with owner-reported and independently observed evidence separated.
-- Current live open Draft PRs at startup: #24 and #10. No prototype PR existed.
+- Draft PR #31 is the existing documentation-only prototype PR. This remediation does not change its scope to implementation.
 - The previously selected Render Free PostgreSQL expires after 30 days and cannot satisfy access through Dec 15. This plan describes a paid persistent database option but approves no spend or resource.
 - Prior Render runbook prohibited Blueprints. This task proposes a Blueprint direction; independent review and explicit owner approval must supersede that prerequisite before use.
 
@@ -43,9 +43,12 @@ The canonical design, task schedule, source checks and constraints are in [NMI-P
 
 - [ ] The architecture defines real authenticated operator-scoped analytics contracts and exact currency-safe KPIs.
 - [ ] The dashboard layout/cross-filter behavior/report persistence and AI Agent Framework feasibility are bounded and testable.
-- [ ] AG Studio 3.0 version/licensing/trial dates and package compatibility are sourced from official docs; current application license remains unapproved.
+- [ ] AG Studio 3.0/version/licensing facts are sourced. Owner reports an obtained 45-day trial; its start/expiry, package entitlement and hosted judge rights remain unverified and require confirmation or Community fallback.
 - [ ] PayPal investigation uses checked-in evidence and official Toolkit guidance without invoking MCP/provider operations; it preserves one-create fencing and records unresolved assumptions truthfully.
-- [ ] Render same-origin Fastify/React + persistent PostgreSQL + Blueprint + one read-only insight Workflow, migration/security/cost/license/Dec 15 access assumptions and separate approval gates are explicit.
+- [ ] Render plan schedules owner-authorized resource creation/first deployment, fresh synthetic DB migration/runtime grants, HTTPS acceptance and backup/rollback rehearsal for Nov 8–9, with Nov 7 stop/go; each action remains separately approval-gated.
+- [ ] Judge access is feasible within the current single-operator model: isolated synthetic-only environment, one full-privilege account, owner-guided sequential sessions with credential/session rotation and baseline reset, or the local fallback; do not call it read-only or least-privilege.
+- [ ] Analytics requires a server-side aggregate over the full authenticated operator population independent of grid pagination, with exact per-currency minor units/exponents and explicit UTC half-open date-range/IANA timezone semantics.
+- [ ] Workflow retries, task/provider timeouts, global concurrency, daily/lifetime run caps, input/output tokens, and proposed AI/Render spend ceilings fail closed and are not treated as authorization.
 - [ ] Ten day-by-day tasks, workstream parallel limits, tests, audit gates, Nov 11 freeze, cut lines and reproducible fallbacks are present.
 - [ ] Stale STATUS facts are corrected against GitHub; handoff points to independent architecture review.
 - [ ] PR remains Draft, no implementation or resource creation occurs.
@@ -73,4 +76,4 @@ Documentation-only Draft PR against `main`; stop for independent architecture re
 
 ## Completion handoff
 
-Append `NMI-PROTOTYPE-10D-DOCS-01` to `docs/HANDOFFS.md` and point `docs/STATUS.md` to it.
+Append a remediation handoff to `docs/HANDOFFS.md` and point `docs/STATUS.md` to it.

@@ -160,6 +160,28 @@ If an existing repository already has a handoff/continuation mechanism:
 <!-- HANDOFF_ENTRIES_START -->
 <!-- Append project handoff sections before HANDOFF_ENTRIES_END. -->
 
+## Handoff: NMI-PROTOTYPE-10D-ARCH-REMED-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D.md`
+- **From:** architecture remediation
+- **To:** independent architecture reviewer
+- **Branch:** `docs/nmi-prototype-10d`
+- **Implementation head:** verify current PR head from GitHub before audit; this handoff is included in that exact head.
+- **PR:** [Draft #31](https://github.com/mrdzyn/nudgemyinvoice/pull/31)
+- **Review addressed:** `5731373684`, originally against `308e24aeb87e2875169aecb42a1dbf2d59f18244`
+- **State:** Five architecture/documentation findings addressed in the plan and task; awaiting final validation, CI, and exact-head re-audit.
+
+### Review scope addressed
+- Added Nov 7 stop/go and conditional owner-authorized Nov 8 resource/first-deploy and Nov 9 migration, HTTPS, backup-restore, rollback, and judge-access acceptance gates. No action is authorized by this plan.
+- Defined one isolated synthetic environment with one full-privilege operator and sequential owner-guided judge sessions, rotation/reset between sessions, or local fallback.
+- Required a distinct server-side full-population analytics aggregate, exact per-currency minor units/exponents, UTC half-open range and IANA local-bucket semantics, with multi-page and DST/exponent tests.
+- Corrected AG Studio facts: owner reports an obtained 45-day trial; start/expiry, entitlement, and hosted judge rights are unverified.
+- Bounded Workflow retries to zero, task timeout to 60 seconds, provider timeout to 30 seconds, global concurrency to one, daily/lifetime runs, token/output sizes, and proposed AI/Render cost ceilings. These are not provider or spend authorization.
+
+### Continuation notes
+- Keep the PR documentation-only and Draft. Preserve Nov 11 freeze, separate owner approvals, exhausted PayPal one-create budget, consumed OpenAI Gate A, sandbox-only payment boundary, and local-only follow-up notifications.
+- Verify the final pushed SHA and both required hosted workflows against that SHA before issuing a verdict. Do not provision Render, run migrations, call providers, merge, or deploy.
+
 ## Handoff: NMI-PROTOTYPE-10D-DOCS-01
 
 - **Task / phase:** `tasks/NMI-PROTOTYPE-10D.md`
