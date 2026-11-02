@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A3-FIX1 — PayPal Search Contract Remediation
 
-- **Status:** Implementation and focused local validation complete; awaiting new Draft PR CI and independent exact-HEAD review.
+- **Status:** Implementation and focused local validation complete; Draft PR #35 is open, awaiting required CI and independent exact-HEAD review.
 - **Base:** `main@816efcd9449b2fcfc00628123ded99cc4c62526a`.
 - **Branch:** `fix/nmi-proto-a3-paypal-search-contract`.
 - **Source finding:** A3 offline investigation, PR #34; report `docs/NMI-PROTOTYPE-10D-A3-PAYPAL-OFFLINE-REPORT.md`.
@@ -35,4 +35,4 @@ No PayPal/OpenAI/SMTP requests, credentials, MCP, owner database, migration, Ren
 
 ## Delivery
 
-Open one new Draft PR from this branch and stop for independent exact-HEAD security review. Do not merge or deploy.
+Draft [PR #35](https://github.com/mrdzyn/nudgemyinvoice/pull/35) is open from this branch. Verify both required workflows at the final exact HEAD and stop for independent exact-HEAD security review. Do not merge or deploy.
