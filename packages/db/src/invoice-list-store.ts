@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, sql, type SQL } from "drizzle-orm";
 import { CURRENCY_CODES, formatMoney, type CurrencyCode } from "@nmi/shared";
 import type { Db } from "./client.js";
 import { invoices, paypalDraftOperations } from "./schema.js";
@@ -81,6 +81,9 @@ export interface InvoiceListQuery {
   status?: PayPalStatusGroup | undefined;
   /** Customer name/email substring, or an invoice-id prefix. */
   search?: string | undefined;
+  /** UTC half-open created_at range; API validation requires both bounds or neither. */
+  fromInclusive?: Date | undefined;
+  toExclusive?: Date | undefined;
 }
 
 export interface InvoiceListItem {
@@ -114,6 +117,15 @@ export class PostgresInvoiceListStore {
   async list(q: InvoiceListQuery): Promise<InvoiceListPage> {
     const limit = Math.min(Math.max(Math.trunc(q.limit ?? LIST_DEFAULT_LIMIT), 1), LIST_MAX_LIMIT);
     const where: (SQL | undefined)[] = [eq(invoices.createdBy, q.operatorId)];
+    if (Boolean(q.fromInclusive) !== Boolean(q.toExclusive))
+      throw new Error("date range requires both bounds");
+    if (q.fromInclusive && q.toExclusive) {
+      if (!Number.isFinite(q.fromInclusive.getTime()) || !Number.isFinite(q.toExclusive.getTime()))
+        throw new Error("invalid date range");
+      const duration = q.toExclusive.getTime() - q.fromInclusive.getTime();
+      if (duration <= 0 || duration > 366 * 86_400_000) throw new Error("invalid date range");
+      where.push(gte(invoices.createdAt, q.fromInclusive), lt(invoices.createdAt, q.toExclusive));
+    }
     if (q.currency) {
       if (!(CURRENCY_CODES as readonly string[]).includes(q.currency))
         throw new Error("bad currency");

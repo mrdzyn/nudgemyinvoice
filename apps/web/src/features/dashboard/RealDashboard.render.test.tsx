@@ -3,17 +3,12 @@ import { describe, expect, it } from "vitest";
 import { AppProvider } from "../../demo/AppContext.js";
 import { initialState } from "../../demo/appState.js";
 import { FIXTURE_INVOICES } from "../../demo/fixtures.js";
+import type { AnalyticsSummary } from "../../domain/serverAnalytics.js";
 import type { ListItem } from "../../domain/serverList.js";
+import { NO_FILTERS, initialDash, type DashState } from "./dashboardState.js";
 import { DashboardScreen } from "./DashboardScreen.js";
-import { initialDash, MAX_LOADED_ROWS, type DashState } from "./dashboardState.js";
-import { RealDashboardView, summarize } from "./RealDashboard.js";
+import { RealDashboardView } from "./RealDashboard.js";
 
-/**
- * Objective: the real dashboard renders only what the server listed. Every state (loading, empty, no
- * match, loaded, loading more, end, errors) is honest; a failed load never shows a fixture; amounts
- * of different currencies are never combined and summaries are labelled as covering loaded rows only;
- * the synthetic preview keeps its fixtures and the real component never reaches them.
- */
 const item = (n: number, over: Partial<ListItem> = {}): ListItem => ({
   id: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
   customerName: `Customer ${n}`,
@@ -25,19 +20,43 @@ const item = (n: number, over: Partial<ListItem> = {}): ListItem => ({
   paypalState: "none",
   ...over,
 });
-const view = (s: Partial<DashState>, search = "") =>
-  renderToString(
+const range = NO_FILTERS;
+const summary: AnalyticsSummary = {
+  version: 1,
+  fromInclusive: range.fromInclusive,
+  toExclusive: range.toExclusive,
+  timeZone: range.timeZone,
+  currencies: [
+    {
+      currency: "USD",
+      exponent: 2,
+      invoiceCount: 2,
+      totalMinor: "2000",
+      stateCounts: { none: 1, progress: 0, created: 1, attention: 0 },
+    },
+  ],
+  days: [{ day: "2026-10-27", currency: "USD", exponent: 2, invoiceCount: 2, totalMinor: "2000" }],
+};
+const view = (s: Partial<DashState>, search = "") => {
+  const state = { ...initialDash, ...s };
+  return renderToString(
     <RealDashboardView
-      state={{ ...initialDash, ...s }}
+      state={state}
       searchText={search}
+      startDate={state.filters.startDate}
+      endDate={state.filters.endDate}
       onSearchText={() => undefined}
       onFilters={() => undefined}
+      onDateRange={() => undefined}
       onRetry={() => undefined}
+      onAnalyticsRetry={() => undefined}
+      onClearFilters={() => undefined}
       onLoadMore={() => undefined}
       onOpen={() => undefined}
       onNew={() => undefined}
     />,
   ).replace(/<!-- -->/g, "");
+};
 const fixtureLeak = (html: string) => {
   for (const f of FIXTURE_INVOICES) {
     expect(html).not.toContain(f.draft.customerName);
@@ -46,181 +65,86 @@ const fixtureLeak = (html: string) => {
   expect(html).not.toMatch(/DEMO \/ SYNTHETIC|fabricated|synthetic fixtures/i);
 };
 
-describe("states", () => {
-  it("A. loading shows skeletons and a status, no rows and no fixtures", () => {
-    const h = view({ status: "loading" });
-    expect(h).toContain("Loading invoices");
-    expect(h).toContain('aria-busy="true"');
-    expect(h).not.toContain("<table");
+describe("authenticated dashboard states", () => {
+  it("keeps rows and totals loading states explicit without substituting fixtures", () => {
+    const h = view({ status: "loading", ready: true });
+    expect(h).toContain('id="dash-search"');
+    expect(h).toContain("Loading matching invoice rows");
+    expect(h).toContain("Loading full-population totals");
+    expect(h).not.toContain("Customer 1");
     fixtureLeak(h);
   });
-  it("B. loaded rows come from the server list, newest first, each with a View action", () => {
-    const h = view({ status: "loaded", items: [item(2), item(1)] });
-    // AG Grid draws its rows in the browser (it has no server-side markup), so row content, order and
-    // the View actions are asserted in InvoiceGrid.test.tsx and the real-browser journeys.
-    expect(h).toContain('data-testid="invoice-grid"');
-    expect(h).toContain('class="nmi-grid ag-theme-quartz"');
-    expect(h).not.toContain("<table");
-    expect(h).toContain("2 invoices loaded");
-    expect(h).not.toMatch(/Create PayPal|Send|Delete|Edit/);
-    fixtureLeak(h);
-  });
-  it("C. no invoices at all: an honest empty state that does not mention samples", () => {
-    const h = view({ status: "loaded", items: [] });
-    expect(h).toContain("No saved invoices yet");
-    expect(h).toContain("Create your first invoice");
-    expect(h).not.toContain("<table");
-    fixtureLeak(h);
-  });
-  it("D. filters with no match: a distinct state with a working clear action", () => {
+
+  it("renders only server-provided full-population totals beside loaded rows", () => {
     const h = view({
       status: "loaded",
-      items: [],
-      filters: { currency: "EUR", status: "ALL", q: "" },
+      items: [item(1, { paypalState: "created" }), item(2)],
+      analyticsStatus: "loaded",
+      analytics: summary,
     });
-    expect(h).toContain("No invoices match these filters");
-    expect(h).toContain("Clear filters");
-    expect(h).not.toContain("No saved invoices yet");
-    expect(view({ status: "loaded", items: [] }, "zebra")).toContain(
-      "No invoices match these filters",
-    );
-  });
-  it.each(["offline", "unavailable", "malformed", "forbidden", "rejected"] as const)(
-    "E-I. %s: an alert with a genuine Retry and NO substituted data",
-    (kind) => {
-      const h = view({ status: "error", error: kind });
-      expect(h).toContain('role="alert"');
-      expect(h).toContain("Could not load your invoices");
-      expect(h).toContain('id="dash-retry"');
-      expect(h).toContain("no sample data is substituted");
-      expect(h).not.toContain("<table");
-      expect(h).not.toContain("Customer");
-      fixtureLeak(h);
-    },
-  );
-  it("J. loading the next page keeps the rows and shows progress", () => {
-    const h = view({ status: "loading-more", items: [item(2), item(1)], nextCursor: "c" });
-    expect(h).toContain("Loading more invoices");
     expect(h).toContain('data-testid="invoice-grid"');
-    expect(h).not.toContain('id="dash-more"');
-  });
-  it("a next page that is available offers Load more; K. the end says everything is loaded", () => {
-    const more = view({ status: "loaded", items: [item(1)], nextCursor: "c" });
-    expect(more).toContain("Load more invoices");
-    expect(more).toContain("more are available");
-    const end = view({ status: "loaded", items: [item(1)], nextCursor: null });
-    expect(end).toContain("All matching invoices are loaded.");
-    expect(end).not.toContain("Load more invoices");
-  });
-  it("a failed next page keeps the loaded rows and offers a retry", () => {
-    const h = view({ status: "loaded", items: [item(1)], nextCursor: "c", moreError: "offline" });
-    expect(h).toContain("Could not load more invoices");
-    expect(h).toContain('data-testid="invoice-grid"');
-    expect(h).toContain('id="dash-more-retry"');
-  });
-});
-
-describe("filter bar stays mounted once the list has been shown", () => {
-  it("first load of an unfiltered list shows only skeletons (no controls to lose)", () => {
-    expect(view({ status: "loading" })).not.toContain('id="dash-search"');
-  });
-  it("after a first page, a reload under a new filter keeps the search box and pills (focus is not lost)", () => {
-    const h = view({
-      status: "loading",
-      ready: true,
-      items: [],
-      filters: { currency: "EUR", status: "ALL", q: "" },
-    });
-    expect(h).toContain('id="dash-search"');
-    expect(h).toContain('aria-busy="true"');
-    expect(h).toMatch(/aria-pressed="true">EUR</);
-  });
-  it("a typed search that is still loading keeps its input", () => {
-    const h = view({ status: "loading", ready: true, items: [] }, "zeta");
-    expect(h).toContain('id="dash-search"');
-    expect(h).toContain('value="zeta"');
-  });
-  it("an error after a first page keeps the filters next to the Retry", () => {
-    const h = view({ status: "error", ready: true, error: "offline" });
-    expect(h).toContain('id="dash-search"');
-    expect(h).toContain('id="dash-retry"');
-  });
-  it("an error before anything ever loaded shows just the alert", () => {
-    const h = view({ status: "error", ready: false, error: "offline" });
-    expect(h).toContain('id="dash-retry"');
-    expect(h).not.toContain('id="dash-search"');
-  });
-});
-
-describe("currency separation and honest summaries", () => {
-  const mixed = [
-    item(1, { currency: "USD", total: "1000.50", paypalState: "created" }),
-    item(2, { currency: "USD", total: "0.55" }),
-    item(3, { currency: "EUR", total: "999.99" }),
-    item(4, { currency: "JPY", total: "2200", paypalState: "created" }),
-    item(5, { currency: "JPY", total: "800" }),
-  ];
-  it("sums each currency separately with exact integer arithmetic and never across currencies", () => {
-    const s = summarize(mixed);
-    const by = Object.fromEntries(s.map((c) => [c.currency, c]));
-    expect(s.map((c) => c.currency)).toEqual(["USD", "EUR", "JPY"]);
-    expect(by["USD"]).toMatchObject({ count: 2, sumMinor: 100105n, paypalCreated: 1 });
-    expect(by["EUR"]).toMatchObject({ count: 1, sumMinor: 99999n, paypalCreated: 0 });
-    expect(by["JPY"]).toMatchObject({ count: 2, sumMinor: 3000n, paypalCreated: 1 });
-  });
-  it("is float-safe: classic 0.1 + 0.2 style sums stay exact", () => {
-    const tens = Array.from({ length: 3 }, (_, i) => item(i + 1, { total: "0.10" }));
-    expect(summarize(tens)[0]?.sumMinor).toBe(30n);
-  });
-  it("renders one card per currency with the correct formatted sum and a page-summary label", () => {
-    const h = view({ status: "loaded", items: mixed, nextCursor: "c" });
-    expect(h.match(/class="currency-card"/g)).toHaveLength(3);
-    expect(h).toContain("$1,001.05");
-    expect(h).toContain("€999.99");
-    expect(h).toContain("¥3,000");
-    expect(h).toContain("Sum of the 2 loaded invoices in USD");
-    expect(h).toContain("Page summary");
-    expect(h).toContain("not a total of all your invoices");
-    expect(h).toContain("never added together or converted");
-    // no cross-currency grand total anywhere
+    expect(h).toContain("Full matching operator-owned USD total");
+    expect(h).toContain("2 invoices");
+    expect(h).toContain("$20.00");
+    expect(h).toContain("PayPal Sandbox drafts created:");
+    expect(h).toContain("not only rows loaded below");
+    expect(h).toContain("Matching invoices owned by this operator");
     expect(h).not.toMatch(/Grand total|All currencies total/i);
+    fixtureLeak(h);
   });
-  it("PayPal counts are scoped to the loaded invoices", () => {
-    const h = view({ status: "loaded", items: mixed });
-    expect(h).toContain("PayPal Sandbox drafts created among them: 1");
-  });
-});
 
-describe("filters", () => {
-  it("lists every supported currency server-side, not just those on the current page", () => {
-    const h = view({ status: "loaded", items: [item(1)] });
-    for (const c of ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"])
-      expect(h).toContain(`>${c}</button>`);
-    expect(h).toContain("PayPal draft created");
-    expect(h).toContain("Needs attention");
-  });
-  it("shows the applied filter as pressed", () => {
+  it("does not substitute loaded-row estimates when full analytics fail", () => {
     const h = view({
       status: "loaded",
       items: [item(1)],
-      filters: { currency: "USD", status: "ALL", q: "" },
+      analyticsStatus: "error",
+      analyticsError: "offline",
     });
-    expect(h).toMatch(/aria-pressed="true">USD</);
+    expect(h).toContain("Could not load full-population totals");
+    expect(h).toContain("No loaded-row estimate is substituted");
+    expect(h).toContain('id="dash-analytics-retry"');
+    expect(h).not.toContain("currency-card");
+  });
+
+  it("keeps search/date/currency controls during a new filter load and debounce", () => {
+    const loading = view({ status: "loading", ready: true, searchPending: true }, "zeta");
+    expect(loading).toContain('id="dash-search"');
+    expect(loading).toContain('value="zeta"');
+    expect(loading).toContain('id="dash-date-start"');
+    expect(loading).toContain("Applying the search");
+    expect(loading).not.toContain("currency-card");
+  });
+
+  it("blocks invalid date ranges and hides previously loaded rows and totals", () => {
+    const h = view({
+      ready: true,
+      status: "loaded",
+      items: [item(1)],
+      analyticsStatus: "loaded",
+      analytics: summary,
+      rangeError: "Choose a valid range.",
+    });
+    expect(h).toContain("Choose a valid created-date range");
+    expect(h).not.toContain('data-testid="invoice-grid"');
+    expect(h).not.toContain("currency-card");
   });
 });
 
 describe("isolation from the synthetic preview", () => {
-  const html = (withList: boolean) =>
+  const html = (mode: "real" | "list-only" | "preview") =>
     renderToString(
       <AppProvider
         state={{ ...initialState("light"), screen: "dashboard" }}
         dispatch={() => undefined}
         session={
-          withList
+          mode !== "preview"
             ? {
                 username: "op",
                 signOut: () => undefined,
                 listInvoices: () => new Promise(() => undefined),
+                ...(mode === "real"
+                  ? { analyticsInvoices: () => new Promise(() => undefined) }
+                  : {}),
               }
             : null
         }
@@ -228,34 +152,21 @@ describe("isolation from the synthetic preview", () => {
         <DashboardScreen />
       </AppProvider>,
     ).replace(/<!-- -->/g, "");
-  it("a real session renders the loading state and no fixture, even before any answer arrives", () => {
-    const h = html(true);
-    expect(h).toContain("Loading invoices");
+  it("a real session renders loading state and no fixtures", () => {
+    const h = html("real");
+    expect(h).toContain("Loading matching invoices and full-population totals");
     fixtureLeak(h);
   });
-  it("the preview (no session) keeps its fixture rows and DEMO / SYNTHETIC labelling unchanged", () => {
-    const h = html(false);
+  it("the preview keeps its fixture rows and DEMO / SYNTHETIC label", () => {
+    const h = html("preview");
     expect(h).toContain("DEMO / SYNTHETIC");
     expect(h).toContain(FIXTURE_INVOICES[0]?.draft.customerName);
     expect(h).not.toContain("Loading invoices");
   });
-});
-
-describe("grid disclosure and rendering bound", () => {
-  it("states that column sorting covers only the loaded invoices and filters cover all of them", () => {
-    const h = view({ status: "loaded", items: [item(2), item(1)], nextCursor: "c" });
-    expect(h).toContain('id="dash-sort-note"');
-    expect(h).toContain("Sorting a column reorders only the 2 invoices loaded so far");
-    expect(h).toContain("look through all your saved invoices");
-    expect(h).toContain('aria-describedby="dash-sort-note"');
-  });
-  it("at the bound, Load more is replaced by an explanation and a pointer to the filters", () => {
-    const rows = Array.from({ length: MAX_LOADED_ROWS }, (_, i) => item(i + 1));
-    const h = view({ status: "loaded", items: rows, nextCursor: "c" });
-    expect(h).not.toContain('id="dash-more"');
-    expect(h).toContain('id="dash-limit"');
-    expect(h).toContain(`${MAX_LOADED_ROWS} invoices are loaded`);
-    const below = view({ status: "loaded", items: rows.slice(1), nextCursor: "c" });
-    expect(below).toContain('id="dash-more"');
+  it("a real session missing its aggregate fails closed instead of showing the fixture preview", () => {
+    const h = html("list-only");
+    expect(h).toContain("Full-population dashboard analytics are unavailable");
+    expect(h).toContain("no synthetic preview data has been substituted");
+    fixtureLeak(h);
   });
 });

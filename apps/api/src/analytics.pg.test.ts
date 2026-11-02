@@ -48,6 +48,17 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
       },
       payload: payload as object,
     });
+  const searchInvoices = (payload: Record<string, unknown>) =>
+    app.inject({
+      method: "POST",
+      url: "/api/invoice-drafts/search",
+      headers: {
+        cookie: authA.cookie,
+        origin: baseEnv.WEB_ORIGIN,
+        "x-csrf-token": authA.csrf,
+      },
+      payload,
+    });
   const login = async (name: string, password: string) => {
     const r = await app.inject({
       method: "POST",
@@ -78,13 +89,13 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
     ownerA = (await query("SELECT id FROM operators WHERE username='analytics-a'"))[0].id;
     ownerB = (await query("SELECT id FROM operators WHERE username='analytics-b'"))[0].id;
 
-    // 57 matching owner rows exceed the grid's 50-item maximum; no in-memory page sum is valid.
+    // More than the dashboard's 200-row cap and list page size; no loaded-page sum is valid.
     await query(
       `INSERT INTO invoices
          (created_by, customer_name, customer_email, currency, subtotal_minor, total_minor, due_date, created_at)
        SELECT $1, 'Alpha Synthetic', 'alpha-' || g || '@example.test',
               'USD', 100, 100, '2030-01-01', '2026-11-03T12:00:00Z'::timestamptz
-       FROM generate_series(1,57) g`,
+       FROM generate_series(1,257) g`,
       [ownerA],
     );
     await query(
@@ -150,7 +161,7 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
     expect((await post(authA, period, { origin: "http://evil.example" })).statusCode).toBe(403);
   });
 
-  it("computes all 57 USD invoices, not just the first 50, excluding foreign and orphan rows", async () => {
+  it("computes all 257 USD invoices beyond pagination and the dashboard cap, excluding foreign and orphan rows", async () => {
     const r = await post(authA, period);
     expect(r.statusCode, r.body).toBe(200);
     expect(r.headers["cache-control"]).toBe("no-store");
@@ -187,15 +198,15 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
       {
         currency: "USD",
         exponent: 2,
-        invoiceCount: 57,
-        totalMinor: "5700",
-        stateCounts: { none: 56, progress: 0, created: 0, attention: 1 },
+        invoiceCount: 257,
+        totalMinor: "25700",
+        stateCounts: { none: 256, progress: 0, created: 0, attention: 1 },
       },
     ]);
     expect(data.days.find((x) => x.currency === "USD")).toMatchObject({
       day: "2026-11-03",
-      invoiceCount: 57,
-      totalMinor: "5700",
+      invoiceCount: 257,
+      totalMinor: "25700",
     });
     expect(r.body).not.toMatch(/customerName|customerEmail|@example|paypalInvoiceId|payloadDigest/);
     const grid = await app.inject({
@@ -205,6 +216,40 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
     });
     expect(grid.statusCode).toBe(200);
     expect((grid.json() as { items: unknown[] }).items).toHaveLength(50);
+  });
+
+  it("uses the same half-open date population for analytics and every cursor page", async () => {
+    const analytics = await post(authA, { ...period, currency: "USD" });
+    expect(analytics.statusCode).toBe(200);
+    const first = await searchInvoices({
+      limit: 50,
+      currency: "USD",
+      fromInclusive: period.fromInclusive,
+      toExclusive: period.toExclusive,
+    });
+    expect(first.statusCode).toBe(200);
+    let page = first.json() as { items: Array<{ id: string }>; nextCursor: string | null };
+    const ids = page.items.map((item) => item.id);
+    let cursor = page.nextCursor;
+    while (cursor) {
+      const next = await searchInvoices({
+        limit: 50,
+        currency: "USD",
+        fromInclusive: period.fromInclusive,
+        toExclusive: period.toExclusive,
+        cursor,
+      });
+      expect(next.statusCode).toBe(200);
+      page = next.json() as typeof page;
+      ids.push(...page.items.map((item) => item.id));
+      cursor = page.nextCursor;
+    }
+    const usd = (
+      analytics.json() as { currencies: Array<{ currency: string; invoiceCount: number }> }
+    ).currencies.find((currency) => currency.currency === "USD");
+    expect(ids).toHaveLength(257);
+    expect(new Set(ids).size).toBe(257);
+    expect(usd?.invoiceCount).toBe(ids.length);
   });
 
   it("applies identical owner/currency/status/text filters independent of pagination", async () => {
@@ -219,7 +264,7 @@ describe.skipIf(!url)("POST /api/analytics/summary (real PostgreSQL)", () => {
     expect(
       (search.json() as { currencies: Array<{ invoiceCount: number }> }).currencies[0]
         ?.invoiceCount,
-    ).toBe(57);
+    ).toBe(257);
     const foreign = await post(authB, period);
     expect(foreign.statusCode).toBe(200);
     expect(

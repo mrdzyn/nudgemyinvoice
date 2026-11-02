@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createInvoiceApi, saveBody, type ListQuery } from "./api.js";
 import { IDEMPOTENCY_KEY, newIdempotencyKey } from "./idempotency.js";
 import type { InvoiceDraft } from "../domain/types.js";
@@ -40,6 +40,13 @@ const detail = (over: Record<string, unknown> = {}) =>
   record({ paypal: { state: "none", paypalInvoiceId: null, lastErrorCode: null }, ...over });
 const reply = (status: number, body?: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 const KEY = "key_ABCDEFGH12345678";
 const sig = () => new AbortController().signal;
 const save = (res: () => Response | Promise<Response>, signal = sig()) =>
@@ -373,6 +380,73 @@ describe("list request and results", () => {
   const list = (res: () => Response | Promise<Response>, query = q, signal = sig()) =>
     createInvoiceApi(async () => res()).list(query, CSRF, signal);
 
+  it("applies the request deadline through a stalled JSON body and ignores its late completion", async () => {
+    vi.useFakeTimers();
+    const body = deferred<unknown>();
+    const started = deferred<void>();
+    const request = { signal: null as AbortSignal | null };
+    try {
+      const response = reply(200);
+      response.json = () => {
+        started.resolve();
+        return body.promise;
+      };
+      const pending = createInvoiceApi(async (_url, init) => {
+        request.signal = init.signal as AbortSignal;
+        return response;
+      }, 15_000).list(q, CSRF, sig());
+      await started.promise;
+      await vi.advanceTimersByTimeAsync(15_000);
+      await expect(pending).resolves.toEqual({ kind: "timeout" });
+      expect(request.signal?.aborted).toBe(true);
+      body.resolve(page([row(1)]));
+      await Promise.resolve();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("honors parent cancellation during JSON consumption and accepts a valid delayed 200 body", async () => {
+    const cancelledBody = deferred<unknown>();
+    const cancelStarted = deferred<void>();
+    const controller = new AbortController();
+    const cancelledRequest = { signal: null as AbortSignal | null };
+    const cancelledResponse = reply(200);
+    cancelledResponse.json = () => {
+      cancelStarted.resolve();
+      return cancelledBody.promise;
+    };
+    const cancelled = createInvoiceApi(async (_url, init) => {
+      cancelledRequest.signal = init.signal as AbortSignal;
+      return cancelledResponse;
+    }).list(q, CSRF, controller.signal);
+    await cancelStarted.promise;
+    controller.abort();
+    await expect(cancelled).resolves.toEqual({ kind: "aborted" });
+    expect(cancelledRequest.signal?.aborted).toBe(true);
+    cancelledBody.resolve(page([]));
+
+    vi.useFakeTimers();
+    const successBody = deferred<unknown>();
+    const successStarted = deferred<void>();
+    try {
+      const response = reply(200);
+      response.json = () => {
+        successStarted.resolve();
+        return successBody.promise;
+      };
+      const valid = createInvoiceApi(async () => response, 15_000).list(q, CSRF, sig());
+      await successStarted.promise;
+      successBody.resolve(page([row(1)]));
+      await expect(valid).resolves.toMatchObject({
+        kind: "ok",
+        page: { items: [{ id: row(1).id }] },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("is a credentialed, no-store, CSRF-protected POST whose URL is fixed and whose body carries the whole query", async () => {
     let seen: { url: string; init: RequestInit } | undefined;
     const r = await createInvoiceApi(
@@ -411,6 +485,33 @@ describe("list request and results", () => {
       async (_u, init) => ((body = String(init.body)), reply(200, page([]))),
     ).list(q, CSRF, sig());
     expect(JSON.parse(body)).toEqual({ limit: 3 });
+  });
+  it("sends paired UTC date bounds only in the POST body and rejects partial ranges locally", async () => {
+    let seen: { url: string; init: RequestInit } | undefined;
+    const range = {
+      ...q,
+      fromInclusive: "2026-11-01T00:00:00.000Z",
+      toExclusive: "2026-12-01T00:00:00.000Z",
+    };
+    const result = await createInvoiceApi(async (url, init) => {
+      seen = { url, init };
+      return reply(200, page([]));
+    }).list(range, CSRF, sig());
+    expect(result.kind).toBe("ok");
+    expect(seen?.url).toBe("/api/invoice-drafts/search");
+    expect(JSON.parse(String(seen?.init.body))).toMatchObject({
+      fromInclusive: range.fromInclusive,
+      toExclusive: range.toExclusive,
+    });
+    let called = false;
+    expect(
+      await createInvoiceApi(async () => ((called = true), reply(200, page([])))).list(
+        { ...q, fromInclusive: range.fromInclusive },
+        CSRF,
+        sig(),
+      ),
+    ).toEqual({ kind: "rejected" });
+    expect(called).toBe(false);
   });
   it("returns the validated page, newest first, and a cursor only after a full page", async () => {
     const r = await list(() => reply(200, page([row(1), row(2), row(3)], "next_cursor_1")));
@@ -455,6 +556,22 @@ describe("list request and results", () => {
         CSRF,
         ac.signal,
       ),
+    ).toEqual({ kind: "aborted" });
+  });
+  it("honors a returned 401 after internal cancellation but ignores other late responses", async () => {
+    const unauthorized = new AbortController();
+    expect(
+      await createInvoiceApi(async () => {
+        unauthorized.abort();
+        return reply(401);
+      }).list(q, CSRF, unauthorized.signal),
+    ).toEqual({ kind: "unauthorized" });
+    const cancelled = new AbortController();
+    expect(
+      await createInvoiceApi(async () => {
+        cancelled.abort();
+        return reply(503);
+      }).list(q, CSRF, cancelled.signal),
     ).toEqual({ kind: "aborted" });
   });
   const dup = row(1);
@@ -519,6 +636,201 @@ describe("list request and results", () => {
     expect(await list(() => new Response("<html>", { status: 200 }))).toEqual({
       kind: "malformed",
     });
+  });
+});
+
+describe("full-population analytics transport", () => {
+  const query = {
+    fromInclusive: "2026-11-01T00:00:00.000Z",
+    toExclusive: "2026-11-07T00:00:00.000Z",
+    timeZone: "Asia/Manila",
+    currency: "USD" as const,
+    status: "created" as const,
+    q: "Zeta customer",
+  };
+  const summary = {
+    version: 1,
+    fromInclusive: query.fromInclusive,
+    toExclusive: query.toExclusive,
+    timeZone: query.timeZone,
+    currencies: [
+      {
+        currency: "USD",
+        exponent: 2,
+        invoiceCount: 250,
+        totalMinor: "3000050",
+        stateCounts: { none: 0, progress: 0, created: 250, attention: 0 },
+      },
+    ],
+    days: [
+      { day: "2026-11-01", currency: "USD", exponent: 2, invoiceCount: 100, totalMinor: "1200000" },
+      { day: "2026-11-02", currency: "USD", exponent: 2, invoiceCount: 150, totalMinor: "1800050" },
+    ],
+  };
+  const CSRF = "volatile-csrf-token";
+
+  it("keeps the analytics deadline active until its full JSON body arrives", async () => {
+    vi.useFakeTimers();
+    const body = deferred<unknown>();
+    const started = deferred<void>();
+    const request = { signal: null as AbortSignal | null };
+    try {
+      const response = reply(200);
+      response.json = () => {
+        started.resolve();
+        return body.promise;
+      };
+      const pending = createInvoiceApi(async (_url, init) => {
+        request.signal = init.signal as AbortSignal;
+        return response;
+      }, 15_000).analytics(query, CSRF, sig());
+      await started.promise;
+      await vi.advanceTimersByTimeAsync(15_000);
+      await expect(pending).resolves.toEqual({ kind: "timeout" });
+      expect(request.signal?.aborted).toBe(true);
+      body.resolve(summary);
+      await Promise.resolve();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("expires on an HTTP 401 returned after the request timeout aborted its controller", async () => {
+    vi.useFakeTimers();
+    const response = deferred<Response>();
+    const started = deferred<void>();
+    const request = { signal: null as AbortSignal | null };
+    try {
+      const pending = createInvoiceApi(async (_url, init) => {
+        request.signal = init.signal as AbortSignal;
+        started.resolve();
+        return response.promise;
+      }, 15_000).analytics(query, CSRF, sig());
+      await started.promise;
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(request.signal?.aborted).toBe(true);
+      response.resolve(reply(401));
+      await expect(pending).resolves.toEqual({ kind: "unauthorized" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("uses only the fixed same-origin POST, volatile CSRF and strict no-store response contract", async () => {
+    let seen: { url: string; init: RequestInit } | undefined;
+    const result = await createInvoiceApi(async (url, init) => {
+      seen = { url, init };
+      return reply(200, summary);
+    }).analytics(query, CSRF, sig());
+    expect(result).toMatchObject({
+      kind: "ok",
+      summary: { currencies: [{ totalMinor: "3000050" }] },
+    });
+    expect(seen?.url).toBe("/api/analytics/summary");
+    expect(seen?.init).toMatchObject({
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      redirect: "error",
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+        "x-csrf-token": CSRF,
+      },
+    });
+    expect(JSON.parse(String(seen?.init.body))).toEqual({
+      fromInclusive: query.fromInclusive,
+      toExclusive: query.toExclusive,
+      timeZone: query.timeZone,
+      currency: "USD",
+      status: "created",
+      q: "Zeta customer",
+    });
+    expect(seen?.url).not.toContain(query.q);
+  });
+
+  it("maps HTTP errors, offline, timeout, and cancellation explicitly", async () => {
+    const run = (status: number) =>
+      createInvoiceApi(async () => reply(status)).analytics(query, CSRF, sig());
+    expect(await run(400)).toEqual({ kind: "rejected" });
+    expect(await run(401)).toEqual({ kind: "unauthorized" });
+    expect(await run(403)).toEqual({ kind: "forbidden" });
+    expect(await run(503)).toEqual({ kind: "unavailable" });
+    expect(
+      await createInvoiceApi(() => Promise.reject(new TypeError("offline"))).analytics(
+        query,
+        CSRF,
+        sig(),
+      ),
+    ).toEqual({ kind: "offline" });
+    expect(
+      await createInvoiceApi(
+        () =>
+          new Promise<Response>((resolve) => setTimeout(() => resolve(reply(200, summary)), 15)),
+        1,
+      ).analytics(query, CSRF, sig()),
+    ).toEqual({ kind: "timeout" });
+    const aborted = new AbortController();
+    aborted.abort();
+    expect(
+      await createInvoiceApi(async () => reply(200, summary)).analytics(
+        query,
+        CSRF,
+        aborted.signal,
+      ),
+    ).toEqual({ kind: "aborted" });
+  });
+
+  it("honors a verified 401 even when the parent request was internally aborted", async () => {
+    const controller = new AbortController();
+    const result = await createInvoiceApi(async () => {
+      controller.abort();
+      return reply(401);
+    }).analytics(query, CSRF, controller.signal);
+    expect(result).toEqual({ kind: "unauthorized" });
+  });
+
+  it.each([
+    ["extra response field", { ...summary, extra: true }],
+    [
+      "currency exponent mismatch",
+      { ...summary, currencies: [{ ...summary.currencies[0], exponent: 0 }] },
+    ],
+    [
+      "unsafe count",
+      {
+        ...summary,
+        currencies: [{ ...summary.currencies[0], invoiceCount: Number.MAX_SAFE_INTEGER + 1 }],
+      },
+    ],
+    [
+      "duplicate currency",
+      { ...summary, currencies: [...summary.currencies, summary.currencies[0]] },
+    ],
+    ["duplicate day", { ...summary, days: [...summary.days, summary.days[0]] }],
+    [
+      "inconsistent daily total",
+      { ...summary, days: [{ ...summary.days[0], totalMinor: "1" }, summary.days[1]] },
+    ],
+    [
+      "noncanonical money",
+      { ...summary, currencies: [{ ...summary.currencies[0], totalMinor: "03000050" }] },
+    ],
+    ["wrong echoed range", { ...summary, fromInclusive: "2026-11-02T00:00:00.000Z" }],
+  ])("fails closed on %s analytics data", async (_name, body) => {
+    expect(
+      await createInvoiceApi(async () => reply(200, body)).analytics(query, CSRF, sig()),
+    ).toEqual({ kind: "malformed" });
+  });
+
+  it("does not request a malformed local date range", async () => {
+    let called = false;
+    const invalid = { ...query, fromInclusive: "2026-11-02" };
+    const result = await createInvoiceApi(
+      async () => ((called = true), reply(200, summary)),
+    ).analytics(invalid, CSRF, sig());
+    expect(result).toEqual({ kind: "rejected" });
+    expect(called).toBe(false);
   });
 });
 

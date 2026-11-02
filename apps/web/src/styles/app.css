@@ -1079,6 +1079,39 @@ dialog .actions {
   flex-wrap: wrap;
   gap: 10px;
 }
+.date-range-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.date-range-filter legend,
+.date-range-filter label span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.date-range-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.date-range-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.date-range-input {
+  min-width: 145px;
+  min-height: 40px;
+}
+.date-range-error {
+  margin: 0;
+  color: var(--err-text);
+  font-size: 12px;
+}
 .search-input {
   min-width: 230px;
 }

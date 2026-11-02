@@ -1767,4 +1767,37 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Out of scope:** AG Studio shell/UI, report persistence, Render resources/workflows, trial key, PayPal Toolkit MCP, OpenAI/PayPal requests, judge access, main merge and deployment. Payment test budget remains exhausted.
 - **Next:** open Draft PR, verify required CI and independently review exact source/tests; separate owner approval before merge. UI design and AG Studio license gate remain ahead.
 
+## Handoff: NMI-PROTOTYPE-10D-A2-IMPL-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D-A2-dashboard-integration.md`
+- **From:** implementation agent. **To:** independent exact-head correctness/security reviewer.
+- **Branch:** `feat/nmi-proto-analytics-02`; **implementation commit:** `64bba258a47517c0184395034172fbcb637d2b34` (from exact `main@7f87ca80e61b3c418c9b596b39cbb6b4bebb99bc`).
+- **PR:** Draft [#33](https://github.com/mrdzyn/nudgemyinvoice/pull/33).
+- **State:** implementation, focused local validation and synthetic local browser QA complete. A follow-up documentation commit points STATUS to this handoff; verify hosted checks against the current live PR head, not only the implementation commit. Keep Draft.
+- **Completed:** authenticated full-population summary integration; exact currency totals; synchronized server filters and local-date half-open bounds; strict DTO parsing, epoch/cancellation/401 handling, owner scoping and fail-closed fixture isolation. No schema/migration change. Evidence: `design/evidence/NMI-PROTOTYPE-10D-A2/QA-RESULTS.md`.
+- **Validation:** 207 focused web/Nudgey tests passed; 96 disposable PostgreSQL list/store/analytics tests passed; 12/12 local Chrome checks passed; lint, format, typecheck, build, bundle secret scan and diff check passed. Vite reported a non-failing large-chunk advisory. Both newly created `nmi_test_a2_*` databases were dropped; the owner's databases were not accessed. Required Project Baseline and Stack CI are pending on the final PR head.
+- **Continuation notes:** no provider calls; PayPal draft creation disabled during browser QA, OpenAI unconfigured and SMTP absent. No Render/AG Studio work, migration, merge or deployment. PayPal one-create authorization remains exhausted; OpenAI Gate A remains consumed.
+- **Next action:** verify Project Baseline and Stack CI pass on the current PR #33 head, then stop for independent exact-head audit.
+
+## Handoff: NMI-PROTOTYPE-10D-A2-CI-RECHECK-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D-A2-dashboard-integration.md`
+- **From:** implementation agent. **To:** independent exact-head correctness/security reviewer.
+- **Branch / PR:** `feat/nmi-proto-analytics-02`; Draft [#33](https://github.com/mrdzyn/nudgemyinvoice/pull/33).
+- **Correction:** Stack CI failed at `650e8b9d6bea89762fbe5a8eeb2eaa7299866b05` because old boundary tests rejected the new same-origin analytics route and first-party analytics code. The boundary test now allows `/api/analytics/summary` and specifically checks for third-party analytics SDKs. No production behavior changed.
+- **Local validation:** boundary suite 28/28; combined focused web/Nudgey suite 235/235; lint, format, typecheck and `git diff --check` passed after correction. Prior disposable PostgreSQL integration 96/96 and local synthetic Chrome QA 12/12 remain valid; browser/application code did not change in this correction.
+- **Safety:** no provider calls, migration, owner database operation, Render/AG Studio work, merge or deployment. Existing PayPal/OpenAI boundaries remain as documented.
+- **Pre-documentation correction SHA / hosted CI:** `3669a3063f5b8f77f3f896c4613338f456541f18`; Project Baseline passed. Stack CI first timed out in an existing fake-adapter concurrent PayPal-draft PostgreSQL test, then the failed job rerun passed all steps including PostgreSQL tests. The documentation update in this handoff changes the PR head, so both workflows must be checked once more at the live exact head.
+- **Next action:** confirm the live PR head and both required hosted checks pass at that exact SHA; then stop for independent exact-head audit.
+
+## Handoff: NMI-PROTOTYPE-10D-A2-MINOR-1-REMEDIATION-01
+
+- **Task / phase:** `tasks/NMI-PROTOTYPE-10D-A2-dashboard-integration.md`, independent audit MINOR-1.
+- **From:** remediation implementation. **To:** independent exact-head re-auditor.
+- **Branch / PR:** `feat/nmi-proto-analytics-02`; existing Draft [#33](https://github.com/mrdzyn/nudgemyinvoice/pull/33), starting/audited head `e29596618304017587548bb06fc92b1409df4616`.
+- **Change:** the shared list/analytics request budget now covers HTTP headers and complete success JSON body consumption. Timeout and parent abort race body consumption; 401 remains authoritative when returned after internal timeout/cancellation. Existing stale-response generation protections are unchanged.
+- **Validation:** `apps/web/src/invoices/api.test.ts` 142/142; web typecheck; changed-file ESLint and Prettier; `git diff --check`. Tests cover stalled body timeout for both endpoints, parent abort during body consumption, late 401 after timeout, and successful 200 body parsing. Read-only candidate review reported no concrete surviving bypass or behavior regression.
+- **Safety:** no provider calls, database operations, migration, merge, deployment, or scope expansion.
+- **Next action:** confirm both Project Baseline CI and Stack CI pass on the final live PR head, then stop for independent exact-head audit.
+
 <!-- HANDOFF_ENTRIES_END -->

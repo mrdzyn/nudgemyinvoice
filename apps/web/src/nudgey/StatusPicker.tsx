@@ -14,6 +14,7 @@ export const DRAFT_ONLY_NOTE =
 
 const FAILURE_TEXT: Record<StatusFailure, string> = {
   offline: "I couldn't reach the server, so I can't show your invoices right now.",
+  timeout: "The request took too long, so I couldn't show your invoices right now.",
   unavailable: "The server couldn't load your invoices right now. Nothing was changed.",
   malformed: "The server's answer wasn't in the expected format, so I didn't show it.",
   forbidden: "The server didn't accept this request. Reload the page and try again.",

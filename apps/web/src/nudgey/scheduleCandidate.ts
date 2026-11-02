@@ -5,7 +5,8 @@ import { resolveWallTime, type ScheduleProposal } from "./scheduleIntent.js";
 
 export const SCHEDULE_CANDIDATE_PAGE = 20;
 
-export type CandidateFailure = "offline" | "unavailable" | "malformed" | "forbidden" | "rejected";
+export type CandidateFailure =
+  "offline" | "timeout" | "unavailable" | "malformed" | "forbidden" | "rejected";
 
 export type ScheduleCandidateState =
   | { kind: "idle" }

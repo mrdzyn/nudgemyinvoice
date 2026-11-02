@@ -436,6 +436,75 @@ describe.skipIf(!url)("GET /api/invoice-drafts (real PostgreSQL)", () => {
   });
 
   describe("privacy-preserving search transport (NMI-RENDER-P1)", () => {
+    it("applies paired UTC half-open date bounds consistently before paging while preserving GET behavior", async () => {
+      const start = await create(sA, draft({ customerName: "Range start" }));
+      const middle = await create(sA, draft({ customerName: "Range middle" }));
+      const end = await create(sA, draft({ customerName: "Range end" }));
+      const foreign = await create(sB, draft({ customerName: "Range foreign" }));
+      await sql("UPDATE invoices SET created_at=$2::timestamptz WHERE id=$1", [
+        start,
+        "2026-11-01T00:00:00Z",
+      ]);
+      await sql("UPDATE invoices SET created_at=$2::timestamptz WHERE id=$1", [
+        middle,
+        "2026-11-03T12:00:00Z",
+      ]);
+      await sql("UPDATE invoices SET created_at=$2::timestamptz WHERE id=$1", [
+        end,
+        "2026-11-06T00:00:00Z",
+      ]);
+      await sql("UPDATE invoices SET created_at=$2::timestamptz WHERE id=$1", [
+        foreign,
+        "2026-11-03T12:00:00Z",
+      ]);
+      const range = {
+        fromInclusive: "2026-11-01T00:00:00.000Z",
+        toExclusive: "2026-11-06T00:00:00.000Z",
+        q: "Range",
+      };
+      const p = await sA.search({ ...range, limit: 1 });
+      expect(p.statusCode).toBe(200);
+      expect((p.json() as { items: Item[] }).items.map((i) => i.id)).toEqual([middle]);
+      const cursor = (p.json() as { nextCursor: string }).nextCursor;
+      const p2 = await sA.search({ ...range, limit: 1, cursor });
+      expect((p2.json() as { items: Item[] }).items.map((i) => i.id)).toEqual([start]);
+      const all = await sA.search(range);
+      expect((all.json() as { items: Item[] }).items.map((i) => i.id)).toEqual([middle, start]);
+      expect(all.headers["cache-control"]).toBe("no-store");
+      expect((await sA.search({})).statusCode).toBe(200); // existing POST clients remain compatible
+      expect((await sA.get("/api/invoice-drafts")).statusCode).toBe(200); // GET contract unchanged
+      expect((await sB.search(range)).json()).toMatchObject({
+        items: [{ id: foreign }],
+      });
+    });
+
+    it.each([
+      ["partial start", { fromInclusive: "2026-11-01T00:00:00.000Z" }],
+      ["partial end", { toExclusive: "2026-11-02T00:00:00.000Z" }],
+      ["date only", { fromInclusive: "2026-11-01", toExclusive: "2026-11-02" }],
+      [
+        "non-UTC offset",
+        { fromInclusive: "2026-11-01T00:00:00.000+08:00", toExclusive: "2026-11-02T00:00:00.000Z" },
+      ],
+      [
+        "empty interval",
+        { fromInclusive: "2026-11-01T00:00:00.000Z", toExclusive: "2026-11-01T00:00:00.000Z" },
+      ],
+      [
+        "reversed interval",
+        { fromInclusive: "2026-11-02T00:00:00.000Z", toExclusive: "2026-11-01T00:00:00.000Z" },
+      ],
+      [
+        "over 366 days",
+        { fromInclusive: "2026-01-01T00:00:00.000Z", toExclusive: "2027-01-03T00:00:00.000Z" },
+      ],
+    ])("rejects %s date filters with 400", async (_name, range) => {
+      const r = await sA.search(range);
+      expect(r.statusCode).toBe(400);
+      expect(r.headers["cache-control"]).toBe("no-store");
+      expect(r.body).not.toMatch(/items|customer/);
+    });
+
     it("POST /search returns exactly the same ordered items as the legacy GET did, owner-scoped", async () => {
       await create(sA, draft({ customerName: "Same Order One" }));
       await create(sA, draft({ customerName: "Same Order Two" }));
