@@ -1,0 +1,68 @@
+{
+  "browser": "Chrome/156.0.8078.80",
+  "stack": "local Fastify + Vite + disposable PostgreSQL; PayPal disabled; OpenAI not configured; no SMTP",
+  "checks": [
+    {
+      "name": "authenticated dashboard loads server aggregate and rows",
+      "result": "PASS",
+      "detail": "{\"coverage\":\"Matching invoices owned by this operator, created Oct 4, 2026 through Nov 2, 2026 inclusive (Asia/Manila).\",\"visibleRows\":20}"
+    },
+    {
+      "name": "aggregate stays independent of page size and is labelled by currency",
+      "result": "PASS",
+      "detail": "[\"USD\\n257 invoices\\n$3,171.38\\nFull matching operator-owned USD total · PayPal Sandbox drafts created: 1\"]"
+    },
+    {
+      "name": "pagination stops at 200 loaded rows without changing full-population KPI",
+      "result": "PASS",
+      "detail": "load-more actions=9; visible grid rows=200"
+    },
+    {
+      "name": "date and customer filters apply to both SQL reads",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "search term is absent from the browser URL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "currency filter has a truthful no-match state",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "search-to-status keyboard navigation works",
+      "result": "PASS",
+      "detail": "focused control=dash-status"
+    },
+    {
+      "name": "system dark theme renders the authenticated dashboard",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "390px mobile dashboard has no page-level horizontal overflow",
+      "result": "PASS",
+      "detail": "{\"width\":390,\"documentWidth\":390,\"card\":true,\"range\":true}"
+    },
+    {
+      "name": "date range remains visible and tappable after mobile scroll",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "no browser request left the local app origin",
+      "result": "PASS",
+      "detail": "no non-local requests observed"
+    },
+    {
+      "name": "no browser runtime or console errors",
+      "result": "PASS",
+      "detail": ""
+    }
+  ],
+  "foreignRequests": [],
+  "consoleErrors": []
+}

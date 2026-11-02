@@ -12,7 +12,8 @@ import type { ListQuery, ListResult } from "../invoices/api.js";
 export const STATUS_PAGE = 20;
 export const STATUS_MAX_TERM = 100;
 
-export type StatusFailure = "offline" | "unavailable" | "malformed" | "forbidden" | "rejected";
+export type StatusFailure =
+  "offline" | "timeout" | "unavailable" | "malformed" | "forbidden" | "rejected";
 
 export interface StatusState {
   phase: "idle" | "loading" | "ready" | "error";

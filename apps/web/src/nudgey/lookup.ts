@@ -14,7 +14,8 @@ import type { Intent, PayPalGroup } from "./intent.js";
 export const CHAT_PAGE = 10;
 export const OVERVIEW_PAGE = 5;
 
-export type Failure = "offline" | "unavailable" | "malformed" | "forbidden" | "rejected";
+export type Failure =
+  "offline" | "timeout" | "unavailable" | "malformed" | "forbidden" | "rejected";
 
 export interface InvoiceGroup {
   key: PayPalGroup;

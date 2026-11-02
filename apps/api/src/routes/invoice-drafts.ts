@@ -41,13 +41,24 @@ const listQuery = z.strictObject({
 });
 // Search transport that keeps customer text out of every request URL: the whole query travels in an
 // authenticated, CSRF-protected POST body. Same fields and limits as the GET query, same strictness.
-const searchBody = z.strictObject({
-  limit: z.number().int().min(1).max(LIST_MAX_LIMIT).optional(),
-  cursor: z.string().min(1).max(120).optional(),
-  currency: z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]]).optional(),
-  status: z.enum(PAYPAL_STATUS_GROUPS).optional(),
-  q: z.string().trim().min(1).max(LIST_MAX_SEARCH).optional(),
-});
+const utcMillisecondInstant = z.iso.datetime({ offset: false, precision: 3 });
+const searchBody = z
+  .strictObject({
+    limit: z.number().int().min(1).max(LIST_MAX_LIMIT).optional(),
+    cursor: z.string().min(1).max(120).optional(),
+    currency: z.enum(CURRENCY_CODES as [CurrencyCode, ...CurrencyCode[]]).optional(),
+    status: z.enum(PAYPAL_STATUS_GROUPS).optional(),
+    q: z.string().trim().min(1).max(LIST_MAX_SEARCH).optional(),
+    fromInclusive: utcMillisecondInstant.optional(),
+    toExclusive: utcMillisecondInstant.optional(),
+  })
+  .refine((v) => {
+    if (Boolean(v.fromInclusive) !== Boolean(v.toExclusive)) return false;
+    if (!v.fromInclusive || !v.toExclusive) return true;
+    const from = Date.parse(v.fromInclusive);
+    const to = Date.parse(v.toExclusive);
+    return to > from && to - from <= 366 * 86_400_000;
+  }, "invalid or partial date range");
 const idempotencyHeader = z.string().regex(/^[A-Za-z0-9_-]{8,128}$/);
 
 export interface InvoiceDraftRouteDeps {
@@ -190,6 +201,8 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
     currency?: CurrencyCode | undefined;
     status?: (typeof PAYPAL_STATUS_GROUPS)[number] | undefined;
     q?: string | undefined;
+    fromInclusive?: string | undefined;
+    toExclusive?: string | undefined;
   };
   const runList = async (req: FastifyRequest, reply: FastifyReply, input: ListInput) => {
     let cursor;
@@ -204,6 +217,8 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
       currency: input.currency,
       status: input.status,
       search: input.q,
+      fromInclusive: input.fromInclusive ? new Date(input.fromInclusive) : undefined,
+      toExclusive: input.toExclusive ? new Date(input.toExclusive) : undefined,
     });
     return reply.send({
       items: page.items.map((i) => ({

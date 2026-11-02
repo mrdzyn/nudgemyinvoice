@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ListItem } from "../../domain/serverList.js";
+import type { AnalyticsSummary } from "../../domain/serverAnalytics.js";
 import {
   dashReducer,
   initialDash,
@@ -28,7 +29,13 @@ const page = (ns: number[], nextCursor: string | null = null) => ({
   nextCursor,
 });
 const loaded = (ns: number[], next: string | null = null): DashState =>
-  dashReducer(initialDash, { type: "page", generation: 0, page: page(ns, next), append: false });
+  dashReducer(initialDash, {
+    type: "page",
+    generation: 0,
+    filterGeneration: 0,
+    page: page(ns, next),
+    append: false,
+  });
 
 describe("dashReducer", () => {
   it("starts loading with no rows", () => {
@@ -58,6 +65,7 @@ describe("dashReducer", () => {
       const stale = dashReducer(s1, {
         type: "page",
         generation: 0,
+        filterGeneration: 0,
         page: page([9]),
         append: false,
       });
@@ -66,6 +74,7 @@ describe("dashReducer", () => {
       const fresh = dashReducer(s1, {
         type: "page",
         generation: 1,
+        filterGeneration: 1,
         page: page([1]),
         append: false,
       });
@@ -77,17 +86,36 @@ describe("dashReducer", () => {
         filters: { ...NO_FILTERS, status: "created" },
       }); // gen 1
       s = dashReducer(s, { type: "filters", filters: { ...NO_FILTERS, status: "none" } }); // gen 2
-      s = dashReducer(s, { type: "page", generation: 2, page: page([2]), append: false });
-      s = dashReducer(s, { type: "page", generation: 1, page: page([1]), append: false }); // late, older
+      s = dashReducer(s, {
+        type: "page",
+        generation: 2,
+        filterGeneration: 2,
+        page: page([2]),
+        append: false,
+      });
+      s = dashReducer(s, {
+        type: "page",
+        generation: 1,
+        filterGeneration: 1,
+        page: page([1]),
+        append: false,
+      }); // late, older
       expect(s.items.map((i) => i.customerName)).toEqual(["Customer 2"]);
     });
     it("a late failure of an older generation does not replace a good list", () => {
       let s = loaded([1]);
       s = dashReducer(s, { type: "filters", filters: { ...NO_FILTERS, q: "x" } });
-      s = dashReducer(s, { type: "page", generation: 1, page: page([5]), append: false });
+      s = dashReducer(s, {
+        type: "page",
+        generation: 1,
+        filterGeneration: 1,
+        page: page([5]),
+        append: false,
+      });
       const after = dashReducer(s, {
         type: "failed",
         generation: 0,
+        filterGeneration: 0,
         kind: "offline",
         append: false,
       });
@@ -109,6 +137,7 @@ describe("dashReducer", () => {
       s = dashReducer(s, {
         type: "failed",
         generation: s.generation,
+        filterGeneration: s.filterGeneration,
         kind: "offline",
         append: false,
       });
@@ -116,20 +145,65 @@ describe("dashReducer", () => {
       s = dashReducer(s, { type: "retry" });
       expect(s.ready).toBe(true);
       expect(
-        dashReducer(initialDash, { type: "failed", generation: 0, kind: "offline", append: false })
-          .ready,
+        dashReducer(initialDash, {
+          type: "failed",
+          generation: 0,
+          filterGeneration: 0,
+          kind: "offline",
+          append: false,
+        }).ready,
       ).toBe(false);
     });
   });
 
   describe("debounced search", () => {
+    it("marks the shared population pending immediately, before the debounce commits a new query", () => {
+      const s = loaded([1]);
+      const pending = dashReducer(s, { type: "search-input", q: "new term" });
+      expect(pending.searchPending).toBe(true);
+      expect(pending.filterGeneration).toBe(s.filterGeneration + 1);
+      // Old values remain available to the reducer only; the view receives searchPending and hides them.
+      expect(pending.items).toEqual(s.items);
+    });
+
+    it("does not clear an invalid date range when a pending search debounce commits", () => {
+      let s = dashReducer(initialDash, { type: "range-invalid", reason: "Invalid date." });
+      s = dashReducer(s, { type: "search-input", q: "new term" });
+      s = dashReducer(s, { type: "search", q: "new term" });
+      expect(s.rangeError).toBe("Invalid date.");
+      expect(s.searchPending).toBe(false);
+    });
+
+    it("drops a stale analytics response after a filter epoch advances", () => {
+      const changed = dashReducer(initialDash, {
+        type: "filters",
+        filters: { ...NO_FILTERS, currency: "EUR" },
+      });
+      const stale: AnalyticsSummary = {
+        version: 1,
+        fromInclusive: NO_FILTERS.fromInclusive,
+        toExclusive: NO_FILTERS.toExclusive,
+        timeZone: NO_FILTERS.timeZone,
+        currencies: [],
+        days: [],
+      };
+      expect(
+        dashReducer(changed, {
+          type: "analytics-page",
+          generation: 0,
+          filterGeneration: 0,
+          summary: stale,
+        }),
+      ).toBe(changed);
+    });
+
     it("is merged into the latest filters, so a pill clicked while typing is not undone", () => {
       let s = dashReducer(initialDash, {
         type: "filters",
         filters: { ...NO_FILTERS, currency: "EUR" },
       });
       s = dashReducer(s, { type: "search", q: "zeta" });
-      expect(s.filters).toEqual({ currency: "EUR", status: "ALL", q: "zeta" });
+      expect(s.filters).toMatchObject({ currency: "EUR", status: "ALL", q: "zeta" });
       expect(s.generation).toBe(2);
     });
     it("the same search text again is a no-op (no refetch)", () => {
@@ -165,6 +239,7 @@ describe("dashReducer", () => {
       s = dashReducer(s, {
         type: "page",
         generation: s.generation,
+        filterGeneration: s.filterGeneration,
         page: page([2, 1], null),
         append: true,
       });
@@ -183,6 +258,7 @@ describe("dashReducer", () => {
       s = dashReducer(s, {
         type: "page",
         generation: s.generation,
+        filterGeneration: s.filterGeneration,
         page: page([2, 1], null),
         append: true,
       });
@@ -195,6 +271,7 @@ describe("dashReducer", () => {
       s = dashReducer(s, {
         type: "failed",
         generation: s.generation,
+        filterGeneration: s.filterGeneration,
         kind: "offline",
         append: true,
       });
@@ -212,6 +289,7 @@ describe("dashReducer", () => {
       let s = dashReducer(initialDash, {
         type: "failed",
         generation: 0,
+        filterGeneration: 0,
         kind: "unavailable",
         append: false,
       });
@@ -224,7 +302,13 @@ describe("dashReducer", () => {
       expect(s.generation).toBe(1);
       // the failed attempt's late echo (generation 0) cannot resurrect the error
       expect(
-        dashReducer(s, { type: "failed", generation: 0, kind: "offline", append: false }),
+        dashReducer(s, {
+          type: "failed",
+          generation: 0,
+          filterGeneration: 0,
+          kind: "offline",
+          append: false,
+        }),
       ).toBe(s);
     });
   });

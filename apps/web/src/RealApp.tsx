@@ -6,7 +6,12 @@ import { AppShell } from "./components/AppShell.js";
 import { Spinner } from "./components/Spinner.js";
 import { LEAVE_COPY, mustConfirmLeave, type SaveGuard } from "./invoices/leaveGuard.js";
 import { Dialog } from "./components/Dialog.js";
-import { createInvoiceApi, type InvoiceApi, type ListQuery } from "./invoices/api.js";
+import {
+  createInvoiceApi,
+  type AnalyticsQuery,
+  type InvoiceApi,
+  type ListQuery,
+} from "./invoices/api.js";
 import { createParseApi, type ParseApi } from "./parse/api.js";
 import { createFollowUpApi, type FollowUpApi } from "./followups/api.js";
 import { FollowUpsController } from "./followups/controller.js";
@@ -91,6 +96,10 @@ function Workspace({
     (query: ListQuery, signal: AbortSignal) => invoiceApi.list(query, csrfToken, signal),
     [invoiceApi, csrfToken],
   );
+  const analyticsInvoices = useCallback(
+    (query: AnalyticsQuery, signal: AbortSignal) => invoiceApi.analytics(query, csrfToken, signal),
+    [invoiceApi, csrfToken],
+  );
   const createPayPalDraft = useCallback(
     (id: string, signal: AbortSignal) => invoiceApi.createPayPalDraft(id, csrfToken, signal),
     [invoiceApi, csrfToken],
@@ -161,6 +170,7 @@ function Workspace({
         save,
         getInvoice,
         listInvoices,
+        analyticsInvoices,
         createPayPalDraft,
         sessionExpired: expire,
         followUps,

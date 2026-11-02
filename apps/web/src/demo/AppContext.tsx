@@ -12,6 +12,8 @@ import type { Action, AppState } from "./appState.js";
 import type { SaveGuard } from "../invoices/leaveGuard.js";
 import type {
   GetResult,
+  AnalyticsQuery,
+  AnalyticsResult,
   ListQuery,
   ListResult,
   PayPalDraftResult,
@@ -34,6 +36,8 @@ export interface SessionInfo {
   save?: (draft: InvoiceDraft, idempotencyKey: string, signal: AbortSignal) => Promise<SaveResult>;
   /** Real read-only, owner-scoped list (`GET /api/invoice-drafts`). Present only in real mode. */
   listInvoices?: (query: ListQuery, signal: AbortSignal) => Promise<ListResult>;
+  /** Real full-population, owner-scoped dashboard aggregate; CSRF bound in memory. */
+  analyticsInvoices?: (query: AnalyticsQuery, signal: AbortSignal) => Promise<AnalyticsResult>;
   /** Real PayPal Sandbox DRAFT creation (`POST /api/invoice-drafts/:id/paypal-draft`), CSRF bound in memory. Real mode only. */
   createPayPalDraft?: (id: string, signal: AbortSignal) => Promise<PayPalDraftResult>;
   /** Real read-only detail (`GET /api/invoice-drafts/:id`). */

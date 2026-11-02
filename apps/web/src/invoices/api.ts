@@ -18,7 +18,13 @@ import {
   type ServerInvoice,
 } from "../domain/serverInvoice.js";
 import { parseListPage, type ListPage } from "../domain/serverList.js";
-import type { InvoiceDraft } from "../domain/types.js";
+import {
+  parseAnalyticsSummary,
+  type AnalyticsQuery,
+  type AnalyticsSummary,
+} from "../domain/serverAnalytics.js";
+export type { AnalyticsQuery, AnalyticsSummary } from "../domain/serverAnalytics.js";
+import { CURRENCY_CODES, type InvoiceDraft } from "../domain/types.js";
 import { IDEMPOTENCY_KEY } from "./idempotency.js";
 
 const MAX_MESSAGES = 20;
@@ -42,6 +48,8 @@ export interface ListQuery {
   currency: string | null;
   status: string | null;
   q: string | null;
+  fromInclusive?: string | null;
+  toExclusive?: string | null;
 }
 
 export type ListResult =
@@ -52,7 +60,96 @@ export type ListResult =
   | { kind: "unavailable" }
   | { kind: "malformed" }
   | { kind: "offline" }
+  | { kind: "timeout" }
   | { kind: "aborted" };
+
+export type AnalyticsResult =
+  | { kind: "ok"; summary: AnalyticsSummary }
+  | { kind: "unauthorized" }
+  | { kind: "forbidden" }
+  | { kind: "rejected" }
+  | { kind: "unavailable" }
+  | { kind: "malformed" }
+  | { kind: "offline" }
+  | { kind: "timeout" }
+  | { kind: "aborted" };
+
+type BoundedFetchResult =
+  { kind: "response"; response: Response } | { kind: "offline" | "timeout" | "aborted" };
+
+async function boundedFetch(
+  doFetch: FetchLike,
+  path: string,
+  init: RequestInit,
+  parent: AbortSignal,
+  timeoutMs: number,
+): Promise<BoundedFetchResult> {
+  if (parent.aborted) return { kind: "aborted" };
+  const controller = new AbortController();
+  let timedOut = false;
+  const abortFromParent = () => controller.abort();
+  parent.addEventListener("abort", abortFromParent, { once: true });
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  try {
+    const response = await doFetch(path, { ...init, signal: controller.signal });
+    // A response that proves session expiry is authoritative even if this request was internally
+    // superseded or its timeout controller fired while the server was returning the response.
+    if (response.status === 401) return { kind: "response", response };
+    if (parent.aborted) return { kind: "aborted" };
+    if (timedOut) return { kind: "timeout" };
+    return { kind: "response", response };
+  } catch {
+    if (parent.aborted) return { kind: "aborted" };
+    return timedOut ? { kind: "timeout" } : { kind: "offline" };
+  } finally {
+    clearTimeout(timer);
+    parent.removeEventListener("abort", abortFromParent);
+  }
+}
+
+const isUtcMillisecondInstant = (value: unknown): value is string => {
+  if (typeof value !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value))
+    return false;
+  const milliseconds = Date.parse(value);
+  return Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value;
+};
+
+function validListRange(query: ListQuery): boolean {
+  if (Boolean(query.fromInclusive) !== Boolean(query.toExclusive)) return false;
+  if (!query.fromInclusive || !query.toExclusive) return true;
+  if (!isUtcMillisecondInstant(query.fromInclusive) || !isUtcMillisecondInstant(query.toExclusive))
+    return false;
+  const duration = Date.parse(query.toExclusive) - Date.parse(query.fromInclusive);
+  return duration > 0 && duration <= 366 * 86_400_000;
+}
+
+function validAnalyticsQuery(query: AnalyticsQuery): boolean {
+  if (
+    !isUtcMillisecondInstant(query.fromInclusive) ||
+    !isUtcMillisecondInstant(query.toExclusive) ||
+    Date.parse(query.toExclusive) <= Date.parse(query.fromInclusive) ||
+    Date.parse(query.toExclusive) - Date.parse(query.fromInclusive) > 366 * 86_400_000
+  )
+    return false;
+  if (typeof query.timeZone !== "string" || query.timeZone.length < 1 || query.timeZone.length > 64)
+    return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: query.timeZone });
+  } catch {
+    return false;
+  }
+  if (query.currency && !CURRENCY_CODES.includes(query.currency)) return false;
+  if (
+    query.status &&
+    !(["none", "progress", "created", "attention"] as readonly string[]).includes(query.status)
+  )
+    return false;
+  if (query.q !== undefined && (!query.q.trim() || query.q.trim().length > 100)) return false;
+  return true;
+}
 
 /** Why the server refused to map a local invoice to a PayPal draft (it never rounds silently). */
 export const MAPPING_REFUSALS = [
@@ -136,11 +233,17 @@ export interface InvoiceApi {
   ): Promise<SaveResult>;
   get(id: string, signal: AbortSignal): Promise<GetResult>;
   list(query: ListQuery, csrfToken: string, signal: AbortSignal): Promise<ListResult>;
+  analytics(
+    query: AnalyticsQuery,
+    csrfToken: string,
+    signal: AbortSignal,
+  ): Promise<AnalyticsResult>;
   createPayPalDraft(id: string, csrfToken: string, signal: AbortSignal): Promise<PayPalDraftResult>;
 }
 
 export function createInvoiceApi(
   doFetch: FetchLike = (input, init) => fetch(input, init),
+  timeoutMs = 15_000,
 ): InvoiceApi {
   const base: RequestInit = { credentials: "same-origin", cache: "no-store", redirect: "error" };
   return {
@@ -203,6 +306,7 @@ export function createInvoiceApi(
       }
     },
     async list(query, csrfToken, signal) {
+      if (!validListRange(query)) return { kind: "rejected" };
       // The whole query (including the operator's search text) travels in a POST body: the request
       // URL is fixed, so hosting/ingress request-URL logs can never contain customer names or e-mails.
       const body: Record<string, unknown> = { limit: query.limit };
@@ -210,9 +314,12 @@ export function createInvoiceApi(
       if (query.currency) body["currency"] = query.currency;
       if (query.status) body["status"] = query.status;
       if (query.q) body["q"] = query.q;
-      let res: Response;
-      try {
-        res = await doFetch("/api/invoice-drafts/search", {
+      if (query.fromInclusive) body["fromInclusive"] = query.fromInclusive;
+      if (query.toExclusive) body["toExclusive"] = query.toExclusive;
+      const fetched = await boundedFetch(
+        doFetch,
+        "/api/invoice-drafts/search",
+        {
           ...base,
           method: "POST",
           headers: {
@@ -221,16 +328,69 @@ export function createInvoiceApi(
             "x-csrf-token": csrfToken,
           },
           body: JSON.stringify(body),
-          signal,
-        });
-      } catch {
-        return signal.aborted ? { kind: "aborted" } : { kind: "offline" };
-      }
+        },
+        signal,
+        timeoutMs,
+      );
+      if (fetched.kind !== "response") return fetched;
+      const res = fetched.response;
       switch (res.status) {
         case 200:
           try {
             const page = parseListPage(await res.json(), query.limit, query.cursor);
+            if (signal.aborted) return { kind: "aborted" };
             return page ? { kind: "ok", page } : { kind: "malformed" };
+          } catch {
+            return signal.aborted ? { kind: "aborted" } : { kind: "malformed" };
+          }
+        case 400:
+          return { kind: "rejected" };
+        case 401:
+          return { kind: "unauthorized" };
+        case 403:
+          return { kind: "forbidden" };
+        default:
+          return { kind: "unavailable" };
+      }
+    },
+    async analytics(query, csrfToken, signal) {
+      if (!validAnalyticsQuery(query)) return { kind: "rejected" };
+      const body: Record<string, unknown> = {
+        fromInclusive: query.fromInclusive,
+        toExclusive: query.toExclusive,
+        timeZone: query.timeZone,
+      };
+      if (query.currency) body["currency"] = query.currency;
+      if (query.status) body["status"] = query.status;
+      const q = query.q?.trim();
+      if (q) body["q"] = q;
+      const fetched = await boundedFetch(
+        doFetch,
+        "/api/analytics/summary",
+        {
+          ...base,
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "cache-control": "no-store",
+            "x-csrf-token": csrfToken,
+          },
+          body: JSON.stringify(body),
+        },
+        signal,
+        timeoutMs,
+      );
+      if (fetched.kind !== "response") return fetched;
+      const res = fetched.response;
+      switch (res.status) {
+        case 200:
+          try {
+            const summary = parseAnalyticsSummary(await res.json(), {
+              ...query,
+              ...(q ? { q } : {}),
+            });
+            if (signal.aborted) return { kind: "aborted" };
+            return summary ? { kind: "ok", summary } : { kind: "malformed" };
           } catch {
             return signal.aborted ? { kind: "aborted" } : { kind: "malformed" };
           }

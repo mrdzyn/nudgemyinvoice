@@ -241,6 +241,34 @@ describe.skipIf(!url)("PostgresInvoiceListStore (real PostgreSQL)", () => {
   });
 
   describe("filters and search (whole owned collection, preserved across pages)", () => {
+    it("applies UTC half-open date bounds to the owner population before cursor pagination", async () => {
+      const P = await addOperator("operator-date-range");
+      const atStart = await save(P, draft({ customerName: "At start" }));
+      const inside = await save(P, draft({ customerName: "Inside" }));
+      const atEnd = await save(P, draft({ customerName: "At end" }));
+      const foreign = await save(B, draft({ customerName: "Foreign date range" }));
+      await stamp(atStart, "2026-11-01T00:00:00.000Z");
+      await stamp(inside, "2026-11-03T12:00:00.000Z");
+      await stamp(atEnd, "2026-11-06T00:00:00.000Z");
+      await stamp(foreign, "2026-11-03T12:00:00.000Z");
+
+      const range = {
+        fromInclusive: new Date("2026-11-01T00:00:00.000Z"),
+        toExclusive: new Date("2026-11-06T00:00:00.000Z"),
+      };
+      const first = await q(P, { ...range, limit: 1 });
+      expect(first.items.map((i) => i.id)).toEqual([inside]);
+      expect(first.nextCursor).toBeTruthy();
+      const second = await q(P, { ...range, limit: 1, cursor: first.nextCursor! });
+      expect(second.items.map((i) => i.id)).toEqual([atStart]);
+      expect(second.nextCursor).toBeNull();
+      expect(await ids(P, range)).not.toContain(atEnd);
+      expect(await ids(P, range)).not.toContain(foreign);
+      await expect(
+        list.list({ operatorId: P, fromInclusive: range.fromInclusive }),
+      ).rejects.toThrow("date range requires both bounds");
+    });
+
     it("search finds a row on the LAST page, not only the first page", async () => {
       const P = await addOperator("operator-search");
       for (let i = 0; i < 30; i++) await save(P, draft({ customerName: `Filler ${i}` }));

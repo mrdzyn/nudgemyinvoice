@@ -34,7 +34,16 @@ function Skeleton({ h, w }: { h: number; w?: string }) {
  */
 export function DashboardScreen() {
   const { session } = useApp();
-  if (session?.listInvoices) return <RealDashboard list={session.listInvoices} />;
+  if (session?.listInvoices) {
+    if (session.analyticsInvoices)
+      return <RealDashboard list={session.listInvoices} analytics={session.analyticsInvoices} />;
+    return (
+      <Notice kind="err" role="alert">
+        Full-population dashboard analytics are unavailable. Authenticated invoice data is hidden;
+        no synthetic preview data has been substituted.
+      </Notice>
+    );
+  }
   return <SyntheticDashboard />;
 }
 
