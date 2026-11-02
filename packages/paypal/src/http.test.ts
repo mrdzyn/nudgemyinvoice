@@ -8,7 +8,7 @@ describe("PayPal request guard (allowlist)", () => {
     ["POST", "/v1/oauth2/token"],
     ["POST", "/v2/invoicing/invoices"],
     ["GET", "/v2/invoicing/invoices/INV2-ABCD-1234"],
-    ["POST", "/v2/invoicing/search-invoices"],
+    ["POST", "/v2/invoicing/search-invoices?page=1&page_size=20&total_required=true"],
   ])("allows %s %s", (m, p) => expect(() => guardRequest(m, H + p)).not.toThrow());
 
   it.each([
@@ -48,4 +48,21 @@ describe("PayPal request guard (allowlist)", () => {
   ])("refuses live, foreign or malformed url %j", (u) =>
     expect(() => guardRequest("POST", u)).toThrow(ForbiddenPayPalOperation),
   );
+
+  it.each([
+    "",
+    "?page=1&page_size=20",
+    "?page=1&page_size=20&total_required=false",
+    "?page=2&page_size=20&total_required=true",
+    "?page=1&page_size=21&total_required=true",
+    "?page=1&page_size=20&total_required=true&page=1",
+    "?page=1&page_size=20&total_required=true&invoice_number=controlled",
+    "?page=1%ZZ&page_size=20&total_required=true",
+    "?page_size=20&page=1&total_required=true",
+    "?page=1&page_size=20&total_required=true ",
+  ])("refuses noncanonical search query %j", (query) => {
+    expect(() => guardRequest("POST", `${H}/v2/invoicing/search-invoices${query}`)).toThrow(
+      ForbiddenPayPalOperation,
+    );
+  });
 });

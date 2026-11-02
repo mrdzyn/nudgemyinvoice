@@ -1811,4 +1811,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Boundaries:** no provider, OpenAI, SMTP, MCP, owner DB, migration, or Render activity. `PAYPAL_DRAFTS_ENABLED=false`; historical one-create budget remains exhausted.
 - **Next:** confirm final exact SHA and green Project Baseline + Stack checks, then stop for independent review. Remediation needs its own task; no PayPal provider probe without new explicit owner authorization.
 
+## Handoff: NMI-PROTOTYPE-10D-A3-FIX1-IMPLEMENT-01
+
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A3-FIX1-paypal-search-contract.md`.
+- **From / to:** implementation → independent exact-HEAD security reviewer.
+- **Base / branch:** `main@816efcd9449b2fcfc00628123ded99cc4c62526a`; `fix/nmi-proto-a3-paypal-search-contract`.
+- **PR:** new Draft PR; record final number and SHA after push.
+- **Scope:** PayPal Invoicing v2 search fixed query serialization, exact URL allowlist exception, complete-response proof and related deterministic regression tests. No invoice-date work, migration or payment/create implementation change.
+- **Validation already run:** focused PayPal client/HTTP/mapping/index tests **132/132 passed**; workspace `pnpm typecheck`, `pnpm lint`, and `pnpm format:check` passed; create-401 and invoice-drafts PostgreSQL suites **62/62 passed** on fresh disposable PostgreSQL 16 (`nmi_test_a3fix1`) which was stopped and removed. No provider call or owner DB operation.
+- **Safety:** create is still fenced and never automatically resent; search is read-only; query allowlist only permits fixed pagination values on the existing Sandbox search route. `PAYPAL_DRAFTS_ENABLED=false`; historical one-create authorization remains exhausted.
+- **Next:** open one Draft PR, run required hosted Project Baseline and Stack workflows on the final PR SHA, confirm Draft status and record the PR number, then stop for independent review. No merge/deploy/provider activity.
+
 <!-- HANDOFF_ENTRIES_END -->

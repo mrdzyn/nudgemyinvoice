@@ -29,6 +29,9 @@ export class ForbiddenPayPalOperation extends Error {
   }
 }
 
+/** Exact fixed pagination query required by the invoicing v2 search operation. */
+export const PAYPAL_INVOICE_SEARCH_QUERY = "page=1&page_size=20&total_required=true";
+
 /**
  * The ONLY PayPal calls this project may make. Anything else (send, remind, cancel, payments,
  * refunds, update, delete, live hosts, redirects off the sandbox host) is refused before any
@@ -51,16 +54,27 @@ export function guardRequest(method: string, rawUrl: string): void {
   if (
     url.protocol !== "https:" ||
     url.hostname !== PAYPAL_SANDBOX_HOST ||
+    url.href !== rawUrl ||
     url.port ||
     url.username ||
     url.password ||
-    url.search ||
     url.hash
   ) {
     throw new ForbiddenPayPalOperation("host or url shape");
   }
   const ok = ALLOWED.some((a) => a.method === method && a.path.test(url.pathname));
   if (!ok) throw new ForbiddenPayPalOperation(`${method} ${url.pathname}`);
+
+  const isSearch = method === "POST" && url.pathname === "/v2/invoicing/search-invoices";
+  if (isSearch) {
+    // Exact byte spelling/order avoids duplicate keys, encoding tricks, user-provided filters,
+    // malformed values, and ambiguity around pagination. No other operation accepts a query.
+    if (url.search !== `?${PAYPAL_INVOICE_SEARCH_QUERY}`) {
+      throw new ForbiddenPayPalOperation("search query shape");
+    }
+  } else if (url.search) {
+    throw new ForbiddenPayPalOperation("query not allowed");
+  }
 }
 
 const MAX_RESPONSE_BYTES = 1_000_000;

@@ -66,3 +66,7 @@ No uncertainty above may be resolved by using the exhausted authorization. Any p
 ## Next action
 
 Open a separate remediation task and obtain independent review of the request serialization/completeness fix before any code change is merged. Keep `PAYPAL_DRAFTS_ENABLED=false`, preserve the 1/1 exhausted one-create budget, and never add send/reminder calls. No provider call is recommended as the immediate next step; first fix and offline-verify the documented request contract.
+
+## Remediation follow-up
+
+The bounded contract correction is tracked separately in `tasks/NMI-PROTOTYPE-10D-A3-FIX1-paypal-search-contract.md` on branch `fix/nmi-proto-a3-paypal-search-contract`. That follow-up moves the fixed pagination controls to the query string and requires internally consistent complete result metadata; it does not change payment creation or enable provider calls.
