@@ -1832,4 +1832,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** exact Sandbox allowlist unchanged; reconciliation remains read-only; create remains fenced and at most once. `PAYPAL_DRAFTS_ENABLED=false`; one-create authorization exhausted.
 - **Next:** run both required hosted workflows on the final PR SHA, confirm PR #35 remains Draft, and stop for independent exact-HEAD re-audit. No provider, migration, deployment, or merge.
 
+
+## Handoff: NMI-PROTOTYPE-10D-A4-START
+
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; evidence: `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`.
+- **From / to:** orchestrator kickoff → A4 QA/implementation agent.
+- **Base / branch:** `main@588717a7b04cae185da2ad12995346943fe27d02`; `docs/nmi-prototype-10d-a4-readiness` (one Draft PR).
+- **Objective:** verify the current A2+A3-FIX1 integrated **SIMULATED** judge experience from a clean clone, isolated disposable PostgreSQL and zero-provider fake launcher; refresh accurate demo runbook/submission blockers and Nov 7 hosting decision matrix.
+- **Current state:** task/evidence template prepared, **NO A4 tests executed or PASS evidence claimed**. Previous R0/A2 tests are historical evidence only.
+- **Security:** production `PAYPAL_DRAFTS_ENABLED=false` remains; fake evaluation may enable the feature only with fake adapters in the separate local test launcher. No real PayPal/OpenAI, MCP, owner DB, migrations on existing data, Render, deployment, merge, bills or judge URL sharing.
+- **Next:** run objective-based local synthetic rehearsal, capture exact-SHA evidence and cleanup, update runbook/checklist, run required CI on final Draft PR HEAD and stop for independent audit.
+
 <!-- HANDOFF_ENTRIES_END -->
