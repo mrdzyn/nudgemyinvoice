@@ -1,6 +1,6 @@
 # NudgeMyInvoice — Submission checklist and release-blocker register
 
-> Maintained by NMI-DEMO-R0. **Nothing has been submitted, published, uploaded or deployed.** Deadline (owner brief): **Nov 12, 2026, 12:00 PM PST = Nov 13, 2026, 4:00 AM Asia/Manila.** Official rules: https://paypalaihackathon.devpost.com/rules — **not retrievable by R0's own tooling (HTTP 403); independently retrieved and verified by the independent reviewer** for: setup instructions OR hosted demo is acceptable; a public open-source repository/license and a public YouTube video under 3 minutes are required. All other criteria (dates, eligibility, team, sponsor rules) are **not** independently verified here; the owner confirms every row marked "owner" against the live page.
+> Maintained by NMI-DEMO-R0; local-rehearsal evidence refreshed by NMI-PROTOTYPE-10D-A4 (section F). **Nothing has been submitted, published, uploaded or deployed.** Deadline (owner brief): **Nov 12, 2026, 12:00 PM PST = Nov 13, 2026, 4:00 AM Asia/Manila.** Official rules: https://paypalaihackathon.devpost.com/rules — **not retrievable by R0's own tooling (HTTP 403); independently retrieved and verified by the independent reviewer** for: setup instructions OR hosted demo is acceptable; a public open-source repository/license and a public YouTube video under 3 minutes are required. All other criteria (dates, eligibility, team, sponsor rules) are **not** independently verified here; the owner confirms every row marked "owner" against the live page.
 
 ## A. Official requirements (per owner brief) — status
 
@@ -71,3 +71,12 @@
 
 - `pnpm test` (no database): see the R0 PR for exact counts; `pnpm test:db` on real PostgreSQL 16.15: 277 passed (+ the R0 tests that need no database run in the main suite).
 - Browser journeys rerun on the merged code in R0: C2 88/88, C3 116/116, C4 79/79 (stale-copy assertions updated to the approved current behaviour: **C2 = 3, C3 = 5, C4 = 2**; behavioural assertions unchanged), C5-P1 102/102, **R0 end-to-end 32/32**.
+
+## F. A4 synthetic local rehearsal (2026-11-03; observed, simulated providers only)
+
+Source: `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md` (tested commit `8c084d7`, clean clone, new disposable PostgreSQL 16 database, no network egress, no provider credential).
+
+- `pnpm validate`: passed (1056 tests passed, 323 skipped without a database). `pnpm test:db` on a private PG16: 340 passed.
+- A4 harness: **112/112** (auth/CSRF/privacy, invoice journey with simulated PayPal DRAFT and replay, full-population analytics vs independent SQL across USD/EUR/JPY, status, search, date and DST boundaries, 390px and keyboard checks). Judge-runbook Mode A commands re-run verbatim: pass.
+- Older R0 journey script: 29/32 (three stale pre-analytics assertions; superseded by the A4 harness). The earlier "R0 end-to-end 32/32" in section E is historical.
+- **Still NOT done / NOT verified:** physical phone, Safari, Firefox, VoiceOver/NVDA; Mode B and Docker; Render/HTTPS/backup restore (not authorized; planning decision 2026-11-07 12:00 Asia/Manila); AG Studio licensing (Community fallback in use); live PayPal Sandbox search/reconciliation (Gate B closed); public video and Devpost submission; independent audit and owner merge of PR #36.

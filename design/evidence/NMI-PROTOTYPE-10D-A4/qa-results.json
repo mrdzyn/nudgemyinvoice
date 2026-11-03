@@ -1,0 +1,695 @@
+{
+  "task": "NMI-PROTOTYPE-10D-A4",
+  "environment": {
+    "node": "v24.21.0",
+    "pnpm": "10.28.0",
+    "postgres": "postgres (PostgreSQL) 16.15 (Homebrew)",
+    "chrome": "Google Chrome 156.0.8078.80",
+    "os": "Darwin 27.2.0 arm64",
+    "sourceSha": "8c084d72c3c3632a0fc81e5d93ef07e49d5e70f6",
+    "dirty": "clean working tree",
+    "startedAt": "2026-11-03T02:13:34.435Z",
+    "database": "nmi_test_a4_20261103 on 127.0.0.1:54364 (private cluster in a temp directory)",
+    "migrations": 8,
+    "finishedAt": "2026-11-03T02:14:15.768Z",
+    "passed": 112,
+    "total": 112,
+    "failed": 0,
+    "stack": "real Fastify (SIMULATED launcher: fake parser, fake PayPal) in a sandbox-exec no-egress profile + vite preview production build + headless Chrome (CDP, Asia/Manila emulated) + private PostgreSQL 16"
+  },
+  "simulated": true,
+  "results": [
+    {
+      "group": "clean clone",
+      "name": "exact source SHA recorded and the working tree is clean",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "database",
+      "name": "a NEW disposable PostgreSQL 16 database (nmi_test_a4_20261103) was created in a private temp cluster and all 8 journal migrations were applied once",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "database",
+      "name": "one synthetic operator was provisioned with the real CLI (random password, never printed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "isolation",
+      "name": "the network sandbox the API runs in denies non-loopback egress (connect to the reserved documentation address 192.0.2.1 is refused with EPERM before any packet exists)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "isolation",
+      "name": "loopback still works inside the same sandbox",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "simulated mode",
+      "name": "the SIMULATED launcher (fake parser + fake PayPal client) is up behind the web proxy; /health says aiConfigured=false; no real OpenAI/PayPal credential exists in its environment",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "simulated mode",
+      "name": "the production server entry has no simulation switch (unit-tested) and the launcher refuses to run without NMI_SIMULATED_EVAL=1",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "seed",
+      "name": "66 synthetic invoices (USD / EUR / JPY, more than three 20-row pages) were saved through the real POST /api/invoice-drafts route",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "seed",
+      "name": "SIMULATED operation rows give every status group a population (created x3, progress x2, attention x1, the rest none); ownerless and other-operator rows exist as negative controls",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: whole window, Asia/Manila",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: whole window, America/New_York",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: currency USD",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: currency EUR",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: currency JPY (zero-decimal)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: status none",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: status created",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: status progress",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: status attention",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: search Northwind",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: search 'a4 client 1' (case-insensitive substring)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: search by invoice-id prefix",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: search '%' (literal, not a wildcard)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: search '_' (literal, not a wildcard)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: no match",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: currency + status + search",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: Manila boundary window [B1 inclusive, B4 exclusive)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "API equals independent SQL over every matched row: New York DST fall-back window (Nov 1 00:00 EDT to Nov 3 00:00 EST)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "negative control: comparing the API's EUR totals with the independent SQL for USD is detected as a MISMATCH (the parity check can fail)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "the full population exceeds one page and two units of currency stay separate: USD, EUR and JPY each have their own count and exact minor-unit total, with no combined figure",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "JPY is zero-decimal (exponent 0) and USD/EUR are two-decimal (exponent 2) in the response",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics parity",
+      "name": "the ownerless row and the other operator's row are excluded (the SQL population WITHOUT the owner filter would be larger)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "date bounds",
+      "name": "inclusive start / exclusive end: the row AT the start and the row 1 ms before the end are in; the row 1 ms before the start and the row AT the end are out",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "date bounds",
+      "name": "DST fall-back (America/New_York 2026-11-01): both 01:30 instants (EDT then EST) and 23:59:59.999 EST fall on local day Nov 1; 00:00:00 EST on Nov 2 starts the next local day (independent SQL, per row)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "date bounds",
+      "name": "Manila (no DST): the inclusive-start row is local Oct 11, the last-ms row is Oct 12; the row 1 ms before the start is Oct 10 and the row AT the exclusive end is Oct 13 (both outside the window)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "date bounds",
+      "name": "the API's New York day buckets for the DST window equal the independent SQL buckets (no duplicated or missing local day across the repeated hour)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "a missing time zone is refused (400, no data)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "an unknown time zone is refused",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "a missing end bound is refused",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "a reversed range is refused",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "a range over 366 days is refused",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "an unknown extra key (e.g. a client-chosen operator) is refused",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "analytics errors",
+      "name": "an offset instead of UTC is refused",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "grid parity",
+      "name": "paging the grid's list API to the end returns the same rows (count and exact per-currency sum) as the analytics API and the independent SQL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "grid parity",
+      "name": "a currency + status filter returns the same population in the grid as in analytics (EUR / no PayPal draft)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "login succeeds; the session cookie is HttpOnly, SameSite=Lax and scoped to /",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "a wrong password is refused with 401 and no session cookie",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "session refresh (GET /api/auth/session) returns the operator and a fresh CSRF token",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "a mutation without the CSRF token is refused (403)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "a mutation with a wrong CSRF token is refused (403)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "a mutation from a foreign Origin is refused (403)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "a mutation with no Origin is refused (403)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "anonymous callers get 401 on analytics and the invoice list, with no data",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "owner scoping: another operator's invoice is a plain 404 (and an unknown id is identical)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "owner scoping: searching for the other operator's / ownerless customer names finds nothing",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "logout revokes the server session: the SAME cookie is rejected afterwards (401 on analytics and on the session check)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "the sign-in screen is shown first, with no invoice or analytics request",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "a wrong password shows an error, keeps the operator signed out, and does not reveal whether the username exists",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "the correct synthetic credentials sign in and the real dashboard (with all synthetic invoices) loads",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: default window (last 30 days, Asia/Manila)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "the page states the window it covers, inclusive of both dates, with its time zone",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser currency",
+      "name": "the page says every card is one currency and that currencies are never added together or converted; no grand total is shown",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser currency",
+      "name": "USD, EUR and JPY appear as three separate cards (JPY with no decimals)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser pagination",
+      "name": "the grid loads the window page by page (20 -> 40 -> 60 -> 66 rows) and ends with 'All matching invoices are loaded' equal to the SQL count (66)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser pagination",
+      "name": "loading more pages did not re-request the full-population analytics",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: after paging to the end (cards unchanged)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: currency pill EUR",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser filters",
+      "name": "the EUR pill sends currency=EUR in BOTH the list and the analytics request bodies",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: PayPal draft status = created",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: PayPal draft status = none",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: PayPal draft status = needs attention",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: customer search 'Northwind'",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser filters",
+      "name": "the search term travels only in POST bodies (list and analytics) and never in a URL, and the grid shows exactly the SQL-matching rows",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: date range Oct 11 to Oct 12 (Manila local days)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser date bounds",
+      "name": "the page sends paired UTC instants for the local days: start = Oct 11 00:00 Manila (2026-10-10T16:00:00.000Z) inclusive, end = Oct 13 00:00 Manila (exclusive), with the IANA zone",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser date bounds",
+      "name": "a reversed range shows an inline error and sends no analytics request",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser error states",
+      "name": "when analytics fails the page shows an alert 'Could not load full-population totals', says no loaded-row estimate is substituted, and shows NO KPI cards",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: after 'Retry totals' (currency USD)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser loading state",
+      "name": "while analytics is in flight the cards area shows a busy skeleton labelled 'Loading full-population totals' (no stale or estimated numbers)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser error states",
+      "name": "a request that never answers ends with an honest error after the client timeout (15s), not an endless spinner or a guess",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser cancellation",
+      "name": "a superseded analytics request (JPY) is cancelled/ignored: after its late wrong answer is injected the page still shows the LATEST filter's (EUR) totals, never the stale ¥1",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: latest filter after cancellation (EUR)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "the SIMULATED parser's proposal opens the editable Review; nothing is saved yet",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "the human Save writes exactly one verified draft to PostgreSQL (server total $540.00) and opens the saved page",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "no PayPal draft exists after parse and save (no create during parse/save/list/refresh)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "the confirmation dialog names the invoice, customer and amount and says nothing is emailed, sent or collected",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "the SIMULATED DRAFT is verified by the real service: DRAFT shown, 'customer has not been emailed', one POST, one fake create, operation 'created' with attempts=1",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "A3-FIX1 safeguard: repeating the confirmation is a replay (HTTP 200, same id), NOT a second create: still exactly one fake provider create and one operation row",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "the page re-read the durable state (GET) and shows the same PayPal id as PostgreSQL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser analytics parity",
+      "name": "dashboard KPI cards equal independent SQL for the window/filters the page requested: after the journey (new invoice included)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "invoice journey",
+      "name": "only the explicit confirmation made a fake provider call (one create for the whole run); simulated parse calls were counted locally and no browser request left the origin",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "late 401: after the session is revoked server-side, the next dashboard request returns the page to the sign-in screen",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser privacy",
+      "name": "after the late 401 no customer name, e-mail or total remains on the page",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "signing in again works",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "the browser holds the session cookie as HttpOnly (invisible to page scripts) and document.cookie shows nothing",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "Sign out returns to the sign-in screen and removes every invoice from the page",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "browser auth",
+      "name": "the cookie the browser used before logout is rejected by the server afterwards (revocation, 401)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "390px",
+      "name": "the dashboard at 390px has no page-level horizontal overflow and keeps the KPI cards and date range reachable",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "390px",
+      "name": "the date inputs can be scrolled into view and tapped (hit-tested)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "390px",
+      "name": "the composer at 390px has no page-level horizontal overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "390px",
+      "name": "the Nudgey panel at 390px stays inside the viewport and above the mobile navigation",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "keyboard",
+      "name": "Tab reaches the date range, search and status filters in order and every focused control shows a visible focus indicator",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser used only auth, invoice save/list/detail/search, PayPal-draft confirm, analytics and follow-up reads",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no send, remind, cancel, refund, payment, webhook, SMTP or OpenAI route was requested",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no browser request left the local origin",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no browser persistent storage (localStorage, sessionStorage, IndexedDB, Cache) and no customer data or query in the page URL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the API log holds no customer name/e-mail, password, session cookie value or CSRF token",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "zero external provider activity: exactly one fake PayPal create in the whole run, and the sandboxed API process had no way to reach another host",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no uncaught exception or unexpected console error in the browser (expected 4xx/blocked-request log lines excluded)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the audit log carries no customer name or e-mail",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "repeated wrong passwords are rate limited (HTTP 429 with Retry-After) after 6 attempts",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "while limited, even the correct password is refused (429); restarting the API process clears the in-memory throttle (documented operational limit)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "auth",
+      "name": "after an API restart the operator can sign in again",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

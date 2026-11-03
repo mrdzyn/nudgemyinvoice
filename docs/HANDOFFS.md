@@ -1843,4 +1843,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Security:** production `PAYPAL_DRAFTS_ENABLED=false` remains; fake evaluation may enable the feature only with fake adapters in the separate local test launcher. No real PayPal/OpenAI, MCP, owner DB, migrations on existing data, Render, deployment, merge, bills or judge URL sharing.
 - **Next:** run objective-based local synthetic rehearsal, capture exact-SHA evidence and cleanup, update runbook/checklist, run required CI on final Draft PR HEAD and stop for independent audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A4-REHEARSAL-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; Draft [#36](https://github.com/mrdzyn/nudgemyinvoice/pull/36); evidence `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`.
+- **From / to:** A4 implementation/QA → independent exact-HEAD auditor.
+- **Tested commit:** `8c084d7` (clean clone, new disposable PostgreSQL 16, no egress). Later commits change docs/evidence only.
+- **Observed:** `pnpm validate` pass; `pnpm test:db` 340/340; A4 harness 112/112; judge-runbook Mode A commands re-run verbatim and torn down; old R0 script 29/32 (three stale pre-A2 assertions, not fixed, out of scope). A3-FIX1 covered offline only; live PayPal search NOT TESTED.
+- **Verdicts:** LOCAL READY (headless/emulated only); HOSTED NOT AUTHORIZED.
+- **Not run:** physical device, Safari, Firefox, VoiceOver/NVDA, Mode B, Docker, Render, AG Studio licensing, backup restore, Devpost/video.
+- **Safety:** no provider call, owner DB, migration on existing data, Render, deploy or merge. Gates A/B/C stay NOT AUTHORIZED; one-create budget exhausted.
+- **Next:** run both hosted workflows on the final PR HEAD (run IDs on the PR), keep Draft, independent audit, then owner merge decision.
+
 <!-- HANDOFF_ENTRIES_END -->
