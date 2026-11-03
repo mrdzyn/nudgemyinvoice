@@ -57,9 +57,16 @@ The invoice-search contract enforcement is covered offline by `packages/paypal` 
 
 The audit found that an unexpected exception, rejected promise or SIGINT/SIGTERM could leave child processes or PostgreSQL running, or delete the data directory under a live server. `run-a4-rehearsal.mjs` now handles `uncaughtException`, `unhandledRejection`, SIGINT and SIGTERM with one single-flight cleanup: stop every child process group (SIGTERM, then SIGKILL), stop PostgreSQL (`pg_ctl -m immediate -w stop`, SIGKILL fallback), then delete the temp data and Chrome profile; exit codes 1 / 1 / 130 / 143. The normal path is unchanged.
 
-- New [test-cleanup-injection.mjs](test-cleanup-injection.mjs) runs the real harness with a test-only `A4_INJECT_FAILURE` hook (inert unless set) for throw, reject, sigint and sigterm after the full stack is up. Observed **29/29**: expected nonzero exit code and abort message, 50+ checks had passed before injection, no listener on 3164/4164/9364/54364, no orphaned process, no `nmi-a4-*`/`nmi-qa-a4-*` directory, `qa-results.json` untouched.
+- New [test-cleanup-injection.mjs](test-cleanup-injection.mjs) runs the real harness with a test-only `A4_INJECT_FAILURE` hook (inert unless set) for throw, reject, sigint and sigterm after the full stack is up. Observed **29/29** (first remediation; 37/37 after the residual fix below): expected nonzero exit code and abort message, 50+ checks had passed before injection, no listener on 3164/4164/9364/54364, no orphaned process, no `nmi-a4-*`/`nmi-qa-a4-*` directory, `qa-results.json` untouched.
 - The unmodified success path was re-run after the change: **112/112, exit 0**, no leftovers. The committed `qa-results.json` and screenshots above remain the original run at `8c084d7`.
 - The injection test needs macOS `sandbox-exec`, PG16 binaries and Chrome, so it is local evidence and is not part of hosted CI.
+
+### Residual MINOR (re-audit): never delete PostgreSQL data unless shutdown is confirmed
+
+The first remediation ran `pg_ctl` without checking the result and then deleted the data directory after a fixed 300 ms, both in the async cleanup and in the synchronous `exit` fallback. Now one shared routine (`stopPostgresConfirmed`) is used by both: it runs `pg_ctl -m immediate -w stop` (bounded), SIGKILLs the recorded postmaster pid if it is still alive, and confirms by checking that the pid is no longer a live process. Only a confirmed stop allows the data directory to be deleted. Otherwise the harness prints a "PostgreSQL shutdown could NOT be confirmed" warning with the manual stop command, preserves the directory, still removes the Chrome profile, and exits nonzero (also from a successful run).
+
+- Deterministic negative test (added to `test-cleanup-injection.mjs`, test-only hook `A4_INJECT_PG_STOP_FAILURE=1` that skips every stop attempt so the server is genuinely still running): observed nonzero exit, warning printed, data directory preserved, server still listening on 54364, API/web/Chrome stopped, Chrome profile removed; the test then stops that server and deletes the directory itself and verifies nothing is left. The suite is now **37/37** (the earlier 29 cases unchanged, plus 8).
+- The unmodified success path re-run after this change: **112/112, exit 0**, no warning, no leftover port, process or temp directory. Committed `qa-results.json` and screenshots remain the original run at `8c084d7`.
 
 ## Pending gates
 

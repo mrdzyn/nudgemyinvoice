@@ -1863,4 +1863,13 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A4-MINOR1-REMEDIATION-02
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; existing Draft [#36](https://github.com/mrdzyn/nudgemyinvoice/pull/36).
+- **From / to:** residual-MINOR remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `d6d0e83c3512dc24b216db18ef28f7e17b5854ac`.
+- **Change:** test-only harness deletes its private PostgreSQL data directory only after shutdown is confirmed (pid no longer alive), in both the async cleanup and the `exit` fallback; otherwise it warns, preserves the directory and exits nonzero. New deterministic PG-shutdown-failure negative test; injection suite 37/37 (prior 29 unchanged); unmodified rehearsal 112/112.
+- **Safety:** A4 harness, test and docs only; no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
+- **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -56,6 +56,38 @@ const children = [];
 const extraDirs = [];
 const groupAlive = (pid) => { try { process.kill(-pid, 0); return true; } catch { return false; } };
 const killGroup = (c, sig) => { try { process.kill(-c.pid, sig); } catch { try { c.kill(sig); } catch {} } };
+const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const pidAlive = (pid) => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === "EPERM"; } };
+/* PostgreSQL safety rule: the private data directory is deleted ONLY after shutdown is CONFIRMED, i.e. the
+   postmaster pid recorded in postmaster.pid is no longer a live process. Returns true when confirmed (or when
+   no server was ever started); false means "could not confirm": the caller must preserve the directory.
+   Synchronous on purpose so the async cleanup and the process "exit" fallback enforce the identical rule.
+   A4_INJECT_PG_STOP_FAILURE=1 (test-only, see test-cleanup-injection.mjs) skips every stop attempt. */
+let pgConfirmedStopped = false;
+const stopPostgresConfirmed = () => {
+  if (pgConfirmedStopped) return true;
+  const pidFile = join(work, "pg", "postmaster.pid");
+  if (!existsSync(pidFile)) return (pgConfirmedStopped = true);
+  const pgPid = Number(readFileSync(pidFile, "utf8").split("\n")[0]);
+  if (!Number.isInteger(pgPid) || pgPid <= 1) return false;
+  const inject = process.env.A4_INJECT_PG_STOP_FAILURE === "1";
+  const waitDead = (ms) => { for (let t = 0; t < ms && pidAlive(pgPid); t += 100) sleepSync(100); return !pidAlive(pgPid); };
+  if (!inject) {
+    const r = spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "-w", "stop"], { stdio: "ignore", timeout: 30000 });
+    if (r.status !== 0 && pidAlive(pgPid)) { try { process.kill(pgPid, "SIGKILL"); } catch {} }
+  }
+  return (pgConfirmedStopped = waitDead(inject ? 300 : 10000));
+};
+let pgPreservedDir = null;
+const removeDirs = () => {
+  const dirs = [...extraDirs];
+  if (stopPostgresConfirmed()) dirs.push(work);
+  else {
+    if (!pgPreservedDir) console.error(`\nWARNING: PostgreSQL shutdown could NOT be confirmed. Preserving ${work} for diagnosis (stop the server by hand: pg_ctl -D ${join(work, "pg")} -m immediate stop; then delete the directory).`);
+    pgPreservedDir = work;
+  }
+  for (const d of dirs) rmSync(d, { recursive: true, force: true });
+};
 /* Single-flight: every path (normal end, exception, rejection, SIGINT/SIGTERM) shares ONE cleanup run.
    Order matters: stop every child (own process group) first, stop PostgreSQL second, delete data last. */
 let cleanupRun = null;
@@ -63,16 +95,7 @@ const cleanup = () => (cleanupRun ??= (async () => {
   for (const c of children) killGroup(c, "SIGTERM");
   for (let i = 0; i < 50 && children.some((c) => groupAlive(c.pid)); i++) await sleep(100);
   for (const c of children) if (groupAlive(c.pid)) killGroup(c, "SIGKILL");
-  const pidFile = join(work, "pg", "postmaster.pid");
-  if (existsSync(pidFile)) {
-    spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "-w", "stop"], { stdio: "ignore" });
-    if (existsSync(pidFile)) {
-      const pgPid = Number(readFileSync(pidFile, "utf8").split("\n")[0]);
-      if (Number.isInteger(pgPid) && pgPid > 1) { try { process.kill(pgPid, "SIGKILL"); } catch {} }
-      await sleep(300);
-    }
-  }
-  for (const d of [work, ...extraDirs]) rmSync(d, { recursive: true, force: true });
+  removeDirs();
 })());
 /* Abnormal ends: print the reason, clean up once, then exit nonzero (130/143 for SIGINT/SIGTERM). */
 let exiting = false;
@@ -88,11 +111,10 @@ process.on("uncaughtException", (e) => abort(e?.stack ?? String(e), 1));
 process.on("unhandledRejection", (e) => abort(e?.stack ?? String(e), 1));
 process.on("SIGINT", () => abort("SIGINT", 130));
 process.on("SIGTERM", () => abort("SIGTERM", 143));
-/* Last-resort synchronous fallback (e.g. process.exit elsewhere): never delete data under a live server. */
+/* Last-resort synchronous fallback (e.g. the 30 s hard exit): same confirmed-shutdown rule, never a blind delete. */
 process.on("exit", () => {
   for (const c of children) killGroup(c, "SIGKILL");
-  if (existsSync(join(work, "pg", "postmaster.pid"))) spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "-w", "stop"], { stdio: "ignore" });
-  try { for (const d of [work, ...extraDirs]) rmSync(d, { recursive: true, force: true }); } catch {}
+  try { removeDirs(); } catch {}
 });
 
 const run = (cmd, args, opts = {}) => {
@@ -683,4 +705,4 @@ console.log(`\n${results.length - failed}/${results.length} passed`);
 try { if (ws.readyState === WebSocket.OPEN) ws.close(); } catch {}
 await cleanup();
 info.cleanup = !existsSync(work);
-process.exit(failed ? 1 : 0);
+process.exit(failed || pgPreservedDir ? 1 : 0);
