@@ -1883,4 +1883,14 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no package, dependency, app code, browser licence, PayPal/OpenAI, owner DB, provider usage, Render resource/deployment, merge or judge URL. A4 local-only simulated READY and hosted NOT AUTHORIZED remain.
 - **Next:** independent scope/licence review; owner approves Studio screen/layout, then separately bounded A5-I1 local-only implementation Draft PR; test before claim of Studio integration.
 
+## Handoff: NMI-PROTOTYPE-10D-A5-D-DESIGN-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** Design/UX agent → project owner (visual approval), then independent design/licence review.
+- **Delivered (design only):** screen spec `design/screens/NMI-PROTOTYPE-10D-A5D-STUDIO-ANALYTICS.md`; static mockup `design/mockups/NMI-PROTOTYPE-10D-A5D-studio-analytics.html` (real tokens/app CSS inlined); 19 PNG previews and generator scripts in `design/evidence/NMI-PROTOTYPE-10D-A5D/`. Desktop 1280, tablet 820, mobile 390; light/dark; loading, empty, error, Studio-unavailable and session-expired states; currency-separated cards, daily value chart, draft-status breakdown, shared filters, unchanged AG Grid Community table.
+- **Proposal:** one optional view-only Studio panel between the currency cards and the table, fed by the existing `POST /api/analytics/summary`; no Studio filters, KPI tiles, table, export, edit or AI. Community dashboard remains the default and fallback.
+- **Not verified:** AG Studio rendering/theming/accessibility/watermark/licence behavior (previews are not Studio renders); physical device, Safari/Firefox, assistive technology.
+- **Safety:** no package, dependency, application, schema, licence-key, provider, owner-DB, Render, deploy or merge change. Synthetic data only.
+- **Next:** owner decides Q1-Q6 in the spec and approves or requests changes. Only after approval, a separately scoped A5-I1 local implementation Draft PR. Both hosted workflows on the final head of this PR.
+
 <!-- HANDOFF_ENTRIES_END -->

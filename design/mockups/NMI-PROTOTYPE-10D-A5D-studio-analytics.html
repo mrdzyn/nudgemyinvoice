@@ -1,0 +1,2216 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>NMI A5-D Studio analytics design</title>
+<style>
+/* ===== real tokens.css (verbatim) ===== */
+/* Semantic tokens: the visual source of truth is design/tokens/design-tokens.json (v1.1.0),
+   mirrored here as CSS custom properties exactly as approved in NMI-UI-01A. */
+:root {
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --surface-sunken: #f1f5f9;
+  --border: #e2e8f0;
+  --border-input: #64748b;
+  --text: #0f172a;
+  --text-2: #475569;
+  --text-muted: #55657a;
+  --link: #1d4ed8;
+  --action-bg: #2563eb;
+  --action-bg-hover: #1d4ed8;
+  --action-text: #ffffff;
+  --focus: #1d4ed8;
+  --accent: #6d28d9;
+  --sandbox-bg: #fffbeb;
+  --sandbox-border: #d97706;
+  --sandbox-text: #78350f;
+  --sandbox-pill-bg: #fef3c7;
+  --ok-bg: #ecfdf5;
+  --ok-text: #065f46;
+  --ok-border: #059669;
+  --warn-bg: #fffbeb;
+  --warn-text: #92400e;
+  --warn-border: #d97706;
+  --err-bg: #fef2f2;
+  --err-text: #991b1b;
+  --err-border: #dc2626;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  --info-border: #93c5fd;
+  --neutral-bg: #f1f5f9;
+  --neutral-text: #334155;
+  --neutral-border: #94a3b8;
+  --ai-bg: #f5f3ff;
+  --ai-text: #5b21b6;
+  --ai-border: #c4b5fd;
+  --bar-bg: #0f172a;
+  --bar-text: #e2e8f0;
+  --bar-control: #1e293b;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Roboto Mono", "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+:root[data-theme="dark"] {
+  --canvas: #0b0f19;
+  --surface: #131b2e;
+  --surface-sunken: #0d1424;
+  --border: #25324a;
+  --border-input: #8798ad;
+  --text: #f8fafc;
+  --text-2: #cbd5e1;
+  --text-muted: #a3b2c6;
+  --link: #7cb0ff;
+  --action-bg: #2563eb;
+  --action-bg-hover: #3b73f0;
+  --action-text: #ffffff;
+  --focus: #93c5fd;
+  --accent: #c4b5fd;
+  --sandbox-bg: #261604;
+  --sandbox-border: #b45309;
+  --sandbox-text: #fde68a;
+  --sandbox-pill-bg: #451a03;
+  --ok-bg: #064e3b;
+  --ok-text: #a7f3d0;
+  --ok-border: #059669;
+  --warn-bg: #3b2205;
+  --warn-text: #fcd34d;
+  --warn-border: #b45309;
+  --err-bg: #450a0a;
+  --err-text: #fecaca;
+  --err-border: #dc2626;
+  --info-bg: #172554;
+  --info-text: #bfdbfe;
+  --info-border: #3b82f6;
+  --neutral-bg: #1e293b;
+  --neutral-text: #e2e8f0;
+  --neutral-border: #64748b;
+  --ai-bg: #1e1b4b;
+  --ai-text: #ddd6fe;
+  --ai-border: #6d28d9;
+  --bar-bg: #020617;
+  --bar-text: #e2e8f0;
+  --bar-control: #1e293b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== real app.css (verbatim) ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  background: var(--canvas);
+  color: var(--text);
+  min-height: 100vh;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+a {
+  color: var(--link);
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.mono,
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+:focus-visible,
+input[type="date"]:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -64px;
+  background: var(--action-bg);
+  color: var(--action-text);
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  z-index: 3000;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/* ------------------------------ review controls ------------------------------ */
+.review-controls {
+  background: var(--bar-bg);
+  color: var(--bar-text);
+  border-bottom: 1px solid #334155;
+  font-size: 13px;
+}
+.review-controls summary {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  list-style-position: inside;
+}
+.review-controls-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 0 16px 12px;
+  align-items: center;
+}
+.rc-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.rc-label {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+.rc-btn,
+.rc-select {
+  background: var(--bar-control);
+  color: var(--bar-text);
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.rc-btn[aria-pressed="true"],
+.rc-btn[aria-current="true"] {
+  background: #2563eb;
+  border-color: #93c5fd;
+  color: #fff;
+  font-weight: 600;
+}
+.review-controls :focus-visible {
+  outline-color: #93c5fd;
+}
+.rc-note {
+  color: #cbd5e1;
+  flex-basis: 100%;
+}
+
+/* ------------------------------ app shell ------------------------------ */
+.sandbox-banner {
+  background: var(--sandbox-bg);
+  color: var(--sandbox-text);
+  border-bottom: 1px solid var(--sandbox-border);
+  padding: 8px 24px;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  justify-content: space-between;
+}
+.banner-offline {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-bottom: 1px solid var(--warn-border);
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #2563eb, #6d28d9);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sandbox-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sandbox-pill-bg);
+  color: var(--sandbox-text);
+  border: 1px solid var(--sandbox-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.app-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 20px;
+}
+.nav-link {
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 12px 4px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.nav-link[aria-current="page"] {
+  color: var(--link);
+  border-bottom-color: var(--link);
+  font-weight: 700;
+}
+.mobile-nav {
+  display: none;
+}
+main {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+main:focus {
+  outline: none;
+}
+.screen-title {
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.screen-title:focus {
+  outline: none;
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* ------------------------------ components ------------------------------ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card + .card {
+  margin-top: 16px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  background: transparent;
+}
+.btn-primary {
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+.btn-primary:hover {
+  background: var(--action-bg-hover);
+}
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border-input);
+  color: var(--text);
+}
+.btn-secondary:hover {
+  background: var(--surface-sunken);
+}
+.btn-danger {
+  background: var(--err-bg);
+  color: var(--err-text);
+  border-color: var(--err-border);
+}
+.btn-link {
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  text-align: left;
+  color: var(--link);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-sm {
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-ok {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-border);
+}
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-color: var(--warn-border);
+}
+.badge-err {
+  background: var(--err-bg);
+  color: var(--err-text);
+  border-color: var(--err-border);
+}
+.badge-neutral {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+  border-color: var(--neutral-border);
+}
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+.notice {
+  display: flex;
+  gap: 10px;
+  border: 1px solid;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.notice > div {
+  flex: 1;
+  min-width: 0;
+}
+.notice-info {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+.notice-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-color: var(--warn-border);
+}
+.notice-err {
+  background: var(--err-bg);
+  color: var(--err-text);
+  border-color: var(--err-border);
+}
+.notice-ok {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-border);
+}
+.notice-ai {
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  border-color: var(--ai-border);
+}
+.notice ul,
+.notice ol {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+.notice .btn-link {
+  color: inherit;
+}
+
+/* forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+.field > label,
+.field > .label {
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  gap: 4px;
+}
+.field > label.spread {
+  justify-content: space-between;
+}
+.req {
+  color: var(--err-text);
+}
+.hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-input);
+  background: var(--surface);
+  color: var(--text);
+}
+.textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--err-border);
+  border-width: 2px;
+  background: var(--err-bg);
+}
+.input[disabled],
+.textarea[disabled] {
+  opacity: 0.6;
+}
+.field-error {
+  color: var(--err-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+.field-error::before {
+  content: "\26A0\FE0E  ";
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.counter {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.counter.over {
+  color: var(--err-text);
+  font-weight: 700;
+}
+
+/* tabs */
+.tablist {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-weight: 500;
+  min-height: 44px;
+}
+.tab[aria-selected="true"] {
+  color: var(--link);
+  border-bottom-color: var(--link);
+  font-weight: 700;
+}
+
+/* login */
+.login-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+}
+.login-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.login-head .brand-mark {
+  margin: 0 auto 10px;
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+}
+
+/* dashboard */
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.currency-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.currency-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.currency-card .amount {
+  font-size: 26px;
+  font-weight: 700;
+}
+.currency-card .meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pill {
+  background: var(--surface);
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 32px;
+}
+.pill[aria-pressed="true"] {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+  font-weight: 700;
+}
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-top: 16px;
+  overflow-x: auto;
+  position: relative;
+}
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+table.data caption {
+  text-align: left;
+}
+table.data th {
+  text-align: left;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+table.data td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+table.data tbody tr:last-child td {
+  border-bottom: 0;
+}
+table.data th.r,
+table.data td.r {
+  text-align: right;
+}
+.cell-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.grid-footer {
+  padding: 10px 16px;
+  border-top: 1px dashed var(--border-input);
+  background: var(--surface-sunken);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-sunken), var(--border), var(--surface-sunken));
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+}
+.empty h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.empty p {
+  color: var(--text-muted);
+  max-width: 420px;
+  margin: 0 auto 16px;
+}
+
+/* composer */
+.composer {
+  max-width: 820px;
+  margin: 0 auto;
+}
+.chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.chip {
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  min-height: 44px;
+  color: var(--text-2);
+}
+.chip:hover {
+  border-color: var(--link);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.actions .spacer {
+  margin-right: auto;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* review */
+.review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.line-head,
+.line-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) 90px 130px 120px 84px;
+  gap: 10px;
+  align-items: start;
+}
+.line-head {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.line-row {
+  padding-bottom: 10px;
+}
+.line-row .field {
+  margin-bottom: 0;
+}
+.line-total {
+  padding-top: 10px;
+  text-align: right;
+  font-weight: 600;
+}
+.m-label {
+  display: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.totals {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  position: sticky;
+  top: 12px;
+}
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  color: var(--text-2);
+}
+.totals-row.final {
+  border-top: 2px solid var(--border-input);
+  margin-top: 8px;
+  padding-top: 10px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+}
+.discount-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+/* detail */
+.meta-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+.meta-list dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.meta-list dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.paypal-panel {
+  border: 2px solid var(--sandbox-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 20px;
+  margin: 16px 0;
+}
+.paypal-panel .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.paypal-status {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+
+/* dialog */
+dialog {
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  padding: 24px;
+  max-width: 480px;
+  width: calc(100% - 32px);
+}
+dialog::backdrop {
+  background: rgba(2, 6, 23, 0.65);
+}
+dialog h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+dialog .actions {
+  border: 0;
+  padding-top: 0;
+}
+
+/* ------------------------------ responsive ------------------------------ */
+@media (max-width: 1023px) {
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+  .totals {
+    position: static;
+  }
+}
+@media (max-width: 767px) {
+  body {
+    font-size: 16px;
+    padding-bottom: 68px;
+  }
+  main {
+    padding: 16px;
+  }
+  .sandbox-banner,
+  .app-header {
+    padding: 10px 16px;
+  }
+  .app-nav {
+    display: none;
+  }
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    z-index: 500;
+    justify-content: space-around;
+  }
+  .mobile-nav button {
+    background: none;
+    border: 0;
+    min-height: 48px;
+    min-width: 80px;
+    padding: 4px 10px;
+    color: var(--text-2);
+    font-weight: 500;
+    font-size: 13px;
+    border-radius: var(--radius);
+  }
+  .mobile-nav button[aria-current="page"] {
+    color: var(--link);
+    font-weight: 700;
+  }
+  .btn,
+  .input,
+  .select,
+  .pill,
+  .chip,
+  .tab {
+    min-height: 44px;
+  }
+  .btn-sm,
+  .btn-link,
+  .brand {
+    min-height: 44px;
+  }
+  .grid-2,
+  .discount-grid {
+    grid-template-columns: 1fr;
+  }
+  .currency-grid {
+    grid-template-columns: 1fr;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .actions .btn {
+    width: 100%;
+  }
+  .actions .spacer {
+    margin: 0;
+  }
+  .line-head {
+    display: none;
+  }
+  .line-row {
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .line-row .f-desc {
+    grid-column: 1 / -1;
+  }
+  .line-row .f-total {
+    grid-column: 1 / 2;
+  }
+  .line-row .f-remove {
+    grid-column: 2 / 3;
+    justify-self: end;
+    align-self: end;
+  }
+  .line-total {
+    text-align: left;
+    padding-top: 0;
+  }
+  .m-label {
+    display: block;
+  }
+  table.data thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  table.data.stack tr {
+    display: block;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.data.stack td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    padding: 4px 0;
+    text-align: right;
+  }
+  table.data.stack td::before {
+    font-family: var(--font-sans);
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    flex: 0 0 auto;
+  }
+  table.data.stack td.r {
+    text-align: right;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .spinner {
+    border-right-color: currentColor;
+  }
+}
+
+/* ==========================================================================
+   React shell additions (NMI-UI-01B): utilities replace the prototype's inline styles so the
+   production CSP can forbid inline style attributes.
+   ========================================================================== */
+.brand-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  font-size: 17px;
+}
+.mt-4 {
+  margin-top: 4px;
+}
+.mt-8 {
+  margin-top: 8px;
+}
+.mt-12 {
+  margin-top: 12px;
+}
+.mt-14 {
+  margin-top: 14px;
+}
+.mt-16 {
+  margin-top: 16px;
+}
+.mb-0 {
+  margin-bottom: 0;
+}
+.mb-10 {
+  margin-bottom: 10px;
+}
+.mb-12 {
+  margin-bottom: 12px;
+}
+.w-full {
+  width: 100%;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.pad-16 {
+  padding: 16px;
+}
+.hint-normal {
+  font-weight: 400;
+}
+.notice-flush {
+  margin: 0;
+}
+.notice-flush.mt-12 {
+  margin-top: 12px;
+}
+.notice-compact {
+  font-size: 13px;
+}
+.label-strong {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.card-head .card-title {
+  margin: 0;
+}
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.date-range-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.date-range-filter legend,
+.date-range-filter label span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.date-range-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.date-range-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.date-range-input {
+  min-width: 145px;
+  min-height: 40px;
+}
+.date-range-error {
+  margin: 0;
+  color: var(--err-text);
+  font-size: 12px;
+}
+.search-input {
+  min-width: 230px;
+}
+.actions-plain {
+  border: 0;
+  padding-top: 0;
+  margin-top: 8px;
+}
+.plain-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.stack-buttons {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.totals-box {
+  max-width: 340px;
+  margin: 16px 0 0 auto;
+}
+.sk-h14 {
+  height: 14px;
+  margin-top: 12px;
+}
+.sk-h18 {
+  height: 18px;
+}
+.sk-h22 {
+  height: 22px;
+  margin: 14px 0;
+}
+.sk-h30 {
+  height: 30px;
+  margin-top: 12px;
+}
+.sk-w40 {
+  width: 40%;
+}
+.sk-w55 {
+  width: 55%;
+}
+.sk-w70 {
+  width: 70%;
+}
+@media (max-width: 767px) {
+  .search-input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  table.data th,
+  table.data td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .filters {
+    padding: 12px;
+  }
+}
+
+/* AG Grid Community, mapped onto the app's own tokens so light and dark follow the page theme. */
+.nmi-grid.ag-theme-quartz {
+  --ag-background-color: var(--surface);
+  --ag-foreground-color: var(--text);
+  --ag-secondary-foreground-color: var(--text-2);
+  --ag-header-background-color: var(--surface-sunken);
+  --ag-header-foreground-color: var(--text-muted);
+  --ag-border-color: var(--border);
+  --ag-secondary-border-color: var(--border);
+  --ag-row-border-color: var(--border);
+  --ag-row-hover-color: var(--surface-sunken);
+  --ag-active-color: var(--focus);
+  --ag-icon-font-color: var(--text-muted);
+  --ag-header-column-resize-handle-color: var(--border-input);
+  --ag-font-family: var(--font-sans);
+  --ag-font-size: 14px;
+  --ag-wrapper-border-radius: 0;
+  --ag-borders: none;
+  --ag-cell-horizontal-padding: 16px;
+  /* Read by the auto-height measurement; the legacy stylesheet does not define it. */
+  --ag-auto-height-max-body-height: 100000px;
+  border: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.nmi-grid .ag-header-cell-text {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.nmi-grid .ag-header-cell-label {
+  gap: 6px;
+}
+.nmi-grid .ag-sort-indicator-icon {
+  color: var(--text-2);
+  font-size: 11px;
+}
+.nmi-grid .ag-right-aligned-header .ag-header-cell-label {
+  justify-content: flex-end;
+}
+.nmi-grid .ag-cell {
+  display: flex;
+  align-items: center;
+  line-height: 1.35;
+}
+.nmi-grid .ag-cell.ag-right-aligned-cell {
+  justify-content: flex-end;
+}
+.nmi-grid .cell-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nmi-grid .cell-stack > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nmi-grid.ag-theme-quartz .ag-cell:focus-visible,
+.nmi-grid.ag-theme-quartz .ag-header-cell:focus-visible,
+.nmi-grid.ag-theme-quartz .ag-cell.ag-cell-focus:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.grid-note {
+  margin: 0;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* NMI-UX-02 — Nudgey: authenticated quick-action popover, no provider calls. */
+.nudgey {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+}
+.nudgey > * {
+  pointer-events: auto;
+}
+.nudgey-launcher {
+  min-height: 48px;
+  min-width: 124px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--action-bg);
+  color: var(--action-text);
+  box-shadow: 0 6px 22px rgba(15, 23, 42, 0.2);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nudgey-launcher:hover {
+  background: var(--action-bg-hover);
+}
+.nudgey-sparkle {
+  font-size: 19px;
+  line-height: 1;
+}
+.nudgey-panel {
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 116px);
+  overflow-y: auto;
+  padding: 18px;
+  border: 1px solid var(--border-input);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 44px rgba(15, 23, 42, 0.25);
+}
+.nudgey-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.nudgey-title {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 750;
+}
+.nudgey-kicker {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.nudgey-close {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.nudgey-greeting {
+  padding-top: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.nudgey-question {
+  margin: 3px 0 14px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.nudgey-actions {
+  display: grid;
+  gap: 9px;
+}
+.nudgey-action {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 64px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.nudgey-action:hover {
+  border-color: var(--link);
+}
+.nudgey-action-icon {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 18px;
+}
+.nudgey-action-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.nudgey-action-copy strong {
+  font-size: 13.5px;
+}
+.nudgey-action-copy small {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+.nudgey-footnote {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  text-align: center;
+  padding-top: 14px;
+}
+@media (max-width: 767px) {
+  .nudgey {
+    right: 12px;
+    bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+  .nudgey-panel {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 164px);
+  }
+}
+
+/* NMI-FUP-01 follow-up scheduling (inside Nudgey and on the saved-invoice page). Existing tokens only. */
+.nudgey-panel {
+  width: min(400px, calc(100vw - 32px));
+}
+.nudgey-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--err-bg);
+  color: var(--err-text);
+  border: 1px solid var(--err-border);
+  font-size: 12px;
+  font-weight: 800;
+}
+.followup-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.followup-title,
+.followup-form-title {
+  font-size: 15px;
+  font-weight: 750;
+}
+.followup-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.followup-count {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+}
+.followup-count-due {
+  border-color: var(--err-border);
+  background: var(--err-bg);
+  color: var(--err-text);
+}
+.followup-group-title {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-2);
+}
+.followup-items,
+.followup-history {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.followup-history {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.followup-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.followup-due {
+  border-color: var(--err-border);
+}
+.followup-upcoming {
+  border-color: var(--info-border);
+}
+.followup-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.followup-state {
+  font-size: 11.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.followup-when,
+.followup-inv,
+.followup-note {
+  margin-top: 2px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.followup-empty,
+.followup-hint,
+.followup-tz {
+  margin: 8px 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.followup-error {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--err-text);
+}
+.followup-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.followup-btn {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.followup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.followup-btn-primary {
+  border-color: transparent;
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+.followup-btn-danger {
+  border-color: var(--err-border);
+  color: var(--err-text);
+}
+.followup-form {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+}
+.followup-form label {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.followup-form input,
+.followup-form select,
+.followup-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.followup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.followup-fixed {
+  font-weight: 650;
+}
+.followup-message {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 13px;
+}
+.followup-card .followup-item {
+  max-width: 640px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .followup-btn {
+    transition: none;
+  }
+}
+
+/* Nudgey "Check invoice status" selector (existing tokens only). */
+.status-picker {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+}
+.status-picker label {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.status-picker input[type="search"] {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.status-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 34dvh;
+  overflow-y: auto;
+}
+.status-option {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.status-option[aria-pressed="true"] {
+  border: 2px solid var(--focus);
+  background: var(--info-bg);
+}
+.status-option-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.status-option-meta {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.status-selected {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.status-selected p {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+
+/* NMI-NDG-02 C1 conversational lookup (inside the Nudgey panel). Existing tokens only. */
+.chat {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+}
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chat-chip {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.chat-log {
+  display: grid;
+  gap: 8px;
+  max-height: 46dvh;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.chat-msg {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.chat-user {
+  justify-self: end;
+  max-width: 92%;
+  background: var(--info-bg);
+  color: var(--info-text);
+  border: 1px solid var(--info-border);
+}
+.chat-bot {
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.chat-bot p {
+  margin: 0 0 6px;
+}
+.chat-title {
+  font-weight: 700;
+}
+.chat-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.chat-limit {
+  padding: 8px 10px;
+  border: 1px solid var(--warn-border);
+  border-radius: 10px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+.chat-group {
+  margin-top: 8px;
+}
+.chat-group-title {
+  font-size: 13px;
+  font-weight: 750;
+}
+.chat-cards {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.chat-card {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+}
+.chat-card-due {
+  border-color: var(--err-border);
+}
+.chat-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chat-amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.chat-card-meta {
+  margin: 2px 0 4px;
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.schedule-candidate {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.schedule-candidate h4 {
+  margin: 0;
+  font-size: 13px;
+}
+.schedule-candidate-badge {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--info-border);
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.schedule-candidate-list li {
+  min-width: 0;
+}
+.schedule-candidate-option {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.schedule-candidate-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--action-bg);
+  grid-row: span 2;
+}
+.schedule-candidate-option.is-selected {
+  border-color: var(--action-bg);
+  box-shadow: 0 0 0 2px var(--action-bg);
+}
+.schedule-candidate-option-head {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.schedule-candidate-option .chat-card-meta {
+  grid-column: 2;
+}
+.schedule-candidate .followup-error {
+  overflow-wrap: anywhere;
+}
+.schedule-candidate .followup-error .followup-btn {
+  display: block;
+  margin-top: 8px;
+}
+.chat-form {
+  display: grid;
+  gap: 4px;
+}
+.chat-form label {
+  font-size: 13px;
+  font-weight: 650;
+}
+.chat-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+/* NMI-NDG-02 V1: small progressive enhancement of the approved Ask text field. */
+.chat-voice-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.chat-voice-controls .followup-btn {
+  min-height: 40px;
+}
+.chat-voice-controls .chat-hint {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* ===== A5-D review-only additions: the proposed Studio region, annotations and the representative grid ===== */
+.studio{position:relative;margin-top:16px}
+.studio-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.studio-head .card-title{margin-bottom:4px}
+.studio-actions{display:flex;align-items:center;gap:10px}
+.hint-tight{margin:6px 0 0}
+.h3{font-size:14px;font-weight:700;margin:0;color:var(--text-2)}
+.studio-grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(280px,1fr);gap:24px}
+.chart-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.cur-tabs{display:inline-flex;border:1px solid var(--border-input);border-radius:999px;overflow:hidden}
+.cur-tab{background:var(--surface);border:0;padding:6px 16px;min-height:36px;font:inherit;font-size:13px;color:var(--text-2);cursor:pointer}
+.cur-tab+.cur-tab{border-left:1px solid var(--border-input)}
+.cur-tab[aria-selected="true"]{background:var(--info-bg);color:var(--info-text);font-weight:700}
+.chart-wrap .chart-m{display:none}
+.chart-svg{width:100%;height:auto;display:block}
+.chart-svg .grid{stroke:var(--border);stroke-width:1}
+.chart-svg .grid.base{stroke:var(--border-input)}
+.chart-svg .axis{fill:var(--text-muted);font-size:11px;font-family:var(--font-sans)}
+.chart-svg .bar{fill:var(--action-bg);opacity:.88}
+.chart-svg .bar.hot{opacity:1;stroke:var(--text);stroke-width:1.5}
+.chart-svg .tip rect{fill:var(--bar-bg);stroke:var(--bar-control)}
+.chart-svg .tip .t1{fill:var(--bar-text);font-size:11px;font-family:var(--font-sans)}
+.chart-svg .tip .t2{fill:#fff;font-size:12px;font-weight:700;font-family:var(--font-sans)}
+.data-alt{margin-top:10px;font-size:13px}
+.data-alt summary{cursor:pointer;min-height:32px;padding:4px 0;color:var(--link);font-weight:600}
+.data-alt table{margin-top:8px}
+table.tight th,table.tight td{padding:4px 8px}
+.r{text-align:right}
+.status-row{padding:12px 0;border-bottom:1px solid var(--border)}
+.status-row:first-of-type{padding-top:8px}
+.status-head{display:flex;justify-content:space-between;margin-bottom:6px}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface-sunken);border:1px solid var(--border)}
+.seg{display:block;min-width:4px}
+.seg+.seg{border-left:2px solid var(--surface)}
+.seg-none{background:var(--border-input)}
+.seg-progress{background:var(--info-text)}
+.seg-created{background:var(--ok-border)}
+.seg-attention{background:var(--warn-border)}
+.state-list{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+.state-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.state-list .cnt{font-weight:700}
+.vendor-slot{margin-top:14px;border:1px dashed var(--border-input);border-radius:var(--radius);padding:6px 10px;font-size:12px;color:var(--text-muted);text-align:center}
+.muted{color:var(--text-muted)}
+.ag-mock{padding:0}
+.ag-scroll{overflow-x:auto}
+.ag-table{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+.ag-table th{background:var(--surface-sunken);text-transform:uppercase;letter-spacing:.06em;font-size:12px;color:var(--text-2);text-align:left;padding:14px 16px;border-bottom:1px solid var(--border)}
+.ag-table td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ag-table th.r,.ag-table td.r{text-align:right}
+.ag-mock .grid-note{padding:12px 16px 0;margin:0}
+.nudgey-fab-mock{position:fixed;right:16px;bottom:84px;background:var(--action-bg);color:#fff;border:0;border-radius:999px;padding:12px 20px;font-weight:700;box-shadow:0 4px 12px rgba(15,23,42,.3)}
+@media (min-width:768px){.nudgey-fab-mock{bottom:20px}}
+/* review annotations (hidden with #clean) */
+.rtag{display:inline-block;font:700 11px/1 var(--font-sans);letter-spacing:.04em;padding:4px 8px;border-radius:4px;margin:10px 0 6px}
+.rtag-old{background:var(--neutral-bg);color:var(--neutral-text);border:1px solid var(--neutral-border)}
+.rtag-new{background:var(--ai-bg);color:var(--ai-text);border:1px solid var(--ai-border);position:absolute;top:-12px;left:14px;margin:0}
+.studio{outline:2px dashed var(--ai-border);outline-offset:4px}
+.ag-mock .rtag{margin:10px 16px 0}
+body.clean .rtag,body.clean .vendor-slot{display:none}
+body.clean .studio{outline:0}
+.state-page[hidden]{display:none}
+@media (max-width:1023px){.studio-grid{grid-template-columns:1fr}}
+@media (max-width:767px){
+  .chart-wrap .chart-d{display:none}.chart-wrap .chart-m{display:block}
+  .state-list{grid-template-columns:1fr}
+  .studio-actions{width:100%;justify-content:space-between}
+  .cur-tabs{width:100%}.cur-tab{flex:1;min-height:44px}
+  .nudgey-fab-mock{bottom:80px}
+}
+@media (prefers-reduced-motion:reduce){.skeleton{animation:none}}
+</style>
+</head>
+<body>
+<div id="root">
+<div id="app-authed"><div class="sandbox-banner" role="note" aria-label="PayPal Sandbox notice"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div><div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as a5-design-owner</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main"><button class="nav-link" aria-current="page">Invoice drafts</button><button class="nav-link">New invoice</button></nav><main id="main-content" tabindex="-1"><div class="notice notice-info notice-compact" role="note"><span class="notice-icon" aria-hidden="true">ℹ</span><div><strong>You are signed in to the server.</strong> Parsing, saving, the invoice list and the saved-invoice pages use the server and PostgreSQL. Saving never creates a PayPal invoice. A PayPal Sandbox DRAFT is created only when you explicitly confirm it on a saved invoice, and only if the server has drafting enabled; the customer is never emailed and no payment is collected.</div></div>
+<div class="state-page" data-state="default" data-cur="USD" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><span class="rtag rtag-old" aria-hidden="true">EXISTING · filters · single source of truth</span><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><span class="rtag rtag-old" aria-hidden="true">EXISTING · currency cards · full population · unchanged</span><div class="currency-grid" data-region="existing"><div class="currency-card" data-cur="USD"><div class="top"><span>USD</span><span class="badge badge-neutral">117 invoices</span></div><div class="amount num">$26,941.61</div><div class="meta">Full matching operator-owned USD total · PayPal Sandbox drafts created: 7</div></div><div class="currency-card" data-cur="EUR"><div class="top"><span>EUR</span><span class="badge badge-neutral">56 invoices</span></div><div class="amount num">€10,561.62</div><div class="meta">Full matching operator-owned EUR total · PayPal Sandbox drafts created: 5</div></div><div class="currency-card" data-cur="JPY"><div class="top"><span>JPY</span><span class="badge badge-neutral">20 invoices</span></div><div class="amount num">¥657,000</div><div class="meta">Full matching operator-owned JPY total · PayPal Sandbox drafts created: 0</div></div></div><p class="hint">Totals cover the full matching invoice population, not only rows loaded below. Each card uses one currency; currencies are never added together or converted.</p><section class="card studio" id="studio-panel" aria-labelledby="studio-title" data-region="new">
+  <span class="rtag rtag-new" aria-hidden="true">NEW · AG Studio view-only region</span>
+  <div class="studio-head">
+    <div><h2 class="card-title" id="studio-title">Activity analytics</h2>
+    <p class="hint hint-tight">Same filters and the same full-population server totals as the cards above. Values are invoice totals by creation day (Asia/Manila), not payments.</p></div>
+    <div class="studio-actions"><span class="badge badge-info">Studio · view only</span><button type="button" class="btn btn-secondary btn-sm" aria-expanded="true" aria-controls="studio-body">Hide charts</button></div>
+  </div>
+  <div id="studio-body" class="studio-body">
+    <div class="studio-grid">
+      <div class="studio-chart" aria-labelledby="chart-h">
+        <div class="chart-bar"><h3 id="chart-h" class="h3">Daily invoice value · <span class="cur-now">USD</span></h3><div class="cur-tabs" role="tablist" aria-label="Chart currency (view only; does not change the filters)"><button type="button" role="tab" class="cur-tab" aria-selected="true" tabindex="0">USD</button><button type="button" role="tab" class="cur-tab" aria-selected="false" tabindex="-1">EUR</button><button type="button" role="tab" class="cur-tab" aria-selected="false" tabindex="-1">JPY</button></div></div>
+        <div class="chart-wrap"><svg class="chart-svg chart-d" viewBox="0 0 640 280" role="img" aria-labelledby="chart-USD-d-t chart-USD-d-d" focusable="false"><title id="chart-USD-d-t">Daily USD invoice value</title><desc id="chart-USD-d-d">Bar chart of USD invoice totals by local creation day, Oct 5 to Nov 3. Peak $2,037.43 on Oct 27. The same values are in the table below the chart.</desc><line x1="64" x2="632" y1="252" y2="252" class="grid base"/><text x="58" y="256" text-anchor="end" class="axis">$0</text><line x1="64" x2="632" y1="172" y2="172" class="grid"/><text x="58" y="176" text-anchor="end" class="axis">$1K</text><line x1="64" x2="632" y1="92" y2="92" class="grid"/><text x="58" y="96" text-anchor="end" class="axis">$2K</text><line x1="64" x2="632" y1="12" y2="12" class="grid"/><text x="58" y="16" text-anchor="end" class="axis">$3K</text><rect x="66.7" y="182.8" width="13.6" height="69.2" rx="2" class="bar"/><rect x="85.6" y="207.2" width="13.6" height="44.8" rx="2" class="bar"/><rect x="104.5" y="149.6" width="13.6" height="102.4" rx="2" class="bar"/><rect x="123.5" y="203.4" width="13.6" height="48.6" rx="2" class="bar"/><rect x="142.4" y="122.5" width="13.6" height="129.5" rx="2" class="bar"/><rect x="161.3" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="180.3" y="223.8" width="13.6" height="28.2" rx="2" class="bar"/><rect x="199.2" y="202.2" width="13.6" height="49.8" rx="2" class="bar"/><rect x="218.1" y="201.3" width="13.6" height="50.7" rx="2" class="bar"/><rect x="237.1" y="160.9" width="13.6" height="91.1" rx="2" class="bar"/><rect x="256.0" y="216.9" width="13.6" height="35.1" rx="2" class="bar"/><rect x="274.9" y="144.5" width="13.6" height="107.5" rx="2" class="bar"/><rect x="293.9" y="202.9" width="13.6" height="49.1" rx="2" class="bar"/><rect x="312.8" y="234.6" width="13.6" height="17.4" rx="2" class="bar"/><rect x="331.7" y="184.1" width="13.6" height="67.9" rx="2" class="bar"/><rect x="350.7" y="216.1" width="13.6" height="35.9" rx="2" class="bar"/><rect x="369.6" y="174.6" width="13.6" height="77.4" rx="2" class="bar"/><rect x="388.5" y="152.1" width="13.6" height="99.9" rx="2" class="bar"/><rect x="407.5" y="92.5" width="13.6" height="159.5" rx="2" class="bar"/><rect x="426.4" y="204.1" width="13.6" height="47.9" rx="2" class="bar"/><rect x="445.3" y="211.3" width="13.6" height="40.7" rx="2" class="bar"/><rect x="464.3" y="184.1" width="13.6" height="67.9" rx="2" class="bar"/><rect x="483.2" y="89.0" width="13.6" height="163.0" rx="2" class="bar hot"/><rect x="502.1" y="124.6" width="13.6" height="127.4" rx="2" class="bar"/><rect x="521.1" y="195.8" width="13.6" height="56.2" rx="2" class="bar"/><rect x="540.0" y="175.9" width="13.6" height="76.1" rx="2" class="bar"/><rect x="558.9" y="212.3" width="13.6" height="39.7" rx="2" class="bar"/><rect x="577.9" y="187.2" width="13.6" height="64.8" rx="2" class="bar"/><rect x="596.8" y="196.2" width="13.6" height="55.8" rx="2" class="bar"/><rect x="615.7" y="100.0" width="13.6" height="152.0" rx="2" class="bar"/><text x="73.5" y="272" text-anchor="middle" class="axis">Oct 5</text><text x="168.1" y="272" text-anchor="middle" class="axis">Oct 10</text><text x="262.8" y="272" text-anchor="middle" class="axis">Oct 15</text><text x="357.5" y="272" text-anchor="middle" class="axis">Oct 20</text><text x="452.1" y="272" text-anchor="middle" class="axis">Oct 25</text><text x="546.8" y="272" text-anchor="middle" class="axis">Oct 30</text><text x="622.5" y="272" text-anchor="middle" class="axis">Nov 3</text><g class="tip"><rect x="405" y="35.005600000000015" width="170" height="46" rx="6"/><text x="413" y="51.005600000000015" class="t1">Oct 27, 2026</text><text x="413" y="67.00560000000002" class="t2">$2,037.43 · 7 invoices</text></g></svg><svg class="chart-svg chart-m" viewBox="0 0 340 230" role="img" aria-labelledby="chart-USD-m-t chart-USD-m-d" focusable="false"><title id="chart-USD-m-t">Daily USD invoice value</title><desc id="chart-USD-m-d">Bar chart of USD invoice totals by local creation day, Oct 5 to Nov 3. Peak $2,037.43 on Oct 27. The same values are in the table below the chart.</desc><line x1="46" x2="332" y1="202" y2="202" class="grid base"/><text x="40" y="206" text-anchor="end" class="axis">$0</text><line x1="46" x2="332" y1="138.66666666666669" y2="138.66666666666669" class="grid"/><text x="40" y="142.66666666666669" text-anchor="end" class="axis">$1K</text><line x1="46" x2="332" y1="75.33333333333334" y2="75.33333333333334" class="grid"/><text x="40" y="79.33333333333334" text-anchor="end" class="axis">$2K</text><line x1="46" x2="332" y1="12" y2="12" class="grid"/><text x="40" y="16" text-anchor="end" class="axis">$3K</text><rect x="47.3" y="147.2" width="6.9" height="54.8" rx="2" class="bar"/><rect x="56.9" y="166.5" width="6.9" height="35.5" rx="2" class="bar"/><rect x="66.4" y="120.9" width="6.9" height="81.1" rx="2" class="bar"/><rect x="75.9" y="163.5" width="6.9" height="38.5" rx="2" class="bar"/><rect x="85.5" y="99.5" width="6.9" height="102.5" rx="2" class="bar"/><rect x="95.0" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="104.5" y="179.7" width="6.9" height="22.3" rx="2" class="bar"/><rect x="114.1" y="162.6" width="6.9" height="39.4" rx="2" class="bar"/><rect x="123.6" y="161.8" width="6.9" height="40.2" rx="2" class="bar"/><rect x="133.1" y="129.9" width="6.9" height="72.1" rx="2" class="bar"/><rect x="142.7" y="174.2" width="6.9" height="27.8" rx="2" class="bar"/><rect x="152.2" y="116.9" width="6.9" height="85.1" rx="2" class="bar"/><rect x="161.7" y="163.1" width="6.9" height="38.9" rx="2" class="bar"/><rect x="171.3" y="188.2" width="6.9" height="13.8" rx="2" class="bar"/><rect x="180.8" y="148.3" width="6.9" height="53.7" rx="2" class="bar"/><rect x="190.3" y="173.5" width="6.9" height="28.5" rx="2" class="bar"/><rect x="199.9" y="140.7" width="6.9" height="61.3" rx="2" class="bar"/><rect x="209.4" y="122.9" width="6.9" height="79.1" rx="2" class="bar"/><rect x="218.9" y="75.7" width="6.9" height="126.3" rx="2" class="bar"/><rect x="228.5" y="164.1" width="6.9" height="37.9" rx="2" class="bar"/><rect x="238.0" y="169.8" width="6.9" height="32.2" rx="2" class="bar"/><rect x="247.5" y="148.3" width="6.9" height="53.7" rx="2" class="bar"/><rect x="257.1" y="73.0" width="6.9" height="129.0" rx="2" class="bar hot"/><rect x="266.6" y="101.2" width="6.9" height="100.8" rx="2" class="bar"/><rect x="276.1" y="157.5" width="6.9" height="44.5" rx="2" class="bar"/><rect x="285.7" y="141.8" width="6.9" height="60.2" rx="2" class="bar"/><rect x="295.2" y="170.5" width="6.9" height="31.5" rx="2" class="bar"/><rect x="304.7" y="150.7" width="6.9" height="51.3" rx="2" class="bar"/><rect x="314.3" y="157.9" width="6.9" height="44.1" rx="2" class="bar"/><rect x="323.8" y="81.6" width="6.9" height="120.4" rx="2" class="bar"/><text x="50.8" y="222" text-anchor="middle" class="axis">Oct 5</text><text x="117.5" y="222" text-anchor="middle" class="axis">Oct 12</text><text x="184.2" y="222" text-anchor="middle" class="axis">Oct 19</text><text x="251.0" y="222" text-anchor="middle" class="axis">Oct 26</text><text x="327.2" y="222" text-anchor="end" class="axis">Nov 3</text><g class="tip"><rect x="164" y="18.96276666666668" width="168" height="46" rx="6"/><text x="172" y="34.96276666666668" class="t1">Oct 27, 2026</text><text x="172" y="50.96276666666668" class="t2">$2,037.43 · 7 invoices</text></g></svg></div>
+        <p class="hint hint-tight">Peak day: Oct 27 · $2,037.43 · 7 invoices. One currency per chart; axes are never shared across currencies.</p>
+        <details class="data-alt"><summary>View USD data as a table</summary><table class="data tight"><caption class="sr-only">USD invoices by local creation day (Asia/Manila)</caption><thead><tr><th scope="col">Day</th><th scope="col" class="r">Invoices</th><th scope="col" class="r">Total (USD)</th></tr></thead><tbody><tr><th scope="row">Oct 5</th><td class="r num">5</td><td class="r num">$864.51</td></tr><tr><th scope="row">Oct 6</th><td class="r num">3</td><td class="r num">$559.95</td></tr><tr><th scope="row">Oct 7</th><td class="r num">7</td><td class="r num">$1,280.17</td></tr><tr><th scope="row">Oct 8</th><td class="r num">3</td><td class="r num">$607.78</td></tr><tr><th scope="row">Oct 9</th><td class="r num">6</td><td class="r num">$1,618.37</td></tr><tr><th scope="row">Oct 11</th><td class="r num">1</td><td class="r num">$352.53</td></tr><tr><th scope="row">Oct 12</th><td class="r num">3</td><td class="r num">$622.60</td></tr><tr><th scope="row">Oct 13</th><td class="r num">3</td><td class="r num">$634.32</td></tr><tr><th scope="row">Oct 14</th><td class="r num">5</td><td class="r num">$1,139.04</td></tr><tr><th scope="row">Oct 15</th><td class="r num">3</td><td class="r num">$438.23</td></tr><tr><th scope="row">Oct 16</th><td class="r num">5</td><td class="r num">$1,343.34</td></tr><tr><th scope="row">Oct 17</th><td class="r num">2</td><td class="r num">$613.88</td></tr><tr><th scope="row">Oct 18</th><td class="r num">1</td><td class="r num">$217.73</td></tr><tr><th scope="row">Oct 19</th><td class="r num">3</td><td class="r num">$848.31</td></tr><tr><th scope="row">Oct 20</th><td class="r num">2</td><td class="r num">$449.26</td></tr><tr><th scope="row">Oct 21</th><td class="r num">4</td><td class="r num">$967.43</td></tr><tr><th scope="row">Oct 22</th><td class="r num">7</td><td class="r num">$1,248.17</td></tr><tr><th scope="row">Oct 23</th><td class="r num">7</td><td class="r num">$1,993.86</td></tr><tr><th scope="row">Oct 24</th><td class="r num">2</td><td class="r num">$598.29</td></tr><tr><th scope="row">Oct 25</th><td class="r num">3</td><td class="r num">$508.47</td></tr><tr><th scope="row">Oct 26</th><td class="r num">5</td><td class="r num">$848.17</td></tr><tr><th scope="row">Oct 27</th><td class="r num">7</td><td class="r num">$2,037.43</td></tr><tr><th scope="row">Oct 28</th><td class="r num">7</td><td class="r num">$1,592.18</td></tr><tr><th scope="row">Oct 29</th><td class="r num">4</td><td class="r num">$703.12</td></tr><tr><th scope="row">Oct 30</th><td class="r num">4</td><td class="r num">$950.67</td></tr><tr><th scope="row">Oct 31</th><td class="r num">3</td><td class="r num">$496.68</td></tr><tr><th scope="row">Nov 1</th><td class="r num">3</td><td class="r num">$809.69</td></tr><tr><th scope="row">Nov 2</th><td class="r num">3</td><td class="r num">$697.08</td></tr><tr><th scope="row">Nov 3</th><td class="r num">6</td><td class="r num">$1,900.35</td></tr></tbody></table></details>
+      </div>
+      <div class="studio-status" aria-labelledby="status-h">
+        <h3 id="status-h" class="h3">PayPal Sandbox draft status</h3>
+        <div class="status-row" data-cur="USD"><div class="status-head"><strong>USD</strong><span class="muted">117 invoices</span></div><div class="stack" role="img" aria-label="USD PayPal Sandbox draft status: No PayPal draft 105, In progress 3, PayPal draft created 7, Needs attention 2"><span class="seg seg-none" style="flex:105" title="No PayPal draft: 105"></span><span class="seg seg-progress" style="flex:3" title="In progress: 3"></span><span class="seg seg-created" style="flex:7" title="PayPal draft created: 7"></span><span class="seg seg-attention" style="flex:2" title="Needs attention: 2"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">105</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">3</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">7</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">2</span></li></ul></div><div class="status-row" data-cur="EUR"><div class="status-head"><strong>EUR</strong><span class="muted">56 invoices</span></div><div class="stack" role="img" aria-label="EUR PayPal Sandbox draft status: No PayPal draft 49, In progress 0, PayPal draft created 5, Needs attention 2"><span class="seg seg-none" style="flex:49" title="No PayPal draft: 49"></span><span class="seg seg-created" style="flex:5" title="PayPal draft created: 5"></span><span class="seg seg-attention" style="flex:2" title="Needs attention: 2"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">49</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">0</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">5</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">2</span></li></ul></div><div class="status-row" data-cur="JPY"><div class="status-head"><strong>JPY</strong><span class="muted">20 invoices</span></div><div class="stack" role="img" aria-label="JPY PayPal Sandbox draft status: No PayPal draft 19, In progress 0, PayPal draft created 0, Needs attention 1"><span class="seg seg-none" style="flex:19" title="No PayPal draft: 19"></span><span class="seg seg-attention" style="flex:1" title="Needs attention: 1"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">19</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">0</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">0</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">1</span></li></ul></div>
+        <p class="hint hint-tight"><strong>PayPal draft created</strong> means a Sandbox DRAFT exists. It is not sent, not paid and not overdue.</p>
+      </div>
+    </div>
+    <div class="vendor-slot" aria-hidden="true">Reserved strip: vendor attribution or evaluation watermark, if AG Studio shows one (unverified until A5-I1)</div>
+  </div>
+</section><div class="table-card ag-mock" data-region="existing"><span class="rtag rtag-old" aria-hidden="true">EXISTING · AG Grid Community 36.2 · unchanged</span>
+  <p class="sr-only" role="status" data-testid="result-count">Showing 20 invoices</p>
+  <p class="hint grid-note">Sorting reorders only the 20 rows loaded so far. The totals above cover all matching invoices. Search, date, currency and PayPal status filters apply on the server.</p>
+  <div class="ag-scroll"><table class="ag-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="r">Total</th><th>PayPal Sandbox</th><th>Actions</th></tr></thead><tbody><tr><td><span class="mono">ff895600</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 41<div class="cell-sub">synthetic-41@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$12.34</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb820a49</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 23<div class="cell-sub">synthetic-23@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">€599.97</strong> <span class="cell-sub">EUR</span></td><td><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb410e3c</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 17<div class="cell-sub">synthetic-17@example.test</div></td><td>Mar 01, 2030</td><td class="r"><strong class="num">¥180,000</strong> <span class="cell-sub">JPY</span></td><td><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">f9c0172d</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 08<div class="cell-sub">synthetic-08@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$540.00</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-info"><span aria-hidden="true">◔</span>Creation in progress</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr></tbody></table></div>
+  <div class="grid-footer"><span class="muted">20 loaded · more available</span><button type="button" class="btn btn-secondary">Load more invoices</button></div></div></div><div class="state-page" data-state="default" data-cur="EUR" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><span class="rtag rtag-old" aria-hidden="true">EXISTING · filters · single source of truth</span><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><span class="rtag rtag-old" aria-hidden="true">EXISTING · currency cards · full population · unchanged</span><div class="currency-grid" data-region="existing"><div class="currency-card" data-cur="USD"><div class="top"><span>USD</span><span class="badge badge-neutral">117 invoices</span></div><div class="amount num">$26,941.61</div><div class="meta">Full matching operator-owned USD total · PayPal Sandbox drafts created: 7</div></div><div class="currency-card" data-cur="EUR"><div class="top"><span>EUR</span><span class="badge badge-neutral">56 invoices</span></div><div class="amount num">€10,561.62</div><div class="meta">Full matching operator-owned EUR total · PayPal Sandbox drafts created: 5</div></div><div class="currency-card" data-cur="JPY"><div class="top"><span>JPY</span><span class="badge badge-neutral">20 invoices</span></div><div class="amount num">¥657,000</div><div class="meta">Full matching operator-owned JPY total · PayPal Sandbox drafts created: 0</div></div></div><p class="hint">Totals cover the full matching invoice population, not only rows loaded below. Each card uses one currency; currencies are never added together or converted.</p><section class="card studio" id="studio-panel" aria-labelledby="studio-title" data-region="new">
+  <span class="rtag rtag-new" aria-hidden="true">NEW · AG Studio view-only region</span>
+  <div class="studio-head">
+    <div><h2 class="card-title" id="studio-title">Activity analytics</h2>
+    <p class="hint hint-tight">Same filters and the same full-population server totals as the cards above. Values are invoice totals by creation day (Asia/Manila), not payments.</p></div>
+    <div class="studio-actions"><span class="badge badge-info">Studio · view only</span><button type="button" class="btn btn-secondary btn-sm" aria-expanded="true" aria-controls="studio-body">Hide charts</button></div>
+  </div>
+  <div id="studio-body" class="studio-body">
+    <div class="studio-grid">
+      <div class="studio-chart" aria-labelledby="chart-h">
+        <div class="chart-bar"><h3 id="chart-h" class="h3">Daily invoice value · <span class="cur-now">EUR</span></h3><div class="cur-tabs" role="tablist" aria-label="Chart currency (view only; does not change the filters)"><button type="button" role="tab" class="cur-tab" aria-selected="false" tabindex="-1">USD</button><button type="button" role="tab" class="cur-tab" aria-selected="true" tabindex="0">EUR</button><button type="button" role="tab" class="cur-tab" aria-selected="false" tabindex="-1">JPY</button></div></div>
+        <div class="chart-wrap"><svg class="chart-svg chart-d" viewBox="0 0 640 280" role="img" aria-labelledby="chart-EUR-d-t chart-EUR-d-d" focusable="false"><title id="chart-EUR-d-t">Daily EUR invoice value</title><desc id="chart-EUR-d-d">Bar chart of EUR invoice totals by local creation day, Oct 5 to Nov 3. Peak €779.93 on Oct 29. The same values are in the table below the chart.</desc><line x1="64" x2="632" y1="252" y2="252" class="grid base"/><text x="58" y="256" text-anchor="end" class="axis">€0</text><line x1="64" x2="632" y1="192" y2="192" class="grid"/><text x="58" y="196" text-anchor="end" class="axis">€200</text><line x1="64" x2="632" y1="132" y2="132" class="grid"/><text x="58" y="136" text-anchor="end" class="axis">€400</text><line x1="64" x2="632" y1="72" y2="72" class="grid"/><text x="58" y="76" text-anchor="end" class="axis">€600</text><line x1="64" x2="632" y1="12" y2="12" class="grid"/><text x="58" y="16" text-anchor="end" class="axis">€800</text><rect x="66.7" y="117.6" width="13.6" height="134.4" rx="2" class="bar"/><rect x="85.6" y="21.6" width="13.6" height="230.4" rx="2" class="bar"/><rect x="104.5" y="98.9" width="13.6" height="153.1" rx="2" class="bar"/><rect x="123.5" y="52.8" width="13.6" height="199.2" rx="2" class="bar"/><rect x="142.4" y="97.7" width="13.6" height="154.3" rx="2" class="bar"/><rect x="161.3" y="170.5" width="13.6" height="81.5" rx="2" class="bar"/><rect x="180.3" y="163.0" width="13.6" height="89.0" rx="2" class="bar"/><rect x="199.2" y="159.1" width="13.6" height="92.9" rx="2" class="bar"/><rect x="218.1" y="80.1" width="13.6" height="171.9" rx="2" class="bar"/><rect x="237.1" y="195.6" width="13.6" height="56.4" rx="2" class="bar"/><rect x="256.0" y="211.4" width="13.6" height="40.6" rx="2" class="bar"/><rect x="274.9" y="131.6" width="13.6" height="120.4" rx="2" class="bar"/><rect x="293.9" y="173.2" width="13.6" height="78.8" rx="2" class="bar"/><rect x="312.8" y="212.0" width="13.6" height="40.0" rx="2" class="bar"/><rect x="331.7" y="138.0" width="13.6" height="114.0" rx="2" class="bar"/><rect x="350.7" y="172.1" width="13.6" height="80.0" rx="2" class="bar"/><rect x="369.6" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="388.5" y="206.8" width="13.6" height="45.2" rx="2" class="bar"/><rect x="407.5" y="58.5" width="13.6" height="193.5" rx="2" class="bar"/><rect x="426.4" y="171.6" width="13.6" height="80.4" rx="2" class="bar"/><rect x="445.3" y="230.3" width="13.6" height="21.7" rx="2" class="bar"/><rect x="464.3" y="98.6" width="13.6" height="153.4" rx="2" class="bar"/><rect x="483.2" y="171.0" width="13.6" height="81.0" rx="2" class="bar"/><rect x="502.1" y="232.8" width="13.6" height="19.2" rx="2" class="bar"/><rect x="521.1" y="18.0" width="13.6" height="234.0" rx="2" class="bar hot"/><rect x="540.0" y="176.1" width="13.6" height="75.9" rx="2" class="bar"/><rect x="558.9" y="186.6" width="13.6" height="65.4" rx="2" class="bar"/><rect x="577.9" y="210.0" width="13.6" height="42.0" rx="2" class="bar"/><rect x="596.8" y="120.0" width="13.6" height="132.0" rx="2" class="bar"/><rect x="615.7" y="64.2" width="13.6" height="187.8" rx="2" class="bar"/><text x="73.5" y="272" text-anchor="middle" class="axis">Oct 5</text><text x="168.1" y="272" text-anchor="middle" class="axis">Oct 10</text><text x="262.8" y="272" text-anchor="middle" class="axis">Oct 15</text><text x="357.5" y="272" text-anchor="middle" class="axis">Oct 20</text><text x="452.1" y="272" text-anchor="middle" class="axis">Oct 25</text><text x="546.8" y="272" text-anchor="middle" class="axis">Oct 30</text><text x="622.5" y="272" text-anchor="middle" class="axis">Nov 3</text><g class="tip"><rect x="342.72" y="12" width="170" height="46" rx="6"/><text x="350.72" y="28" class="t1">Oct 29, 2026</text><text x="350.72" y="44" class="t2">€779.93 · 4 invoices</text></g></svg><svg class="chart-svg chart-m" viewBox="0 0 340 230" role="img" aria-labelledby="chart-EUR-m-t chart-EUR-m-d" focusable="false"><title id="chart-EUR-m-t">Daily EUR invoice value</title><desc id="chart-EUR-m-d">Bar chart of EUR invoice totals by local creation day, Oct 5 to Nov 3. Peak €779.93 on Oct 29. The same values are in the table below the chart.</desc><line x1="46" x2="332" y1="202" y2="202" class="grid base"/><text x="40" y="206" text-anchor="end" class="axis">€0</text><line x1="46" x2="332" y1="154.5" y2="154.5" class="grid"/><text x="40" y="158.5" text-anchor="end" class="axis">€200</text><line x1="46" x2="332" y1="107" y2="107" class="grid"/><text x="40" y="111" text-anchor="end" class="axis">€400</text><line x1="46" x2="332" y1="59.5" y2="59.5" class="grid"/><text x="40" y="63.5" text-anchor="end" class="axis">€600</text><line x1="46" x2="332" y1="12" y2="12" class="grid"/><text x="40" y="16" text-anchor="end" class="axis">€800</text><rect x="47.3" y="95.6" width="6.9" height="106.4" rx="2" class="bar"/><rect x="56.9" y="19.6" width="6.9" height="182.4" rx="2" class="bar"/><rect x="66.4" y="80.8" width="6.9" height="121.2" rx="2" class="bar"/><rect x="75.9" y="44.3" width="6.9" height="157.7" rx="2" class="bar"/><rect x="85.5" y="79.8" width="6.9" height="122.2" rx="2" class="bar"/><rect x="95.0" y="137.5" width="6.9" height="64.5" rx="2" class="bar"/><rect x="104.5" y="131.5" width="6.9" height="70.5" rx="2" class="bar"/><rect x="114.1" y="128.4" width="6.9" height="73.6" rx="2" class="bar"/><rect x="123.6" y="65.9" width="6.9" height="136.1" rx="2" class="bar"/><rect x="133.1" y="157.4" width="6.9" height="44.6" rx="2" class="bar"/><rect x="142.7" y="169.8" width="6.9" height="32.2" rx="2" class="bar"/><rect x="152.2" y="106.7" width="6.9" height="95.3" rx="2" class="bar"/><rect x="161.7" y="139.6" width="6.9" height="62.4" rx="2" class="bar"/><rect x="171.3" y="170.3" width="6.9" height="31.7" rx="2" class="bar"/><rect x="180.8" y="111.8" width="6.9" height="90.2" rx="2" class="bar"/><rect x="190.3" y="138.7" width="6.9" height="63.3" rx="2" class="bar"/><rect x="199.9" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="209.4" y="166.2" width="6.9" height="35.8" rx="2" class="bar"/><rect x="218.9" y="48.8" width="6.9" height="153.2" rx="2" class="bar"/><rect x="228.5" y="138.4" width="6.9" height="63.6" rx="2" class="bar"/><rect x="238.0" y="184.8" width="6.9" height="17.2" rx="2" class="bar"/><rect x="247.5" y="80.5" width="6.9" height="121.5" rx="2" class="bar"/><rect x="257.1" y="137.9" width="6.9" height="64.1" rx="2" class="bar"/><rect x="266.6" y="186.8" width="6.9" height="15.2" rx="2" class="bar"/><rect x="276.1" y="16.8" width="6.9" height="185.2" rx="2" class="bar hot"/><rect x="285.7" y="141.9" width="6.9" height="60.1" rx="2" class="bar"/><rect x="295.2" y="150.2" width="6.9" height="51.8" rx="2" class="bar"/><rect x="304.7" y="168.8" width="6.9" height="33.3" rx="2" class="bar"/><rect x="314.3" y="97.5" width="6.9" height="104.5" rx="2" class="bar"/><rect x="323.8" y="53.3" width="6.9" height="148.7" rx="2" class="bar"/><text x="50.8" y="222" text-anchor="middle" class="axis">Oct 5</text><text x="117.5" y="222" text-anchor="middle" class="axis">Oct 12</text><text x="184.2" y="222" text-anchor="middle" class="axis">Oct 19</text><text x="251.0" y="222" text-anchor="middle" class="axis">Oct 26</text><text x="327.2" y="222" text-anchor="end" class="axis">Nov 3</text><g class="tip"><rect x="103.94" y="12" width="168" height="46" rx="6"/><text x="111.94" y="28" class="t1">Oct 29, 2026</text><text x="111.94" y="44" class="t2">€779.93 · 4 invoices</text></g></svg></div>
+        <p class="hint hint-tight">Peak day: Oct 29 · €779.93 · 4 invoices. One currency per chart; axes are never shared across currencies.</p>
+        <details class="data-alt"><summary>View EUR data as a table</summary><table class="data tight"><caption class="sr-only">EUR invoices by local creation day (Asia/Manila)</caption><thead><tr><th scope="col">Day</th><th scope="col" class="r">Invoices</th><th scope="col" class="r">Total (EUR)</th></tr></thead><tbody><tr><th scope="row">Oct 5</th><td class="r num">3</td><td class="r num">€447.85</td></tr><tr><th scope="row">Oct 6</th><td class="r num">4</td><td class="r num">€768.11</td></tr><tr><th scope="row">Oct 7</th><td class="r num">2</td><td class="r num">€510.43</td></tr><tr><th scope="row">Oct 8</th><td class="r num">2</td><td class="r num">€664.08</td></tr><tr><th scope="row">Oct 9</th><td class="r num">2</td><td class="r num">€514.34</td></tr><tr><th scope="row">Oct 10</th><td class="r num">1</td><td class="r num">€271.63</td></tr><tr><th scope="row">Oct 11</th><td class="r num">1</td><td class="r num">€296.70</td></tr><tr><th scope="row">Oct 12</th><td class="r num">1</td><td class="r num">€309.76</td></tr><tr><th scope="row">Oct 13</th><td class="r num">4</td><td class="r num">€573.16</td></tr><tr><th scope="row">Oct 14</th><td class="r num">1</td><td class="r num">€187.98</td></tr><tr><th scope="row">Oct 15</th><td class="r num">1</td><td class="r num">€135.44</td></tr><tr><th scope="row">Oct 16</th><td class="r num">2</td><td class="r num">€401.33</td></tr><tr><th scope="row">Oct 17</th><td class="r num">1</td><td class="r num">€262.55</td></tr><tr><th scope="row">Oct 18</th><td class="r num">1</td><td class="r num">€133.41</td></tr><tr><th scope="row">Oct 19</th><td class="r num">2</td><td class="r num">€379.96</td></tr><tr><th scope="row">Oct 20</th><td class="r num">2</td><td class="r num">€266.50</td></tr><tr><th scope="row">Oct 22</th><td class="r num">1</td><td class="r num">€150.57</td></tr><tr><th scope="row">Oct 23</th><td class="r num">3</td><td class="r num">€645.03</td></tr><tr><th scope="row">Oct 24</th><td class="r num">1</td><td class="r num">€267.87</td></tr><tr><th scope="row">Oct 25</th><td class="r num">1</td><td class="r num">€72.48</td></tr><tr><th scope="row">Oct 26</th><td class="r num">3</td><td class="r num">€511.42</td></tr><tr><th scope="row">Oct 27</th><td class="r num">1</td><td class="r num">€270.05</td></tr><tr><th scope="row">Oct 28</th><td class="r num">1</td><td class="r num">€63.87</td></tr><tr><th scope="row">Oct 29</th><td class="r num">4</td><td class="r num">€779.93</td></tr><tr><th scope="row">Oct 30</th><td class="r num">3</td><td class="r num">€252.90</td></tr><tr><th scope="row">Oct 31</th><td class="r num">1</td><td class="r num">€218.09</td></tr><tr><th scope="row">Nov 1</th><td class="r num">1</td><td class="r num">€140.00</td></tr><tr><th scope="row">Nov 2</th><td class="r num">3</td><td class="r num">€440.11</td></tr><tr><th scope="row">Nov 3</th><td class="r num">3</td><td class="r num">€626.07</td></tr></tbody></table></details>
+      </div>
+      <div class="studio-status" aria-labelledby="status-h">
+        <h3 id="status-h" class="h3">PayPal Sandbox draft status</h3>
+        <div class="status-row" data-cur="USD"><div class="status-head"><strong>USD</strong><span class="muted">117 invoices</span></div><div class="stack" role="img" aria-label="USD PayPal Sandbox draft status: No PayPal draft 105, In progress 3, PayPal draft created 7, Needs attention 2"><span class="seg seg-none" style="flex:105" title="No PayPal draft: 105"></span><span class="seg seg-progress" style="flex:3" title="In progress: 3"></span><span class="seg seg-created" style="flex:7" title="PayPal draft created: 7"></span><span class="seg seg-attention" style="flex:2" title="Needs attention: 2"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">105</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">3</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">7</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">2</span></li></ul></div><div class="status-row" data-cur="EUR"><div class="status-head"><strong>EUR</strong><span class="muted">56 invoices</span></div><div class="stack" role="img" aria-label="EUR PayPal Sandbox draft status: No PayPal draft 49, In progress 0, PayPal draft created 5, Needs attention 2"><span class="seg seg-none" style="flex:49" title="No PayPal draft: 49"></span><span class="seg seg-created" style="flex:5" title="PayPal draft created: 5"></span><span class="seg seg-attention" style="flex:2" title="Needs attention: 2"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">49</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">0</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">5</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">2</span></li></ul></div><div class="status-row" data-cur="JPY"><div class="status-head"><strong>JPY</strong><span class="muted">20 invoices</span></div><div class="stack" role="img" aria-label="JPY PayPal Sandbox draft status: No PayPal draft 19, In progress 0, PayPal draft created 0, Needs attention 1"><span class="seg seg-none" style="flex:19" title="No PayPal draft: 19"></span><span class="seg seg-attention" style="flex:1" title="Needs attention: 1"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">19</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">0</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">0</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">1</span></li></ul></div>
+        <p class="hint hint-tight"><strong>PayPal draft created</strong> means a Sandbox DRAFT exists. It is not sent, not paid and not overdue.</p>
+      </div>
+    </div>
+    <div class="vendor-slot" aria-hidden="true">Reserved strip: vendor attribution or evaluation watermark, if AG Studio shows one (unverified until A5-I1)</div>
+  </div>
+</section><div class="table-card ag-mock" data-region="existing"><span class="rtag rtag-old" aria-hidden="true">EXISTING · AG Grid Community 36.2 · unchanged</span>
+  <p class="sr-only" role="status" data-testid="result-count">Showing 20 invoices</p>
+  <p class="hint grid-note">Sorting reorders only the 20 rows loaded so far. The totals above cover all matching invoices. Search, date, currency and PayPal status filters apply on the server.</p>
+  <div class="ag-scroll"><table class="ag-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="r">Total</th><th>PayPal Sandbox</th><th>Actions</th></tr></thead><tbody><tr><td><span class="mono">ff895600</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 41<div class="cell-sub">synthetic-41@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$12.34</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb820a49</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 23<div class="cell-sub">synthetic-23@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">€599.97</strong> <span class="cell-sub">EUR</span></td><td><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb410e3c</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 17<div class="cell-sub">synthetic-17@example.test</div></td><td>Mar 01, 2030</td><td class="r"><strong class="num">¥180,000</strong> <span class="cell-sub">JPY</span></td><td><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">f9c0172d</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 08<div class="cell-sub">synthetic-08@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$540.00</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-info"><span aria-hidden="true">◔</span>Creation in progress</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr></tbody></table></div>
+  <div class="grid-footer"><span class="muted">20 loaded · more available</span><button type="button" class="btn btn-secondary">Load more invoices</button></div></div></div><div class="state-page" data-state="default" data-cur="JPY" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><span class="rtag rtag-old" aria-hidden="true">EXISTING · filters · single source of truth</span><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><span class="rtag rtag-old" aria-hidden="true">EXISTING · currency cards · full population · unchanged</span><div class="currency-grid" data-region="existing"><div class="currency-card" data-cur="USD"><div class="top"><span>USD</span><span class="badge badge-neutral">117 invoices</span></div><div class="amount num">$26,941.61</div><div class="meta">Full matching operator-owned USD total · PayPal Sandbox drafts created: 7</div></div><div class="currency-card" data-cur="EUR"><div class="top"><span>EUR</span><span class="badge badge-neutral">56 invoices</span></div><div class="amount num">€10,561.62</div><div class="meta">Full matching operator-owned EUR total · PayPal Sandbox drafts created: 5</div></div><div class="currency-card" data-cur="JPY"><div class="top"><span>JPY</span><span class="badge badge-neutral">20 invoices</span></div><div class="amount num">¥657,000</div><div class="meta">Full matching operator-owned JPY total · PayPal Sandbox drafts created: 0</div></div></div><p class="hint">Totals cover the full matching invoice population, not only rows loaded below. Each card uses one currency; currencies are never added together or converted.</p><section class="card studio" id="studio-panel" aria-labelledby="studio-title" data-region="new">
+  <span class="rtag rtag-new" aria-hidden="true">NEW · AG Studio view-only region</span>
+  <div class="studio-head">
+    <div><h2 class="card-title" id="studio-title">Activity analytics</h2>
+    <p class="hint hint-tight">Same filters and the same full-population server totals as the cards above. Values are invoice totals by creation day (Asia/Manila), not payments.</p></div>
+    <div class="studio-actions"><span class="badge badge-info">Studio · view only</span><button type="button" class="btn btn-secondary btn-sm" aria-expanded="true" aria-controls="studio-body">Hide charts</button></div>
+  </div>
+  <div id="studio-body" class="studio-body">
+    <div class="studio-grid">
+      <div class="studio-chart" aria-labelledby="chart-h">
+        <div class="chart-bar"><h3 id="chart-h" class="h3">Daily invoice value · <span class="cur-now">JPY</span></h3><div class="cur-tabs" role="tablist" aria-label="Chart currency (view only; does not change the filters)"><button type="button" role="tab" class="cur-tab" aria-selected="false" tabindex="-1">USD</button><button type="button" role="tab" class="cur-tab" aria-selected="false" tabindex="-1">EUR</button><button type="button" role="tab" class="cur-tab" aria-selected="true" tabindex="0">JPY</button></div></div>
+        <div class="chart-wrap"><svg class="chart-svg chart-d" viewBox="0 0 640 280" role="img" aria-labelledby="chart-JPY-d-t chart-JPY-d-d" focusable="false"><title id="chart-JPY-d-t">Daily JPY invoice value</title><desc id="chart-JPY-d-d">Bar chart of JPY invoice totals by local creation day, Oct 5 to Nov 3. Peak ¥71,100 on Oct 5. The same values are in the table below the chart.</desc><line x1="64" x2="632" y1="252" y2="252" class="grid base"/><text x="58" y="256" text-anchor="end" class="axis">¥0</text><line x1="64" x2="632" y1="192" y2="192" class="grid"/><text x="58" y="196" text-anchor="end" class="axis">¥20K</text><line x1="64" x2="632" y1="132" y2="132" class="grid"/><text x="58" y="136" text-anchor="end" class="axis">¥40K</text><line x1="64" x2="632" y1="72" y2="72" class="grid"/><text x="58" y="76" text-anchor="end" class="axis">¥60K</text><line x1="64" x2="632" y1="12" y2="12" class="grid"/><text x="58" y="16" text-anchor="end" class="axis">¥80K</text><rect x="66.7" y="38.7" width="13.6" height="213.3" rx="2" class="bar hot"/><rect x="85.6" y="114.9" width="13.6" height="137.1" rx="2" class="bar"/><rect x="104.5" y="137.7" width="13.6" height="114.3" rx="2" class="bar"/><rect x="123.5" y="226.8" width="13.6" height="25.2" rx="2" class="bar"/><rect x="142.4" y="114.0" width="13.6" height="138.0" rx="2" class="bar"/><rect x="161.3" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="180.3" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="199.2" y="66.3" width="13.6" height="185.7" rx="2" class="bar"/><rect x="218.1" y="90.0" width="13.6" height="162.0" rx="2" class="bar"/><rect x="237.1" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="256.0" y="208.5" width="13.6" height="43.5" rx="2" class="bar"/><rect x="274.9" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="293.9" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="312.8" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="331.7" y="178.2" width="13.6" height="73.8" rx="2" class="bar"/><rect x="350.7" y="112.8" width="13.6" height="139.2" rx="2" class="bar"/><rect x="369.6" y="199.8" width="13.6" height="52.2" rx="2" class="bar"/><rect x="388.5" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="407.5" y="211.8" width="13.6" height="40.2" rx="2" class="bar"/><rect x="426.4" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="445.3" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="464.3" y="109.8" width="13.6" height="142.2" rx="2" class="bar"/><rect x="483.2" y="144.9" width="13.6" height="107.1" rx="2" class="bar"/><rect x="502.1" y="182.1" width="13.6" height="69.9" rx="2" class="bar"/><rect x="521.1" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="540.0" y="104.1" width="13.6" height="147.9" rx="2" class="bar"/><rect x="558.9" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="577.9" y="252.0" width="13.6" height="0.0" rx="2" class="bar"/><rect x="596.8" y="192.0" width="13.6" height="60.0" rx="2" class="bar"/><rect x="615.7" y="132.6" width="13.6" height="119.4" rx="2" class="bar"/><text x="73.5" y="272" text-anchor="middle" class="axis">Oct 5</text><text x="168.1" y="272" text-anchor="middle" class="axis">Oct 10</text><text x="262.8" y="272" text-anchor="middle" class="axis">Oct 15</text><text x="357.5" y="272" text-anchor="middle" class="axis">Oct 20</text><text x="452.1" y="272" text-anchor="middle" class="axis">Oct 25</text><text x="546.8" y="272" text-anchor="middle" class="axis">Oct 30</text><text x="622.5" y="272" text-anchor="middle" class="axis">Nov 3</text><g class="tip"><rect x="88.61333333333334" y="12" width="170" height="46" rx="6"/><text x="96.61333333333334" y="28" class="t1">Oct 5, 2026</text><text x="96.61333333333334" y="44" class="t2">¥71,100 · 2 invoices</text></g></svg><svg class="chart-svg chart-m" viewBox="0 0 340 230" role="img" aria-labelledby="chart-JPY-m-t chart-JPY-m-d" focusable="false"><title id="chart-JPY-m-t">Daily JPY invoice value</title><desc id="chart-JPY-m-d">Bar chart of JPY invoice totals by local creation day, Oct 5 to Nov 3. Peak ¥71,100 on Oct 5. The same values are in the table below the chart.</desc><line x1="46" x2="332" y1="202" y2="202" class="grid base"/><text x="40" y="206" text-anchor="end" class="axis">¥0</text><line x1="46" x2="332" y1="154.5" y2="154.5" class="grid"/><text x="40" y="158.5" text-anchor="end" class="axis">¥20K</text><line x1="46" x2="332" y1="107" y2="107" class="grid"/><text x="40" y="111" text-anchor="end" class="axis">¥40K</text><line x1="46" x2="332" y1="59.5" y2="59.5" class="grid"/><text x="40" y="63.5" text-anchor="end" class="axis">¥60K</text><line x1="46" x2="332" y1="12" y2="12" class="grid"/><text x="40" y="16" text-anchor="end" class="axis">¥80K</text><rect x="47.3" y="33.1" width="6.9" height="168.9" rx="2" class="bar hot"/><rect x="56.9" y="93.5" width="6.9" height="108.5" rx="2" class="bar"/><rect x="66.4" y="111.5" width="6.9" height="90.5" rx="2" class="bar"/><rect x="75.9" y="182.1" width="6.9" height="19.9" rx="2" class="bar"/><rect x="85.5" y="92.8" width="6.9" height="109.2" rx="2" class="bar"/><rect x="95.0" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="104.5" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="114.1" y="55.0" width="6.9" height="147.0" rx="2" class="bar"/><rect x="123.6" y="73.8" width="6.9" height="128.3" rx="2" class="bar"/><rect x="133.1" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="142.7" y="167.6" width="6.9" height="34.4" rx="2" class="bar"/><rect x="152.2" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="161.7" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="171.3" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="180.8" y="143.6" width="6.9" height="58.4" rx="2" class="bar"/><rect x="190.3" y="91.8" width="6.9" height="110.2" rx="2" class="bar"/><rect x="199.9" y="160.7" width="6.9" height="41.3" rx="2" class="bar"/><rect x="209.4" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="218.9" y="170.2" width="6.9" height="31.8" rx="2" class="bar"/><rect x="228.5" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="238.0" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="247.5" y="89.4" width="6.9" height="112.6" rx="2" class="bar"/><rect x="257.1" y="117.2" width="6.9" height="84.8" rx="2" class="bar"/><rect x="266.6" y="146.7" width="6.9" height="55.3" rx="2" class="bar"/><rect x="276.1" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="285.7" y="84.9" width="6.9" height="117.1" rx="2" class="bar"/><rect x="295.2" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="304.7" y="202.0" width="6.9" height="0.0" rx="2" class="bar"/><rect x="314.3" y="154.5" width="6.9" height="47.5" rx="2" class="bar"/><rect x="323.8" y="107.5" width="6.9" height="94.5" rx="2" class="bar"/><text x="50.8" y="222" text-anchor="middle" class="axis">Oct 5</text><text x="117.5" y="222" text-anchor="middle" class="axis">Oct 12</text><text x="184.2" y="222" text-anchor="middle" class="axis">Oct 19</text><text x="251.0" y="222" text-anchor="middle" class="axis">Oct 26</text><text x="327.2" y="222" text-anchor="end" class="axis">Nov 3</text><g class="tip"><rect x="58.39333333333333" y="12" width="168" height="46" rx="6"/><text x="66.39333333333333" y="28" class="t1">Oct 5, 2026</text><text x="66.39333333333333" y="44" class="t2">¥71,100 · 2 invoices</text></g></svg></div>
+        <p class="hint hint-tight">Peak day: Oct 5 · ¥71,100 · 2 invoices. One currency per chart; axes are never shared across currencies.</p>
+        <details class="data-alt"><summary>View JPY data as a table</summary><table class="data tight"><caption class="sr-only">JPY invoices by local creation day (Asia/Manila)</caption><thead><tr><th scope="col">Day</th><th scope="col" class="r">Invoices</th><th scope="col" class="r">Total (JPY)</th></tr></thead><tbody><tr><th scope="row">Oct 5</th><td class="r num">2</td><td class="r num">¥71,100</td></tr><tr><th scope="row">Oct 6</th><td class="r num">1</td><td class="r num">¥45,700</td></tr><tr><th scope="row">Oct 7</th><td class="r num">1</td><td class="r num">¥38,100</td></tr><tr><th scope="row">Oct 8</th><td class="r num">1</td><td class="r num">¥8,400</td></tr><tr><th scope="row">Oct 9</th><td class="r num">1</td><td class="r num">¥46,000</td></tr><tr><th scope="row">Oct 12</th><td class="r num">2</td><td class="r num">¥61,900</td></tr><tr><th scope="row">Oct 13</th><td class="r num">1</td><td class="r num">¥54,000</td></tr><tr><th scope="row">Oct 15</th><td class="r num">1</td><td class="r num">¥14,500</td></tr><tr><th scope="row">Oct 19</th><td class="r num">1</td><td class="r num">¥24,600</td></tr><tr><th scope="row">Oct 20</th><td class="r num">1</td><td class="r num">¥46,400</td></tr><tr><th scope="row">Oct 21</th><td class="r num">1</td><td class="r num">¥17,400</td></tr><tr><th scope="row">Oct 23</th><td class="r num">1</td><td class="r num">¥13,400</td></tr><tr><th scope="row">Oct 26</th><td class="r num">1</td><td class="r num">¥47,400</td></tr><tr><th scope="row">Oct 27</th><td class="r num">1</td><td class="r num">¥35,700</td></tr><tr><th scope="row">Oct 28</th><td class="r num">1</td><td class="r num">¥23,300</td></tr><tr><th scope="row">Oct 30</th><td class="r num">1</td><td class="r num">¥49,300</td></tr><tr><th scope="row">Nov 2</th><td class="r num">1</td><td class="r num">¥20,000</td></tr><tr><th scope="row">Nov 3</th><td class="r num">1</td><td class="r num">¥39,800</td></tr></tbody></table></details>
+      </div>
+      <div class="studio-status" aria-labelledby="status-h">
+        <h3 id="status-h" class="h3">PayPal Sandbox draft status</h3>
+        <div class="status-row" data-cur="USD"><div class="status-head"><strong>USD</strong><span class="muted">117 invoices</span></div><div class="stack" role="img" aria-label="USD PayPal Sandbox draft status: No PayPal draft 105, In progress 3, PayPal draft created 7, Needs attention 2"><span class="seg seg-none" style="flex:105" title="No PayPal draft: 105"></span><span class="seg seg-progress" style="flex:3" title="In progress: 3"></span><span class="seg seg-created" style="flex:7" title="PayPal draft created: 7"></span><span class="seg seg-attention" style="flex:2" title="Needs attention: 2"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">105</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">3</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">7</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">2</span></li></ul></div><div class="status-row" data-cur="EUR"><div class="status-head"><strong>EUR</strong><span class="muted">56 invoices</span></div><div class="stack" role="img" aria-label="EUR PayPal Sandbox draft status: No PayPal draft 49, In progress 0, PayPal draft created 5, Needs attention 2"><span class="seg seg-none" style="flex:49" title="No PayPal draft: 49"></span><span class="seg seg-created" style="flex:5" title="PayPal draft created: 5"></span><span class="seg seg-attention" style="flex:2" title="Needs attention: 2"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">49</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">0</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">5</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">2</span></li></ul></div><div class="status-row" data-cur="JPY"><div class="status-head"><strong>JPY</strong><span class="muted">20 invoices</span></div><div class="stack" role="img" aria-label="JPY PayPal Sandbox draft status: No PayPal draft 19, In progress 0, PayPal draft created 0, Needs attention 1"><span class="seg seg-none" style="flex:19" title="No PayPal draft: 19"></span><span class="seg seg-attention" style="flex:1" title="Needs attention: 1"></span></div><ul class="state-list"><li><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span><span class="num cnt">19</span></li><li><span class="badge badge-info"><span aria-hidden="true">◔</span>In progress</span><span class="num cnt">0</span></li><li><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span><span class="num cnt">0</span></li><li><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span><span class="num cnt">1</span></li></ul></div>
+        <p class="hint hint-tight"><strong>PayPal draft created</strong> means a Sandbox DRAFT exists. It is not sent, not paid and not overdue.</p>
+      </div>
+    </div>
+    <div class="vendor-slot" aria-hidden="true">Reserved strip: vendor attribution or evaluation watermark, if AG Studio shows one (unverified until A5-I1)</div>
+  </div>
+</section><div class="table-card ag-mock" data-region="existing"><span class="rtag rtag-old" aria-hidden="true">EXISTING · AG Grid Community 36.2 · unchanged</span>
+  <p class="sr-only" role="status" data-testid="result-count">Showing 20 invoices</p>
+  <p class="hint grid-note">Sorting reorders only the 20 rows loaded so far. The totals above cover all matching invoices. Search, date, currency and PayPal status filters apply on the server.</p>
+  <div class="ag-scroll"><table class="ag-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="r">Total</th><th>PayPal Sandbox</th><th>Actions</th></tr></thead><tbody><tr><td><span class="mono">ff895600</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 41<div class="cell-sub">synthetic-41@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$12.34</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb820a49</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 23<div class="cell-sub">synthetic-23@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">€599.97</strong> <span class="cell-sub">EUR</span></td><td><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb410e3c</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 17<div class="cell-sub">synthetic-17@example.test</div></td><td>Mar 01, 2030</td><td class="r"><strong class="num">¥180,000</strong> <span class="cell-sub">JPY</span></td><td><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">f9c0172d</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 08<div class="cell-sub">synthetic-08@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$540.00</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-info"><span aria-hidden="true">◔</span>Creation in progress</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr></tbody></table></div>
+  <div class="grid-footer"><span class="muted">20 loaded · more available</span><button type="button" class="btn btn-secondary">Load more invoices</button></div></div></div>
+<div class="state-page" data-state="loading" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><div class="currency-grid" aria-busy="true" aria-label="Loading full-population totals"><div class="currency-card"><div class="skeleton sk-h18 sk-w40"></div><div class="skeleton sk-h30 sk-w70"></div><div class="skeleton sk-h14 sk-w55"></div></div><div class="currency-card"><div class="skeleton sk-h18 sk-w40"></div><div class="skeleton sk-h30 sk-w70"></div><div class="skeleton sk-h14 sk-w55"></div></div><div class="currency-card"><div class="skeleton sk-h18 sk-w40"></div><div class="skeleton sk-h30 sk-w70"></div><div class="skeleton sk-h14 sk-w55"></div></div></div><section class="card studio" aria-busy="true" aria-labelledby="studio-title" data-region="new"><span class="rtag rtag-new" aria-hidden="true">NEW · loading</span>
+  <p class="sr-only" role="status">Loading analytics</p>
+  <div class="studio-head"><div><h2 class="card-title" id="studio-title">Activity analytics</h2></div></div>
+  <div class="studio-grid"><div><div class="skeleton sk-h18 sk-w40"></div><div class="skeleton" style="height:230px;margin-top:14px"></div></div>
+  <div><div class="skeleton sk-h18 sk-w55"></div><div class="skeleton sk-h14" style="margin-top:18px;height:22px"></div><div class="skeleton sk-h14 sk-w70"></div><div class="skeleton sk-h14" style="margin-top:18px;height:22px"></div><div class="skeleton sk-h14 sk-w70"></div><div class="skeleton sk-h14" style="margin-top:18px;height:22px"></div><div class="skeleton sk-h14 sk-w70"></div></div></div></section><div class="table-card ag-mock" data-region="existing"><span class="rtag rtag-old" aria-hidden="true">EXISTING · AG Grid Community 36.2 · unchanged</span>
+  <p class="sr-only" role="status" data-testid="result-count">Showing 20 invoices</p>
+  <p class="hint grid-note">Sorting reorders only the 20 rows loaded so far. The totals above cover all matching invoices. Search, date, currency and PayPal status filters apply on the server.</p>
+  <div class="ag-scroll"><table class="ag-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="r">Total</th><th>PayPal Sandbox</th><th>Actions</th></tr></thead><tbody><tr><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td></tr><tr><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td></tr><tr><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td></tr><tr><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td><td><div class="skeleton sk-h14" style="margin:0"></div></td></tr></tbody></table></div>
+  <div class="grid-footer"><span class="muted">20 loaded · more available</span><button type="button" class="btn btn-secondary">Load more invoices</button></div></div></div>
+<div class="state-page" data-state="empty" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><div class="empty" id="dash-empty-range"><h2>No invoices match these filters</h2><p>Try a wider date range or clear your filters, or create a new invoice draft.</p><button type="button" class="btn btn-primary">Create an invoice</button></div></div>
+<div class="state-page" data-state="error" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><div class="notice notice-err" role="alert" id="dash-analytics-error"><span class="notice-icon" aria-hidden="true">!</span><div><strong>Could not load full-population totals.</strong> Could not reach the server. No loaded-row estimate is substituted.<div class="mt-12"><button type="button" class="btn btn-secondary btn-sm">Retry</button></div></div></div><span class="rtag rtag-old" aria-hidden="true">Studio panel is not rendered while totals are unavailable</span><div class="table-card ag-mock" data-region="existing"><span class="rtag rtag-old" aria-hidden="true">EXISTING · AG Grid Community 36.2 · unchanged</span>
+  <p class="sr-only" role="status" data-testid="result-count">Showing 20 invoices</p>
+  <p class="hint grid-note">Sorting reorders only the 20 rows loaded so far. The totals above cover all matching invoices. Search, date, currency and PayPal status filters apply on the server.</p>
+  <div class="ag-scroll"><table class="ag-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="r">Total</th><th>PayPal Sandbox</th><th>Actions</th></tr></thead><tbody><tr><td><span class="mono">ff895600</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 41<div class="cell-sub">synthetic-41@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$12.34</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb820a49</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 23<div class="cell-sub">synthetic-23@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">€599.97</strong> <span class="cell-sub">EUR</span></td><td><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb410e3c</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 17<div class="cell-sub">synthetic-17@example.test</div></td><td>Mar 01, 2030</td><td class="r"><strong class="num">¥180,000</strong> <span class="cell-sub">JPY</span></td><td><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">f9c0172d</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 08<div class="cell-sub">synthetic-08@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$540.00</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-info"><span aria-hidden="true">◔</span>Creation in progress</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr></tbody></table></div>
+  <div class="grid-footer"><span class="muted">20 loaded · more available</span><button type="button" class="btn btn-secondary">Load more invoices</button></div></div></div>
+<div class="state-page" data-state="unavailable" hidden><div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div><div class="table-card"><div class="filters">
+  <div class="pills" role="group" aria-label="Filter by currency"><button class="pill" type="button" aria-pressed="true">All currencies</button><button class="pill" type="button" aria-pressed="false">USD</button><button class="pill" type="button" aria-pressed="false">EUR</button><button class="pill" type="button" aria-pressed="false">GBP</button><button class="pill" type="button" aria-pressed="false">CAD</button><button class="pill" type="button" aria-pressed="false">AUD</button><button class="pill" type="button" aria-pressed="false">JPY</button></div>
+  <div class="filter-controls">
+    <fieldset class="date-range-filter"><legend>Created date range</legend><div class="date-range-fields"><label><span>From</span><input class="input date-range-input" type="date" value="2026-10-05" aria-label="From date"></label><label><span>Through</span><input class="input date-range-input" type="date" value="2026-11-03" aria-label="Through date"></label></div></fieldset>
+    <div><label class="sr-only" for="dash-search">Search invoices</label><input class="input search-input" id="dash-search" type="search" placeholder="Search invoices" autocomplete="off"></div>
+    <div><label class="sr-only" for="dash-status">PayPal Sandbox status</label><select class="select" id="dash-status"><option>All PayPal statuses</option><option>No PayPal draft</option><option>In progress</option><option>PayPal draft created</option><option>Needs attention</option></select></div>
+  </div></div></div><p class="hint" id="dash-coverage">Matching invoices owned by this operator, created Oct 5, 2026 through Nov 3, 2026 inclusive (Asia/Manila).</p><div class="currency-grid"><div class="currency-card" data-cur="USD"><div class="top"><span>USD</span><span class="badge badge-neutral">117 invoices</span></div><div class="amount num">$26,941.61</div><div class="meta">Full matching operator-owned USD total · PayPal Sandbox drafts created: 7</div></div><div class="currency-card" data-cur="EUR"><div class="top"><span>EUR</span><span class="badge badge-neutral">56 invoices</span></div><div class="amount num">€10,561.62</div><div class="meta">Full matching operator-owned EUR total · PayPal Sandbox drafts created: 5</div></div><div class="currency-card" data-cur="JPY"><div class="top"><span>JPY</span><span class="badge badge-neutral">20 invoices</span></div><div class="amount num">¥657,000</div><div class="meta">Full matching operator-owned JPY total · PayPal Sandbox drafts created: 0</div></div></div><p class="hint">Totals cover the full matching invoice population, not only rows loaded below. Each card uses one currency; currencies are never added together or converted.</p><section class="card studio" data-region="new" aria-labelledby="studio-title"><span class="rtag rtag-new" aria-hidden="true">NEW · fallback</span>
+  <div class="studio-head"><div><h2 class="card-title" id="studio-title">Activity analytics</h2></div></div>
+  <div class="notice notice-info" role="status"><span class="notice-icon" aria-hidden="true">ℹ</span><div><strong>Charts are unavailable right now.</strong> The totals above and the invoice table below are not affected.
+  <div class="mt-12"><button type="button" class="btn btn-secondary btn-sm">Try loading charts again</button></div></div></div></section><div class="table-card ag-mock" data-region="existing"><span class="rtag rtag-old" aria-hidden="true">EXISTING · AG Grid Community 36.2 · unchanged</span>
+  <p class="sr-only" role="status" data-testid="result-count">Showing 20 invoices</p>
+  <p class="hint grid-note">Sorting reorders only the 20 rows loaded so far. The totals above cover all matching invoices. Search, date, currency and PayPal status filters apply on the server.</p>
+  <div class="ag-scroll"><table class="ag-table"><thead><tr><th>Invoice</th><th>Customer</th><th>Due</th><th class="r">Total</th><th>PayPal Sandbox</th><th>Actions</th></tr></thead><tbody><tr><td><span class="mono">ff895600</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 41<div class="cell-sub">synthetic-41@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$12.34</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-neutral"><span aria-hidden="true">○</span>No PayPal draft</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb820a49</span><div class="cell-sub">Saved Oct 27, 2026</div></td><td>Synthetic Client 23<div class="cell-sub">synthetic-23@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">€599.97</strong> <span class="cell-sub">EUR</span></td><td><span class="badge badge-ok"><span aria-hidden="true">✓</span>PayPal draft created</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">fb410e3c</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 17<div class="cell-sub">synthetic-17@example.test</div></td><td>Mar 01, 2030</td><td class="r"><strong class="num">¥180,000</strong> <span class="cell-sub">JPY</span></td><td><span class="badge badge-warn"><span aria-hidden="true">!</span>Needs attention</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr><tr><td><span class="mono">f9c0172d</span><div class="cell-sub">Saved Oct 26, 2026</div></td><td>Synthetic Client 08<div class="cell-sub">synthetic-08@example.test</div></td><td>Jan 15, 2030</td><td class="r"><strong class="num">$540.00</strong> <span class="cell-sub">USD</span></td><td><span class="badge badge-info"><span aria-hidden="true">◔</span>Creation in progress</span></td><td><button type="button" class="btn btn-secondary btn-sm">View</button></td></tr></tbody></table></div>
+  <div class="grid-footer"><span class="muted">20 loaded · more available</span><button type="button" class="btn btn-secondary">Load more invoices</button></div></div></div>
+</main><button type="button" class="nudgey-fab-mock">✦ Nudgey</button><nav class="mobile-nav" aria-label="Main (mobile)"><button aria-current="page">Drafts</button><button>New invoice</button><button>Sign out</button></nav></div>
+<div id="app-login" hidden><div class="sandbox-banner" role="note" aria-label="PayPal Sandbox notice"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div><div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span></div></header>
+<main id="main-content-login" tabindex="-1"><section aria-labelledby="login-title"><div class="login-wrap"><div class="card login-card"><div class="login-head"><div class="brand-mark" aria-hidden="true">N</div><h1 class="screen-title" id="login-title">Operator sign in</h1><p class="subtitle">Single-operator console for the PayPal Sandbox demo</p></div>
+<div class="notice notice-warn" role="status"><span class="notice-icon" aria-hidden="true">!</span><div><strong>Your session has expired.</strong> Sign in again to continue. Unsaved edits are not kept by the server.</div></div>
+<form onsubmit="return false"><div class="field"><label for="u">Username <span class="req" aria-hidden="true">*</span></label><input class="input" id="u" autocomplete="username"></div><div class="field"><label for="p">Password <span class="req" aria-hidden="true">*</span></label><input class="input" id="p" type="password" autocomplete="current-password"></div><button class="btn btn-primary" type="submit">Sign in</button></form>
+</div></div></section></main></div>
+</div>
+<script>
+/* Review harness only: #state=default|loading|empty|error|unavailable|session-expired  #cur=USD|EUR|JPY  #theme=dark  #clean=1 */
+(function(){
+  var h={};location.hash.replace(/^#/,'').split('&').forEach(function(p){var kv=p.split('=');if(kv[0])h[kv[0]]=kv[1]||'1'});
+  var st=h.state||'default',cur=h.cur||'USD';
+  if(h.theme==='dark')document.documentElement.setAttribute('data-theme','dark');
+  if(h.clean)document.body.classList.add('clean');
+  var login=st==='session-expired';
+  document.getElementById('app-authed').hidden=login;
+  document.getElementById('app-login').hidden=!login;
+  if(!login){document.querySelectorAll('.state-page').forEach(function(el){
+    var ok=el.getAttribute('data-state')===st&&(st!=='default'||el.getAttribute('data-cur')===cur);
+    el.hidden=!ok;});}
+})();
+</script>
+</body>
+</html>
