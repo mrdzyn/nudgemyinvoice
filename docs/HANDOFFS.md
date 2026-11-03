@@ -1872,4 +1872,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** A4 harness, test and docs only; no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
 
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-START
+
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; contract `docs/NMI-PROTOTYPE-10D-A5-AG-STUDIO-PLAN.md`.
+- **From / to:** A5 product/architecture kickoff → independent design/licence review and bounded A5-I1 implementation planning.
+- **Base / branch:** `main@653c44451efc1c59b8a805382dc5b44d57fc7790`; `docs/nmi-prototype-10d-a5-studio-contract`.
+- **State:** documentation only, not an AG Studio installed/integrated claim; owner-provided trial expiry **2026-12-16**, license string not copied or committed. Studio published EULA trial-use wording requires vendor written confirmation before external judges/public access despite marketing's production-evaluation statement.
+- **Design:** retain current AG Grid Community 36.2 dashboard as default; optional view-only Studio aggregate chart area is proposed only, subject to owner visual approval. No new standalone paid Enterprise widgets or AG Studio AI.
+- **Safety:** no package, dependency, app code, browser licence, PayPal/OpenAI, owner DB, provider usage, Render resource/deployment, merge or judge URL. A4 local-only simulated READY and hosted NOT AUTHORIZED remain.
+- **Next:** independent scope/licence review; owner approves Studio screen/layout, then separately bounded A5-I1 local-only implementation Draft PR; test before claim of Studio integration.
+
 <!-- HANDOFF_ENTRIES_END -->
