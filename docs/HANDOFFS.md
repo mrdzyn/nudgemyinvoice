@@ -1832,4 +1832,44 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** exact Sandbox allowlist unchanged; reconciliation remains read-only; create remains fenced and at most once. `PAYPAL_DRAFTS_ENABLED=false`; one-create authorization exhausted.
 - **Next:** run both required hosted workflows on the final PR SHA, confirm PR #35 remains Draft, and stop for independent exact-HEAD re-audit. No provider, migration, deployment, or merge.
 
+
+## Handoff: NMI-PROTOTYPE-10D-A4-START
+
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; evidence: `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`.
+- **From / to:** orchestrator kickoff → A4 QA/implementation agent.
+- **Base / branch:** `main@588717a7b04cae185da2ad12995346943fe27d02`; `docs/nmi-prototype-10d-a4-readiness` (one Draft PR).
+- **Objective:** verify the current A2+A3-FIX1 integrated **SIMULATED** judge experience from a clean clone, isolated disposable PostgreSQL and zero-provider fake launcher; refresh accurate demo runbook/submission blockers and Nov 7 hosting decision matrix.
+- **Current state:** task/evidence template prepared, **NO A4 tests executed or PASS evidence claimed**. Previous R0/A2 tests are historical evidence only.
+- **Security:** production `PAYPAL_DRAFTS_ENABLED=false` remains; fake evaluation may enable the feature only with fake adapters in the separate local test launcher. No real PayPal/OpenAI, MCP, owner DB, migrations on existing data, Render, deployment, merge, bills or judge URL sharing.
+- **Next:** run objective-based local synthetic rehearsal, capture exact-SHA evidence and cleanup, update runbook/checklist, run required CI on final Draft PR HEAD and stop for independent audit.
+
+## Handoff: NMI-PROTOTYPE-10D-A4-REHEARSAL-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; Draft [#36](https://github.com/mrdzyn/nudgemyinvoice/pull/36); evidence `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`.
+- **From / to:** A4 implementation/QA → independent exact-HEAD auditor.
+- **Tested commit:** `8c084d7` (clean clone, new disposable PostgreSQL 16, no egress). Later commits change docs/evidence only.
+- **Observed:** `pnpm validate` pass; `pnpm test:db` 340/340; A4 harness 112/112; judge-runbook Mode A commands re-run verbatim and torn down; old R0 script 29/32 (three stale pre-A2 assertions, not fixed, out of scope). A3-FIX1 covered offline only; live PayPal search NOT TESTED.
+- **Verdicts:** LOCAL READY (headless/emulated only); HOSTED NOT AUTHORIZED.
+- **Not run:** physical device, Safari, Firefox, VoiceOver/NVDA, Mode B, Docker, Render, AG Studio licensing, backup restore, Devpost/video.
+- **Safety:** no provider call, owner DB, migration on existing data, Render, deploy or merge. Gates A/B/C stay NOT AUTHORIZED; one-create budget exhausted.
+- **Next:** run both hosted workflows on the final PR HEAD (run IDs on the PR), keep Draft, independent audit, then owner merge decision.
+
+## Handoff: NMI-PROTOTYPE-10D-A4-MINOR1-REMEDIATION-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; existing Draft [#36](https://github.com/mrdzyn/nudgemyinvoice/pull/36).
+- **From / to:** MINOR-1 remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `1550894105ea6967af1d4ded194b1d77ad902ad2`.
+- **Change:** test-only harness cleanup is single-flight on exception, rejection, SIGINT and SIGTERM (children, then PostgreSQL, then data deletion; nonzero exit). New `test-cleanup-injection.mjs` 29/29; unmodified rehearsal re-run 112/112. Task status updated to the observed 112/112 and 340/340 results.
+- **Safety:** no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
+- **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
+
+## Handoff: NMI-PROTOTYPE-10D-A4-MINOR1-REMEDIATION-02
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; existing Draft [#36](https://github.com/mrdzyn/nudgemyinvoice/pull/36).
+- **From / to:** residual-MINOR remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `d6d0e83c3512dc24b216db18ef28f7e17b5854ac`.
+- **Change:** test-only harness deletes its private PostgreSQL data directory only after shutdown is confirmed (pid no longer alive), in both the async cleanup and the `exit` fallback; otherwise it warns, preserves the directory and exits nonzero. New deterministic PG-shutdown-failure negative test; injection suite 37/37 (prior 29 unchanged); unmodified rehearsal 112/112.
+- **Safety:** A4 harness, test and docs only; no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
+- **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
+
 <!-- HANDOFF_ENTRIES_END -->

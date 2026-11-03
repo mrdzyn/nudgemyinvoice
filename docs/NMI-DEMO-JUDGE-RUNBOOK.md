@@ -1,6 +1,6 @@
 # NudgeMyInvoice — Judge runbook
 
-> **What was tested.** The **Mode A (simulated) path with a local PostgreSQL** was executed from a **clean clone** on macOS (Node 24.21.0, pnpm 10.28.0, PostgreSQL 16.15, headless Chrome) during NMI-DEMO-R0 and worked. **Not tested:** **Mode B** (your own real OpenAI/PayPal credentials: never run), the **Docker** database option, and any non-macOS platform. Those parts are instructions only. No private credentials, passwords or undisclosed setup are needed.
+> **What was tested.** The **Mode A (simulated) path with a local PostgreSQL** was re-executed in NMI-PROTOTYPE-10D-A4 (2026-11-03) from a **clean clone** on macOS (Node 24.21.0, pnpm 10.28.0, PostgreSQL 16.15, headless Chrome, 390px emulated): the commands in §3–§7 and §11 were run verbatim, and the automated A4 check in §9 passed 112/112 (evidence: `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`). **Not tested:** **Mode B** (your own real OpenAI/PayPal credentials: never run), the **Docker** database option, any non-macOS platform, a physical phone, Safari/Firefox and screen readers (VoiceOver/NVDA), and any hosted deployment. Those parts are instructions only. No private credentials, passwords or undisclosed setup are needed.
 
 NudgeMyInvoice is a **PayPal Sandbox-only** hackathon app: a freelancer describes an invoice in plain language, reviews and edits the proposal, saves it to PostgreSQL, sees it on a dashboard, and can *explicitly* confirm creation of a PayPal Sandbox **DRAFT** invoice. It never sends an invoice, collects a payment or contacts the customer.
 
@@ -157,6 +157,8 @@ Open **http://localhost:5173** (use exactly this origin; it must equal `WEB_ORIG
 6. **Sandbox DRAFT:** open a saved invoice → *Create PayPal Sandbox draft…* → read the confirmation (exact invoice, customer, currency, server-computed total; the customer is **not** emailed, no payment is collected, nothing is sent) → confirm. The page shows the validated DRAFT id and re-reads the saved state.
 7. **Status verification:** *Check status* only re-reads the server record. The dashboard shows "PayPal draft created" for that invoice.
 
+8. **Analytics (full population, not just the visible page):** the cards above the grid total every invoice that matches the current filters, one card per currency in that currency's own units (never summed across currencies, no FX). Try the currency pills, the PayPal-status filter, search, and a date range (days are the operator's local days; a range is at most 366 days and the start must not be after the end). Cards stay equal to the database totals after loading more rows. If the summary request fails you get an error with *Retry*; a request that takes over 15 s shows "The request took too long."
+
 Not implemented (by design): sending invoices, collecting payments, automatic reminders, payment webhooks, multi-user accounts.
 
 ## 9. Automated check (optional)
@@ -165,8 +167,10 @@ Reproduces steps 1–8 headlessly against a disposable database with both provid
 
 ```bash
 pnpm --filter @nmi/web build
-node design/evidence/NMI-DEMO-R0/run-e2e-journey.mjs     # expects: 32/32 passed
+node design/evidence/NMI-PROTOTYPE-10D-A4/run-a4-rehearsal.mjs     # expects: 112/112 passed
 ```
+
+The A4 script creates its own private PostgreSQL 16 cluster (needs `initdb` on PATH, macOS `sandbox-exec`, Google Chrome), seeds 66 synthetic invoices, compares the dashboard and analytics with independent SQL, and removes everything afterwards. Ports 3164, 4164, 9364 and 54364 must be free. The older `design/evidence/NMI-DEMO-R0/run-e2e-journey.mjs` predates the analytics dashboard and now reports 29/32 (three stale assertions, not application defects); use the A4 script instead.
 
 Other checks: `pnpm validate` (lint, format, typecheck, tests, build, bundle scan). PostgreSQL integration tests need a disposable database whose name starts with `nmi_test`: `TEST_DATABASE_URL=postgres://nmi@127.0.0.1:54370/nmi_test pnpm test:db` (create that database first).
 
