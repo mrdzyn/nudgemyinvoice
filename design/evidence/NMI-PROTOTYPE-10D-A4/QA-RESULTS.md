@@ -53,6 +53,14 @@ The invoice-search contract enforcement is covered offline by `packages/paypal` 
 | SECURITY | PASS (local scope) | Item 3 and 7; no hosted/HTTPS/secret-store review |
 | RELEASE | NOT DONE | Draft PR; independent audit, owner merge decision and Devpost submission/public video pending |
 
+## MINOR-1 remediation: harness cleanup (observed)
+
+The audit found that an unexpected exception, rejected promise or SIGINT/SIGTERM could leave child processes or PostgreSQL running, or delete the data directory under a live server. `run-a4-rehearsal.mjs` now handles `uncaughtException`, `unhandledRejection`, SIGINT and SIGTERM with one single-flight cleanup: stop every child process group (SIGTERM, then SIGKILL), stop PostgreSQL (`pg_ctl -m immediate -w stop`, SIGKILL fallback), then delete the temp data and Chrome profile; exit codes 1 / 1 / 130 / 143. The normal path is unchanged.
+
+- New [test-cleanup-injection.mjs](test-cleanup-injection.mjs) runs the real harness with a test-only `A4_INJECT_FAILURE` hook (inert unless set) for throw, reject, sigint and sigterm after the full stack is up. Observed **29/29**: expected nonzero exit code and abort message, 50+ checks had passed before injection, no listener on 3164/4164/9364/54364, no orphaned process, no `nmi-a4-*`/`nmi-qa-a4-*` directory, `qa-results.json` untouched.
+- The unmodified success path was re-run after the change: **112/112, exit 0**, no leftovers. The committed `qa-results.json` and screenshots above remain the original run at `8c084d7`.
+- The injection test needs macOS `sandbox-exec`, PG16 binaries and Chrome, so it is local evidence and is not part of hosted CI.
+
 ## Pending gates
 
 - Host CI at final A4 HEAD (Project Baseline and Stack): see PR #36 and the handoff for run IDs.

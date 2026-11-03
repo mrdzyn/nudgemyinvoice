@@ -1854,4 +1854,13 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no provider call, owner DB, migration on existing data, Render, deploy or merge. Gates A/B/C stay NOT AUTHORIZED; one-create budget exhausted.
 - **Next:** run both hosted workflows on the final PR HEAD (run IDs on the PR), keep Draft, independent audit, then owner merge decision.
 
+## Handoff: NMI-PROTOTYPE-10D-A4-MINOR1-REMEDIATION-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; existing Draft [#36](https://github.com/mrdzyn/nudgemyinvoice/pull/36).
+- **From / to:** MINOR-1 remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `1550894105ea6967af1d4ded194b1d77ad902ad2`.
+- **Change:** test-only harness cleanup is single-flight on exception, rejection, SIGINT and SIGTERM (children, then PostgreSQL, then data deletion; nonzero exit). New `test-cleanup-injection.mjs` 29/29; unmodified rehearsal re-run 112/112. Task status updated to the observed 112/112 and 340/340 results.
+- **Safety:** no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
+- **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
+
 <!-- HANDOFF_ENTRIES_END -->

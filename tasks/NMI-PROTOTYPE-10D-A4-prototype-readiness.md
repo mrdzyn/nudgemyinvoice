@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A4 — Local Prototype Readiness and Judge Rehearsal
 
-- **Status:** STARTED — task contract / evidence template only. **NO A4 rehearsal or tests have been executed yet.**
+- **Status:** REHEARSAL EXECUTED (2026-11-03) — local verdict READY (headless/emulated only), hosted NOT AUTHORIZED. Observed: A4 harness 112/112, `pnpm validate` pass, `pnpm test:db` 340/340, runbook Mode A re-run verbatim. MINOR-1 remediation: harness cleanup hardened and covered by a 29/29 failure-injection test. Awaiting hosted CI and independent exact-HEAD re-audit. Evidence: `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`.
 - **Starting base:** `main@588717a7b04cae185da2ad12995346943fe27d02` (A3-FIX1 PR #35 owner-approved squash merge).
 - **Branch / PR:** `docs/nmi-prototype-10d-a4-readiness` / one Draft PR, never self-merge.
 - **Mode:** offline, synthetic-only readiness verification and documentation. The **existing approved NMI-UI-01B design**, AG Grid Community 36.2.0 and A2 backend/dashboard are the release baseline; no AG Studio licensing or product design approval is implied.

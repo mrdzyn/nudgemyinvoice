@@ -53,17 +53,47 @@ if (!existsSync(join(root, "apps/web/dist/index.html"))) throw new Error("Run `p
 
 const work = mkdtempSync(join(tmpdir(), "nmi-a4-"));
 const children = [];
-let cleaned = false;
-const cleanup = async () => {
-  if (cleaned) return;
-  cleaned = true;
-  for (const c of children) { try { process.kill(-c.pid, "SIGTERM"); } catch { try { c.kill("SIGTERM"); } catch {} } }
-  await sleep(500);
-  spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "stop"], { stdio: "ignore" });
-  await sleep(300);
-  rmSync(work, { recursive: true, force: true });
+const extraDirs = [];
+const groupAlive = (pid) => { try { process.kill(-pid, 0); return true; } catch { return false; } };
+const killGroup = (c, sig) => { try { process.kill(-c.pid, sig); } catch { try { c.kill(sig); } catch {} } };
+/* Single-flight: every path (normal end, exception, rejection, SIGINT/SIGTERM) shares ONE cleanup run.
+   Order matters: stop every child (own process group) first, stop PostgreSQL second, delete data last. */
+let cleanupRun = null;
+const cleanup = () => (cleanupRun ??= (async () => {
+  for (const c of children) killGroup(c, "SIGTERM");
+  for (let i = 0; i < 50 && children.some((c) => groupAlive(c.pid)); i++) await sleep(100);
+  for (const c of children) if (groupAlive(c.pid)) killGroup(c, "SIGKILL");
+  const pidFile = join(work, "pg", "postmaster.pid");
+  if (existsSync(pidFile)) {
+    spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "-w", "stop"], { stdio: "ignore" });
+    if (existsSync(pidFile)) {
+      const pgPid = Number(readFileSync(pidFile, "utf8").split("\n")[0]);
+      if (Number.isInteger(pgPid) && pgPid > 1) { try { process.kill(pgPid, "SIGKILL"); } catch {} }
+      await sleep(300);
+    }
+  }
+  for (const d of [work, ...extraDirs]) rmSync(d, { recursive: true, force: true });
+})());
+/* Abnormal ends: print the reason, clean up once, then exit nonzero (130/143 for SIGINT/SIGTERM). */
+let exiting = false;
+const abort = (why, code) => {
+  if (exiting) return;
+  exiting = true;
+  console.error(`\nA4 rehearsal aborted: ${why}`);
+  const hard = setTimeout(() => process.exit(code), 30000);
+  hard.unref();
+  cleanup().catch((e) => console.error("cleanup failed:", e)).finally(() => process.exit(code));
 };
-process.on("exit", () => { try { rmSync(work, { recursive: true, force: true }); } catch {} });
+process.on("uncaughtException", (e) => abort(e?.stack ?? String(e), 1));
+process.on("unhandledRejection", (e) => abort(e?.stack ?? String(e), 1));
+process.on("SIGINT", () => abort("SIGINT", 130));
+process.on("SIGTERM", () => abort("SIGTERM", 143));
+/* Last-resort synchronous fallback (e.g. process.exit elsewhere): never delete data under a live server. */
+process.on("exit", () => {
+  for (const c of children) killGroup(c, "SIGKILL");
+  if (existsSync(join(work, "pg", "postmaster.pid"))) spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "-w", "stop"], { stdio: "ignore" });
+  try { for (const d of [work, ...extraDirs]) rmSync(d, { recursive: true, force: true }); } catch {}
+});
 
 const run = (cmd, args, opts = {}) => {
   const r = spawnSync(cmd, args, { encoding: "utf8", ...opts, env: { LC_ALL: "en_US.UTF-8", ...(opts.env ?? process.env) } });
@@ -335,11 +365,20 @@ check("auth", "logout revokes the server session: the SAME cookie is rejected af
 
 /* ---------------------------------------------------------------- browser (CDP) */
 const profile = mkdtempSync(join(tmpdir(), "nmi-qa-a4-"));
-const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${DEBUG_PORT}`, `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-background-networking", "--hide-scrollbars", "about:blank"], { stdio: "ignore" });
+extraDirs.push(profile);
+const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${DEBUG_PORT}`, `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-background-networking", "--hide-scrollbars", "about:blank"], { stdio: "ignore", detached: true });
 children.push(chrome);
 let version;
 for (let i = 0; i < 100; i++) { try { const r = await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/version`); if (r.ok) { version = await r.json(); break; } } catch {} await sleep(150); }
 if (!version) throw new Error("Chrome did not start");
+/* Test-only failure injection (see test-cleanup-injection.mjs): fires once every resource exists. Inert unless set. */
+if (process.env.A4_INJECT_FAILURE) {
+  const mode = process.env.A4_INJECT_FAILURE;
+  if (mode === "throw") throw new Error("injected failure (throw)");
+  if (mode === "reject") { Promise.reject(new Error("injected failure (rejection)")); await sleep(60000); }
+  if (mode === "sigint") { process.kill(process.pid, "SIGINT"); await sleep(60000); }
+  if (mode === "sigterm") { process.kill(process.pid, "SIGTERM"); await sleep(60000); }
+}
 const targetInfo = await (await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/new?about:blank`, { method: "PUT" })).json();
 const ws = new WebSocket(targetInfo.webSocketDebuggerUrl);
 await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
@@ -643,6 +682,5 @@ writeFileSync(join(here, "qa-results.json"), JSON.stringify({ task: "NMI-PROTOTY
 console.log(`\n${results.length - failed}/${results.length} passed`);
 try { if (ws.readyState === WebSocket.OPEN) ws.close(); } catch {}
 await cleanup();
-rmSync(profile, { recursive: true, force: true });
 info.cleanup = !existsSync(work);
 process.exit(failed ? 1 : 0);
