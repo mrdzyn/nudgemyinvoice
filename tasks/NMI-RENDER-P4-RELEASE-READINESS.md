@@ -1,0 +1,33 @@
+# NMI-RENDER-P4 — Judge-hosted Release Readiness (PREPARE ONLY)
+
+**State:** KICKOFF only; no implementation beyond planning/task/handoff in this commit. **Not deployed.**
+**Approved base:** `main@e314bef381c66b4233576683c7f53dd248f58a86` after owner-approved and independently audited A5-I1 PR #38 squash merge.
+**Branch:** `feat/nmi-render-p4-release-readiness`; **PR:** Draft, separate from Render budget Draft PR #39.
+**UI design gate:** Not applicable for deployment-only checks; existing approved UI retained. New UI or major security behavior requires its own design/authorization.
+**Owner spending decision:** **up to USD $25 Render credits for NudgeMyInvoice hosting through 2026-12-15** (2026-11-04). This is a budget ceiling, **not** explicit resource creation, first deployment, judge access, or acceptance of unverified billing/security.
+**Current licensing:** real AG Studio is **local Vite dev-only**, default OFF; the **production build must exclude Studio and license entirely**. No Studio key is to be transferred to Render. Public Studio/judge rights are NOT VERIFIED, trial ends 2026-12-16.
+**Planning dependency:** `docs/nmi-render-p3-budget-25` / Draft PR #39 is still awaiting independent audit and owner merge. Do not rebase, merge, or treat its historical Free-tier selection as operative without explicit owner decision. Its proposed Mrdzyn Hobby + Starter web + Basic PG16 plan and $25 ceilings are planning parameters, not actual Render quote.
+
+## Objective
+
+Bring the existing **Community-only, provider-disabled** NMI release path to a precise, independently auditable **READY FOR OWNER HOSTING APPROVAL** state without provisioning anything. Reuse the already merged P1 hosting system, P2 security/runbook and P3 budget proposal. Do not duplicate or silently weaken existing defenses.
+
+## Work plan
+
+1. Read `AGENTS.md`, `docs/STATUS.md`, `config/project-profile.json`, this task, active handoff, `docs/TESTING.md`, `docs/SECURITY.md`, P1/P2 Render runbooks/evidence, and relevant hosting/auth/source/test files only. Read Draft PR #39's proposed P3 budget plan via connected GitHub if available. Do not consume `docs/PROJECT-MEMORY.md`.
+2. **Verify a fresh release candidate** at a pinned audited source SHA rather than the October `652cf702…` P2 historical release SHA. Design the exact `release/nmi-render-judges-2026` branch mechanism, auto-deploy OFF, branch source check, initial-build/first-deployment risks, fail-closed `WEB_ORIGIN` and rollback proof. **Do not create the release branch in this phase.**
+3. Confirm the production Community-only build contains no AG Studio packages, trial key, local `/__nmi_dev/studio-licence` endpoint, dev-only Studio assets, synthetic app code, or unreviewed toggles. Recheck `pnpm build`, `pnpm check:bundle` and negative controls as needed. Production server must serve static assets and same-origin `/api`/`health`; implement **only bounded release-blocking repairs** with focused tests, not new product behavior.
+4. Run existing **no-egress**, private PostgreSQL 16 (disposable), simulated-provider, real-process hosting tests as appropriate to verify: HTTPS origins, __Host cookie flags, CSRF, one-hop `TRUST_PROXY=1`/spoof-resistance, exact-URL logging privacy, POST-body search, Content-Security-Policy, HSTS, response headers, operator ownership and least-privilege runtime role, owner-only migrations and backup/restore, safe rate limiting. No owner data, provider credentials or live provider calls.
+5. Create a **Render preflight/release readiness checklist** and redacted env-var **names-only** deployment matrix: `NODE_ENV=production`, `HOST=0.0.0.0`, Render-supplied PORT, verified HTTPS `WEB_ORIGIN`, `TRUST_PROXY=1` only after proof, runtime least-privilege `DATABASE_URL`, secret stored separately, `PAYPAL_DRAFTS_ENABLED=false`, `PAYPAL_ENV=sandbox`, no provider API keys, no local trial key. Source region Singapore if actually available; plan one Starter web + paid Basic 256 MB PG16 with initial 1 GB, Mrdzyn Hobby.
+6. **Do not silently waive Hobby Pro-only request-log evidence gap.** Document what can and cannot be verified without Pro native logs; propose a bounded, independently testable alternative privacy evidence contract, with explicit residual-risk disclosure requiring owner acceptance before judge URL sharing. No claim that synthetic data alone waives ingress log checks. No Pro upgrade without separate authority.
+7. Cost/schedule: manual checkout/billing balance/credit applicability confirmation before create; estimated base ~$13/month is **not** a quote or hard cap. No agent should create billable resources or auto deploy on branch changes. Plan cost checkpoints and teardown/recovery after judging, with deletion requiring separate explicit owner approval.
+8. Produce evidence in `docs/NMI-RENDER-P4-RELEASE-READINESS.md`, update task/STATUS/one active handoff. Run objective-focused tests/validation and mandatory Project Baseline + Stack CI at the final exact PR SHA. Stop for independent exact-HEAD security/hosting audit.
+
+## Acceptance / exclusions
+
+- The result explicitly states **READY FOR OWNER HOSTING APPROVAL** or **BLOCKED**, with evidence and precise unresolved gates. Never call preparation a completed Render deployment.
+- No Render API create/modify/trigger/deploy/suspend/delete, no workspace upgrade, no actual billable action, no checkout or payment, no production database or public judge URL.
+- No release branch creation/merge, no code built from arbitrary HEAD, no auto-deploy/Blueprint/PR preview.
+- No AG Studio key/environment variable on Render; public build is AG Grid Community only. No real PayPal, OpenAI or other external provider calls.
+- No modifications to `docs/PROJECT-MEMORY.md` or unrelated product features. Do not merge PR #39 or this PR without a separate owner decision.
+- Permission to spend **up to $25** does not override security, independent audit, exact-sha, first-deploy and judge-sharing human approvals.

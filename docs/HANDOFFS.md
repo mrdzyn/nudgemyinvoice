@@ -1955,4 +1955,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Tests:** new `StudioFallback.test.tsx` (4, happy-dom, licensed loader and licence fetch stubbed): outer-chunk rejection, healthy control, huge fixture with tab switching, single-currency all-huge. Control: the 4 fail on the pre-fix code (the file also needs the new `StudioSlotWith` export, so MINOR-2 failure there is partly structural). `pnpm validate` passed (1101 tests). The 96-check browser matrix was NOT rerun (changes do not touch its proven behaviours); no browser run of the outer-chunk failure was added.
 - **Unchanged:** design, analytics API, licence bridge, build guard. No provider call, owner DB, Render, deploy or merge.
 
+
+## Handoff: NMI-RENDER-P4-START-01
+
+- **From / to:** independent A5-I1 PASS + owner squash merge of PR #38 → Render release-readiness implementation agent.
+- **Base:** `main@e314bef381c66b4233576683c7f53dd248f58a86`; branch `feat/nmi-render-p4-release-readiness`; task `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`.
+- **What is authorized:** READ, design/run local offline preflight evidence, bounded hosting-related repairs with tests, documentation. **NOT authorized:** Render resource creation, first deploy, release branch creation, spend/overage acceptance, judge sharing, key distribution, providers or PR merge.
+- **Cost:** owner approved **$25 max of Render credit budget** through 2026-12-15; P3 budget Draft PR #39 remains open, not audited/merged. Do not treat published $7 web + $6 DB as a confirmed account quote; no automatic hard cap.
+- **Hosting route:** existing Fastify same-origin static/API, secure cookie, exact-origin CSRF, single operator, manual PG16 migration/operator role. Assess the unresolved Hobby native HTTP request-log evidence gap; prepare explicit alternative risk proposal instead of silently waiving.
+- **Studio:** AG Studio 3.0.0 now merged in **dev-only/off-by-default** mode. Production build must contain **no AG Studio code/key**, Render remains Community-only until separate written provider external-use approval.
+- **Next:** implement and validate release-readiness evidence on this Draft PR, both hosted CI checks, stop for independent exact-HEAD hosting/security audit and subsequent owner decisions.
+
 <!-- HANDOFF_ENTRIES_END -->
