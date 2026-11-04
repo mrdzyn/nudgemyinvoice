@@ -1955,6 +1955,7 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Tests:** new `StudioFallback.test.tsx` (4, happy-dom, licensed loader and licence fetch stubbed): outer-chunk rejection, healthy control, huge fixture with tab switching, single-currency all-huge. Control: the 4 fail on the pre-fix code (the file also needs the new `StudioSlotWith` export, so MINOR-2 failure there is partly structural). `pnpm validate` passed (1101 tests). The 96-check browser matrix was NOT rerun (changes do not touch its proven behaviours); no browser run of the outer-chunk failure was added.
 - **Unchanged:** design, analytics API, licence bridge, build guard. No provider call, owner DB, Render, deploy or merge.
 
+
 ## Handoff: NMI-RENDER-P3-25-BUDGET-APPROVAL-PREP
 
 - **From / to:** owner $25 credit approval → Render P3 documentation/pricing/security preflight (separate from A5-I1 implementation).
@@ -1973,5 +1974,33 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Not changed:** the $25-through-2026-12-15 approval (a ceiling only), all code, dependencies and infrastructure. Docs-only diff. No Render action, release branch, deploy, provider call, merge or secret access.
 - **Pointer caveat:** STATUS Active task/handoff point to this P3 work while #39 is open; when PR #40 merges, restore its `NMI-RENDER-P4-FIX1-01` pointers.
 - **Next:** hosted CI at the final head, independent re-audit, owner merge decision.
+
+## Handoff: NMI-RENDER-P4-START-01
+
+- **From / to:** independent A5-I1 PASS + owner squash merge of PR #38 → Render release-readiness implementation agent.
+- **Base:** `main@e314bef381c66b4233576683c7f53dd248f58a86`; branch `feat/nmi-render-p4-release-readiness`; task `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`.
+- **What is authorized:** READ, design/run local offline preflight evidence, bounded hosting-related repairs with tests, documentation. **NOT authorized:** Render resource creation, first deploy, release branch creation, spend/overage acceptance, judge sharing, key distribution, providers or PR merge.
+- **Cost:** owner approved **$25 max of Render credit budget** through 2026-12-15; P3 budget Draft PR #39 remains open, not audited/merged. Do not treat published $7 web + $6 DB as a confirmed account quote; no automatic hard cap.
+- **Hosting route:** existing Fastify same-origin static/API, secure cookie, exact-origin CSRF, single operator, manual PG16 migration/operator role. Assess the unresolved Hobby native HTTP request-log evidence gap; prepare explicit alternative risk proposal instead of silently waiving.
+- **Studio:** AG Studio 3.0.0 now merged in **dev-only/off-by-default** mode. Production build must contain **no AG Studio code/key**, Render remains Community-only until separate written provider external-use approval.
+- **Next:** implement and validate release-readiness evidence on this Draft PR, both hosted CI checks, stop for independent exact-HEAD hosting/security audit and subsequent owner decisions.
+
+## Handoff: NMI-RENDER-P4-IMPL-01
+
+- **Task / PR:** `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`; Draft [#40](https://github.com/mrdzyn/nudgemyinvoice/pull/40). **From / to:** implementation → independent exact-HEAD hosting/security auditor. **Starting SHA:** `e7b50f418817e84a8522618f3fbbb9a0758d3a5b`.
+- **Verdict:** READY FOR OWNER HOSTING APPROVAL, conditional on owner gates G1–G8 (`docs/NMI-RENDER-P4-RELEASE-READINESS.md` §10). Nothing created or deployed.
+- **Evidence:** Community-only build verified plus negative control (flag + fake key → byte-identical bundle); `pnpm test:db` on PG16.15: 340 passed; P1 hosted real-Chrome harness re-run as adapted copy 26/26; backup/restore drill 26/26 (non-superuser owner, restore, least-privilege and audit immutability preserved, corrupted-dump control, confirmed-shutdown cleanup).
+- **Code change (only):** `release-preflight` CLI (`apps/api/src/release-preflight.ts`, `cli/release-preflight.ts`, package script) with 42 tests: env matrix (provider-disabled, never prints values) and exact-SHA source controls. No app behaviour changed.
+- **For the auditor to judge:** Hobby request-log alternative contract and residual risk (§6, gate G5); Studio packages being downloaded by Render's build (§3, G7); `loadConfig` does not itself reject provider keys in production (preflight is the control).
+- **Not done:** Render API/UI, release branch, merge of #39/#40, provider calls, Safari/Firefox/device/AT QA, restore on Render's managed service.
+
+## Handoff: NMI-RENDER-P4-FIX1-01
+
+- **Task / PR:** `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`; Draft [#40](https://github.com/mrdzyn/nudgemyinvoice/pull/40). **From / to:** implementation → independent focused re-audit. **Starting SHA:** `ddac9155d0210bd93f7cb503b6734e5838f18a5e`.
+- **MAJOR-1 fixed:** `release-preflight source` now reads the CURRENT `main` and `release/nmi-render-judges-2026` tips with `git ls-remote --exit-code` (never local tracking refs); the release branch is mandatory (no `--release-ref`); remote failure/incomplete answer fails closed; ancestry is judged against the fresh main tip (missing object ⇒ fail). 
+- **MINOR-1 fixed:** every git call is anchored to `git rev-parse --show-toplevel`, so the lockfile check targets the root `pnpm-lock.yaml` from `apps/api`; a failed `git status` no longer looks clean. P4 browser JSON `generatedBy` corrected.
+- **Tests:** 53 in `release-preflight.test.ts` (11 new CLI/remote cases) against a disposable bare remote: pinned pass (root and apps/api cwd), stale tracking ref fails after the remote moves, stale main ancestry fails until fetched, absent/unknown branch and unreachable remote fail, HEAD mismatch / dirty / off-main each fail, tampered root lockfile fails from apps/api. Full browser/DB drills not rerun (unchanged code paths).
+- **Scope held:** no Render, release branch, deploy, provider call, key handling, budget change or merge during the original P4-FIX1 implementation.
+- **P3-to-P4 reconciliation (2026-11-04):** P3 PR #39 was independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. A non-force two-parent merge on this existing Draft P4 branch brings the **complete P3 budget docs, P2 historical preface, and both P3 handoffs** forward while preserving all P4 code/tests/evidence and the P4 active task/`NMI-RENDER-P4-FIX1-01` pointer. All G1–G8 persist; G3 (P3 audit/merge) is complete, but G1/G4/G5/G6/G7 and G2's P4 merge remain open. No release branch, Render action or first deployment; re-run exact-head hosted checks and request independent merge-specific audit.
 
 <!-- HANDOFF_ENTRIES_END -->
