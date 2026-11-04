@@ -29,7 +29,14 @@ const FORBIDDEN: [string, RegExp, string[]?][] = [
   [
     "fetch outside the auth transport",
     /\bfetch\s*\(/,
-    ["src/auth/api.ts", "src/parse/api.ts", "src/invoices/api.ts", "src/followups/api.ts"],
+    [
+      "src/auth/api.ts",
+      "src/parse/api.ts",
+      "src/invoices/api.ts",
+      "src/followups/api.ts",
+      // A5-I1: dev-server-only licence fetch; unreachable in production (see the AG Studio boundaries below).
+      "src/features/studio/studioLicence.ts",
+    ],
   ],
   ["XMLHttpRequest", /XMLHttpRequest/],
   ["WebSocket/EventSource", /\bWebSocket\b|\bEventSource\b/],
@@ -65,6 +72,7 @@ describe("UI shell boundaries", () => {
     const hits = files.filter((f) => /\bfetch\s*\(/.test(read(f))).map((f) => relative(webRoot, f));
     expect(hits.sort()).toEqual([
       "src/auth/api.ts",
+      "src/features/studio/studioLicence.ts",
       "src/followups/api.ts",
       "src/invoices/api.ts",
       "src/parse/api.ts",
@@ -188,26 +196,36 @@ describe("UI shell boundaries", () => {
     expect(users).toEqual(["src/App.tsx"]);
   });
 
-  it("adds no runtime dependency beyond React and the two AG Grid Community packages (no AG Studio, Enterprise, router, state manager, icon or font package)", () => {
+  it("adds no runtime dependency beyond React, AG Grid Community and the two A5-I1 AG Studio packages (no router, state manager, icon, font, AI or charts package)", () => {
     const pkg = JSON.parse(readFileSync(join(webRoot, "package.json"), "utf8")) as {
       dependencies: Record<string, string>;
     };
     expect(Object.keys(pkg.dependencies).sort()).toEqual([
       "ag-grid-community",
       "ag-grid-react",
+      "ag-studio",
+      "ag-studio-react",
       "react",
       "react-dom",
     ]);
-    // Exact pins, never a range: the licensed-for-free Community build is what was verified.
+    // Exact pins, never a range. Community is what the default dashboard uses; the Studio pair (A5-I1) is
+    // reachable only through the dev-gated slot (see the AG Studio boundaries below).
     expect(pkg.dependencies["ag-grid-community"]).toMatch(/^\d+\.\d+\.\d+$/);
     expect(pkg.dependencies["ag-grid-react"]).toBe(pkg.dependencies["ag-grid-community"]);
+    expect(pkg.dependencies["ag-studio"]).toBe("3.0.0");
+    expect(pkg.dependencies["ag-studio-react"]).toBe("3.0.0");
   });
 
-  it("uses AG Grid Community only: no Enterprise, Studio or license-key code, and only the grid file imports it", () => {
-    const all = files.map(read).join("\n");
+  it("uses AG Grid Community only outside the dev-gated Studio folder: no Enterprise, Studio or license-key code, and only the grid file imports it", () => {
+    const outside = files.filter((f) => !relative(webRoot, f).startsWith("src/features/studio/"));
+    const all = outside.map(read).join("\n");
     expect(all).not.toMatch(/ag-grid-enterprise|ag-grid-charts|ag-studio|@ag-grid-enterprise/i);
     expect(all).not.toMatch(/LicenseManager|setLicenseKey|licenseKey/);
-    const importers = files.filter((f) => /from "ag-grid-|import "ag-grid-/.test(read(f)));
+    // No licence-manager API anywhere, including the Studio folder (the key only ever flows via the provider prop).
+    expect(files.map(read).join("\n")).not.toMatch(
+      /LicenseManager|setLicenseKey|AgStudioLicenseManager/,
+    );
+    const importers = outside.filter((f) => /from "ag-grid-|import "ag-grid-/.test(read(f)));
     expect(importers.map((f) => f.split("/").pop()).sort()).toEqual(["InvoiceGrid.tsx"]);
   });
 
@@ -233,5 +251,63 @@ describe("UI shell boundaries", () => {
     expect(vite).toContain("default-src 'none'");
     expect(vite).not.toMatch(/style-src[^"]*unsafe-inline/);
     expect(vite).not.toMatch(/script-src[^"]*unsafe/);
+  });
+
+  describe("AG Studio (A5-I1, local development only)", () => {
+    const code = (text: string) =>
+      text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    const studioDir = join(root, "features/studio");
+    const studioFiles = sources(studioDir).map((f) => relative(webRoot, f));
+    const vite = readFileSync(join(webRoot, "vite.config.ts"), "utf8");
+    const bridge = readFileSync(join(webRoot, "vite.studio-dev.ts"), "utf8");
+
+    it("only StudioCharts imports the licensed packages as values; everything else is type-only", () => {
+      const valueImport = /^import\s+(?!type\b)[^;]*from\s+["'](ag-studio|ag-studio-react)["']/m;
+      const hits = files.filter((f) => valueImport.test(read(f))).map((f) => relative(webRoot, f));
+      expect(hits).toEqual(["src/features/studio/StudioCharts.tsx"]);
+      expect(read(join(root, "features/studio/studioReport.ts"))).toMatch(
+        /import type \{[^}]*\} from "ag-studio"/,
+      );
+    });
+
+    it("the dashboard reaches Studio only through the dev-gated slot, never statically", () => {
+      const dash = read(join(root, "features/dashboard/RealDashboard.tsx"));
+      expect(dash).toContain('from "../studio/StudioSlot.js"');
+      expect(dash).not.toMatch(/StudioPanel|StudioCharts|studioLoader|ag-studio/);
+      const slot = read(join(root, "features/studio/StudioSlot.tsx"));
+      expect(slot).toContain("import.meta.env.DEV");
+      expect(slot).toContain("VITE_NMI_STUDIO_LOCAL");
+      expect(code(slot).match(/import\("\.\/StudioPanel\.js"\)/g)).toHaveLength(1);
+      expect(slot).not.toMatch(/^import .* from "\.\/Studio(Panel|Charts)\.js"/m);
+      const loader = code(read(join(root, "features/studio/studioLoader.ts")));
+      expect(loader.match(/(?<!typeof )import\("\.\/StudioCharts\.js"\)/g)).toHaveLength(1);
+    });
+
+    it("the licence key is referenced only by the dev bridge: never in app source, never defined into a bundle", () => {
+      for (const f of files) expect(read(f), f).not.toMatch(/AG_STUDIO_LICENSE_KEY/);
+      expect(vite).not.toMatch(/\bdefine\s*:|envPrefix|loadEnv\([^)]*,\s*["']["']/);
+      expect(bridge).toContain('apply: "serve"');
+      expect(code(bridge)).not.toMatch(/\btransform\b|\bload\s*\(|\bdefine\b|process\.env/);
+      expect(vite).toContain("studioBuildGuard()");
+    });
+
+    it("the licence fetch targets only the dev bridge route and never stores or logs the key", () => {
+      const lic = read(join(root, "features/studio/studioLicence.ts"));
+      expect([...lic.matchAll(/fetch\(\s*["']([^"']+)["']/g)].map((m) => m[1])).toEqual([
+        "/__nmi_dev/studio-licence",
+      ]);
+      for (const f of studioFiles) {
+        const src = readFileSync(join(webRoot, f), "utf8");
+        expect(src, f).not.toMatch(/console\.|localStorage|sessionStorage|document\.cookie/);
+      }
+    });
+
+    it("Studio receives no customer-facing fields", () => {
+      for (const f of ["studioModel.ts", "studioReport.ts", "StudioCharts.tsx"]) {
+        expect(code(read(join(studioDir, f))), f).not.toMatch(
+          /customer|email|invoiceId|operator|paypalInvoice|csrf|authToken|accessToken|sessionToken|bearer/i,
+        );
+      }
+    });
   });
 });
