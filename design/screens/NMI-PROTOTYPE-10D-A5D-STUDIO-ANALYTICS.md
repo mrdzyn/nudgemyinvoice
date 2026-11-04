@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A5-D — Studio Analytics screen specification (DESIGN ONLY)
 
-**Status: PROPOSED — awaiting owner visual approval. Nothing here is implemented.**
+**Status: OWNER DESIGN DIRECTION APPROVED — 2026-11-04 (Asia/Manila); implementation NOT STARTED.** Owner accepted the six design choices with the reviewed refinements: weekly plotted buckets after 90 days, mobile charts collapsed by default, truthful Studio label/attribution, and tooltip displayed only after user interaction. The **existing 19 preview PNGs and generated HTML still show the original proposal** (expanded mobile, daily bars, initially visible desktop tooltip) and **must be regenerated and reviewed before A5-D is called final**. No AG Studio package or license is installed.
 AG Studio is **not installed**, no licence key is used, no application behavior, dependency, schema or deployment changes. All data in the previews is **synthetic** (seeded generator, `example.test` addresses).
 
 - Task / plan: `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`, `docs/NMI-PROTOTYPE-10D-A5-AG-STUDIO-PLAN.md`
@@ -64,7 +64,7 @@ Source: `AnalyticsSummary` from the existing endpoint (A2). Fields used: `curren
 - When the global currency pill is not "All currencies", the selector is not rendered and the chart is fixed to that currency.
 - Marks: vertical bars, token `--action-bg`; baseline at zero; 4-5 horizontal gridlines at round steps; y labels compact ("$2K", "¥60K"), tooltip/data table exact. Days with no invoices show no bar.
 - Tooltip (hover, focus, tap): "Oct 27, 2026 / $2,037.43 · 7 invoices". Never shows customer data. No click action in v1.
-- Peak line under the chart: "Peak day: … Ranges up to 366 days are allowed by the API; see open decision Q4 for long ranges."
+- Peak line under a daily chart: "Peak day: …". **Owner-approved density rule:** show local-day bars at ranges of **90 calendar days or fewer**; when the selected range exceeds 90 local calendar days, display **weekly buckets** grouped by the operator's local week (Monday start; partial boundary weeks retained). Aggregate each currency separately from the original day buckets using exact integer-minor-unit arithmetic, with no floating-point monetary sums. The **accessible table must preserve the original daily rows and exact formatted values regardless of chart density**. Verify edge cases across IANA time zones and DST; never change the authoritative cards or API request window.
 - **Data-table alternative** (always present, native `<details>`): "View {CUR} data as a table", columns Day / Invoices / Total ({CUR}). This is the accessible equivalent regardless of Studio's own accessibility.
 
 ### 5.2 PayPal Sandbox draft status (C2)
@@ -76,7 +76,7 @@ Source: `AnalyticsSummary` from the existing endpoint (A2). Fields used: `curren
 
 ### 5.3 Panel chrome
 
-- Heading `h2` "Activity analytics"; badge "Studio · view only" (existing `badge-info`); "Hide charts / Show charts" button (`aria-expanded`, controls the panel body). The expanded/collapsed choice is **not persisted** (no browser storage); default expanded.
+- Heading `h2` "Activity analytics"; neutral badge "Studio · view only" **only if the actual Studio panel is active**, never in a Community fallback or mock facade; "Hide charts / Show charts" button (`aria-expanded`, controls the panel body). The expanded/collapsed choice is **not persisted** (no browser storage); default **expanded at >=768px and collapsed at <=767px** (including the 390px reference). Display the panel heading and "Show charts" control even when collapsed. Do not conceal vendor-required attribution.
 - C3 reserved strip: a 24-32 px dashed slot is drawn only in review previews. In the product it exists only if A5-I1 finds that Studio renders a vendor attribution/evaluation watermark; the design must not hide or cover it.
 
 ## 6. Filters (shared, single source)
@@ -98,7 +98,7 @@ A change in filters never leaves a chart for the previous filters on screen: pan
 | --- | --- |
 | ≥ 1024 px | Two columns inside the panel: chart (≈ 64%) and status (≈ 36%). Currency cards in a row. |
 | 768-1023 px | Panel columns stack (chart, then status). Everything else as today. |
-| ≤ 767 px (390 px reference) | Single column. Chart-currency selector is full width, 44 px targets. A mobile chart variant (narrower plot, x labels every 7 days, compact y labels) keeps text ≥ 11 px at 390 px. Status legend becomes one column. Cards one per row. Existing bottom nav and Nudgey button unchanged; the table scrolls horizontally inside its card as today. |
+| ≤ 767 px (390 px reference) | Panel **collapsed by default** with a full-width, accessible "Show charts" action; once expanded, single-column contents. Chart-currency selector has 44 px targets; plot labels are sparse (more sparse for weekly mode), text >= 11 px. Status legend becomes one column. Cards one per row. Existing bottom nav and Nudgey button remain; verify the separate known Nudgey/Load more overlap. Table scrolls only inside its card as today. |
 
 Previews show **no page-level horizontal overflow** at 390, 820 and 1280 px (measured by the capture script).
 
@@ -106,7 +106,7 @@ Previews show **no page-level horizontal overflow** at 390, 820 and 1280 px (mea
 
 | State | Panel | Rest of page | Preview |
 | --- | --- | --- | --- |
-| Default | Chart + status | Cards, table | 01, 02, 03, 11, 12, 13 |
+| Default | Desktop/tablet: chart + status expanded. Mobile <=767px: heading and "Show charts" button only until expanded. | Cards, table | **01–03 remain representative desktop; 11–13 must be regenerated for collapsed default.** |
 | Loading | Skeleton blocks, `aria-busy="true"`, visually hidden `role="status"` "Loading analytics" | Existing card and table skeletons | 05, 15 |
 | Empty (no invoices match) | **Not rendered** | Existing "No invoices match these filters" + "Create an invoice"; table not shown | 06, 16 |
 | Analytics error (offline, timeout, unavailable, malformed, forbidden, rejected) | **Not rendered** | Existing `role="alert"` "Could not load full-population totals. … No loaded-row estimate is substituted." + Retry; table independent | 07, 17 |
@@ -118,7 +118,7 @@ Previews show **no page-level horizontal overflow** at 390, 820 and 1280 px (mea
 
 ## 9. Keyboard and accessibility
 
-- Order: filters → currency cards (non-interactive) → panel heading → Hide/Show button → chart-currency tabs → chart (one focus stop, `role="img"` with an `aria-label`/description of range and peak) → "View as table" disclosure → status rows (each bar `role="img"` with all four counts in its label) → table.
+- Order when **expanded**: filters → currency cards (non-interactive) → panel heading → Hide/Show button → chart-currency tabs → chart (one focus stop, `role="img"` with an `aria-label`/description of range and peak) → "View as table" disclosure → status rows (each bar `role="img"` with all four counts in its label) → table. On mobile's initial **collapsed** view, hidden panel controls are removed from the tab sequence; the native Show charts button expands and announces `aria-expanded=true` without unexpected focus loss.
 - Tabs: arrow keys move and select, Home/End jump, roving `tabindex`; selection is announced (`aria-selected`). Hide/Show and the disclosure are native buttons/`details`.
 - Visible focus ring: existing `--focus` token on every control. Targets ≥ 44 px on mobile (tabs, buttons).
 - Not color-only: state badges carry icon + text; chart values available in the table; tooltips are also reachable by focus.
@@ -137,18 +137,22 @@ Previews show **no page-level horizontal overflow** at 390, 820 and 1280 px (mea
 
 AG Studio rendering, chrome, theming API and accessibility; vendor watermark/attribution; licence behavior; performance and bundle cost; real data scale (366-day ranges); physical device, Safari/Firefox and assistive-technology behavior. Previews are static, headless Chrome, synthetic data.
 
-## 12. Decisions requested from the owner
+## 12. Owner-approved design decisions (2026-11-04, Asia/Manila)
+
+**Approval given in conversation after review of PR #37's proposals and the independent design-review recommendations** ([PR review](https://github.com/mrdzyn/nudgemyinvoice/pull/37#issuecomment-6620932029)). This authorizes the **design direction** and preparation of a separate A5-I1 local-only implementation contract; it is **not** authorization to install/use the private trial key, publish a licensed Studio bundle, deploy, incur costs or merge any PR. Before merging A5-D, reconcile generated HTML and PNG previews with the decisions below, including no idle tooltip and mobile default collapse; re-run design checks and both hosted CI workflows.
+
+### Recorded answers
 
 | # | Decision | Recommendation |
 | --- | --- | --- |
-| Q1 | Placement: panel between cards and table (as drawn) vs right rail vs a "Charts" tab beside the table | Between cards and table: full width for the chart, no table width loss, one scroll column on mobile |
-| Q2 | Multi-currency chart: one currency at a time with a selector (as drawn) vs stacked small multiples (one chart per currency) | Selector: constant height regardless of currency count (the API supports 6+ currencies) |
-| Q3 | Interaction: pure view-only (as drawn) vs click-a-bar to set the date range | View-only now; click-to-filter is a later, separately designed change |
-| Q4 | Long ranges (> ~90 days): keep daily bars with sparse labels, or aggregate to weeks client-side | Keep daily in I1; decide weekly aggregation with real data |
-| Q5 | Panel default on mobile: expanded (as drawn) vs collapsed | Expanded; the Hide charts button covers the rest |
-| Q6 | Approve the "Studio · view only" badge and a visible vendor-attribution slot if Studio requires one | Approve |
+| Q1 | Placement | **APPROVED:** full-width Activity analytics panel between authoritative currency cards and Community invoice table; no other layout changes. |
+| Q2 | Multi-currency chart | **APPROVED:** one currency at a time, view-only selector, never changes global filters; no multi-currency axis. |
+| Q3 | Interaction | **APPROVED:** view-only for A5-I1; no click-to-filter, edit, save, export, AI agent or new persistence. |
+| Q4 | Long ranges (>90 local calendar days) | **APPROVED: weekly plotted bars after 90 days**, local Monday week boundaries, exact per-currency sums. Retain day-level table; if vendor capability blocks exact weekly behavior, log a separate design exception and request owner sign-off instead of silently omitting it. |
+| Q5 | Panel default on mobile <=767px | **APPROVED: collapsed by default**, Show charts button; expanded on desktop/tablet; no persistence. Preview regeneration is required. |
+| Q6 | Studio badge and vendor attribution | **APPROVED** when actual Studio is active; never conceal vendor watermark. In fallback mode, use truthful "Charts unavailable" wording without Studio-active badge. |
 
-Approving this design authorizes **only** a separately scoped A5-I1 local implementation task. It does not authorize installing a licensed package, using the licence key, hosting Studio, Render, a judge URL or a merge.
+Owner approval authorizes a separately scoped A5-I1 **local implementation task after final design-preview reconciliation and review**. It does **not** authorize use of the private licence key, hosting Studio, Render, a judge URL or a merge. **Implementation priority:** show tooltips only on hover/focus/tap, not initially; track Nudgey/Load-more occlusion and dark calendar icon contrast as separate existing-dashboard QA, not an unreviewed A5 scope expansion.
 
 ## 13. Previews index
 

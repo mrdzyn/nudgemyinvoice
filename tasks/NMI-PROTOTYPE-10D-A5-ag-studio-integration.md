@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A5 — AG Studio 3.0 Local Integration and Licence Gate
 
-**State:** A5-D **design proposal delivered for owner visual approval** (`design/screens/NMI-PROTOTYPE-10D-A5D-STUDIO-ANALYTICS.md`, mockup and 19 previews; synthetic data, design only; A5-I1 NOT started). A5 planning/design gate initiated; **no AG Studio package or license key installed in the repository yet**. Draft PR is documentation only. Owner confirms trial expiry **December 16, 2026**; actual hosted-judge entitlement remains **UNVERIFIED**.
+**State:** A5-D **owner approved design direction on 2026-11-04** (Q1–Q6 with weekly plotted bars >90 days, mobile default collapsed, truthful badge and interaction-only tooltip). **Preview/mockup regeneration and independent final design review pending** before A5-D completion. (`design/screens/NMI-PROTOTYPE-10D-A5D-STUDIO-ANALYTICS.md`, mockup and 19 original previews; synthetic data, design only; A5-I1 NOT started). A5 planning/design gate initiated; **no AG Studio package or license key installed in the repository yet**. Draft PR is documentation only. Owner confirms trial expiry **December 16, 2026**; actual hosted-judge entitlement remains **UNVERIFIED**.
 
 **Base:** `main@653c44451efc1c59b8a805382dc5b44d57fc7790`, including independently audited/owner-merged A4 simulated-local READY evidence.
 

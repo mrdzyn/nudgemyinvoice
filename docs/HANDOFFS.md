@@ -1893,4 +1893,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no package, dependency, application, schema, licence-key, provider, owner-DB, Render, deploy or merge change. Synthetic data only.
 - **Next:** owner decides Q1-Q6 in the spec and approves or requests changes. Only after approval, a separately scoped A5-I1 local implementation Draft PR. Both hosted workflows on the final head of this PR.
 
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-OWNER-APPROVAL-01
+
+- **Task/PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** owner-approved A5-D visual direction (2026-11-04, Asia/Manila) → Design/UX agent to align generated mockup/previews, independent exact-HEAD review, then separately authorized A5-I1 local-only implementation.
+- **Owner-approved decisions:** Activity analytics between KPI cards and Community table; single-currency chart selector that does not change filters; view-only; daily <=90 local calendar days / weekly plotted buckets >90 days with exact per-currency minor units and complete daily table; **mobile <=767px collapsed by default**, desktop/tablet expanded; Studio badge only when truly active and vendor attribution never hidden. Idle tooltip should not appear until hover/focus/tap.
+- **Preview debt:** all 19 initial PNG previews and source mockup are from pre-approval proposal (mobile initially expanded, daily-only, idle tooltip); **not final** until regenerated/reviewed. Keep examples synthetic and licensed AG Studio uninstalled in this design PR.
+- **Separate existing-dashboard QA:** 390px Nudgey overlay partly obscures Load more; dark-mode date input calendar icon contrast must be measured. Do not silently modify application scope here.
+- **Boundaries:** no key handling/installation/AG Studio code, dependency, provider calls, owner database, Render, public judge access, deployment or merge approval. Trial expiry 2026-12-16; external judge licensing rights remain UNVERIFIED.
+- **Next:** update HTML generator, mockup, 390px previews and captions, run local design validation and both hosted CI, request independent exact-HEAD design audit, then obtain separate owner squash-merge decision for PR #37.
+
 <!-- HANDOFF_ENTRIES_END -->
