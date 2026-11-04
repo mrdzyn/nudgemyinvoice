@@ -13,6 +13,7 @@ vi.mock("../studio/StudioSlot.js", () => ({
       Activity analytics
     </section>
   ),
+  StudioSlotPlaceholder: () => <div data-testid="studio-placeholder" />,
 }));
 
 const usd: ListItem = {
@@ -49,7 +50,11 @@ const data: AnalyticsSummary = {
   days: [],
 };
 
-function view(filters: DashState["filters"], summary: AnalyticsSummary = data) {
+function view(
+  filters: DashState["filters"],
+  summary: AnalyticsSummary = data,
+  over: Partial<DashState> = {},
+) {
   const state: DashState = {
     ...initialDash,
     ready: true,
@@ -58,6 +63,7 @@ function view(filters: DashState["filters"], summary: AnalyticsSummary = data) {
     filters,
     analyticsStatus: "loaded",
     analytics: summary,
+    ...over,
   };
   return renderToString(
     <RealDashboardView
@@ -98,6 +104,26 @@ describe("NMI UI analytics-first layout", () => {
     expect(html).toContain('data-chart-currency="EUR"');
     expect(html).toMatch(/aria-pressed="true"[^>]*>EUR<\/button>/);
     expect(html).toContain("Full matching operator-owned EUR total");
-    expect(html).not.toContain("Full matching operator-owned USD total");
+  });
+
+  it("under All currencies the chart gets ALL and every currency keeps its own separate card", () => {
+    const html = view(NO_FILTERS);
+    expect(html).toContain('data-chart-currency="ALL"');
+    expect(html).toContain("Full matching operator-owned USD total");
+    expect(html).toContain("Full matching operator-owned EUR total");
+    expect(html.match(/class="currency-card"/g)).toHaveLength(2);
+  });
+
+  it("while analytics reloads after a filter change, the chart space is reserved above the card skeletons", () => {
+    const html = view({ ...NO_FILTERS, currency: "EUR" }, data, {
+      analyticsStatus: "loading",
+      analytics: null,
+    });
+    const filter = html.indexOf('aria-label="Filter by currency"');
+    const placeholder = html.indexOf('data-testid="studio-placeholder"');
+    const skeletons = html.indexOf('aria-label="Loading full-population totals"');
+    expect(html).not.toContain('id="studio-panel"');
+    expect(placeholder).toBeGreaterThan(filter);
+    expect(skeletons).toBeGreaterThan(placeholder);
   });
 });

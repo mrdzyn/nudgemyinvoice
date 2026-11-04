@@ -18,3 +18,11 @@
 - Add a deterministic view-level test for reading-order: global pills → chart → cards → grid and a selected EUR pill flowing through StudioSlot props.
 - Existing `useDashboard` tests cover one filter epoch and joint backend queries; existing Studio QA proves independent per-currency totals. Run smallest targeted tests, required Project Baseline and Stack CI at final exact HEAD. A physical authenticated desktop/mobile visual QA remains **owner acceptance**; do not claim a new screenshot without creating it.
 - No merge/deploy/publish until explicit owner approval.
+
+## Review refinements (REV1, 2026-11-04)
+Low-risk refinements inside the owner's stated direction and the approved A5 panel design, so no separate visual-approval round is needed. The owner still does the authenticated visual QA:
+- **Spacing defect:** the Studio card sat flush on the currency cards, which have no top margin. A `.studio-slot` wrapper in `app.css` adds the gap (in app.css so the fallback is spaced even when the Studio chunk never loads).
+- **Layout jump:** every filter change clears analytics, so the panel at the top unmounted and the cards/grid jumped up and back. `StudioSlotPlaceholder` reserves the space while analytics reloads. It shows no figures, is `aria-hidden`, shows only the header on narrow screens, and renders nothing when Studio is disabled (production unchanged).
+- **Copy:** duplicated "below … below" fixed. The visible note required by this contract now explains that under All currencies the chart tabs only switch the drawn currency, and the filter above filters totals and invoices.
+- **Tests:** the tautological "no USD total" assertion was replaced with All-currencies separate-card, reload-placeholder order, tabs-note and placeholder-disabled tests.
+- **Local QA (simulated providers, synthetic data, key withheld for screenshots):** the A5-I1 harness ran 95/96. Its single FAIL is the A5-I1 assertion that the panel sits between cards and grid, which this task deliberately changes. Screenshots were reviewed locally and not committed; the A5-I1 evidence files were restored unchanged.

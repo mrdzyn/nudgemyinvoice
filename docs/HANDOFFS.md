@@ -2012,4 +2012,12 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Boundaries:** No AI/PayPal or Render calls, license-key access, DB/schema modification, public Studio enablement, merge, deployment or billing change.
 - **Next:** await mandatory CI, request independent code-focused audit, then owner authenticated screenshot QA before any squash merge.
 
+## Handoff: NMI-UI-ANALYTICS-FIRST-01-REV1
+
+- **From / to:** review-and-improve of Draft PR #41 at `be9bf347` → independent exact-HEAD review and owner visual QA.
+- **Changes:** panel/card spacing defect fixed (`.studio-slot`), reload placeholder prevents layout jump, duplicated copy fixed, visible chart-tabs note added, tests strengthened. Details are in the task's REV1 section.
+- **Evidence:** targeted web tests passed; local A5-I1 harness ran 95/96, with the one expected FAIL being the superseded old-order assertion; desktop and 390px screenshots reviewed (not committed).
+- **Boundaries:** dev-only Studio and production Community-only unchanged; no API/DB/dependency/provider/Render/merge change. G7 stays unresolved.
+- **Next:** hosted CI at the final head, independent review, owner signed-in visual QA.
+
 <!-- HANDOFF_ENTRIES_END -->
