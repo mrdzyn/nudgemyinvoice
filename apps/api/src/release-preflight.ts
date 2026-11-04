@@ -119,19 +119,27 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   return out;
 }
 
+/** The one designated release branch. A deployment-ready PASS requires it; there is no optional or alternative ref. */
+export const RELEASE_BRANCH = "release/nmi-render-judges-2026";
+
 export interface SourceInput {
   expectedSha: string;
   headSha: string;
   /** `git status --porcelain` output (empty when clean). */
   porcelain: string;
-  /** Whether `expectedSha` is reachable from `origin/main` (audited and merged). */
-  onMain: boolean;
-  /** Tip of the release branch ref when one is supplied (e.g. origin/release/nmi-render-judges-2026). */
-  releaseTipSha?: string | undefined;
-  /** Which release ref was inspected, for the report. */
-  releaseRef?: string | undefined;
-  /** SHA of `pnpm-lock.yaml`-tracked state is verified by --frozen-lockfile at build; here: lockfile unchanged vs HEAD. */
+  /** pnpm-lock.yaml (REPOSITORY ROOT) is unchanged from HEAD. */
   lockfileClean: boolean;
+  /**
+   * True only when the AUTHORITATIVE remote (`git ls-remote`, not a local tracking ref) answered successfully and
+   * listed exactly one `refs/heads/main` and one `refs/heads/<RELEASE_BRANCH>`. Any failure is false (fail closed).
+   */
+  remoteVerified: boolean;
+  /** Tip of `refs/heads/main` on the authoritative remote, if verified. */
+  remoteMainTip?: string | undefined;
+  /** Tip of the release branch on the authoritative remote, if verified. */
+  remoteReleaseTip?: string | undefined;
+  /** Expected SHA is an ancestor of (or equal to) `remoteMainTip`, computed against that fresh tip. */
+  onMain: boolean;
 }
 
 const SHA = /^[0-9a-f]{40}$/;
@@ -157,19 +165,23 @@ export function checkReleaseSource(i: SourceInput): Finding[] {
   add(
     "src.lockfile-clean",
     i.lockfileClean,
-    "pnpm-lock.yaml must be unchanged from the approved commit",
+    "The repository-root pnpm-lock.yaml must be unchanged from the approved commit",
+  );
+  add(
+    "src.remote-verified",
+    i.remoteVerified && SHA.test(i.remoteMainTip ?? "") && SHA.test(i.remoteReleaseTip ?? ""),
+    `The authoritative remote (git ls-remote, not local tracking refs) must list refs/heads/main and refs/heads/${RELEASE_BRANCH}; an unreachable, unauthenticated or incomplete answer fails closed`,
   );
   add(
     "src.on-main",
-    i.onMain,
-    "The approved SHA must be an ancestor of (or equal to) origin/main, i.e. audited and owner-merged",
+    i.remoteVerified && i.onMain,
+    "The approved SHA must be an ancestor of (or equal to) the CURRENT remote main tip, i.e. audited and owner-merged",
   );
-  if (i.releaseRef !== undefined)
-    add(
-      "src.release-branch-tip-equals-expected",
-      !!i.releaseTipSha && i.releaseTipSha === i.expectedSha,
-      `${i.releaseRef} must point exactly at the approved SHA (a later push to it must not be built or deployed)`,
-    );
+  add(
+    "src.release-branch-tip-equals-expected",
+    i.remoteVerified && SHA.test(i.expectedSha) && i.remoteReleaseTip === i.expectedSha,
+    `The CURRENT remote ${RELEASE_BRANCH} tip must equal the approved SHA (a missing branch or a later push must not pass)`,
+  );
   return out;
 }
 

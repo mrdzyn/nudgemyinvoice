@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,7 @@ import {
   checkReleaseEnv,
   checkReleaseSource,
   isPublicHttpsOrigin,
+  RELEASE_BRANCH,
   type SourceInput,
 } from "./release-preflight.js";
 
@@ -142,8 +143,11 @@ const okSrc: SourceInput = {
   expectedSha: sha,
   headSha: sha,
   porcelain: "",
-  onMain: true,
   lockfileClean: true,
+  remoteVerified: true,
+  remoteMainTip: sha,
+  remoteReleaseTip: sha,
+  onMain: true,
 };
 const failingSrc = (patch: Partial<SourceInput>) =>
   checkReleaseSource({ ...okSrc, ...patch })
@@ -151,11 +155,8 @@ const failingSrc = (patch: Partial<SourceInput>) =>
     .map((f) => f.id);
 
 describe("release source controls (pure)", () => {
-  it("passes for an audited, merged, clean checkout at the exact SHA", () => {
+  it("passes only with a verified remote, the release branch at the SHA, a clean tree and main ancestry", () => {
     expect(allOk(checkReleaseSource(okSrc))).toBe(true);
-    expect(
-      allOk(checkReleaseSource({ ...okSrc, releaseRef: "origin/release/x", releaseTipSha: sha })),
-    ).toBe(true);
   });
   it.each([
     ["short sha", { expectedSha: "abc1234", headSha: "abc1234" }, "src.expected-is-full-sha"],
@@ -168,70 +169,228 @@ describe("release source controls (pure)", () => {
     ["dirty tree", { porcelain: " M apps/api/src/app.ts" }, "src.worktree-clean"],
     ["untracked file", { porcelain: "?? .env.local" }, "src.worktree-clean"],
     ["lockfile changed", { lockfileClean: false }, "src.lockfile-clean"],
+    ["remote unverified", { remoteVerified: false }, "src.remote-verified"],
+    ["remote unverified cannot pass ancestry", { remoteVerified: false }, "src.on-main"],
+    [
+      "remote unverified cannot pass the release tip",
+      { remoteVerified: false },
+      "src.release-branch-tip-equals-expected",
+    ],
     ["not on main", { onMain: false }, "src.on-main"],
     [
       "release tip moved",
-      { releaseRef: "origin/release/x", releaseTipSha: "c".repeat(40) },
+      { remoteReleaseTip: "c".repeat(40) },
       "src.release-branch-tip-equals-expected",
     ],
     [
-      "release ref missing",
-      { releaseRef: "origin/release/x", releaseTipSha: "" },
+      "release branch absent",
+      { remoteReleaseTip: undefined },
       "src.release-branch-tip-equals-expected",
+    ],
+    [
+      "release branch absent (verified flag lies)",
+      { remoteReleaseTip: undefined },
+      "src.remote-verified",
     ],
   ] as const)("fails closed: %s", (_n, patch, id) => {
     expect(failingSrc(patch as Partial<SourceInput>)).toContain(id);
   });
+  it("has no optional path around the release branch (the input type requires remote proof)", () => {
+    const { remoteVerified: _drop, ...rest } = okSrc;
+    void _drop;
+    expect(allOk(checkReleaseSource(rest as unknown as SourceInput))).toBe(false);
+  });
 });
 
-describe("release-preflight CLI against a real throwaway git repository", () => {
+describe("release-preflight CLI against a disposable Git remote", () => {
   const cli = fileURLToPath(new URL("./cli/release-preflight.ts", import.meta.url));
   const apiDir = fileURLToPath(new URL("..", import.meta.url));
+  const tsx = join(apiDir, "node_modules/.bin/tsx");
   const git = (cwd: string, ...a: string[]) =>
     execFileSync("git", a, { cwd, encoding: "utf8" }).trim();
   const run = (cwd: string, args: string[], env: Record<string, string> = {}) =>
-    spawnSync(join(apiDir, "node_modules/.bin/tsx"), [cli, ...args], {
+    spawnSync(tsx, [cli, ...args], {
       cwd,
       encoding: "utf8",
       env: { PATH: process.env["PATH"] ?? "", HOME: tmpdir(), ...env },
     });
+  const ids = (out: string, verdict: "PASS" | "FAIL") =>
+    out
+      .split("\n")
+      .filter((l) => l.startsWith(`${verdict}  `))
+      .map((l) => l.split(" ")[2]);
 
-  it("source mode: PASS at the merged SHA; FAIL when dirty, behind a moved release tip, or not on main", () => {
-    const dir = mkdtempSync(join(tmpdir(), "nmi-p4-git-"));
+  interface Fixture {
+    base: string;
+    remote: string;
+    clone: string; // working checkout (deployer) with apps/api inside
+    other: string; // second clone used to move the remote
+    one: string;
+    cleanup: () => void;
+  }
+  /** bare remote with main and (optionally) the release branch both at commit `one`; clone at one. */
+  function fixture(withRelease = true): Fixture {
+    const base = mkdtempSync(join(tmpdir(), "nmi-p4-remote-"));
+    const remote = join(base, "remote.git");
+    const seed = join(base, "seed");
+    const clone = join(base, "clone");
+    const other = join(base, "other");
+    git(base, "init", "-q", "--bare", "-b", "main", remote);
+    git(base, "init", "-q", "-b", "main", seed);
+    for (const d of [seed]) {
+      git(d, "config", "user.email", "t@example.invalid");
+      git(d, "config", "user.name", "t");
+    }
+    mkdirSync(join(seed, "apps/api"), { recursive: true });
+    writeFileSync(join(seed, "pnpm-lock.yaml"), "lock\n");
+    writeFileSync(join(seed, "apps/api/keep.txt"), "k\n");
+    git(seed, "add", "-A");
+    git(seed, "commit", "-q", "-m", "one");
+    const one = git(seed, "rev-parse", "HEAD");
+    git(seed, "remote", "add", "origin", remote);
+    git(seed, "push", "-q", "origin", "main");
+    if (withRelease) git(seed, "push", "-q", "origin", `main:refs/heads/${RELEASE_BRANCH}`);
+    for (const d of [clone, other]) {
+      git(base, "clone", "-q", remote, d);
+      git(d, "config", "user.email", "t@example.invalid");
+      git(d, "config", "user.name", "t");
+    }
+    return {
+      base,
+      remote,
+      clone,
+      other,
+      one,
+      cleanup: () => rmSync(base, { recursive: true, force: true }),
+    };
+  }
+  const commitIn = (dir: string, file: string) => {
+    writeFileSync(join(dir, file), file);
+    git(dir, "add", "-A");
+    git(dir, "commit", "-q", "-m", file);
+    return git(dir, "rev-parse", "HEAD");
+  };
+
+  it("a correctly pinned release passes, from the repo root and from apps/api (pnpm --filter cwd)", () => {
+    const f = fixture();
     try {
-      git(dir, "init", "-q", "-b", "main");
-      git(dir, "config", "user.email", "t@example.invalid");
-      git(dir, "config", "user.name", "t");
-      writeFileSync(join(dir, "pnpm-lock.yaml"), "lock\n");
-      git(dir, "add", "-A");
-      git(dir, "commit", "-q", "-m", "one");
-      const one = git(dir, "rev-parse", "HEAD");
-      git(dir, "update-ref", "refs/remotes/origin/main", one);
-      git(dir, "update-ref", "refs/remotes/origin/release/r", one);
-      const pass = run(dir, ["source", "--expect", one, "--release-ref", "origin/release/r"]);
-      expect(pass.stdout).toContain("RESULT: PASS");
-      expect(pass.status).toBe(0);
-
-      writeFileSync(join(dir, "stray.txt"), "x");
-      const dirty = run(dir, ["source", "--expect", one]);
-      expect(dirty.status).toBe(1);
-      expect(dirty.stdout).toContain("FAIL  src.worktree-clean");
-      rmSync(join(dir, "stray.txt"));
-
-      writeFileSync(join(dir, "f.txt"), "2");
-      git(dir, "add", "-A");
-      git(dir, "commit", "-q", "-m", "two");
-      const two = git(dir, "rev-parse", "HEAD");
-      const unmerged = run(dir, ["source", "--expect", two]);
-      expect(unmerged.stdout).toContain("FAIL  src.on-main");
-      git(dir, "update-ref", "refs/remotes/origin/release/r", one);
-      const moved = run(dir, ["source", "--expect", two, "--release-ref", "origin/release/r"]);
-      expect(moved.stdout).toContain("FAIL  src.release-branch-tip-equals-expected");
-      expect(run(dir, ["source", "--expect", one]).stdout).toContain(
-        "FAIL  src.head-equals-expected",
-      );
+      for (const cwd of [f.clone, join(f.clone, "apps/api")]) {
+        const r = run(cwd, ["source", "--expect", f.one]);
+        expect(r.stdout).toContain("RESULT: PASS");
+        expect(r.status).toBe(0);
+        expect(ids(r.stdout, "FAIL")).toEqual([]);
+      }
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      f.cleanup();
+    }
+  });
+
+  it("a stale remote-tracking ref cannot pass after the remote release branch moves", () => {
+    const f = fixture();
+    try {
+      const moved = commitIn(f.other, "later.txt");
+      git(f.other, "push", "-q", "origin", `HEAD:refs/heads/${RELEASE_BRANCH}`);
+      // Precondition (the audit's reproduction): the deployer's cached ref still says `one`.
+      expect(git(f.clone, "rev-parse", `origin/${RELEASE_BRANCH}`)).toBe(f.one);
+      expect(git(f.clone, "ls-remote", "origin", `refs/heads/${RELEASE_BRANCH}`)).toContain(moved);
+      const r = run(f.clone, ["source", "--expect", f.one]);
+      expect(r.status).toBe(1);
+      expect(ids(r.stdout, "FAIL")).toContain("src.release-branch-tip-equals-expected");
+      expect(r.stdout).not.toContain("RESULT: PASS");
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("a stale local origin/main cannot vouch for ancestry once the remote main moved without a fetch", () => {
+    const f = fixture();
+    try {
+      commitIn(f.other, "main2.txt");
+      git(f.other, "push", "-q", "origin", "main");
+      const r = run(f.clone, ["source", "--expect", f.one]);
+      // The fresh main tip's commit is not in the deployer's object store: unverifiable, so fail closed.
+      expect(ids(r.stdout, "FAIL")).toContain("src.on-main");
+      git(f.clone, "fetch", "-q", "origin");
+      expect(run(f.clone, ["source", "--expect", f.one]).stdout).toContain("RESULT: PASS");
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("an absent release branch fails, and there is no flag that makes it optional", () => {
+    const f = fixture(false);
+    try {
+      for (const extra of [[], ["--release-ref", "origin/main"], ["--release-ref", "none"]]) {
+        const r = run(f.clone, ["source", "--expect", f.one, ...extra]);
+        expect(r.status).toBe(1);
+        expect(ids(r.stdout, "FAIL")).toEqual(
+          expect.arrayContaining(["src.remote-verified", "src.release-branch-tip-equals-expected"]),
+        );
+      }
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("an unreachable or unknown remote fails closed", () => {
+    const f = fixture();
+    try {
+      const r = run(f.clone, ["source", "--expect", f.one, "--remote", "no-such-remote"]);
+      expect(r.status).toBe(1);
+      expect(ids(r.stdout, "FAIL")).toContain("src.remote-verified");
+      git(f.clone, "remote", "set-url", "origin", join(f.base, "gone.git"));
+      expect(run(f.clone, ["source", "--expect", f.one]).status).toBe(1);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("HEAD mismatch, a dirty tree and missing main ancestry each still fail", () => {
+    const f = fixture();
+    try {
+      // HEAD mismatch: remote and expected agree on `one`, but the checkout moved to a newer local commit.
+      commitIn(f.clone, "local.txt");
+      expect(ids(run(f.clone, ["source", "--expect", f.one]).stdout, "FAIL")).toContain(
+        "src.head-equals-expected",
+      );
+      git(f.clone, "reset", "-q", "--hard", f.one);
+
+      // Dirty tree.
+      writeFileSync(join(f.clone, "stray.txt"), "x");
+      expect(ids(run(f.clone, ["source", "--expect", f.one]).stdout, "FAIL")).toContain(
+        "src.worktree-clean",
+      );
+      rmSync(join(f.clone, "stray.txt"));
+
+      // Missing main ancestry: the release branch carries a commit that is NOT on main.
+      const off = commitIn(f.other, "off-main.txt");
+      git(f.other, "push", "-q", "origin", `HEAD:refs/heads/${RELEASE_BRANCH}`);
+      git(f.clone, "fetch", "-q", "origin");
+      git(f.clone, "reset", "-q", "--hard", off);
+      const r = run(f.clone, ["source", "--expect", off]);
+      expect(ids(r.stdout, "FAIL")).toEqual(["src.on-main"]);
+      expect(r.status).toBe(1);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("modifying the ROOT lockfile fails the lockfile check even when launched from apps/api", () => {
+    const f = fixture();
+    try {
+      const sub = join(f.clone, "apps/api");
+      expect(ids(run(sub, ["source", "--expect", f.one]).stdout, "FAIL")).toEqual([]);
+      writeFileSync(join(f.clone, "pnpm-lock.yaml"), "tampered\n");
+      const r = run(sub, ["source", "--expect", f.one]);
+      expect(ids(r.stdout, "FAIL")).toContain("src.lockfile-clean");
+      expect(r.status).toBe(1);
+      // A lockfile placed under apps/api must not satisfy or confuse the root check.
+      git(f.clone, "checkout", "--", "pnpm-lock.yaml");
+      writeFileSync(join(sub, "pnpm-lock.yaml"), "decoy\n");
+      const d = run(sub, ["source", "--expect", f.one]);
+      expect(ids(d.stdout, "FAIL")).toEqual(["src.worktree-clean"]);
+    } finally {
+      f.cleanup();
     }
   });
 

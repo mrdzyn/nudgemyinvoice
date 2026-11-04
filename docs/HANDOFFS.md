@@ -1975,4 +1975,12 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **For the auditor to judge:** Hobby request-log alternative contract and residual risk (§6, gate G5); Studio packages being downloaded by Render's build (§3, G7); `loadConfig` does not itself reject provider keys in production (preflight is the control).
 - **Not done:** Render API/UI, release branch, merge of #39/#40, provider calls, Safari/Firefox/device/AT QA, restore on Render's managed service.
 
+## Handoff: NMI-RENDER-P4-FIX1-01
+
+- **Task / PR:** `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`; Draft [#40](https://github.com/mrdzyn/nudgemyinvoice/pull/40). **From / to:** implementation → independent focused re-audit. **Starting SHA:** `ddac9155d0210bd93f7cb503b6734e5838f18a5e`.
+- **MAJOR-1 fixed:** `release-preflight source` now reads the CURRENT `main` and `release/nmi-render-judges-2026` tips with `git ls-remote --exit-code` (never local tracking refs); the release branch is mandatory (no `--release-ref`); remote failure/incomplete answer fails closed; ancestry is judged against the fresh main tip (missing object ⇒ fail). 
+- **MINOR-1 fixed:** every git call is anchored to `git rev-parse --show-toplevel`, so the lockfile check targets the root `pnpm-lock.yaml` from `apps/api`; a failed `git status` no longer looks clean. P4 browser JSON `generatedBy` corrected.
+- **Tests:** 53 in `release-preflight.test.ts` (11 new CLI/remote cases) against a disposable bare remote: pinned pass (root and apps/api cwd), stale tracking ref fails after the remote moves, stale main ancestry fails until fetched, absent/unknown branch and unreachable remote fail, HEAD mismatch / dirty / off-main each fail, tampered root lockfile fails from apps/api. Full browser/DB drills not rerun (unchanged code paths).
+- **Scope held:** no Render, release branch, deploy, provider call, key handling, budget change or merge.
+
 <!-- HANDOFF_ENTRIES_END -->

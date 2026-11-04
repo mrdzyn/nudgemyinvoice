@@ -200,7 +200,7 @@ const bad = psql(DB, ["-tA", "-c", "SELECT count(*) FROM audit_log WHERE outcome
 check("database", "no unexpected audit failures", Number(bad) === 0, bad);
 
 const failed = results.filter((r) => !r.pass);
-const out = { generatedBy: "design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs", passed: results.length - failed.length, total: results.length, results };
+const out = { generatedBy: "design/evidence/NMI-RENDER-P4/run-hosted-browser-qa.mjs", passed: results.length - failed.length, total: results.length, results };
 writeFileSync(join(here, "hosted-qa-results.json"), JSON.stringify(out, null, 2) + "\n");
 console.log(`\n${out.passed}/${out.total} checks passed`);
 ws.close(); proxy.close();
