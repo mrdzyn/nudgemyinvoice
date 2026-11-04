@@ -1924,4 +1924,14 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no production code, AG Studio package, licence key, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final head, independent re-audit, owner squash-merge decision, then separately scoped A5-I1.
 
+
+## Handoff: NMI-RENDER-P3-25-BUDGET-APPROVAL-PREP
+
+- **From / to:** owner $25 credit approval → Render P3 documentation/pricing/security preflight (separate from A5-I1 implementation).
+- **Base / branch:** `main@a231cd91534cceb0dc3946a0a34a8427192d204b`; `docs/nmi-render-p3-budget-25`. Draft docs-only PR; **NOT the active implementation handoff** (A5-I1 remains active).
+- **Budget:** up to **USD $25 total NMI hosting** through 2026-12-15 from available Render credit, user approval 2026-11-04. Actual live credit balance and eligibility unknown. Public list rates Hobby + Starter $7/month + Basic PG $6/month, 1 GB included; no hard billing cap for total usage.
+- **Read-only Render evidence:** Mrdzyn workspace found; no PostgreSQL instances; service inventory null. No resource provisioning, production code, release branch, initial deployment, paid charge, or deletion performed.
+- **Safety:** new P3 paid-resource proposal updates Free-tier selection **only if owner merges it**; all P1/P2 privacy, proxy, auth, DB roles, first-deploy and judge-sharing gates remain. Studio hosted licensing and client-visible key remain unapproved.
+- **Next:** independent docs exact-HEAD audit, owner squash merge decision; then later real checkout/credit verification and separate first-deploy authorization only after release gates.
+
 <!-- HANDOFF_ENTRIES_END -->
