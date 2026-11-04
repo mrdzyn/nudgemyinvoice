@@ -1935,4 +1935,16 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** Keep Community dashboard working; no AG Studio AI, provider/MCP calls, owner DB, new API/schema, public deployment, licensed demo recording, license commit, merge or billing. Hosted judge AG Studio rights remain unverified.
 - **Next:** coding agent implements on branch, performs actual local Studio browser QA with synthetic data, documents evidence, runs both exact-HEAD CI, stops for independent audit.
 
+## Handoff: NMI-PROTOTYPE-10D-A5-I1-IMPL-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-I1-ag-studio-local-integration.md`; existing Draft [#38](https://github.com/mrdzyn/nudgemyinvoice/pull/38).
+- **From / to:** A5-I1 implementation → independent exact-HEAD security/licence/UX auditor.
+- **Starting SHA:** `4bf3f69cbc54c950204258ea38d1f9074ea51043`.
+- **Delivered:** `ag-studio@3.0.0` + `ag-studio-react@3.0.0` (exact pins; Grid 36.2.0 / Charts 14.2.0 aligned). View-only Activity analytics panel (`apps/web/src/features/studio/`) fed only by the existing `POST /api/analytics/summary`: daily chart <=90 days, Monday-start weekly beyond, all calendar days incl. zero in the exact table, per-currency BigInt-exact model that fails closed, status chart, mobile collapsed default, fallback "Charts unavailable". Slot dev-gated by `import.meta.env.DEV` + `VITE_NMI_STUDIO_LOCAL=1` (default OFF), lazy; `studioBuildGuard` fails any build that resolves/bundles a licensed package.
+- **Licence key:** found in repo-root `.env.local` (privately). A dev-server-only Vite plugin (`apps/web/vite.studio-dev.ts`) reads ONLY the `AG_STUDIO_LICENSE_KEY` line and serves it at runtime on a loopback/same-origin/flagged GET; never `define`d, never in a build. Value never printed or committed; scans (working tree, API/Vite logs, DOM, console, storage, dist) say absent.
+- **Validation:** QA harness 96/96 (real Studio vs independent SQL, failure states, 401, stale answers, mobile, flag-off); `pnpm validate` passed (1097 tests, 41 new; boundary tests updated deliberately); production bundles clean (3 files); both hosted workflows: see PR for run IDs. DB tests not run (no DB change).
+- **Observed limits:** no watermark appears in view mode with or without the key, so entitlement is not observable; screenshots are key-withheld renders only (no licensed render committed); physical device/Safari/Firefox/AT NOT RUN; hosted/public/judge Studio NOT AUTHORIZED (written AG Grid confirmation required; trial ends 2026-12-16).
+- **Safety:** no provider call, owner DB, Render, deployment, merge, production API/schema change.
+- **Next:** audit; owner merge decision. Hosted Studio only after written licence rights and a separate release gate.
+
 <!-- HANDOFF_ENTRIES_END -->

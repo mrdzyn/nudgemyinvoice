@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A5-I1 — Real AG Studio 3.0 Local Integration
 
-**State:** Implementation **STARTED (task/branch only)**; no AG Studio package installed or runtime integration performed in this kickoff commit.
+**State:** **IMPLEMENTED LOCALLY, awaiting hosted CI and independent exact-HEAD audit.** Real `ag-studio@3.0.0` + `ag-studio-react@3.0.0` render a view-only Activity analytics panel in the authenticated dashboard (dev-only, opt-in `VITE_NMI_STUDIO_LOCAL=1`, default OFF); 96/96 browser checks vs independent SQL, `pnpm validate` passed (1097 tests), production bundles contain no Studio/key. Evidence: `design/evidence/NMI-PROTOTYPE-10D-A5-I1/QA-RESULTS.md`. Hosted/public Studio remains NOT AUTHORIZED.
 **Approved base:** `main@a231cd91534cceb0dc3946a0a34a8427192d204b` after the independent A5-D PASS audit and owner-authorized squash merge of PR #37.
 **Branch:** `feat/nmi-a5i1-ag-studio-local` (Draft PR; no auto-merge).
 **Design authority:** `design/screens/NMI-PROTOTYPE-10D-A5D-STUDIO-ANALYTICS.md`, approved 2026-11-04; current 34 design previews are **NOT** actual AG Studio renders.
