@@ -319,10 +319,12 @@ export default function StudioPanel({
     const inner = (
       <>
         <p className="hint hint-tight">
-          Use the currency pills and filters above to update these charts, the totals below, and
-          the invoice list together. The trend shows one currency at a time; with All currencies
-          selected, the chart tabs let you inspect each currency. Values are invoice totals by
-          creation day ({model.timeZone}), not payments.
+          The currency pills above filter these charts and the totals below. Invoice trends show
+          one currency at a time; under All currencies, the chart tabs switch the trend currency.
+        </p>
+        <p className="hint hint-tight">
+          Same filters and the same full-population server totals as the cards below. Values are
+          invoice totals by creation day ({model.timeZone}), not payments.
         </p>
         <div className="studio-grid">
           {chartColumn}
