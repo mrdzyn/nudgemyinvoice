@@ -1904,4 +1904,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Boundaries:** no key handling/installation/AG Studio code, dependency, provider calls, owner database, Render, public judge access, deployment or merge approval. Trial expiry 2026-12-16; external judge licensing rights remain UNVERIFIED.
 - **Next:** update HTML generator, mockup, 390px previews and captions, run local design validation and both hosted CI, request independent exact-HEAD design audit, then obtain separate owner squash-merge decision for PR #37.
 
+## Handoff: NMI-PROTOTYPE-10D-A5-D-PREVIEWS-REV2-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** Design/UX agent → independent exact-HEAD design auditor, then owner squash-merge decision.
+- **Starting SHA:** `ef4381763389955d697a504585644d85e31192fa` (owner-approved decisions recorded).
+- **Delivered (design only):** generator, mockup and 34 PNG previews regenerated for the approved refinements: mobile (<=767px) panel collapsed by default with accessible Show/Hide charts; daily bars up to 90 days, weekly (Monday start, exact BigInt sums) beyond, daily table preserved; tooltips only on hover, keyboard focus or tap; Studio badge only in the Studio-active variant, vendor-attribution area never hidden while widgets show, truthful "Charts unavailable" fallback; Studio-off preview equals today's dashboard. Light/dark, desktop 1280, tablet 820, mobile 390, loading/empty/error/fallback/session-expired.
+- **Validation:** capture script `design-checks.json` 177/177 PASS (headless Chrome, emulated); `pnpm validate` and both hosted workflows (see PR for run IDs). Existing filters, KPI cards and Community grid markup unchanged.
+- **Not verified:** AG Studio rendering/theming/accessibility/watermark/licence behavior (previews are not Studio renders); physical device, Safari/Firefox, assistive technology. Existing-dashboard 390 px Nudgey/Load more overlap and dark date-icon contrast remain separate QA items.
+- **Safety:** no AG Studio package, licence key, dependency, application, schema, provider, owner-DB, Render, deploy or merge change.
+- **Next:** independent audit, owner merge decision for PR #37, then a separately scoped A5-I1 local implementation task.
+
 <!-- HANDOFF_ENTRIES_END -->

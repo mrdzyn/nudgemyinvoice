@@ -1,6 +1,6 @@
 # A5 — AG Studio 3.0 local analytics implementation brief
 
-**State:** owner approved A5-D visual direction on **2026-11-04**, with desktop/tablet panel expanded, **mobile collapsed by default** and **weekly plotted bars for ranges >90 local calendar days**. Mockups/previews still need to reflect these decisions and pass final design review. Packages **NOT INSTALLED**, Studio UI **NOT IMPLEMENTED**, owner license **NOT PROVIDED TO REPO**, public/hosted rights **NOT VERIFIED**.
+**State:** owner approved A5-D visual direction on **2026-11-04**, with desktop/tablet panel expanded, **mobile collapsed by default** and **weekly plotted bars for ranges >90 local calendar days**. Mockups/previews were regenerated to reflect these decisions (rev 2); independent final design review is pending. Packages **NOT INSTALLED**, Studio UI **NOT IMPLEMENTED**, owner license **NOT PROVIDED TO REPO**, public/hosted rights **NOT VERIFIED**.
 
 ## Approved existing product data boundary
 
