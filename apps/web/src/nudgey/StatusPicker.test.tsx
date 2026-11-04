@@ -236,6 +236,8 @@ describe("security boundary of the status selector sources", () => {
       .map((f) => relative(join(dir, ".."), f));
     expect(apiFiles.sort()).toEqual([
       "auth/api.ts",
+      // A5-I1: dev-server-only AG Studio licence fetch (unreachable in production builds).
+      "features/studio/studioLicence.ts",
       "followups/api.ts",
       "invoices/api.ts",
       "parse/api.ts",

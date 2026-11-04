@@ -1,6 +1,6 @@
 # NMI-RENDER-P3 — Owner-approved $25 hosting budget; provisioning still gated
 
-**2026-11-04 owner decision:** YES — authorize **up to $25 in Render promotional credits** for NudgeMyInvoice hosting **through 2026-12-15**. This changes the prior preferred **Free web + Free PostgreSQL** cost proposal into a **proposed paid Starter web + paid Basic-256MB PostgreSQL 16** configuration, conditional on checkout and release QA. It does **not** authorize provisioning, the unavoidable first deploy, spending beyond $25, workspace upgrade, actual public judge access, AG Studio external license usage, live PayPal/OpenAI calls, or irreversible database teardown. No resources have been created by this phase.
+**2026-11-04 owner decision:** YES — authorize **up to $25 in Render promotional credits** for NudgeMyInvoice hosting **through 2026-12-15**. This changes the prior preferred **Free web + Free PostgreSQL** cost proposal into a **proposed paid Starter web + paid Basic-256MB PostgreSQL 16** configuration, conditional on checkout and release QA. It is a **spending ceiling only**. It does **not** authorize provisioning, the unavoidable first deploy, spending beyond $25, workspace upgrade, actual public judge access, AG Studio external license usage, live PayPal/OpenAI calls, or irreversible database teardown. No resources have been created by this phase.
 
 ## Cost and workspace verification
 
@@ -29,10 +29,31 @@ Sources (checked 2026-11-04): [Render pricing](https://render.com/pricing), [com
 **BLOCKED until:**
 
 1. Owner confirms live Mrdzyn billing, credit eligibility, plan prices and $25 total forecast; no accidental Pro upgrade, paid add-on or extra resource.
-2. A5-I1 real Studio integration has separately passed local audit/merge OR a separately reviewed Community-only release SHA is selected; hosted Studio remains OFF absent written AG Grid rights for external judges. `.env.local` trial key `AG_STUDIO_LICENSE_KEY` is local only, never copied to Render or client build by this hosting phase.
+2. **Lifecycle (reconciled 2026-11-04):** A5-I1 (PR #38) is independently audited and **merged** (`main@e314bef`); its AG Studio integration is dev-only, default-OFF and local. NMI-RENDER-P4 (Draft **PR #40**) has passed independent audit but is **NOT merged**; its readiness work (production Community-only build exclusion, preflight CLI, backup/restore drill, checklist, cost checkpoints C0–C6) and owner gates **G1–G8** govern release. Hosted Studio **use** remains OFF absent written AG Grid rights for external judges. `.env.local` trial key `AG_STUDIO_LICENSE_KEY` is local only, never copied to Render or a client build by this hosting phase.
+   - **G7 — UNRESOLVED:** the Render build would *download* `ag-studio`, `ag-studio-react`, `ag-grid-enterprise` and `ag-charts-enterprise` as regular npm dependencies of `apps/web` even though the production browser bundle excludes them. Do **not** assume this download is covered by the trial terms. The safest path is a separately reviewed hosted-dependency exclusion; otherwise the owner must decide on written AG Grid confirmation. Treating Studio as merely "disabled" does not close G7.
 3. Exact audited `release/nmi-render-judges-2026` branch, auto-deploy OFF, provider-disabled environment, startup fail-closed without exact HTTPS `WEB_ORIGIN`; security acceptance including least-privilege DB user and same-origin reverse proxy documented.
 4. Render resource creation and first deployment separately approved by owner against actual checkout and exact code SHA. Render may auto-build at initial service creation even if `autoDeploy=no`.
-5. No judge/public URL sharing until supervised login/reset policy, real HTTPS tests, no PII in platform logs, Hobby platform-request-log alternative risk acceptance, backup/recovery, and teardown schedule are reviewed.
+5. No judge/public URL sharing until supervised login/reset policy, real HTTPS tests, no PII in platform logs, **G5** (written owner acceptance of the Hobby request-log residual risk, using P4's alternative-evidence contract A1–A4), backup/recovery, and teardown schedule are reviewed.
 6. Billing checks (pre-create/post-create/Nov15/Dec1/Dec10/teardown); halt expansion or extend nothing beyond budget without further owner approval.
+
+## P4 gates carried into this budget (G1–G8, all OWNER-only and open)
+
+| Gate | Requirement | State |
+|---|---|---|
+| G1 | Owner confirms live Billing: Hobby, credit applicability, tax, ≤ $25 forecast | OPEN |
+| G2 | Independent audit of P4 PR #40 (done: PASS) and owner decision to merge it | audit done, merge OPEN |
+| G3 | PR #39 (this packet) re-audited and owner-merged | OPEN |
+| G4 | Owner picks the release SHA and creates `release/nmi-render-judges-2026` | OPEN |
+| G5 | Owner accepts the Hobby request-log residual risk in writing | OPEN |
+| G6 | Separate approvals: resource creation + unavoidable first build; judge-URL sharing; judge-access method | OPEN |
+| G7 | Studio packages downloaded by the Render build (licence boundary above) | **UNRESOLVED** |
+| G8 | Gates A (OpenAI), B (PayPal), C stay NOT AUTHORIZED; no provider credentials on Render | HOLDS |
+
+## Manual budget monitoring, storage and teardown (required before provisioning)
+
+- The $25 ceiling is **owner discipline, not a Render-enforced cap**. Render's only spend limit is for build-pipeline minutes. Use P4's cost checkpoints C0–C6 (pre-create, post-create, Nov 15, Dec 1, Dec 10, pre-teardown) and compare each against the owner-visible Billing page. The ~$17–20 figure is an **estimate, never a verified invoice**; live credit balance, eligibility, bandwidth and tax are NOT VERIFIED. Warn at about $20; stop and re-ask the owner before any charge that could exceed $25.
+- **Stopping or suspending only the web service does not necessarily stop paid PostgreSQL charges.** A still-billing database could therefore exceed $25 silently.
+- **Before ANY resource is created, the owner must approve in writing a feasible teardown/retention plan:** who deletes what and when, the fallback if the owner is unavailable, the pre-deletion export/backup and its retention location, and the date the plan is evaluated against actual judging end time. Deletion is destructive and irreversible: it needs separate explicit owner approval at that time, and this document does not grant it. No teardown plan, no provisioning.
+- At checkout the owner reviews: credit applicability to each resource, tax, and the Postgres storage setting. **Database storage autoscaling must be OFF** and the disk must stay at the selected **1 GB** (a Render Blueprint may default to a larger disk if the size is omitted, so set it explicitly). No Pro upgrade, no paid add-on, no second instance or database.
 
 **Outcome of this phase:** budget decision recorded; no billing or deployment action executed.

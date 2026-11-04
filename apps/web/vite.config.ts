@@ -1,5 +1,8 @@
-import { defineConfig, type Plugin } from "vite";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { studioBuildGuard, studioDevLicence } from "./vite.studio-dev.js";
 
 /**
  * Production CSP: same-origin scripts and styles only, no inline styles, network connections ONLY
@@ -23,17 +26,24 @@ const shellCsp: Plugin = {
   ],
 };
 
+const here = dirname(fileURLToPath(import.meta.url));
+
 // NMI_API_ORIGIN (no VITE_ prefix, so it never reaches the bundle) only moves the local proxy
 // target, e.g. when port 3001 is taken. It is a developer-machine setting, not a browser one.
 const apiOrigin = process.env["NMI_API_ORIGIN"] ?? "http://127.0.0.1:3001";
 const apiProxy = { "/api": apiOrigin, "/health": apiOrigin };
 
 // Only VITE_-prefixed variables reach the bundle. Never put secrets behind that prefix.
-export default defineConfig({
-  plugins: [react(), shellCsp],
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    shellCsp,
+    studioBuildGuard(),
+    studioDevLicence(loadEnv(mode, here, "VITE_")["VITE_NMI_STUDIO_LOCAL"] === "1"),
+  ],
   // The browser only ever talks to its own origin; /api is forwarded to the Fastify server. The
   // proxy keeps the browser's Origin header, which the API compares with WEB_ORIGIN (for the dev
   // server that must be exactly http://localhost:5173; for `vite preview`, http://localhost:4173).
   server: { port: 5173, proxy: apiProxy },
   preview: { port: 4173, proxy: apiProxy },
-});
+}));

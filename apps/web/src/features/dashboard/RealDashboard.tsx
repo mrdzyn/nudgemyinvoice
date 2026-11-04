@@ -8,6 +8,7 @@ import { formatCurrency, formatMinor } from "../../domain/money.js";
 import { MAX_SEARCH_CHARS } from "../../domain/serverList.js";
 import { CURRENCY_CODES } from "../../domain/types.js";
 import { buildDashboardDateRange } from "../../domain/dateRange.js";
+import { StudioSlot } from "../studio/StudioSlot.js";
 import { InvoiceGrid } from "./InvoiceGrid.js";
 import {
   hasFilters,
@@ -316,6 +317,7 @@ export function RealDashboardView({
             Totals cover the full matching invoice population, not only rows loaded below. Each card
             uses one currency; currencies are never added together or converted.
           </p>
+          <StudioSlot summary={state.analytics} range={state.filters} />
         </>
       ) : (
         <div className="empty" id="dash-empty-range">
