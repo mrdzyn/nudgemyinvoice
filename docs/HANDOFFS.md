@@ -2020,4 +2020,24 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Boundaries:** dev-only Studio and production Community-only unchanged; no API/DB/dependency/provider/Render/merge change. G7 stays unresolved.
 - **Next:** hosted CI at the final head, independent review, owner signed-in visual QA.
 
+## Handoff: NMI-P5-IMPL-01
+
+- **Task / branch:** `tasks/NMI-P5-LICENSED-STUDIO-PRODUCTION.md`; `feat/nmi-p5-licensed-studio`, Draft PR stacked on #41 (`f524836`). **From / to:** P5 implementation → owner visual acceptance + independent security/licence audit.
+- **Delivered:**
+  - strict licensed web variant with variant-aware build guard and bundle scans (both variants in `validate` and Stack CI);
+  - authenticated `no-store` licence route and server-only config;
+  - production fail-closed fallback, with the dev bridge unchanged;
+  - per-response CSP style nonce, plus the documented AG Studio 3.0.0 `styleNonce` workaround;
+  - release preflight requiring `NMI_WEB_STUDIO=licensed` and `AG_STUDIO_LICENSE_KEY`;
+  - dashboard visual refinements.
+- **Evidence:** licensed production QA 37/37; A5-I1 dev QA 96/96 (order assertion corrected); screenshots in `design/evidence/NMI-P5/`; see the release doc §6 for tests.
+- **For the auditor:**
+  - the `createElement` style-nonce shim in `StudioCharts.tsx` (rationale in release doc §4);
+  - the licence's inherent browser visibility to the signed-in operator (§2);
+  - the shell is now `no-store`;
+  - G7 is owner-attested only;
+  - the licensed entry chunk is 173 kB larger.
+- **Not done:** hosting, real devices, Safari/Firefox, screen readers, independent review of the licence terms. No provider call, Render action, release branch, deploy, merge or licence disclosure.
+- **Next:** owner visual acceptance of screenshots `01`–`08`; independent exact-HEAD review; then the separate merge decisions (#41 first, or P5 superseding it).
+
 <!-- HANDOFF_ENTRIES_END -->
