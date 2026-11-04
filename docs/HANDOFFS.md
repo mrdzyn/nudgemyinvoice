@@ -1924,4 +1924,15 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no production code, AG Studio package, licence key, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final head, independent re-audit, owner squash-merge decision, then separately scoped A5-I1.
 
+
+## Handoff: NMI-PROTOTYPE-10D-A5-I1-START
+
+- **From / to:** owner approved A5-D + audit PASS and squash merge → A5-I1 implementation agent (real AG Studio runtime).
+- **Base / branch:** `main@a231cd91534cceb0dc3946a0a34a8427192d204b`; `feat/nmi-a5i1-ag-studio-local` in new Draft PR.
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A5-I1-ag-studio-local-integration.md`; canonical owner-approved A5-D screen spec and 34 design previews. **Kickoff only**, no package integration yet.
+- **Owner local license:** key present in an untracked `.env.local` as **`AG_STUDIO_LICENSE_KEY`**, expiry 2026-12-16. Do NOT copy/view/report its value in GitHub, chat, logs or CI. Determine root vs `apps/web` location privately. Vite does not automatically expose unprefixed keys; use a strict **dev-server-only** bridge while keeping all production builds key-free. A client-running Studio license is necessarily visible to the local browser.
+- **Implementation:** real AG Studio 3.0 view-mode chart(s) from existing authenticated sanitized aggregate only, default-off lazy local feature, mobile default collapsed, weekly after 90 days, exact daily table; never substitute design mockup as real integration.
+- **Safety:** Keep Community dashboard working; no AG Studio AI, provider/MCP calls, owner DB, new API/schema, public deployment, licensed demo recording, license commit, merge or billing. Hosted judge AG Studio rights remain unverified.
+- **Next:** coding agent implements on branch, performs actual local Studio browser QA with synthetic data, documents evidence, runs both exact-HEAD CI, stops for independent audit.
+
 <!-- HANDOFF_ENTRIES_END -->
