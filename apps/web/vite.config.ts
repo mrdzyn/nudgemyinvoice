@@ -2,7 +2,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
-import { studioBuildGuard, studioDevLicence } from "./vite.studio-dev.js";
+import { studioBuildGuard, studioDevLicence, studioVariant } from "./vite.studio-dev.js";
 
 /**
  * Production CSP: same-origin scripts and styles only, no inline styles, network connections ONLY
@@ -33,12 +33,16 @@ const here = dirname(fileURLToPath(import.meta.url));
 const apiOrigin = process.env["NMI_API_ORIGIN"] ?? "http://127.0.0.1:3001";
 const apiProxy = { "/api": apiOrigin, "/health": apiOrigin };
 
+// P5: build-time variant switch (not exposed to the browser; only the derived boolean below is).
+const variant = studioVariant(process.env["NMI_WEB_STUDIO"]);
+
 // Only VITE_-prefixed variables reach the bundle. Never put secrets behind that prefix.
 export default defineConfig(({ mode }) => ({
+  define: { __NMI_STUDIO_LICENSED__: JSON.stringify(variant === "licensed") },
   plugins: [
     react(),
     shellCsp,
-    studioBuildGuard(),
+    studioBuildGuard(variant),
     studioDevLicence(loadEnv(mode, here, "VITE_")["VITE_NMI_STUDIO_LOCAL"] === "1"),
   ],
   // The browser only ever talks to its own origin; /api is forwarded to the Fastify server. The

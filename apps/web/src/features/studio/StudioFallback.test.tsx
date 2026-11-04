@@ -7,17 +7,37 @@ import type { StudioRange } from "./studioModel.js";
 import { labScenario } from "../../../studio-lab/synthetic.js";
 import StudioPanel from "./StudioPanel.js";
 import { StudioSlotWith } from "./StudioSlot.js";
+import { STATUS_SERIES } from "./studioReport.js";
 
 // Licensed packages are never loaded here: the loader and the licence fetch are replaced by stubs.
+const licence = vi.hoisted(() => ({
+  required: false,
+  key: null as string | null,
+  seen: [] as unknown[],
+}));
 vi.mock("./studioLoader.js", () => ({
   loadStudioModule: () =>
     Promise.resolve({
-      StudioRoot: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+      StudioRoot: ({
+        children,
+        licenseKey,
+      }: {
+        children: React.ReactNode;
+        licenseKey: string | null;
+      }) => {
+        licence.seen.push(licenseKey);
+        return <>{children}</>;
+      },
       TrendChart: () => <div data-testid="fake-trend" />,
       StatusChart: () => <div data-testid="fake-status" />,
     }),
 }));
-vi.mock("./studioLicence.js", () => ({ fetchDevLicenceKey: () => Promise.resolve(null) }));
+vi.mock("./studioLicence.js", () => ({
+  fetchStudioLicenceKey: () => Promise.resolve(licence.key),
+  get studioLicenceRequired() {
+    return licence.required;
+  },
+}));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -34,6 +54,9 @@ beforeEach(() => {
   document.body.appendChild(host);
 });
 afterEach(() => {
+  licence.required = false;
+  licence.key = null;
+  licence.seen = [];
   act(() => root?.unmount());
   host.remove();
   root = null;
@@ -131,5 +154,85 @@ describe("analytics-first: chart tabs are explained as view-only", () => {
     await mount(<StudioPanel summary={summary} range={range} />);
     expect(host.querySelector("[role=tablist]")).toBeNull();
     expect(host.querySelector("#studio-tabs-note")).toBeNull();
+  });
+});
+
+describe("P5 licensed production: the licence is mandatory", () => {
+  it("without a licence (not configured, signed out, network) shows 'Charts unavailable' with Retry, never Studio", async () => {
+    licence.required = true;
+    licence.key = null;
+    const { summary, range } = labScenario({ days: 30 });
+    await mount(<StudioPanel summary={summary} range={range} />);
+    expect(panel()?.getAttribute("data-studio")).toBe("fallback");
+    expect(host.querySelector("#studio-unavailable")?.textContent).toContain("Charts unavailable.");
+    expect(host.querySelector("[data-testid=fake-trend],[data-testid=fake-status]")).toBeNull();
+    expect(host.textContent).not.toContain("Studio · view only");
+    expect(licence.seen).toEqual([]); // StudioRoot never mounted without a licence
+    // Exact figures stay available as text.
+    expect(host.querySelector("[data-testid=studio-daily-table]")).not.toBeNull();
+    expect(host.querySelector("[data-testid=studio-status-list]")).not.toBeNull();
+    const retry = [...host.querySelectorAll("button")].find((b) =>
+      b.textContent?.includes("Try loading charts again"),
+    );
+    expect(retry).toBeDefined();
+
+    // The licence becomes available (e.g. the operator signed in again): Retry recovers.
+    licence.key = "synthetic-licence-for-test";
+    act(() => retry?.click());
+    await flush();
+    await flush();
+    expect(panel()?.getAttribute("data-studio")).toBe("active");
+    expect(licence.seen.at(-1)).toBe("synthetic-licence-for-test");
+  });
+
+  it("with the licence, Studio renders with that licence passed to the provider", async () => {
+    licence.required = true;
+    licence.key = "synthetic-licence-for-test";
+    const { summary, range } = labScenario({ days: 30 });
+    await mount(<StudioPanel summary={summary} range={range} />);
+    expect(panel()?.getAttribute("data-studio")).toBe("active");
+    expect(licence.seen).toContain("synthetic-licence-for-test");
+  });
+});
+
+describe("P5 dashboard visuals: headline figures and the compact status table", () => {
+  it("the summary strip shows the charted currency's exact total, count and active days from the aggregate", async () => {
+    const { summary, range } = labScenario({ days: 30 });
+    await mount(<StudioPanel summary={summary} range={range} />);
+    const kpis = host.querySelector("[data-testid=studio-kpis]")?.textContent ?? "";
+    const cur = host.querySelector(".cur-now")?.textContent ?? "";
+    const rows = [...host.querySelectorAll("[data-testid=studio-daily-table] tbody tr")];
+    const active = rows.filter((r) => r.children[1]?.textContent !== "0").length;
+    expect(kpis).toContain(`Total (${cur})`);
+    expect(kpis).toContain(`Days with invoices${active} of ${rows.length}`);
+    const card = summary.currencies.find((c) => c.currency === cur);
+    expect(kpis).toContain(`Invoices${card?.invoiceCount}`);
+  });
+
+  it("the status counts are one table, a row per currency, with legend swatches and glyphs (not colour alone)", async () => {
+    const { summary, range } = labScenario({ days: 30 });
+    await mount(<StudioPanel summary={summary} range={range} />);
+    const table = host.querySelector("table[data-testid=studio-status-list]");
+    expect(table?.querySelector("caption")?.textContent).toContain("never combined");
+    const heads = [...(table?.querySelectorAll("thead th") ?? [])].map((t) => t.textContent);
+    expect(heads).toEqual([
+      "Currency",
+      "○ No draft",
+      "◔ In progress",
+      "✓ Draft created",
+      "! Attention",
+      "Invoices",
+    ]);
+    expect(table?.querySelectorAll("thead .swatch")).toHaveLength(4);
+    const body = [...(table?.querySelectorAll("tbody tr") ?? [])].map((r) =>
+      [...r.children].map((c) => c.textContent),
+    );
+    expect(body).toEqual(
+      summary.currencies.map((c) => [
+        c.currency,
+        ...STATUS_SERIES.map(({ state }) => String(c.stateCounts[state])),
+        String(c.invoiceCount),
+      ]),
+    );
   });
 });

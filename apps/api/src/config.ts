@@ -41,6 +41,17 @@ const envSchema = z.object({
   PAYPAL_DRAFTS_ENABLED: z.enum(["true", "false"]).default("false"),
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
+  // P5: the owner's AG Studio deployment licence, delivered at runtime only to an authenticated operator by
+  // GET /api/studio/licence. Server-only: never in the web build, logs or error messages. Optional: without it
+  // the licensed dashboard shows its "Charts unavailable" fallback, never an unlicensed Studio.
+  AG_STUDIO_LICENSE_KEY: z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined || v.trim() === "" ? undefined : v.trim()))
+    .refine(
+      (v) => v === undefined || /^[\x20-\x7e]{16,8192}$/.test(v),
+      "AG_STUDIO_LICENSE_KEY must be 16-8192 printable ASCII characters (no tabs, newlines or control characters)",
+    ),
 });
 
 export interface AppConfig {
@@ -70,6 +81,8 @@ export interface AppConfig {
   paypalDraftsEnabled: boolean;
   /** Server-only. Present only when drafts are enabled. */
   paypalCredentials: { clientId: string; clientSecret: string } | null;
+  /** Server-only AG Studio licence (P5). Returned ONLY by the authenticated licence route; never logged. */
+  studioLicenceKey: string | null;
 }
 
 /** Fails fast: missing/live PayPal config, missing database or weak session secret refuse to start. */
@@ -129,5 +142,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       draftsEnabled && e.PAYPAL_CLIENT_ID && e.PAYPAL_CLIENT_SECRET
         ? { clientId: e.PAYPAL_CLIENT_ID, clientSecret: e.PAYPAL_CLIENT_SECRET }
         : null,
+    studioLicenceKey: e.AG_STUDIO_LICENSE_KEY ?? null,
   };
 }

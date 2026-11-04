@@ -110,7 +110,7 @@ describe("UI shell boundaries", () => {
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|analytics\/summary|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/follow-ups)?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?)$/.test(
+          !/^\/api\/(auth\/(session|login|logout)|analytics\/summary|studio\/licence|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/follow-ups)?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?)$/.test(
             p,
           ),
       ),
@@ -253,7 +253,7 @@ describe("UI shell boundaries", () => {
     expect(vite).not.toMatch(/script-src[^"]*unsafe/);
   });
 
-  describe("AG Studio (A5-I1, local development only)", () => {
+  describe("AG Studio (A5-I1 local development + P5 licensed production build)", () => {
     const code = (text: string) =>
       text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     const studioDir = join(root, "features/studio");
@@ -270,32 +270,41 @@ describe("UI shell boundaries", () => {
       );
     });
 
-    it("the dashboard reaches Studio only through the dev-gated slot, never statically", () => {
+    it("the dashboard reaches Studio only through the build-gated lazy slot, never statically", () => {
       const dash = read(join(root, "features/dashboard/RealDashboard.tsx"));
       expect(dash).toContain('from "../studio/StudioSlot.js"');
       expect(dash).not.toMatch(/StudioPanel|StudioCharts|studioLoader|ag-studio/);
       const slot = read(join(root, "features/studio/StudioSlot.tsx"));
       expect(slot).toContain("import.meta.env.DEV");
       expect(slot).toContain("VITE_NMI_STUDIO_LOCAL");
+      expect(slot).toContain("__NMI_STUDIO_LICENSED__");
       expect(code(slot).match(/import\("\.\/StudioPanel\.js"\)/g)).toHaveLength(1);
       expect(slot).not.toMatch(/^import .* from "\.\/Studio(Panel|Charts)\.js"/m);
       const loader = code(read(join(root, "features/studio/studioLoader.ts")));
       expect(loader.match(/(?<!typeof )import\("\.\/StudioCharts\.js"\)/g)).toHaveLength(1);
     });
 
-    it("the licence key is referenced only by the dev bridge: never in app source, never defined into a bundle", () => {
+    it("the licence key is never in app source or defined into a bundle; only a boolean variant flag is defined", () => {
       for (const f of files) expect(read(f), f).not.toMatch(/AG_STUDIO_LICENSE_KEY/);
-      expect(vite).not.toMatch(/\bdefine\s*:|envPrefix|loadEnv\([^)]*,\s*["']["']/);
+      expect(vite).not.toMatch(/AG_STUDIO_LICENSE_KEY|envPrefix|loadEnv\([^)]*,\s*["']["']/);
+      // The ONLY define is the derived boolean, never a string taken from the environment.
+      const defines = [...vite.matchAll(/define\s*:\s*\{([^}]*)\}/g)].map((m) => m[1]?.trim());
+      expect(defines).toEqual(['__NMI_STUDIO_LICENSED__: JSON.stringify(variant === "licensed")']);
+      expect(vite).toContain('studioVariant(process.env["NMI_WEB_STUDIO"])');
+      expect(vite).toContain("studioBuildGuard(variant)");
       expect(bridge).toContain('apply: "serve"');
       expect(code(bridge)).not.toMatch(/\btransform\b|\bload\s*\(|\bdefine\b|process\.env/);
-      expect(vite).toContain("studioBuildGuard()");
     });
 
-    it("the licence fetch targets only the dev bridge route and never stores or logs the key", () => {
+    it("the licence fetch targets only the authenticated API route or the dev bridge and never stores or logs the key", () => {
       const lic = read(join(root, "features/studio/studioLicence.ts"));
       expect([...lic.matchAll(/fetch\(\s*["']([^"']+)["']/g)].map((m) => m[1])).toEqual([
+        "/api/studio/licence",
         "/__nmi_dev/studio-licence",
       ]);
+      expect(lic).toMatch(
+        /import\.meta\s*\.env\.DEV\s*\?\s*fetchDevLicenceKey\s*:\s*fetchProdLicenceKey/,
+      );
       for (const f of studioFiles) {
         const src = readFileSync(join(webRoot, f), "utf8");
         expect(src, f).not.toMatch(/console\.|localStorage|sessionStorage|document\.cookie/);

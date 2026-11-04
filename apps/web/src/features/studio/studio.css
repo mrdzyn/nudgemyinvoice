@@ -98,38 +98,39 @@
   background-color: var(--surface);
 }
 .studio-canvas-trend {
-  height: 300px;
+  height: 252px;
 }
 .studio-canvas-status {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
+/* One slim bar per currency (studioReport.statusHeightPx: 56 + 26 px per row), same on every width. */
 .studio-rows-1 {
-  height: 120px;
+  height: 82px;
 }
 .studio-rows-2 {
-  height: 160px;
+  height: 108px;
 }
 .studio-rows-3 {
-  height: 200px;
+  height: 134px;
 }
 .studio-rows-4 {
-  height: 240px;
+  height: 160px;
 }
 .studio-rows-5 {
-  height: 280px;
+  height: 186px;
 }
 .studio-rows-6 {
-  height: 320px;
+  height: 212px;
 }
 .studio-rows-7 {
-  height: 360px;
+  height: 238px;
 }
 .studio-rows-8 {
-  height: 400px;
+  height: 264px;
 }
 
 .chart-skel {
-  height: 300px;
+  height: 252px;
   margin-top: 6px;
 }
 .data-alt {
@@ -173,32 +174,71 @@ table.tight tr.zero th {
 .r {
   text-align: right;
 }
-.status-row {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.status-head {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.state-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
+/* Headline figures for the charted currency (exact server aggregate). */
+.studio-kpis {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 16px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius);
 }
-.state-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
+.studio-kpis div {
+  min-width: 0;
 }
-.state-list .cnt {
+.studio-kpis dt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.studio-kpis dd {
+  margin: 2px 0 0;
+  font-size: 15px;
   font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.studio-kpis dd .muted {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+}
+/* Compact exact status table; header swatches are the stacked bar's legend. */
+.status-scroll {
+  max-height: none;
+  margin-top: 0;
+}
+.status-table thead th {
+  font-size: 11.5px;
+  line-height: 1.3;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+  vertical-align: bottom;
+  padding: 6px 8px;
+}
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+.swatch-none {
+  background: var(--border-input);
+}
+.swatch-progress {
+  background: var(--info-text);
+}
+.swatch-created {
+  background: var(--ok-border);
+}
+.swatch-attention {
+  background: var(--warn-border);
+}
+.studio-status .hint-tight {
+  margin-top: 8px;
 }
 .muted {
   color: var(--text-muted);
@@ -209,9 +249,6 @@ table.tight tr.zero th {
   }
 }
 @media (max-width: 767px) {
-  .state-list {
-    grid-template-columns: 1fr;
-  }
   .studio-toggle {
     width: 100%;
     min-height: 44px;
@@ -225,30 +262,26 @@ table.tight tr.zero th {
   }
   .studio-canvas-trend,
   .chart-skel {
-    height: 240px;
+    height: 220px;
   }
-  .studio-rows-1 {
-    height: 112px;
+  .studio-kpis {
+    grid-template-columns: 1fr 1fr;
   }
-  .studio-rows-2 {
-    height: 152px;
+  /* Phones: tighter cells; the per-currency invoice count is already on each currency card below. */
+  .status-table th,
+  .status-table td {
+    padding: 4px 5px;
   }
-  .studio-rows-3 {
-    height: 192px;
+  .status-table .col-total {
+    display: none;
   }
-  .studio-rows-4 {
-    height: 232px;
-  }
-  .studio-rows-5 {
-    height: 272px;
-  }
-  .studio-rows-6 {
-    height: 312px;
-  }
-  .studio-rows-7 {
-    height: 352px;
-  }
-  .studio-rows-8 {
-    height: 392px;
+  /* The app's narrow-screen rule visually hides table.data headers (meant for stacked tables). These Studio
+     tables keep their columns on phones, so their headers must stay visible. */
+  .studio table.data thead {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
   }
 }

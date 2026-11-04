@@ -146,6 +146,47 @@ export function StudioRoot({ licenseKey, onFailure, children }: StudioRootProps)
   );
 }
 
+/**
+ * P5: the per-response CSP nonce the production server publishes in `<meta name="nmi-style-nonce">`. Studio's
+ * theming injects <style> elements; with this nonce they satisfy `style-src 'self' 'nonce-…'` without
+ * `'unsafe-inline'`. Absent on the dev server (no CSP there), which is fine. Every Studio instance on a page must
+ * carry the same nonce, so it is read once.
+ */
+const styleNonce =
+  typeof document === "undefined"
+    ? undefined
+    : (document.querySelector('meta[name="nmi-style-nonce"]')?.getAttribute("content") ??
+      undefined);
+
+/**
+ * Library gap (AG Studio 3.0.0): `styleNonce` reaches Studio's own theme <style> elements but NOT its colour sensor
+ * nor the AG Charts DOM manager it embeds, whose <style> elements are then blocked by the production CSP. So, once
+ * this lazy Studio module loads with a page nonce, a <style> element created BY SCRIPT gets that nonce.
+ *
+ * Why this does not weaken the policy: same-origin script (the only script `script-src 'self'` allows) can already
+ * restyle the page through the CSSOM, which CSP does not govern, so it gains nothing. What the policy exists to stop
+ * is still stopped: <style> arriving through HTML markup (parser-created, including innerHTML) never passes through
+ * createElement and stays blocked, style ATTRIBUTES stay blocked, and the nonce changes on every page load.
+ */
+function nonceScriptCreatedStyles(nonce: string): void {
+  const proto = Document.prototype;
+  const flag = Symbol.for("nmi.studio.styleNonce");
+  if (Reflect.get(proto, flag) === true) return;
+  const original = proto.createElement;
+  const patched = function (this: Document, tagName: string, options?: ElementCreationOptions) {
+    const el = original.call(this, tagName, options);
+    if (el instanceof HTMLStyleElement && !el.nonce) el.nonce = nonce;
+    return el;
+  };
+  Object.defineProperty(proto, "createElement", {
+    value: patched as typeof proto.createElement,
+    configurable: true,
+    writable: true,
+  });
+  Reflect.set(proto, flag, true);
+}
+if (styleNonce) nonceScriptCreatedStyles(styleNonce);
+
 /** View-only: remove every widget toolbar item (CSV/image export, duplicate, delete). */
 const viewOnlyWidgets: NonNullable<AgStudioProperties["widgets"]> = (defaults) => ({
   ...defaults,
@@ -157,6 +198,7 @@ function useCommon(trendSeries: boolean) {
   const panels = useMemo(() => ({ view: { left: [], right: [] } }), []);
   return {
     mode: "view" as const,
+    ...(styleNonce ? { styleNonce } : {}),
     style: { height: "100%", width: "100%" },
     theme: trendSeries ? trendTheme : theme,
     panels,
@@ -204,7 +246,8 @@ export function StatusChart({
   const common = useCommon(false);
   const data = useMemo(() => buildStatusData(all), [all]);
   const { surface } = useTokens();
-  const state = useMemo(() => buildStatusState(surface, compact), [surface, compact]);
+  const rows = all.length;
+  const state = useMemo(() => buildStatusState(surface, compact, rows), [surface, compact, rows]);
   return (
     <div
       className={`studio-canvas studio-canvas-status studio-rows-${Math.min(all.length, 8)}`}

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import { extname, join, relative, sep } from "node:path";
 import type { FastifyInstance, FastifyReply } from "fastify";
@@ -56,6 +57,21 @@ function indexTree(root: string): Map<string, Entry> {
 /** Same policy as the build-time <meta> tag, plus the directives a <meta> CSP cannot carry. */
 export const PAGE_CSP =
   "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'";
+
+/**
+ * P5: AG Studio/Charts/Grid theming injects <style> ELEMENTS at runtime. Rather than `'unsafe-inline'`, every
+ * shell response gets a fresh random nonce that authorises only <style> elements carrying it (the libraries'
+ * `styleNonce` option). Scripts stay `'self'` only; style ATTRIBUTES stay blocked. The nonce is published to
+ * the page in `<meta name="nmi-style-nonce">` so the Studio widgets can pass it on.
+ */
+export const STYLE_NONCE_META = "nmi-style-nonce";
+export const pageCsp = (nonce: string): string =>
+  PAGE_CSP.replace("style-src 'self'", `style-src 'self' 'nonce-${nonce}'`);
+/** The build-time <meta> CSP's style directive, as written raw or HTML-escaped (Vite emits `&#39;`). */
+const META_STYLE_SRC = [
+  ["style-src 'self';", (n: string) => `style-src 'self' 'nonce-${n}';`],
+  ["style-src &#39;self&#39;;", (n: string) => `style-src &#39;self&#39; &#39;nonce-${n}&#39;;`],
+] as const;
 /** For API/health/error responses: nothing may be loaded or framed from them. */
 export const API_CSP = "default-src 'none'; frame-ancestors 'none'";
 
@@ -64,7 +80,32 @@ export function registerWebStatic(app: FastifyInstance, distDir: string): void {
   const shell = files.get("/index.html");
   if (!shell) throw new Error(`WEB_DIST_DIR has no index.html (run the web build): ${distDir}`);
 
+  const shellText = shell.body.toString("utf8");
+  // A build-time <meta> CSP intersects with the header: if the shell has one whose style directive this server
+  // cannot extend with the nonce, Studio styles would be silently blocked. Refuse to start instead.
+  const metaForm = META_STYLE_SRC.find(([raw]) => shellText.includes(raw));
+  if (/http-equiv="Content-Security-Policy"/i.test(shellText) && !metaForm) {
+    throw new Error(
+      "index.html has a CSP <meta> whose style-src cannot carry the per-response nonce",
+    );
+  }
+  /**
+   * The shell with a fresh nonce: in the header CSP, in the build-time <meta> CSP (two policies intersect, so
+   * both must allow it) and in the nonce <meta>. `no-store`: a document carrying a one-time nonce is never kept.
+   */
+  const sendShell = (reply: FastifyReply) => {
+    const nonce = randomBytes(16).toString("base64");
+    let html = metaForm ? shellText.replace(metaForm[0], metaForm[1](nonce)) : shellText;
+    if (html.includes("</head>"))
+      html = html.replace("</head>", `<meta name="${STYLE_NONCE_META}" content="${nonce}"></head>`);
+    void reply.header("content-type", shell.type);
+    void reply.header("cache-control", "no-store");
+    void reply.header("content-security-policy", pageCsp(nonce));
+    return reply.send(html);
+  };
+
   const send = (reply: FastifyReply, entry: Entry, urlPath: string, isShell: boolean) => {
+    if (isShell) return sendShell(reply);
     void reply.header("content-type", entry.type);
     // Hashed build assets are immutable; the HTML shell must always revalidate (a new deploy
     // changes the asset names it references).

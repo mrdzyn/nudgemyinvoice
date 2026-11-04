@@ -12,7 +12,7 @@ import { Notice } from "../../components/Notice.js";
 import type { AnalyticsSummary } from "../../domain/serverAnalytics.js";
 import type { CurrencyCode } from "../../domain/types.js";
 import "./studio.css";
-import { fetchDevLicenceKey } from "./studioLicence.js";
+import { fetchStudioLicenceKey, studioLicenceRequired } from "./studioLicence.js";
 import { loadStudioModule, type StudioModule } from "./studioLoader.js";
 import {
   buildStudioModel,
@@ -123,34 +123,86 @@ function DailyTable({ cur }: { cur: StudioCurrency }) {
   );
 }
 
-const BADGE_KIND = { none: "neutral", progress: "info", created: "ok", attention: "warn" } as const;
-const BADGE_ICON = { none: "○", progress: "◔", created: "✓", attention: "!" } as const;
+const GLYPH = { none: "○", progress: "◔", created: "✓", attention: "!" } as const;
 
-/** Counts only, per currency; never summed across currencies. Text is the accessible form of the status chart. */
-function StatusList({ currencies }: { currencies: readonly StudioCurrency[] }) {
+/**
+ * Exact per-currency status counts as ONE compact table; currencies are never summed. Each header carries the
+ * same colour swatch as the stacked bar (the chart legend), plus a glyph so colour is never the only cue.
+ */
+function StatusTable({ currencies }: { currencies: readonly StudioCurrency[] }) {
   return (
-    <div className="status-text" data-testid="studio-status-list">
-      {currencies.map((c) => (
-        <div className="status-row" key={c.currency}>
-          <div className="status-head">
-            <strong>{c.currency}</strong>
-            <span className="muted">
-              {c.invoiceCount} invoice{c.invoiceCount === 1 ? "" : "s"}
-            </span>
-          </div>
-          <ul className="state-list">
-            {STATUS_SERIES.map(({ state, label }) => (
-              <li key={state}>
-                <Badge kind={BADGE_KIND[state]} glyph={BADGE_ICON[state]}>
-                  {label}
-                </Badge>
-                <span className="num cnt">{c.stateCounts[state]}</span>
-              </li>
+    <div className="table-scroll status-scroll">
+      <table className="data tight status-table" data-testid="studio-status-list">
+        <caption className="sr-only">
+          PayPal Sandbox draft status counts by currency (No PayPal draft, In progress, PayPal draft
+          created, Needs attention), exact; currencies are never combined
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Currency</th>
+            {STATUS_SERIES.map(({ state, label, short }) => (
+              <th scope="col" className="r" key={state} title={label}>
+                <span className={`swatch swatch-${state}`} aria-hidden="true" />
+                <span aria-hidden="true">{GLYPH[state]} </span>
+                {short}
+              </th>
             ))}
-          </ul>
-        </div>
-      ))}
+            <th scope="col" className="r col-total">
+              Invoices
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {currencies.map((c) => (
+            <tr key={c.currency}>
+              <th scope="row">{c.currency}</th>
+              {STATUS_SERIES.map(({ state }) => (
+                <td className="r num" key={state}>
+                  {c.stateCounts[state]}
+                </td>
+              ))}
+              <td className="r num col-total">{c.invoiceCount}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
+  );
+}
+
+/** Headline figures for the charted currency, all from the same exact server aggregate (never estimated). */
+function TrendSummary({ cur, weekly }: { cur: StudioCurrency; weekly: boolean }) {
+  const activeDays = cur.days.filter((d) => d.count > 0).length;
+  const first = cur.buckets[0];
+  const peak = first && cur.buckets.reduce((b, x) => (x.minor > b.minor ? x : b), first);
+  return (
+    <dl className="studio-kpis" data-testid="studio-kpis">
+      <div>
+        <dt>Total ({cur.currency})</dt>
+        <dd className="num">{cur.total}</dd>
+      </div>
+      <div>
+        <dt>Invoices</dt>
+        <dd className="num">{cur.invoiceCount}</dd>
+      </div>
+      <div>
+        <dt>Days with invoices</dt>
+        <dd className="num">
+          {activeDays} of {cur.days.length}
+        </dd>
+      </div>
+      {peak && peak.count > 0 ? (
+        <div>
+          <dt>Peak {weekly ? "week" : "day"}</dt>
+          <dd>
+            <span className="num">{peak.total}</span>{" "}
+            <span className="muted">
+              {peak.title} · {peak.count} invoice{peak.count === 1 ? "" : "s"}
+            </span>
+          </dd>
+        </div>
+      ) : null}
+    </dl>
   );
 }
 
@@ -201,9 +253,15 @@ export default function StudioPanel({
     if (!open || !model.ok || requested.current === attempt) return;
     requested.current = attempt;
     setPhase("loading");
-    void Promise.all([loadStudioModule(), fetchDevLicenceKey()]).then(
+    void Promise.all([loadStudioModule(), fetchStudioLicenceKey()]).then(
       ([m, key]) => {
         if (!mounted.current) return;
+        // Production fails closed: no licence (not configured, signed out, network) means the honest
+        // "Charts unavailable" state with Retry, never an unlicensed Studio.
+        if (studioLicenceRequired && !key) {
+          setPhase("failed");
+          return;
+        }
         failedRef.current = false;
         setMod(m);
         setLicence(key);
@@ -234,22 +292,14 @@ export default function StudioPanel({
       null;
     if (!active) return null;
     const names = model.currencies.map((c) => c.currency);
-    const first = active.buckets[0];
-    const peak = first && active.buckets.reduce((b, x) => (x.minor > b.minor ? x : b), first);
     const weekly = active.mode === "weekly";
     const failed = phase === "failed";
     const showCharts = phase === "ready" && mod !== null && active.chartSafe;
     const Studio = showCharts ? mod : null;
     studioRendered = Studio !== null && !failed;
-    const peakLine = peak && (
-      <p className="hint hint-tight">
-        Peak {weekly ? "week" : "day"}: {peak.title} · {peak.total} · {peak.count} invoice
-        {peak.count === 1 ? "" : "s"}. One currency per chart; axes are never shared across
-        currencies.
-      </p>
-    );
     const chartColumn = (
       <div className="studio-chart">
+        <TrendSummary cur={active} weekly={weekly} />
         <div className="chart-bar">
           <h3 className="h3">
             {weekly ? "Weekly" : "Daily"} invoice value ·{" "}
@@ -292,7 +342,6 @@ export default function StudioPanel({
         ) : (
           <div className="skeleton chart-skel" aria-hidden="true" />
         )}
-        {peakLine}
         <DailyTable cur={active} />
       </div>
     );
@@ -309,7 +358,7 @@ export default function StudioPanel({
             <Studio.StatusChart all={model.currencies} compact={narrow} />
           </div>
         ) : null}
-        <StatusList currencies={model.currencies} />
+        <StatusTable currencies={model.currencies} />
         <p className="hint hint-tight">
           <strong>PayPal draft created</strong> means a Sandbox DRAFT exists. It is not sent, not
           paid and not overdue.
@@ -319,8 +368,9 @@ export default function StudioPanel({
     const inner = (
       <>
         <p className="hint hint-tight">
-          Same filters and the same full-population server totals as the cards below. Values are
-          invoice totals by creation day ({model.timeZone}), not payments.
+          Same filters and full-population server totals as the cards below: invoice totals by
+          creation day ({model.timeZone}), not payments. One currency per chart; currencies are
+          never combined.
         </p>
         {names.length > 1 ? (
           <p className="hint hint-tight" id="studio-tabs-note">
