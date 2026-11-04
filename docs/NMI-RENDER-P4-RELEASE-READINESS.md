@@ -1,8 +1,8 @@
 # NMI-RENDER-P4 — Judge-hosted release readiness (evidence and checklist)
 
-**Verdict: READY FOR OWNER HOSTING APPROVAL, conditional on the owner-only gates in §10.** Nothing was created, deployed, billed or shared. No Render API call was made (the Render connector is not authorized in this session), no release branch exists (`git ls-remote origin 'refs/heads/release/*'` returned nothing), no provider was called, no AG Studio key left the owner's `.env.local`, PR #39 was only read, and no PR was merged.
+**Verdict: READY FOR OWNER HOSTING APPROVAL, conditional on the owner-only gates in §10.** The original P4 implementation made no Render API call, no release branch, no deploy, no provider calls and no AG Studio key transfer; no Render resources or judge URL were created by this phase. **Subsequent documented change (2026-11-04):** P3 budget PR #39 was independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`; P4 PR #40 remains Draft and unmerged. This documentation reconciliation is not an initial deployment or hosting authorization.
 
-Base: `main@e314bef381c66b4233576683c7f53dd248f58a86` (PR #38 merged). Implementation head: see the PR. Exact-SHA mechanics below mean the **deployed SHA is chosen only after P4 and the budget PR #39 are owner-merged**, so this document names no release SHA.
+Original P4 base: `main@e314bef381c66b4233576683c7f53dd248f58a86` (PR #38 merged). Reconciled P4 branch with `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7` (budget PR #39 merged). Implementation source and final reconciliation HEAD are recorded in PR #40. The **release SHA is not selected until P4's own owner-approved merge**, so this document names no release SHA.
 
 ## 1. What was verified, and how (all local, disposable, synthetic)
 
@@ -22,7 +22,7 @@ The P1 harness expected the filtered dashboard to emit only `POST /api/invoice-d
 
 ## 2. Exact-SHA release mechanism (design; nothing created)
 
-1. After the P4 PR and (separately) #39 are owner-merged and audited, the owner (not an agent) picks the **full 40-character SHA** on `main` to release and records it privately.
+1. Budget PR #39 has been audited and owner-merged. After P4 PR #40 completes its new exact-HEAD validation, independent reconciliation review and a separately authorized owner merge, the owner (not an agent) picks the **full 40-character SHA** on `main` to release and records it privately.
 2. Owner creates `release/nmi-render-judges-2026` pointing at exactly that SHA. Branch protection: no force-push, no deletion.
 3. On a clean clone, before provisioning and again before every deploy: `pnpm --filter @nmi/api release-preflight source --expect <SHA>` must print `RESULT: PASS`. It asks the authoritative remote (`git ls-remote`, never local tracking refs) for the CURRENT tips of `main` and `release/nmi-render-judges-2026`, and requires: HEAD equals the SHA, clean tree, the repository-root `pnpm-lock.yaml` unchanged (also when launched from `apps/api`), the SHA is an ancestor of the fresh `main` tip (fetch first if its object is missing), and the release-branch tip equals the SHA. The release branch is mandatory (there is no flag to omit it); an unreachable, unauthenticated or incomplete remote answer fails closed. The only network read is GitHub ref listing.
 4. Render service: **Auto-Deploy Off**, no Blueprint, no previews, one instance. **First-deploy risk:** creating a service from a branch triggers an initial build of the branch tip even with auto-deploy off, so the tip must equal the approved SHA at creation time (step 3 proves it). Any later change is a manual "Deploy a specific commit".
@@ -100,7 +100,7 @@ Create (manual, region Singapore if available; Hobby; Starter web; Basic 256 MB 
 |---|---|
 | G1 | Owner confirms live Billing: Hobby, credit applicability, ≤ $25 forecast (C0). |
 | G2 | Independent exact-head audit of this P4 PR; owner decision to merge it. |
-| G3 | PR #39 (budget) audited and reconciled by the owner; this PR does not depend on its text and did not modify it. |
+| G3 | **CLOSED:** P3 budget PR #39 independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`; budget ceiling only. Live billing G1 is still OPEN. |
 | G4 | Owner picks the release SHA and creates `release/nmi-render-judges-2026` (§2). |
 | G5 | Owner accepts the Hobby request-log residual risk (§6) in writing. |
 | G6 | Separate approval for resource creation and the unavoidable first build; separate approval to share the URL; judge-access method (supervised credentials or video) decided. |
@@ -113,3 +113,9 @@ Create (manual, region Singapore if available; Hobby; Starter web; Basic 256 MB 
 
 ## 12. Audit remediation (P4-FIX1)
 Independent audit of `ddac915…` found MAJOR-1 (release branch tip judged from a stale local `origin/...` ref, and the branch proof was optional) and MINOR-1 (lockfile pathspec resolved against `apps/api` under `pnpm --filter`). Fixed in the source checker only: authoritative `git ls-remote`, mandatory release branch, root-anchored git calls, tests above. The `generatedBy` provenance of the P4 browser JSON now names the P4 harness. Hosting behaviour, other gates (G1–G8) and all scope exclusions are unchanged.
+
+## 13. Post-P3-merge reconciliation (2026-11-04)
+
+- Owner-approved P3 budget PR #39 was independently audited PASS and squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. The original P4 source/checker and local QA artifacts were kept unchanged; PR #40 receives a normal **two-parent merge commit** to integrate P3's five documentation files and preserve both P3 and P4 handoff histories. G3 is now closed; **G1/G2 owner P4 merge/G4/G5/G6/G7 remain OPEN** and G8 provider prohibition continues.
+- `docs/STATUS.md` now points to the P4 release-readiness task and `NMI-RENDER-P4-FIX1-01`; the P2 Free-tier choice remains historical and cannot be used for the proposed judge release. No current Render cost quote, eligible credit check, Studio vendor consent, host request-log evidence, release branch or production deployment was created by this reconciliation.
+- Reconciliation changes documentation only; run both hosted CI workflows on the **new PR #40 exact HEAD**, confirm mergeability and obtain focused independent audit before requesting any owner squash merge. No merge, deploy, billing approval escalation, provider calls or judge URL publication follows automatically.

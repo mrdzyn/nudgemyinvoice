@@ -1,12 +1,12 @@
 # NMI-RENDER-P4 — Judge-hosted Release Readiness (PREPARE ONLY)
 
-**State:** IMPLEMENTED for independent audit (verdict READY FOR OWNER HOSTING APPROVAL, conditional on owner gates G1–G8). Evidence: `docs/NMI-RENDER-P4-RELEASE-READINESS.md` and `design/evidence/NMI-RENDER-P4/`. **Not deployed; no Render resource, release branch, provider call or merge.**
+**State:** Implementation independently audited PASS at `4d59267ec7f48c095ca08e863a9b2f0c324e3ef3`; reconciliation of subsequently merged P3 PR #39 is docs-only and requires new exact-HEAD CI/focused review. Verdict remains READY FOR OWNER HOSTING APPROVAL, conditional on owner gates G1–G8. Evidence: `docs/NMI-RENDER-P4-RELEASE-READINESS.md` and `design/evidence/NMI-RENDER-P4/`. **P4 Draft PR #40 is not merged; no Render resources, release branch, deployment or provider calls.**
 **Approved base:** `main@e314bef381c66b4233576683c7f53dd248f58a86` after owner-approved and independently audited A5-I1 PR #38 squash merge.
-**Branch:** `feat/nmi-render-p4-release-readiness`; **PR:** Draft, separate from Render budget Draft PR #39.
+**Branch:** `feat/nmi-render-p4-release-readiness`; **PR:** #40 Draft, reconciled with budget PR #39 (independently audited, **squash-merged** to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`).
 **UI design gate:** Not applicable for deployment-only checks; existing approved UI retained. New UI or major security behavior requires its own design/authorization.
 **Owner spending decision:** **up to USD $25 Render credits for NudgeMyInvoice hosting through 2026-12-15** (2026-11-04). This is a budget ceiling, **not** explicit resource creation, first deployment, judge access, or acceptance of unverified billing/security.
 **Current licensing:** real AG Studio is **local Vite dev-only**, default OFF; the **production build must exclude Studio and license entirely**. No Studio key is to be transferred to Render. Public Studio/judge rights are NOT VERIFIED, trial ends 2026-12-16.
-**Planning dependency:** `docs/nmi-render-p3-budget-25` / Draft PR #39 is still awaiting independent audit and owner merge. Do not rebase, merge, or treat its historical Free-tier selection as operative without explicit owner decision. Its proposed Mrdzyn Hobby + Starter web + Basic PG16 plan and $25 ceilings are planning parameters, not actual Render quote.
+**Budget dependency satisfied in Git:** P3 PR #39 was independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. It records an **up-to-$25 credit-funded budget ceiling only**, not initial Render resource creation, first build/deploy, a live quote, public judge access or destructive teardown. The older P2 Free-tier pricing choice is superseded, while all P1/P2 privacy/security requirements continue. This P4 branch reconciliation is **not itself a deployment authorization**.
 
 ## Objective
 
@@ -14,7 +14,7 @@ Bring the existing **Community-only, provider-disabled** NMI release path to a p
 
 ## Work plan
 
-1. Read `AGENTS.md`, `docs/STATUS.md`, `config/project-profile.json`, this task, active handoff, `docs/TESTING.md`, `docs/SECURITY.md`, P1/P2 Render runbooks/evidence, and relevant hosting/auth/source/test files only. Read Draft PR #39's proposed P3 budget plan via connected GitHub if available. Do not consume `docs/PROJECT-MEMORY.md`.
+1. Read `AGENTS.md`, `docs/STATUS.md`, `config/project-profile.json`, this task, active handoff, `docs/TESTING.md`, `docs/SECURITY.md`, P1/P2 Render runbooks/evidence, and relevant hosting/auth/source/test files only. Read the merged P3 budget plan in `docs/NMI-RENDER-P3-25-BUDGET-GATE.md`. Do not consume `docs/PROJECT-MEMORY.md`.
 2. **Verify a fresh release candidate** at a pinned audited source SHA rather than the October `652cf702…` P2 historical release SHA. Design the exact `release/nmi-render-judges-2026` branch mechanism, auto-deploy OFF, branch source check, initial-build/first-deployment risks, fail-closed `WEB_ORIGIN` and rollback proof. **Do not create the release branch in this phase.**
 3. Confirm the production Community-only build contains no AG Studio packages, trial key, local `/__nmi_dev/studio-licence` endpoint, dev-only Studio assets, synthetic app code, or unreviewed toggles. Recheck `pnpm build`, `pnpm check:bundle` and negative controls as needed. Production server must serve static assets and same-origin `/api`/`health`; implement **only bounded release-blocking repairs** with focused tests, not new product behavior.
 4. Run existing **no-egress**, private PostgreSQL 16 (disposable), simulated-provider, real-process hosting tests as appropriate to verify: HTTPS origins, __Host cookie flags, CSRF, one-hop `TRUST_PROXY=1`/spoof-resistance, exact-URL logging privacy, POST-body search, Content-Security-Policy, HSTS, response headers, operator ownership and least-privilege runtime role, owner-only migrations and backup/restore, safe rate limiting. No owner data, provider credentials or live provider calls.
@@ -29,5 +29,5 @@ Bring the existing **Community-only, provider-disabled** NMI release path to a p
 - No Render API create/modify/trigger/deploy/suspend/delete, no workspace upgrade, no actual billable action, no checkout or payment, no production database or public judge URL.
 - No release branch creation/merge, no code built from arbitrary HEAD, no auto-deploy/Blueprint/PR preview.
 - No AG Studio key/environment variable on Render; public build is AG Grid Community only. No real PayPal, OpenAI or other external provider calls.
-- No modifications to `docs/PROJECT-MEMORY.md` or unrelated product features. Do not merge PR #39 or this PR without a separate owner decision.
+- No modifications to `docs/PROJECT-MEMORY.md` or unrelated product features. PR #39 has already been owner-merged; do not merge PR #40 without its own separate owner decision.
 - Permission to spend **up to $25** does not override security, independent audit, exact-sha, first-deploy and judge-sharing human approvals.
