@@ -1,0 +1,138 @@
+{
+  "at": "2026-11-04T08:46:52.885Z",
+  "pg": "16",
+  "total": 26,
+  "failed": 0,
+  "results": [
+    {
+      "name": "disposable PostgreSQL 16 cluster started",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "owner role is not a superuser",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "migrations 0000-0007 apply as the non-superuser owner, one transaction each",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "runtime-role.sql applies as the owner",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "synthetic rows seeded by the owner (25 invoices, 25 items)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "runtime role can append to the audit log (INSERT)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source fingerprints taken (tables: 9)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "pg_dump (custom format) succeeded; file mode 0600",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "pg_restore --list can read the archive",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "simulated data loss (owner deletes invoices)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "lost database dropped",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "pg_restore as the non-superuser owner succeeded (backup+disaster+restore 0.3s on synthetic data)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored CONTENT fingerprint equals the pre-loss source (every table, rows + md5)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored SCHEMA fingerprint equals the source (columns, constraints, triggers, indexes)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime SELECT on invoices works",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime DELETE FROM invoices denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime CREATE TABLE denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime TRUNCATE denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime cannot touch operators credentials",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime audit INSERT still works",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: the append-only trigger rejects even the OWNER's UPDATE of audit_log",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: a truncated dump is rejected by pg_restore (non-zero exit)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: the fingerprint of the failed restore does not match the source",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "the archive contains operator credential hashes and customer rows (must be stored privately)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "cleanup: PostgreSQL shutdown confirmed before the data directory was deleted",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

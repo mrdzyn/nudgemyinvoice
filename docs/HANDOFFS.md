@@ -1966,4 +1966,13 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Studio:** AG Studio 3.0.0 now merged in **dev-only/off-by-default** mode. Production build must contain **no AG Studio code/key**, Render remains Community-only until separate written provider external-use approval.
 - **Next:** implement and validate release-readiness evidence on this Draft PR, both hosted CI checks, stop for independent exact-HEAD hosting/security audit and subsequent owner decisions.
 
+## Handoff: NMI-RENDER-P4-IMPL-01
+
+- **Task / PR:** `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`; Draft [#40](https://github.com/mrdzyn/nudgemyinvoice/pull/40). **From / to:** implementation → independent exact-HEAD hosting/security auditor. **Starting SHA:** `e7b50f418817e84a8522618f3fbbb9a0758d3a5b`.
+- **Verdict:** READY FOR OWNER HOSTING APPROVAL, conditional on owner gates G1–G8 (`docs/NMI-RENDER-P4-RELEASE-READINESS.md` §10). Nothing created or deployed.
+- **Evidence:** Community-only build verified plus negative control (flag + fake key → byte-identical bundle); `pnpm test:db` on PG16.15: 340 passed; P1 hosted real-Chrome harness re-run as adapted copy 26/26; backup/restore drill 26/26 (non-superuser owner, restore, least-privilege and audit immutability preserved, corrupted-dump control, confirmed-shutdown cleanup).
+- **Code change (only):** `release-preflight` CLI (`apps/api/src/release-preflight.ts`, `cli/release-preflight.ts`, package script) with 42 tests: env matrix (provider-disabled, never prints values) and exact-SHA source controls. No app behaviour changed.
+- **For the auditor to judge:** Hobby request-log alternative contract and residual risk (§6, gate G5); Studio packages being downloaded by Render's build (§3, G7); `loadConfig` does not itself reject provider keys in production (preflight is the control).
+- **Not done:** Render API/UI, release branch, merge of #39/#40, provider calls, Safari/Firefox/device/AT QA, restore on Render's managed service.
+
 <!-- HANDOFF_ENTRIES_END -->

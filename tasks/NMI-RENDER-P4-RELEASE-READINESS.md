@@ -1,6 +1,6 @@
 # NMI-RENDER-P4 — Judge-hosted Release Readiness (PREPARE ONLY)
 
-**State:** KICKOFF only; no implementation beyond planning/task/handoff in this commit. **Not deployed.**
+**State:** IMPLEMENTED for independent audit (verdict READY FOR OWNER HOSTING APPROVAL, conditional on owner gates G1–G8). Evidence: `docs/NMI-RENDER-P4-RELEASE-READINESS.md` and `design/evidence/NMI-RENDER-P4/`. **Not deployed; no Render resource, release branch, provider call or merge.**
 **Approved base:** `main@e314bef381c66b4233576683c7f53dd248f58a86` after owner-approved and independently audited A5-I1 PR #38 squash merge.
 **Branch:** `feat/nmi-render-p4-release-readiness`; **PR:** Draft, separate from Render budget Draft PR #39.
 **UI design gate:** Not applicable for deployment-only checks; existing approved UI retained. New UI or major security behavior requires its own design/authorization.

@@ -7,7 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "provision-operator": "tsx src/cli/provision-operator.ts"
+    "provision-operator": "tsx src/cli/provision-operator.ts",
+    "release-preflight": "tsx src/cli/release-preflight.ts"
   },
   "dependencies": {
     "@nmi/paypal": "workspace:*",
