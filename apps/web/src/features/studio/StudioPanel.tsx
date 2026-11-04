@@ -157,8 +157,8 @@ function StatusList({ currencies }: { currencies: readonly StudioCurrency[] }) {
 type Phase = "idle" | "loading" | "ready" | "failed";
 
 /**
- * "Activity analytics": a view-only AG Studio region between the full-population currency cards and the AG Grid
- * Community table. It renders the EXISTING analytics answer only (no fetch of its own, no new endpoint) and keeps
+ * "Activity analytics": a view-only AG Studio region immediately below the shared dashboard filters,
+ * above the full-population currency cards and the AG Grid Community table. It renders the EXISTING analytics answer only (no fetch of its own, no new endpoint) and keeps
  * everything exact: currencies are separate, amounts are minor-unit BigInt, zero days stay in the table.
  */
 export default function StudioPanel({
@@ -319,8 +319,10 @@ export default function StudioPanel({
     const inner = (
       <>
         <p className="hint hint-tight">
-          Same filters and the same full-population server totals as the cards above. Values are
-          invoice totals by creation day ({model.timeZone}), not payments.
+          Use the currency pills and filters above to update these charts, the totals below, and
+          the invoice list together. The trend shows one currency at a time; with All currencies
+          selected, the chart tabs let you inspect each currency. Values are invoice totals by
+          creation day ({model.timeZone}), not payments.
         </p>
         <div className="studio-grid">
           {chartColumn}

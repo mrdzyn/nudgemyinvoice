@@ -291,6 +291,7 @@ export function RealDashboardView({
     state.analyticsStatus === "loaded" && state.analytics ? (
       state.analytics.currencies.length ? (
         <>
+          <StudioSlot summary={state.analytics} range={f} />
           <h2 className="sr-only" id="dash-totals-heading">
             Full matching totals by currency
           </h2>
@@ -317,7 +318,6 @@ export function RealDashboardView({
             Totals cover the full matching invoice population, not only rows loaded below. Each card
             uses one currency; currencies are never added together or converted.
           </p>
-          <StudioSlot summary={state.analytics} range={state.filters} />
         </>
       ) : (
         <div className="empty" id="dash-empty-range">

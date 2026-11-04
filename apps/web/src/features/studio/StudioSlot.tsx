@@ -42,7 +42,7 @@ export function StudioUnavailable() {
         </div>
       </div>
       <Notice kind="info" role="status" id="studio-unavailable">
-        <strong>Charts unavailable.</strong> The totals above and the invoice table below are not
+        <strong>Charts unavailable.</strong> The currency totals and invoice table below are not
         affected. Reload the page to try loading charts again.
       </Notice>
     </section>
