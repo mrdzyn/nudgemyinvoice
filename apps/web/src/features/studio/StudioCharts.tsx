@@ -158,34 +158,12 @@ const styleNonce =
     : (document.querySelector('meta[name="nmi-style-nonce"]')?.getAttribute("content") ??
       undefined);
 
-/**
- * Library gap (AG Studio 3.0.0): `styleNonce` reaches Studio's own theme <style> elements but NOT its colour sensor
- * nor the AG Charts DOM manager it embeds, whose <style> elements are then blocked by the production CSP. So, once
- * this lazy Studio module loads with a page nonce, a <style> element created BY SCRIPT gets that nonce.
- *
- * Why this does not weaken the policy: same-origin script (the only script `script-src 'self'` allows) can already
- * restyle the page through the CSSOM, which CSP does not govern, so it gains nothing. What the policy exists to stop
- * is still stopped: <style> arriving through HTML markup (parser-created, including innerHTML) never passes through
- * createElement and stays blocked, style ATTRIBUTES stay blocked, and the nonce changes on every page load.
+/*
+ * AG Studio 3.0.0 does not forward `styleNonce` to its colour sensor or to the AG Charts DOM manager. Those few
+ * static vendor stylesheets are allowed by exact SHA-256 hash in the server's CSP (apps/api/src/plugins/
+ * studio-style-hashes.ts). There is deliberately NO page-wide createElement patch (SEC-N1): any other <style>
+ * without the nonce stays blocked.
  */
-function nonceScriptCreatedStyles(nonce: string): void {
-  const proto = Document.prototype;
-  const flag = Symbol.for("nmi.studio.styleNonce");
-  if (Reflect.get(proto, flag) === true) return;
-  const original = proto.createElement;
-  const patched = function (this: Document, tagName: string, options?: ElementCreationOptions) {
-    const el = original.call(this, tagName, options);
-    if (el instanceof HTMLStyleElement && !el.nonce) el.nonce = nonce;
-    return el;
-  };
-  Object.defineProperty(proto, "createElement", {
-    value: patched as typeof proto.createElement,
-    configurable: true,
-    writable: true,
-  });
-  Reflect.set(proto, flag, true);
-}
-if (styleNonce) nonceScriptCreatedStyles(styleNonce);
 
 /** View-only: remove every widget toolbar item (CSV/image export, duplicate, delete). */
 const viewOnlyWidgets: NonNullable<AgStudioProperties["widgets"]> = (defaults) => ({

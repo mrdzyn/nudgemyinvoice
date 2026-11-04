@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import { extname, join, relative, sep } from "node:path";
 import type { FastifyInstance, FastifyReply } from "fastify";
+import { STUDIO_STYLE_HASHES } from "./studio-style-hashes.js";
 
 /**
  * Serves the built web app (apps/web/dist) from the API's own origin, so the browser, the session
@@ -61,16 +62,23 @@ export const PAGE_CSP =
 /**
  * P5: AG Studio/Charts/Grid theming injects <style> ELEMENTS at runtime. Rather than `'unsafe-inline'`, every
  * shell response gets a fresh random nonce that authorises only <style> elements carrying it (the libraries'
- * `styleNonce` option). Scripts stay `'self'` only; style ATTRIBUTES stay blocked. The nonce is published to
- * the page in `<meta name="nmi-style-nonce">` so the Studio widgets can pass it on.
+ * `styleNonce` option), plus the exact hashes of the few vendor stylesheets AG Studio 3.0.0 injects without
+ * that nonce (studio-style-hashes.ts, SEC-N1). Scripts stay `'self'` only; style ATTRIBUTES stay blocked. The
+ * nonce is published to the page in `<meta name="nmi-style-nonce">` so the Studio widgets can pass it on.
  */
 export const STYLE_NONCE_META = "nmi-style-nonce";
+const styleSources = (nonce: string, q: string) =>
+  [
+    `${q}self${q}`,
+    `${q}nonce-${nonce}${q}`,
+    ...STUDIO_STYLE_HASHES.map((h) => `${q}${h}${q}`),
+  ].join(" ");
 export const pageCsp = (nonce: string): string =>
-  PAGE_CSP.replace("style-src 'self'", `style-src 'self' 'nonce-${nonce}'`);
+  PAGE_CSP.replace("style-src 'self'", `style-src ${styleSources(nonce, "'")}`);
 /** The build-time <meta> CSP's style directive, as written raw or HTML-escaped (Vite emits `&#39;`). */
 const META_STYLE_SRC = [
-  ["style-src 'self';", (n: string) => `style-src 'self' 'nonce-${n}';`],
-  ["style-src &#39;self&#39;;", (n: string) => `style-src &#39;self&#39; &#39;nonce-${n}&#39;;`],
+  ["style-src 'self';", (n: string) => `style-src ${styleSources(n, "'")};`],
+  ["style-src &#39;self&#39;;", (n: string) => `style-src ${styleSources(n, "&#39;")};`],
 ] as const;
 /** For API/health/error responses: nothing may be loaded or framed from them. */
 export const API_CSP = "default-src 'none'; frame-ancestors 'none'";

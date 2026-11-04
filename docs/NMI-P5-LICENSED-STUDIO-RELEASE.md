@@ -23,7 +23,11 @@ AG Studio's licence model is browser-side: `AgStudioProvider licenseKey` must re
   - Responses are `no-store, private`, `Vary: Cookie`, with the fixed API CSP.
   - It answers 404 when no licence is configured.
 - **Lazy load after sign-in:** the sign-in page loads no Studio code and requests no licence. On phones the panel starts collapsed, and nothing is fetched until the operator opens it.
-- **No client copy kept:** the key is held only in React state, never in web storage, cookies, the DOM or a URL. Each chart (re)load re-authorises against the live session (at most one small request per filter change), so signing out or revoking the session cuts access immediately.
+- **No persistent client copy:** the key is held only in React state, never in web storage, cookies, the DOM or a URL. Each chart (re)load asks the server again (at most one small request per filter change).
+- **What session revocation does and does not do (SEC-N2):** signing out or revoking a session makes every **future** licence request fail (401). It **cannot retract a licence already delivered to a browser**:
+  - A page that already received the key keeps it in memory and keeps showing the charts it drew, until the panel unmounts, the page reloads or the operator is signed out of the app.
+  - Anyone who copied the key from that browser keeps it.
+  - Delivery to a browser is irreversible. If a key is believed exposed beyond the accepted operator and judge use, the only remedy is the vendor's own process (for example, replacing the licence), followed by updating `AG_STUDIO_LICENSE_KEY`.
 - **Fail closed:** in a built bundle, a missing licence (not configured, signed out, network error) shows "Charts unavailable" with Retry. It never shows an unlicensed Studio. The exact daily and status tables, the currency cards and the invoice grid stay intact.
 - **Local development unchanged:** `VITE_NMI_STUDIO_LOCAL=1` on the Vite dev server still uses the loopback-only dev bridge. That bridge, its route and header are absent from every built bundle, which the build guard and the bundle scan both enforce.
 
@@ -49,10 +53,15 @@ Production QA found that AG Studio's theming, embedded AG Charts and grid core i
 
 - **Fresh nonce per shell response:** every HTML shell response gets a new 128-bit nonce, placed in the header CSP, in the build-time `<meta>` CSP and in `<meta name="nmi-style-nonce">`. The shell is `no-store`. The server refuses to start if the shell has a meta CSP it cannot extend.
 - **Studio passes the nonce:** Studio passes the nonce through its official `styleNonce` option.
-- **Library gap workaround:** AG Studio 3.0.0 does not forward `styleNonce` to its colour sensor or to the AG Charts DOM manager. Once the lazy Studio module loads, a `<style>` element **created by script** gets the page nonce.
-  - This grants same-origin script nothing it lacks, since the CSSOM, which CSP doesn't govern, can already restyle the page.
-  - `<style>` arriving through markup (parser-created, including `innerHTML`) stays blocked.
-  - Style attributes stay blocked, scripts stay `'self'` only, and there is no `'unsafe-inline'` or `'unsafe-eval'`.
+- **Exact vendor-stylesheet hashes (SEC-N1, replacing the earlier shim):** AG Studio 3.0.0 does not forward `styleNonce` to its colour sensor or to the AG Charts DOM manager. Instead of a page-wide patch, `style-src` also lists the SHA-256 of exactly four static vendor stylesheets (`apps/api/src/plugins/studio-style-hashes.ts`):
+  - the AG Charts Community stylesheet (57,088 chars);
+  - the AG Charts Enterprise stylesheet (31,898 chars);
+  - AG Studio's colour-sensor `@property` rule;
+  - the empty string (AG Charts inserts its `<style>` empty, then fills it; an empty sheet applies nothing).
+
+  These were captured from Chrome's CSP reports and the blocked elements' text in the licensed production build (desktop, 390 px and dark theme, identical across runs). Two are re-derived independently in a unit test, and a test fails if the lockfile moves off the pinned `ag-studio 3.0.0` / `ag-charts-* 14.2.0`.
+- **What this means for other styles:** no app code patches DOM prototypes any more (a boundary test enforces it). Any other `<style>` stays blocked, whether script-created without the nonce, injected through markup or carrying a wrong nonce. Style attributes stay blocked, scripts stay `'self'` only, and there is no `'unsafe-inline'` or `'unsafe-eval'`. The production harness proves each of these in a real browser while licensed Studio is loaded, for **both** enforcing policies (header and meta CSP), with a positive control showing it detects an applied style.
+- **Residual risk:** an attacker able to inject a `<style>` whose text is *byte-identical* to one of the four vendor sheets could insert that vendor CSS again. It is the same CSS the page already uses, so this has no practical effect. The hashes must be recaptured on any AG Studio/Charts upgrade (`P5_COLLECT_HASHES=1`). Until then, a version drift shows up as unstyled charts and a failing production QA, never as a silent relaxation.
 - **Result:** zero CSP violations across the full production QA session (desktop, mobile, dark theme, fallback and recovery).
 
 ## 5. Dashboard visual changes (owner-directed; awaiting owner visual acceptance)
@@ -78,14 +87,14 @@ The order is kept: page heading → **global currency/date/search/status filters
 
 ## 6. Evidence
 
-- **Licensed production-build QA:** `design/evidence/NMI-P5/run-licensed-production-qa.mjs`, **37/37** (`qa-results.json`, screenshots `01`–`08`).
+- **Licensed production-build QA:** `design/evidence/NMI-P5/run-licensed-production-qa.mjs`, **43/43** (`qa-results.json`, screenshots `01`–`08`), including six SEC-N1 negative-CSP checks.
   - Setup: real production server entry behind a local HTTPS proxy, least-privilege DB role, disposable PostgreSQL 16, 96 synthetic invoices saved through the real route, simulated providers, headless Chrome.
   - Coverage: lazy loading, licence boundary (anonymous, sign-out, logs, storage), CSP, real Studio render, layout order, exact figures against independent SQL, keyboard tabs and toggle with a visible focus ring, filter interaction and the loading placeholder, dark theme, the licence-unavailable fallback and Retry, and 390 px mobile (collapsed, expanded, dark, no overflow).
 - **A5-I1 local dev QA re-run:** corrected for the analytics-first order and the new status table, and a fault-injection race fixed. **96/96** (`a5i1-dev-rerun-results.json`). The historical A5-I1 results are unchanged.
 - **Automated tests:**
   - licence route: 7 PostgreSQL tests;
   - licence config: 7 tests;
-  - shell nonce: 5 tests;
+  - shell nonce: 5 tests; vendor style-hash allowlist: 4 tests;
   - release preflight: 62 tests;
   - web: Studio fallback (production fail-closed), summary strip, status table, chart sizing, boundaries.
 - **Bundle cost:** the licensed entry chunk is 1,332.9 kB (379.9 kB gzip) against Community's 1,159.7 kB (332.2 kB). The shared single-file grid module keeps more code. The Studio chunk is 4,458.5 kB (1,260.3 kB gzip), lazy and loaded only after sign-in.
@@ -97,3 +106,6 @@ The order is kept: page heading → **global currency/date/search/status filters
 - **Licence terms:** not independently reviewed (§1).
 - **No visible entitlement signal:** AG Studio's console reported no licence problem with the owner's key, but view mode shows no watermark either way. Entitlement is not observable in the UI.
 - **Licence in the browser:** a signed-in operator (or a judge using the operator session) can extract the licence from the browser by design (§2).
+- **No recall of a delivered licence:** revoking a session only stops future licence requests. A key already delivered to a browser cannot be retracted (§2, SEC-N2).
+- **Vendor style hashes need upkeep:** they are tied to the pinned AG Studio and AG Charts versions and must be recaptured on upgrade (§4, SEC-N1).
+- **No expiry enforcement:** nothing in the code stops the dashboard at the end of the licence entitlement. The owner must take the licensed dashboard down, or rebuild the Community variant, before the entitlement ends.

@@ -311,6 +311,13 @@ describe("UI shell boundaries", () => {
       }
     });
 
+    it("SEC-N1: no app code patches DOM prototypes (the page-wide createElement nonce shim stays removed)", () => {
+      for (const f of files)
+        expect(code(read(f)), relative(webRoot, f)).not.toMatch(
+          /(Document|Node|Element|HTMLElement)\.prototype|defineProperty\([^)]*createElement|\.createElement\s*=/,
+        );
+    });
+
     it("Studio receives no customer-facing fields", () => {
       for (const f of ["studioModel.ts", "studioReport.ts", "StudioCharts.tsx"]) {
         expect(code(read(join(studioDir, f))), f).not.toMatch(

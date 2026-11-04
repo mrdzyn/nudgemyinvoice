@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDb } from "@nmi/db";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
+import { STUDIO_STYLE_HASHES } from "./plugins/studio-style-hashes.js";
 import { baseEnv } from "./test-support.js";
 
 /**
@@ -181,8 +182,11 @@ describe("single-origin static serving", () => {
   });
   it("every response carries the header-level security policy", async () => {
     const page = await get("/");
-    expect(page.headers["content-security-policy"]).toMatch(
-      /^default-src 'none'; script-src 'self'; style-src 'self' 'nonce-[A-Za-z0-9+/]{22}=='; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'$/,
+    const pageCspHeader = String(page.headers["content-security-policy"]);
+    const n = /'nonce-([A-Za-z0-9+/]{22}==)'/.exec(pageCspHeader)?.[1];
+    expect(n).toBeDefined();
+    expect(pageCspHeader).toBe(
+      `default-src 'none'; script-src 'self'; style-src 'self' 'nonce-${n}' ${STUDIO_STYLE_HASHES.map((h) => `'${h}'`).join(" ")}; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'`,
     );
     for (const r of [
       page,
@@ -366,7 +370,9 @@ describe("P5 per-response style nonce (AG Studio theming under the production CS
     const n = nonceOf(header);
     expect(n).toMatch(/^[A-Za-z0-9+/]{22}==$/);
     expect(r.body).toContain(`<meta name="nmi-style-nonce" content="${n}">`);
-    expect(r.body).toContain(`style-src 'self' 'nonce-${n}';`);
+    const hashes = STUDIO_STYLE_HASHES.map((h) => `'${h}'`).join(" ");
+    expect(r.body).toContain(`style-src 'self' 'nonce-${n}' ${hashes};`);
+    expect(header).toContain(`style-src 'self' 'nonce-${n}' ${hashes};`);
     expect(r.body).not.toContain("style-src 'self'; img-src");
   });
 
@@ -399,7 +405,8 @@ describe("P5 per-response style nonce (AG Studio theming under the production CS
     const a2 = buildApp(loadConfig({ ...prodEnv, WEB_DIST_DIR: d2 }), { db: createDb(pool) });
     const r = await a2.inject({ method: "GET", url: "/" });
     const n = nonceOf(String(r.headers["content-security-policy"]));
-    expect(r.body).toContain(`style-src &#39;self&#39; &#39;nonce-${n}&#39;;`);
+    const hashes = STUDIO_STYLE_HASHES.map((h) => `&#39;${h}&#39;`).join(" ");
+    expect(r.body).toContain(`style-src &#39;self&#39; &#39;nonce-${n}&#39; ${hashes};`);
     await a2.close();
     writeFileSync(
       join(d2, "index.html"),

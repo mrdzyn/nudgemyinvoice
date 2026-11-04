@@ -208,9 +208,8 @@ const key = async (k, n = 1) => { for (let i = 0; i < n; i++) { await send("Inpu
 for (const d of ["Page", "Runtime", "Log", "Network"]) await send(d + ".enable");
 await send("Fetch.enable", { patterns: [{ urlPattern: `${ORIGIN}/api/*` }] });
 // Record every CSP violation with its effective directive (style-src-elem vs style-src-attr) and source file.
-await send("Page.addScriptToEvaluateOnNewDocument", { source: "window.__cspv = []; document.addEventListener('securitypolicyviolation', (e) => window.__cspv.push([e.effectiveDirective, (e.sourceFile || '').replace(location.origin, ''), e.lineNumber, (e.sample || '').slice(0, 60)]));" });
+await send("Page.addScriptToEvaluateOnNewDocument", { source: "window.__cspv = []; document.addEventListener('securitypolicyviolation', (e) => window.__cspv.push([e.effectiveDirective, (e.sourceFile || '').replace(location.origin, ''), e.lineNumber, (e.sample || '').slice(0, 60), /frame-ancestors/.test(e.originalPolicy) ? 'header' : 'meta']));" });
 const cspDetail = () => ev("JSON.stringify(window.__cspv ?? [])");
-if (process.env.P5_DEBUG_CSP) await send("Page.addScriptToEvaluateOnNewDocument", { source: `window.__nonceless = []; for (const fn of ['appendChild', 'insertBefore', 'prepend', 'append']) { const proto = fn === 'prepend' || fn === 'append' ? Element.prototype : Node.prototype; const orig = proto[fn]; proto[fn] = function (...args) { for (const n of args) if (n && n.nodeName === 'STYLE' && !n.nonce) window.__nonceless.push([(n.textContent || '').slice(0, 70), (new Error().stack || '').split('\\n').slice(2, 6).map((l) => l.replace(location.origin, '').trim()).join(' <- ')]); return orig.apply(this, args); }; }` });
 await send("Emulation.setTimezoneOverride", { timezoneId: ZONE });
 const DESKTOP = { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false };
 const MOBILE = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
@@ -260,7 +259,6 @@ check("security", "no Content-Security-Policy violation while the licensed Studi
 check("licence", "AG Studio reports no licence problem in the console (invalid / expired / missing / trial)", licenceComplaints().length === 0, licenceComplaints().slice(0, 3).join(" | "));
 check("network", "no request leaves the single origin (no CDN, licence server or telemetry host)", foreign.length === 0, foreign.slice(0, 5).join(","));
 
-if (process.env.P5_DEBUG_CSP) { console.log("NONCELESS", JSON.stringify(await ev("window.__nonceless"), null, 1).slice(0, 4000)); process.exit(0); }
 /* 3. layout order: filters -> analytics -> cards -> grid */
 const order = await ev(`(() => { const t = (s) => document.querySelector(s)?.getBoundingClientRect().top ?? -1; return [t('[aria-label="Filter by currency"]'), t('#studio-panel'), t('#dash-cards'), t('.nmi-grid')]; })()`);
 check("layout", "reading and visual order is currency filters -> Activity analytics -> currency cards -> invoice grid", order.every((v) => v >= 0) && order[0] < order[1] && order[1] < order[2] && order[2] < order[3], JSON.stringify(order));
@@ -388,6 +386,38 @@ check("logs", "the edge request-line log never contains the licence value and re
 check("security", "no CSP violation for the whole session", cspViolations().length === 0, cspViolations().slice(0, 3).join(" | "));
 check("console", "no uncaught exception in the whole session", !consoleMsgs.some((m) => m.startsWith("exception:")), consoleMsgs.filter((m) => m.startsWith("exception:")).slice(0, 3).join(" | "));
 
+/* 12. SEC-N1 negative CSP regression, on the signed-in dashboard with licensed Studio fully loaded */
+await signIn();
+await settled();
+await waitActive();
+const cspBefore = (await ev("window.__cspv.length")) | 0;
+const neg = await ev(`(async () => {
+  const t = document.querySelector('#dash-title');
+  const cs = () => getComputedStyle(t);
+  const pageNonce = document.querySelector('meta[name="nmi-style-nonce"]').getAttribute('content');
+  document.body.insertAdjacentHTML('beforeend', '<style id="neg-parser">#dash-title{color:rgb(1, 2, 3) !important}</style>');
+  const s2 = document.createElement('style'); s2.textContent = '#dash-title{letter-spacing:7px !important}'; document.head.append(s2);
+  const s3 = document.createElement('style'); s3.nonce = 'AAAAAAAAAAAAAAAAAAAAAA=='; s3.textContent = '#dash-title{word-spacing:9px !important}'; document.head.append(s3);
+  document.body.insertAdjacentHTML('beforeend', '<span id="neg-attr" style="display:inline-block;width:123px">x</span>');
+  const ok = document.createElement('style'); ok.nonce = pageNonce; ok.textContent = '#dash-title{outline-offset:5px !important}'; document.head.append(ok);
+  await new Promise((r) => setTimeout(r, 300));
+  return { parser: cs().color, script: cs().letterSpacing, wrongNonce: cs().wordSpacing, attr: getComputedStyle(document.querySelector('#neg-attr')).width, control: cs().outlineOffset };
+})()`);
+await sleep(300);
+const negViol = await ev(`window.__cspv.slice(${cspBefore}).map((v) => v[4] + ':' + v[0])`);
+const per = (policy, d) => negViol.filter((x) => x === `${policy}:${d}`).length;
+check("csp-negative", "positive control: a <style> carrying THIS page's nonce applies (the harness can observe an applied style)", neg.control === "5px", JSON.stringify(neg));
+check("csp-negative", "a <style> injected through HTML markup stays blocked while licensed Studio is loaded", neg.parser !== "rgb(1, 2, 3)", JSON.stringify(neg));
+check("csp-negative", "a script-created <style> WITHOUT the nonce stays blocked (no page-wide createElement shim exists)", neg.script !== "7px", JSON.stringify(neg));
+check("csp-negative", "a <style> with a wrong nonce stays blocked", neg.wrongNonce !== "9px", JSON.stringify(neg));
+check("csp-negative", "an inline style ATTRIBUTE stays blocked", neg.attr !== "123px", JSON.stringify(neg));
+check("csp-negative", "BOTH enforcing policies (header CSP and the build-time meta CSP) independently report each blocked attempt: 3 style-src-elem + 1 style-src-attr per policy, nothing else", ["header", "meta"].every((p) => per(p, "style-src-elem") === 3 && per(p, "style-src-attr") === 1) && negViol.length === 8, JSON.stringify(negViol));
+
+if (process.env.P5_COLLECT_HASHES) {
+  const hashes = {};
+  for (const m of consoleMsgs) for (const h of m.matchAll(/'(sha256-[A-Za-z0-9+/=]+)'/g)) hashes[h[1]] = (hashes[h[1]] ?? 0) + 1;
+  console.log("BLOCKED_STYLE_HASHES " + JSON.stringify(hashes));
+}
 /* ------------------------------------------------ results (licence-free) */
 const pass = results.filter((r) => r.result === "PASS").length;
 const out = { task: "NMI-P5", environment: { ...info, simulatedProviders: true, chrome: "headless", viewport: [DESKTOP, MOBILE], zone: ZONE }, consoleSample: consoleMsgs.slice(0, 40).map(redact), results };

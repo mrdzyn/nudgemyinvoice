@@ -2040,4 +2040,13 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Not done:** hosting, real devices, Safari/Firefox, screen readers, independent review of the licence terms. No provider call, Render action, release branch, deploy, merge or licence disclosure.
 - **Next:** owner visual acceptance of screenshots `01`–`08`; independent exact-HEAD review; then the separate merge decisions (#41 first, or P5 superseding it).
 
+## Handoff: NMI-P5-FIX1-01
+
+- **Task / PR:** `tasks/NMI-P5-LICENSED-STUDIO-PRODUCTION.md` (section P5-FIX1); Draft [#42](https://github.com/mrdzyn/nudgemyinvoice/pull/42). Start `2bbc5a8431e9979a886b2f13bc7f5d1d9a29514b`; final head is in the PR comment. **From / to:** remediation of audit 5771745273 → independent re-audit.
+- **SEC-N1:** the global `createElement` shim is removed. Four static vendor stylesheets are allowed by exact SHA-256 (`studio-style-hashes.ts`), with provenance, a lockfile pin and a boundary test against DOM-prototype patches. The browser negative-CSP checks pass for both policies, with a positive control.
+- **SEC-N2:** revocation wording corrected in release doc §2 and §7.
+- **Evidence:** licensed production QA 43/43; new vendor style-hash tests (4); updated hosting tests; `pnpm validate` and `pnpm test:db`; hosted CI at the final head.
+- **Residual:** licence extractable by the signed-in operator and not recallable; hash upkeep on vendor upgrade; no automated expiry enforcement; G7 owner-attested only; Safari/Firefox/devices/AT not tested; owner visual acceptance pending.
+- **Unchanged / not done:** licensed variant, visuals, authentication, PR #41 layout. No merge, deploy, Render action or provider call.
+
 <!-- HANDOFF_ENTRIES_END -->

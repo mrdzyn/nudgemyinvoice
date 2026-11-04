@@ -40,3 +40,8 @@
    - `pnpm validate`, `pnpm test:db` and both hosted CI workflows pass at the exact final HEAD.
 
 Details and results are in `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md`.
+
+## Audit remediation (P5-FIX1, after review 5771745273 at `2bbc5a8`)
+- **SEC-N1:** the page-wide `Document.prototype.createElement` nonce shim is **removed**. The four static vendor stylesheets AG Studio 3.0.0 injects without `styleNonce` are allowed by exact SHA-256 in `style-src` (`apps/api/src/plugins/studio-style-hashes.ts`), with provenance, two hashes re-derived independently, a lockfile version pin and a boundary test that forbids DOM-prototype patches. The production harness now also proves, with licensed Studio loaded and for both the header and the meta policy, that markup-injected `<style>`, nonce-less script `<style>`, wrong-nonce `<style>` and inline style attributes stay blocked, with a positive control.
+- **SEC-N2:** documentation corrected. Revocation blocks only **future** licence requests; a licence already delivered to a browser cannot be retracted.
+- **Unchanged:** the licensed variant, dashboard visuals, authentication and every other control, and PR #41's layout.
