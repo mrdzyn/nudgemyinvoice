@@ -1872,4 +1872,56 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** A4 harness, test and docs only; no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
 
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-START
+
+- **Task:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; contract `docs/NMI-PROTOTYPE-10D-A5-AG-STUDIO-PLAN.md`.
+- **From / to:** A5 product/architecture kickoff → independent design/licence review and bounded A5-I1 implementation planning.
+- **Base / branch:** `main@653c44451efc1c59b8a805382dc5b44d57fc7790`; `docs/nmi-prototype-10d-a5-studio-contract`.
+- **State:** documentation only, not an AG Studio installed/integrated claim; owner-provided trial expiry **2026-12-16**, license string not copied or committed. Studio published EULA trial-use wording requires vendor written confirmation before external judges/public access despite marketing's production-evaluation statement.
+- **Design:** retain current AG Grid Community 36.2 dashboard as default; optional view-only Studio aggregate chart area is proposed only, subject to owner visual approval. No new standalone paid Enterprise widgets or AG Studio AI.
+- **Safety:** no package, dependency, app code, browser licence, PayPal/OpenAI, owner DB, provider usage, Render resource/deployment, merge or judge URL. A4 local-only simulated READY and hosted NOT AUTHORIZED remain.
+- **Next:** independent scope/licence review; owner approves Studio screen/layout, then separately bounded A5-I1 local-only implementation Draft PR; test before claim of Studio integration.
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-DESIGN-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** Design/UX agent → project owner (visual approval), then independent design/licence review.
+- **Delivered (design only):** screen spec `design/screens/NMI-PROTOTYPE-10D-A5D-STUDIO-ANALYTICS.md`; static mockup `design/mockups/NMI-PROTOTYPE-10D-A5D-studio-analytics.html` (real tokens/app CSS inlined); 19 PNG previews and generator scripts in `design/evidence/NMI-PROTOTYPE-10D-A5D/`. Desktop 1280, tablet 820, mobile 390; light/dark; loading, empty, error, Studio-unavailable and session-expired states; currency-separated cards, daily value chart, draft-status breakdown, shared filters, unchanged AG Grid Community table.
+- **Proposal:** one optional view-only Studio panel between the currency cards and the table, fed by the existing `POST /api/analytics/summary`; no Studio filters, KPI tiles, table, export, edit or AI. Community dashboard remains the default and fallback.
+- **Not verified:** AG Studio rendering/theming/accessibility/watermark/licence behavior (previews are not Studio renders); physical device, Safari/Firefox, assistive technology.
+- **Safety:** no package, dependency, application, schema, licence-key, provider, owner-DB, Render, deploy or merge change. Synthetic data only.
+- **Next:** owner decides Q1-Q6 in the spec and approves or requests changes. Only after approval, a separately scoped A5-I1 local implementation Draft PR. Both hosted workflows on the final head of this PR.
+
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-OWNER-APPROVAL-01
+
+- **Task/PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** owner-approved A5-D visual direction (2026-11-04, Asia/Manila) → Design/UX agent to align generated mockup/previews, independent exact-HEAD review, then separately authorized A5-I1 local-only implementation.
+- **Owner-approved decisions:** Activity analytics between KPI cards and Community table; single-currency chart selector that does not change filters; view-only; daily <=90 local calendar days / weekly plotted buckets >90 days with exact per-currency minor units and complete daily table; **mobile <=767px collapsed by default**, desktop/tablet expanded; Studio badge only when truly active and vendor attribution never hidden. Idle tooltip should not appear until hover/focus/tap.
+- **Preview debt:** all 19 initial PNG previews and source mockup are from pre-approval proposal (mobile initially expanded, daily-only, idle tooltip); **not final** until regenerated/reviewed. Keep examples synthetic and licensed AG Studio uninstalled in this design PR.
+- **Separate existing-dashboard QA:** 390px Nudgey overlay partly obscures Load more; dark-mode date input calendar icon contrast must be measured. Do not silently modify application scope here.
+- **Boundaries:** no key handling/installation/AG Studio code, dependency, provider calls, owner database, Render, public judge access, deployment or merge approval. Trial expiry 2026-12-16; external judge licensing rights remain UNVERIFIED.
+- **Next:** update HTML generator, mockup, 390px previews and captions, run local design validation and both hosted CI, request independent exact-HEAD design audit, then obtain separate owner squash-merge decision for PR #37.
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-PREVIEWS-REV2-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** Design/UX agent → independent exact-HEAD design auditor, then owner squash-merge decision.
+- **Starting SHA:** `ef4381763389955d697a504585644d85e31192fa` (owner-approved decisions recorded).
+- **Delivered (design only):** generator, mockup and 34 PNG previews regenerated for the approved refinements: mobile (<=767px) panel collapsed by default with accessible Show/Hide charts; daily bars up to 90 days, weekly (Monday start, exact BigInt sums) beyond, daily table preserved; tooltips only on hover, keyboard focus or tap; Studio badge only in the Studio-active variant, vendor-attribution area never hidden while widgets show, truthful "Charts unavailable" fallback; Studio-off preview equals today's dashboard. Light/dark, desktop 1280, tablet 820, mobile 390, loading/empty/error/fallback/session-expired.
+- **Validation:** capture script `design-checks.json` 177/177 PASS (headless Chrome, emulated); `pnpm validate` and both hosted workflows (see PR for run IDs). Existing filters, KPI cards and Community grid markup unchanged.
+- **Not verified:** AG Studio rendering/theming/accessibility/watermark/licence behavior (previews are not Studio renders); physical device, Safari/Firefox, assistive technology. Existing-dashboard 390 px Nudgey/Load more overlap and dark date-icon contrast remain separate QA items.
+- **Safety:** no AG Studio package, licence key, dependency, application, schema, provider, owner-DB, Render, deploy or merge change.
+- **Next:** independent audit, owner merge decision for PR #37, then a separately scoped A5-I1 local implementation task.
+
+## Handoff: NMI-PROTOTYPE-10D-A5-D-MINOR1-REMEDIATION-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** MINOR-1 remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `7905cdddf4a7f0ed4496ded6c642d68ee437a23a`.
+- **Change (design generator/evidence only):** the accessible daily table keeps every calendar day, including zero-invoice days with the exact zero ($0.00, €0.00, ¥0), in daily and weekly modes. New capture checks assert exactly 30/90/120 consecutive daily rows for all nine currency x range combinations, exact zero values, zero rows = zero-height bars, and table = bars = card in minor units. 227/227 PASS; a negative control with the old filter fails 15. Mockup, previews, design-checks.json and docs regenerated.
+- **Safety:** no production code, AG Studio package, licence key, provider, owner-DB, Render, deploy or merge change.
+- **Next:** both hosted workflows on the final head, independent re-audit, owner squash-merge decision, then separately scoped A5-I1.
+
 <!-- HANDOFF_ENTRIES_END -->

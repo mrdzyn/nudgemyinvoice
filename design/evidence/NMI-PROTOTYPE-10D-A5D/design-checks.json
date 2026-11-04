@@ -1,0 +1,1261 @@
+{
+  "task": "NMI-PROTOTYPE-10D-A5-D",
+  "note": "Headless Chrome (CDP), emulated viewports, synthetic static mockup. Not physical-device, Safari/Firefox or assistive-technology QA.",
+  "chrome": "Chrome/156.0.8078.80",
+  "total": 227,
+  "failed": 0,
+  "shots": [
+    {
+      "shot": "01-desktop-default",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "toggle says Hide charts and aria-expanded=true",
+          "result": "PASS"
+        },
+        {
+          "name": "panel body visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "daily chart: 30 bars",
+          "result": "PASS"
+        },
+        {
+          "name": "no weekly note",
+          "result": "PASS"
+        },
+        {
+          "name": "bars, daily table and card agree exactly",
+          "result": "PASS"
+        },
+        {
+          "name": "daily table has exactly 30 consecutive calendar days, zero days exact",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "02-desktop-default-clean",
+      "viewport": "1280x1735@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "review tags hidden",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "03-desktop-tooltip-hover",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "tooltip visible after the interaction with a title and value",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "04-desktop-tooltip-keyboard",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "tooltip visible after the interaction with a title and value",
+          "result": "PASS"
+        },
+        {
+          "name": "chart wrap shows keyboard focus",
+          "result": "PASS"
+        },
+        {
+          "name": "live region announces the bar",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "05-desktop-jpy-tab",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY bars, table and card agree exactly (zero-decimal)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY table: 30 consecutive days incl. at least one zero-invoice day shown as ¥0",
+          "result": "PASS"
+        },
+        {
+          "name": "a zero-invoice row is present",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "06-desktop-range-90-daily",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "90 calendar days stay DAILY: 90 bars, no weekly note",
+          "result": "PASS"
+        },
+        {
+          "name": "bars, daily table and card agree exactly",
+          "result": "PASS"
+        },
+        {
+          "name": "daily table has exactly 90 consecutive calendar days",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "07-desktop-range-120-weekly",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "over 90 days is WEEKLY: 17-19 bars and the weekly note",
+          "result": "PASS"
+        },
+        {
+          "name": "weekly bars, daily table and card agree exactly",
+          "result": "PASS"
+        },
+        {
+          "name": "daily table keeps exactly 120 consecutive calendar days (far more rows than weekly bars)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 120-day table includes zero-invoice days",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "08-desktop-weekly-tooltip-hover",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "tooltip visible after the interaction with a title and value",
+          "result": "PASS"
+        },
+        {
+          "name": "weekly tooltip names a week range",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "09-desktop-weekly-table-open",
+      "viewport": "1280x2174@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "daily table disclosure open",
+          "result": "PASS"
+        },
+        {
+          "name": "exact agreement",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "10-desktop-dark",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "11-desktop-dark-error",
+      "viewport": "1280x1117@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        },
+        {
+          "name": "error alert shown with Retry",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "12-desktop-loading",
+      "viewport": "1280x1350@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "loading panel has NO Studio badge",
+          "result": "PASS"
+        },
+        {
+          "name": "panel busy",
+          "result": "PASS"
+        },
+        {
+          "name": "no vendor area while loading",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "13-desktop-empty",
+      "viewport": "1280x900@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        },
+        {
+          "name": "existing empty state",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "14-desktop-error",
+      "viewport": "1280x1117@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        },
+        {
+          "name": "error alert shown with Retry",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "15-desktop-studio-unavailable",
+      "viewport": "1280x1349@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "fallback has NO Studio badge, NO vendor area, NO toggle",
+          "result": "PASS"
+        },
+        {
+          "name": "truthful wording 'Charts unavailable'",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "16-desktop-studio-unavailable-dark",
+      "viewport": "1280x1349@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "fallback has NO Studio badge",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "17-desktop-studio-off",
+      "viewport": "1280x1275@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "18-desktop-session-expired",
+      "viewport": "1280x900@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "authenticated content removed from view",
+          "result": "PASS"
+        },
+        {
+          "name": "session-expired notice",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "19-tablet-820-default",
+      "viewport": "820x2565@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "toggle says Hide charts and aria-expanded=true",
+          "result": "PASS"
+        },
+        {
+          "name": "panel body visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "20-mobile-390-collapsed-default",
+      "viewport": "390x2493@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "toggle says Show charts, aria-expanded=false, panel body hidden",
+          "result": "PASS"
+        },
+        {
+          "name": "heading and Show charts remain visible when collapsed",
+          "result": "PASS"
+        },
+        {
+          "name": "no hidden panel control stays in the tab sequence",
+          "result": "PASS"
+        },
+        {
+          "name": "toggle target is at least 44px tall",
+          "result": "PASS"
+        },
+        {
+          "name": "Studio-active badge stays in the collapsed header",
+          "result": "PASS"
+        },
+        {
+          "name": "no vendor area drawn while no Studio widget is displayed",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "21-mobile-390-collapsed-clean",
+      "viewport": "390x2325@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "toggle says Show charts, aria-expanded=false, panel body hidden",
+          "result": "PASS"
+        },
+        {
+          "name": "heading and Show charts remain visible when collapsed",
+          "result": "PASS"
+        },
+        {
+          "name": "no hidden panel control stays in the tab sequence",
+          "result": "PASS"
+        },
+        {
+          "name": "toggle target is at least 44px tall",
+          "result": "PASS"
+        },
+        {
+          "name": "Studio-active badge stays in the collapsed header",
+          "result": "PASS"
+        },
+        {
+          "name": "no vendor area drawn while no Studio widget is displayed",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "22-mobile-390-expanded-keyboard",
+      "viewport": "390x3678@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "toggle says Hide charts and aria-expanded=true",
+          "result": "PASS"
+        },
+        {
+          "name": "focus stays on the toggle after expanding",
+          "result": "PASS"
+        },
+        {
+          "name": "panel body visible",
+          "result": "PASS"
+        },
+        {
+          "name": "mobile chart variant shown",
+          "result": "PASS"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "23-mobile-390-expanded-tooltip-tap",
+      "viewport": "390x3678@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "tooltip visible after the interaction with a title and value",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "24-mobile-390-weekly-expanded",
+      "viewport": "390x3775@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "weekly: 17-19 bars and the weekly note",
+          "result": "PASS"
+        },
+        {
+          "name": "exact agreement",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "25-mobile-390-range-90-daily-expanded",
+      "viewport": "390x3678@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "90 days daily on mobile",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "26-mobile-390-eur-expanded",
+      "viewport": "390x3678@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR exact agreement",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "27-mobile-390-dark-collapsed",
+      "viewport": "390x2493@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "toggle says Show charts, aria-expanded=false, panel body hidden",
+          "result": "PASS"
+        },
+        {
+          "name": "heading and Show charts remain visible when collapsed",
+          "result": "PASS"
+        },
+        {
+          "name": "no hidden panel control stays in the tab sequence",
+          "result": "PASS"
+        },
+        {
+          "name": "toggle target is at least 44px tall",
+          "result": "PASS"
+        },
+        {
+          "name": "Studio-active badge stays in the collapsed header",
+          "result": "PASS"
+        },
+        {
+          "name": "no vendor area drawn while no Studio widget is displayed",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "28-mobile-390-dark-expanded",
+      "viewport": "390x3678@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "Studio-active badge shown",
+          "result": "PASS"
+        },
+        {
+          "name": "vendor-attribution area visible while widgets are visible",
+          "result": "PASS"
+        },
+        {
+          "name": "no tooltip visible without hover, focus or tap",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "29-mobile-390-loading",
+      "viewport": "390x2053@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "loading has NO Studio badge",
+          "result": "PASS"
+        },
+        {
+          "name": "collapsed by default on mobile",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "30-mobile-390-empty",
+      "viewport": "390x1344@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "31-mobile-390-error",
+      "viewport": "390x1874@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "32-mobile-390-error-dark",
+      "viewport": "390x1874@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "no analytics panel rendered",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "33-mobile-390-studio-unavailable",
+      "viewport": "390x2520@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "fallback has NO Studio badge and NO toggle",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "34-mobile-390-session-expired",
+      "viewport": "390x844@2x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "session-expired notice",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-USD-30d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "USD 30-day daily table: exactly 30 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 30-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 30-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-USD-90d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "USD 90-day daily table: exactly 90 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 90-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 90-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-USD-120d",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "USD 120-day daily table: exactly 120 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 120-day table = plotted weekly bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 120-day mode is weekly",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-EUR-30d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "EUR 30-day daily table: exactly 30 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 30-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 30-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-EUR-90d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "EUR 90-day daily table: exactly 90 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 90-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 90-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-EUR-120d",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "EUR 120-day daily table: exactly 120 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 120-day table = plotted weekly bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 120-day mode is weekly",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-JPY-30d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "JPY 30-day daily table: exactly 30 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 30-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 30-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-JPY-90d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "JPY 90-day daily table: exactly 90 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 90-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 90-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-JPY-120d",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "JPY 120-day daily table: exactly 120 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 120-day table = plotted weekly bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 120-day mode is weekly",
+          "result": "PASS"
+        }
+      ]
+    }
+  ]
+}
