@@ -44,6 +44,18 @@ const exact = (cur) => String.raw`(() => { const P = ${P}; const m = (s) => BigI
   const rows = [...P.querySelectorAll('.data-alt tbody tr')];
   const ts = rows.reduce((a, r) => a + m(r.children[2].textContent), 0n); const tc = rows.reduce((a, r) => a + +r.children[1].textContent, 0);
   return bs === total && bc === count && ts === total && tc === count; })()`;
+// Daily-table completeness: exactly N consecutive calendar days (zero-invoice days included, with exact zero values),
+// zero rows agree with zero-height bars, and (via exact()) table = bars = card in integer minor units.
+const dailyRows = (cur, n) => String.raw`(() => { const P = ${P}; const rows = [...P.querySelectorAll('.data-alt tbody tr')];
+  const t = rows.map((r) => Date.parse(r.children[0].textContent + ' UTC'));
+  const consecutive = t.every((v, i) => i === 0 || v - t[i - 1] === 86400000);
+  const zero = rows.filter((r) => r.children[1].textContent === '0');
+  const zeroExact = zero.every((r) => r.children[2].textContent === '${cur === "JPY" ? "¥0" : cur === "EUR" ? "€0.00" : "$0.00"}');
+  const nonZeroNeverZero = rows.filter((r) => r.children[1].textContent !== '0').every((r) => r.children[2].textContent !== '${cur === "JPY" ? "¥0" : cur === "EUR" ? "€0.00" : "$0.00"}');
+  const zeroBars = [...P.querySelectorAll('.chart-d .bar')].filter((b) => b.dataset.n === '0').length;
+  const daily = P.querySelectorAll('.mode-note').length === 0;
+  return rows.length === ${n} && consecutive && zeroExact && nonZeroNeverZero && (!daily || zeroBars === zero.length) && ${cur === "JPY" ? "zero.length >= 1" : "true"}; })()`;
+const hasZeroDay = (cur) => String.raw`${P}.querySelectorAll('.data-alt tbody tr.zero').length >= 1`;
 const noTabStopsInBody = `[...${BODY}.querySelectorAll('button,summary,a,input,select,[tabindex]')].every((e) => e.offsetParent === null)`;
 
 const active = (extra = []) => [
@@ -75,13 +87,13 @@ const noPanel = ["no analytics panel rendered", `${P}.querySelectorAll('.studio'
 
 const SHOTS = [
   // ---- desktop 1280
-  { name: "01-desktop-default", vp: D, hash: "state=default&cur=USD", checks: [...active([...expandedDesktop, noTip, ["daily chart: 30 bars", `${barsVisible("d")} === 30`], ["no weekly note", `${P}.querySelectorAll('.mode-note').length === 0`], ["bars, daily table and card agree exactly", exact("USD")]])] },
+  { name: "01-desktop-default", vp: D, hash: "state=default&cur=USD", checks: [...active([...expandedDesktop, noTip, ["daily chart: 30 bars", `${barsVisible("d")} === 30`], ["no weekly note", `${P}.querySelectorAll('.mode-note').length === 0`], ["bars, daily table and card agree exactly", exact("USD")], ["daily table has exactly 30 consecutive calendar days, zero days exact", dailyRows("USD", 30)]])] },
   { name: "02-desktop-default-clean", vp: D, hash: "state=default&cur=USD&clean=1", checks: [...active([noTip, ["review tags hidden", `[...document.querySelectorAll('.rtag')].every((e) => e.offsetParent === null)`]])] },
   { name: "03-desktop-tooltip-hover", vp: D, hash: "state=default&cur=USD", post: [{ hover: ".chart-d .bar[data-i='23']" }], checks: [tipVisible] },
   { name: "04-desktop-tooltip-keyboard", vp: D, hash: "state=default&cur=USD", post: [{ focus: ".chart-wrap" }, { key: "ArrowRight", times: 3 }], checks: [tipVisible, ["chart wrap shows keyboard focus", `document.activeElement.classList.contains('chart-wrap')`], ["live region announces the bar", `${P}.querySelector('[data-live]').textContent.length > 10`]] },
-  { name: "05-desktop-jpy-tab", vp: D, hash: "state=default&cur=JPY", checks: [...active([noTip, ["JPY bars, table and card agree exactly (zero-decimal)", exact("JPY")]])] },
-  { name: "06-desktop-range-90-daily", vp: D, hash: "state=default&cur=USD&range=90", checks: [...active([noTip, ["90 calendar days stay DAILY: 90 bars, no weekly note", `${barsVisible("d")} === 90 && ${P}.querySelectorAll('.mode-note').length === 0`], ["bars, daily table and card agree exactly", exact("USD")]])] },
-  { name: "07-desktop-range-120-weekly", vp: D, hash: "state=default&cur=USD&range=120", checks: [...active([noTip, ["over 90 days is WEEKLY: 17-19 bars and the weekly note", `${barsVisible("d")} >= 17 && ${barsVisible("d")} <= 19 && ${P}.querySelectorAll('.mode-note').length === 1`], ["weekly bars, daily table and card agree exactly", exact("USD")], ["daily table keeps one row per day with invoices (more rows than bars)", `${P}.querySelectorAll('.data-alt tbody tr').length > ${barsVisible("d")}`]])] },
+  { name: "05-desktop-jpy-tab", vp: D, hash: "state=default&cur=JPY", checks: [...active([noTip, ["JPY bars, table and card agree exactly (zero-decimal)", exact("JPY")], ["JPY table: 30 consecutive days incl. at least one zero-invoice day shown as ¥0", dailyRows("JPY", 30)], ["a zero-invoice row is present", hasZeroDay("JPY")]])] },
+  { name: "06-desktop-range-90-daily", vp: D, hash: "state=default&cur=USD&range=90", checks: [...active([noTip, ["90 calendar days stay DAILY: 90 bars, no weekly note", `${barsVisible("d")} === 90 && ${P}.querySelectorAll('.mode-note').length === 0`], ["bars, daily table and card agree exactly", exact("USD")], ["daily table has exactly 90 consecutive calendar days", dailyRows("USD", 90)]])] },
+  { name: "07-desktop-range-120-weekly", vp: D, hash: "state=default&cur=USD&range=120", checks: [...active([noTip, ["over 90 days is WEEKLY: 17-19 bars and the weekly note", `${barsVisible("d")} >= 17 && ${barsVisible("d")} <= 19 && ${P}.querySelectorAll('.mode-note').length === 1`], ["weekly bars, daily table and card agree exactly", exact("USD")], ["daily table keeps exactly 120 consecutive calendar days (far more rows than weekly bars)", dailyRows("USD", 120)], ["USD 120-day table includes zero-invoice days", hasZeroDay("USD")]])] },
   { name: "08-desktop-weekly-tooltip-hover", vp: D, hash: "state=default&cur=USD&range=120", post: [{ hover: ".chart-d .bar[data-i='10']" }], checks: [tipVisible, ["weekly tooltip names a week range", `document.querySelector('.chart-tip:not([hidden]) .t1').textContent.includes('–')`]] },
   { name: "09-desktop-weekly-table-open", vp: D, hash: "state=default&cur=USD&range=120", pre: [{ eval: `${P}.querySelector('.data-alt').open = true` }], checks: [["daily table disclosure open", `${P}.querySelector('.data-alt').open === true`], ["exact agreement", exact("USD")]] },
   { name: "10-desktop-dark", vp: D, hash: "state=default&cur=USD&theme=dark", checks: [...active([noTip])] },
@@ -110,6 +122,8 @@ const SHOTS = [
   { name: "32-mobile-390-error-dark", vp: M, hash: "state=error&theme=dark", checks: [noPanel] },
   { name: "33-mobile-390-studio-unavailable", vp: M, hash: "state=unavailable", checks: [["fallback has NO Studio badge and NO toggle", `${studioBadge} === 0 && ${P}.querySelectorAll('.studio-toggle').length === 0`]] },
   { name: "34-mobile-390-session-expired", vp: M, hash: "state=session-expired", checks: [["session-expired notice", `document.body.textContent.includes('Your session has expired.')`]] },
+  // ---- data-only matrix (no screenshot): every represented currency x range, daily table completeness
+  ...["USD", "EUR", "JPY"].flatMap((cur) => [30, 90, 120].map((n) => ({ name: `data-${cur}-${n}d`, noShot: true, vp: D, hash: `state=default&cur=${cur}&range=${n}`, checks: [[`${cur} ${n}-day daily table: exactly ${n} consecutive calendar days incl. zero-invoice days with exact zero values`, dailyRows(cur, n)], [`${cur} ${n}-day table = plotted ${n > 90 ? "weekly" : "daily"} bars = card (exact minor units)`, exact(cur)], [`${cur} ${n}-day mode is ${n > 90 ? "weekly" : "daily"}`, `${P}.querySelectorAll('.mode-note').length === ${n > 90 ? 1 : 0}`]] }))),
 ];
 
 mkdirSync(OUT, { recursive: true });
@@ -190,14 +204,16 @@ for (const shot of SHOTS) {
   }
   const bad = results.filter((r) => !r[1]);
   failures += bad.length;
-  const shotData = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-  writeFileSync(join(OUT, `${shot.name}.png`), Buffer.from(shotData.data, "base64"));
+  if (!shot.noShot) {
+    const shotData = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(join(OUT, `${shot.name}.png`), Buffer.from(shotData.data, "base64"));
+  }
   report.push({ shot: shot.name, viewport: `${vp.w}x${height}@${vp.dsf}x`, checks: results.map(([name, ok, detail]) => ({ name, result: ok ? "PASS" : "FAIL", ...(detail ? { detail } : {}) })) });
   console.log(`${bad.length ? "FAIL" : "PASS"}  ${shot.name}  ${vp.w}x${height} @${vp.dsf}x  ${results.length - bad.length}/${results.length}${bad.length ? "  <- " + bad.map((b) => b[0] + " " + b[2]).join("; ") : ""}`);
 }
 const total = report.reduce((a, r) => a + r.checks.length, 0);
 writeFileSync(join(here, "design-checks.json"), JSON.stringify({ task: "NMI-PROTOTYPE-10D-A5-D", note: "Headless Chrome (CDP), emulated viewports, synthetic static mockup. Not physical-device, Safari/Firefox or assistive-technology QA.", chrome: version.Browser, total, failed: failures, shots: report }, null, 2) + "\n");
-console.log(`\n${total - failures}/${total} design checks passed across ${SHOTS.length} previews`);
+console.log(`\n${total - failures}/${total} design checks passed across ${SHOTS.filter((x) => !x.noShot).length} previews and ${SHOTS.filter((x) => x.noShot).length} data-only combinations`);
 ws.close();
 cleanup();
 process.exit(failures ? 1 : 0);

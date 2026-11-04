@@ -112,6 +112,7 @@ for (const n of RANGES) for (const c of CURRENCIES) {
   const sumCount = b.reduce((a, x) => a + x.count, 0);
   if (sumMinor !== ds.totals[c].minor || sumCount !== ds.totals[c].count) throw new Error(`bucket sums differ from totals for ${c} ${n}d`);
   if (ds.weekly !== b.length < n) throw new Error("weekly grouping mismatch");
+  if (ds.data[c].length !== n || new Set(ds.data[c].map((r) => r.day)).size !== n) throw new Error(`daily rows != ${n} calendar days for ${c}`);
   const st = ds.states[c];
   if (st.none + st.progress + st.created + st.attention !== ds.totals[c].count) throw new Error("state counts do not sum");
 }
@@ -160,10 +161,11 @@ function chart(ds, c, variant, uid) {
   return s + `</svg>`;
 }
 const peakBucket = (ds, c) => buckets(ds, c).reduce((b, r) => (r.minor > b.minor ? r : b));
+// The accessible equivalent keeps EVERY local calendar day of the selected range (one row per day), including days
+// with no invoices (exact zero in the currency's own units), regardless of daily or weekly plotting.
 const tableFor = (ds, c) =>
-  `<div class="table-scroll"><table class="data tight"><caption class="sr-only">${c} invoices by local creation day (${ZONE}); every day with invoices, exact values</caption><thead><tr><th scope="col">Day</th><th scope="col" class="r">Invoices</th><th scope="col" class="r">Total (${c})</th></tr></thead><tbody>${ds.data[c]
-    .filter((r) => r.count)
-    .map((r) => `<tr><th scope="row">${dayLabelY(r.day)}</th><td class="r num">${r.count}</td><td class="r num">${esc(money(r.minor, c))}</td></tr>`)
+  `<div class="table-scroll"><table class="data tight"><caption class="sr-only">${c} invoices by local creation day (${ZONE}); every calendar day in the range, including days with no invoices, exact values</caption><thead><tr><th scope="col">Day</th><th scope="col" class="r">Invoices</th><th scope="col" class="r">Total (${c})</th></tr></thead><tbody>${ds.data[c]
+    .map((r) => `<tr${r.count ? "" : ' class="zero"'}><th scope="row">${dayLabelY(r.day)}</th><td class="r num">${r.count}</td><td class="r num">${esc(money(r.minor, c))}</td></tr>`)
     .join("")}</tbody></table></div>`;
 
 /* ------------------------------------------------------------------ status breakdown */
@@ -339,6 +341,9 @@ ${appCss}
 .data-alt summary{cursor:pointer;min-height:32px;padding:4px 0;color:var(--link);font-weight:600}
 .table-scroll{max-height:280px;overflow:auto;margin-top:8px;border:1px solid var(--border);border-radius:var(--radius)}
 table.tight th,table.tight td{padding:4px 8px}
+table.tight tbody th{text-transform:none;letter-spacing:0;background:none;font-size:13px;font-weight:600;color:var(--text);text-align:left}
+table.tight tbody td{font-size:13px}
+table.tight tr.zero td,table.tight tr.zero th{color:var(--text-muted)}
 .r{text-align:right}
 .status-row{padding:12px 0;border-bottom:1px solid var(--border)}
 .studio-status .status-row:first-of-type{padding-top:8px}

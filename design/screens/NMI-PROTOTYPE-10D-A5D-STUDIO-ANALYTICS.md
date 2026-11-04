@@ -1,6 +1,6 @@
 # NMI-PROTOTYPE-10D-A5-D — Studio Analytics screen specification (DESIGN ONLY)
 
-**Status: OWNER DESIGN DIRECTION APPROVED — 2026-11-04 (Asia/Manila); previews RECONCILED (rev 2) and awaiting independent exact-HEAD design audit; implementation NOT STARTED.** The mockup generator, HTML and all 34 PNG previews now show the approved refinements: weekly plotted buckets after 90 days, mobile panel collapsed by default, truthful Studio badge/attribution handling, and tooltips only on hover, keyboard focus or tap. 177 automated design checks pass (`design/evidence/NMI-PROTOTYPE-10D-A5D/design-checks.json`). No AG Studio package or license is installed.
+**Status: OWNER DESIGN DIRECTION APPROVED — 2026-11-04 (Asia/Manila); previews RECONCILED (rev 2) and awaiting independent exact-HEAD design audit; implementation NOT STARTED.** The mockup generator, HTML and all 34 PNG previews now show the approved refinements: weekly plotted buckets after 90 days, mobile panel collapsed by default, truthful Studio badge/attribution handling, and tooltips only on hover, keyboard focus or tap. 227 automated design checks pass (177 preview checks plus a 9-combination data-only matrix) (`design/evidence/NMI-PROTOTYPE-10D-A5D/design-checks.json`). No AG Studio package or license is installed.
 AG Studio is **not installed**, no licence key is used, no application behavior, dependency, schema or deployment changes. All data in the previews is **synthetic** (seeded generator, `example.test` addresses).
 
 - Task / plan: `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`, `docs/NMI-PROTOTYPE-10D-A5-AG-STUDIO-PLAN.md`
@@ -64,8 +64,8 @@ Source: `AnalyticsSummary` from the existing endpoint (A2). Fields used: `curren
 - When the global currency pill is not "All currencies", the selector is not rendered and the chart is fixed to that currency.
 - Marks: vertical bars, token `--action-bg`; baseline at zero; 4-5 horizontal gridlines at round steps; y labels compact ("$2K", "¥60K"), tooltip/data table exact. Days with no invoices show no bar.
 - **Tooltip: only on pointer hover, keyboard focus or tap; never shown idle** (no tooltip in any default or loading preview). Daily: "Oct 28, 2026 / $1,592.18 · 7 invoices". Weekly: "Oct 19 – Oct 25, 2026 / $8,952.96 · 37 invoices", with "(partial week)" on clipped boundary weeks. Keyboard: the chart is one focus stop (`role="group"`, visible focus ring); on keyboard focus it shows the peak bar, Left/Right/Home/End move between bars, Escape hides it, and a polite live region announces the bar. Pointer leave and blur hide it. Never shows customer data. No click action (no drill-down) in v1.
-- Peak line under a daily chart: "Peak day: …". **Owner-approved density rule:** show local-day bars at ranges of **90 calendar days or fewer**; when the selected range exceeds 90 local calendar days, display **weekly buckets** grouped by the operator's local week (Monday start; partial boundary weeks retained). Aggregate each currency separately from the original day buckets using exact integer-minor-unit arithmetic, with no floating-point monetary sums. The **accessible table must preserve the original daily rows and exact formatted values regardless of chart density**. Verify edge cases across IANA time zones and DST; never change the authoritative cards or API request window.
-- **Data-table alternative** (always present, native `<details>`): "View {CUR} data as a table", columns Day / Invoices / Total ({CUR}). This is the accessible equivalent regardless of Studio's own accessibility.
+- Peak line under a daily chart: "Peak day: …". **Owner-approved density rule:** show local-day bars at ranges of **90 calendar days or fewer**; when the selected range exceeds 90 local calendar days, display **weekly buckets** grouped by the operator's local week (Monday start; partial boundary weeks retained). Aggregate each currency separately from the original day buckets using exact integer-minor-unit arithmetic, with no floating-point monetary sums. The **accessible table must preserve every original daily row (including zero-invoice days) and exact formatted values regardless of chart density**. Verify edge cases across IANA time zones and DST; never change the authoritative cards or API request window.
+- **Data-table alternative** (always present, native `<details>`): "View {CUR} daily data as a table", columns Day / Invoices / Total ({CUR}). It has **exactly one row per local calendar day of the selected range (30, 90 or 120 rows in the previews), including days with no invoices, shown as 0 invoices and the exact zero in the currency's own units** ($0.00, €0.00, ¥0), in both daily and weekly modes. Zero days are visually muted but never omitted. Table, plotted buckets and the currency card agree exactly in integer minor units. This is the accessible equivalent regardless of Studio's own accessibility.
 
 ### 5.2 PayPal Sandbox draft status (C2)
 
@@ -169,7 +169,7 @@ Every preview uses synthetic data; the three data ranges are 30, 90 and 120 days
 | 06-desktop-range-90-daily | Exactly 90 days: still daily (90 bars) |
 | 07-desktop-range-120-weekly | 120 days: weekly bars (Monday start, partial boundary weeks) with the Weekly view note |
 | 08-desktop-weekly-tooltip-hover | Weekly tooltip with week range |
-| 09-desktop-weekly-table-open | Complete daily table kept in weekly mode |
+| 09-desktop-weekly-table-open | Complete daily table kept in weekly mode (all 120 days, zero days included) |
 | 10-desktop-dark | Dark theme |
 | 11-desktop-dark-error | Analytics error, dark |
 | 12-desktop-loading | Loading skeletons, no Studio badge |
@@ -196,7 +196,7 @@ Every preview uses synthetic data; the three data ranges are 30, 90 and 120 days
 | 33-mobile-390-studio-unavailable | Fallback |
 | 34-mobile-390-session-expired | Session expired |
 
-Synthetic totals (30-day default): USD 117 invoices $26,941.61; EUR 56 invoices €10,561.62; JPY 20 invoices ¥657,000. The 120-day range: USD 487 invoices $110,960.60; EUR 202 €37,192.50; JPY 111 ¥3,626,300. In every default preview the card total equals the exact sum of the plotted bars and of the daily table rows (checked in minor units, including weekly mode and JPY).
+Synthetic totals (30-day default): USD 117 invoices $26,941.61; EUR 56 invoices €10,561.62; JPY 20 invoices ¥657,000. The 120-day range: USD 487 invoices $110,960.60; EUR 202 €37,192.50; JPY 111 ¥3,626,300. `design-checks.json` also asserts, for all nine currency x range combinations (USD/EUR/JPY x 30/90/120 days), that the daily table has exactly 30, 90 or 120 consecutive calendar days, that zero-invoice days (always present for JPY) show the exact zero value, and that zero rows match zero-height daily bars. In every default preview the card total equals the exact sum of the plotted bars and of the daily table rows (checked in minor units, including weekly mode and JPY).
 
 ### Known existing-dashboard issues visible in the previews (not A5 scope)
 

@@ -1915,4 +1915,13 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no AG Studio package, licence key, dependency, application, schema, provider, owner-DB, Render, deploy or merge change.
 - **Next:** independent audit, owner merge decision for PR #37, then a separately scoped A5-I1 local implementation task.
 
+## Handoff: NMI-PROTOTYPE-10D-A5-D-MINOR1-REMEDIATION-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; existing Draft [#37](https://github.com/mrdzyn/nudgemyinvoice/pull/37).
+- **From / to:** MINOR-1 remediation → independent exact-HEAD re-auditor.
+- **Audited starting SHA:** `7905cdddf4a7f0ed4496ded6c642d68ee437a23a`.
+- **Change (design generator/evidence only):** the accessible daily table keeps every calendar day, including zero-invoice days with the exact zero ($0.00, €0.00, ¥0), in daily and weekly modes. New capture checks assert exactly 30/90/120 consecutive daily rows for all nine currency x range combinations, exact zero values, zero rows = zero-height bars, and table = bars = card in minor units. 227/227 PASS; a negative control with the old filter fails 15. Mockup, previews, design-checks.json and docs regenerated.
+- **Safety:** no production code, AG Studio package, licence key, provider, owner-DB, Render, deploy or merge change.
+- **Next:** both hosted workflows on the final head, independent re-audit, owner squash-merge decision, then separately scoped A5-I1.
+
 <!-- HANDOFF_ENTRIES_END -->

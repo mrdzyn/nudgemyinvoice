@@ -2,7 +2,7 @@
   "task": "NMI-PROTOTYPE-10D-A5-D",
   "note": "Headless Chrome (CDP), emulated viewports, synthetic static mockup. Not physical-device, Safari/Firefox or assistive-technology QA.",
   "chrome": "Chrome/156.0.8078.80",
-  "total": 177,
+  "total": 227,
   "failed": 0,
   "shots": [
     {
@@ -49,6 +49,10 @@
         },
         {
           "name": "bars, daily table and card agree exactly",
+          "result": "PASS"
+        },
+        {
+          "name": "daily table has exactly 30 consecutive calendar days, zero days exact",
           "result": "PASS"
         }
       ]
@@ -162,6 +166,14 @@
         {
           "name": "JPY bars, table and card agree exactly (zero-decimal)",
           "result": "PASS"
+        },
+        {
+          "name": "JPY table: 30 consecutive days incl. at least one zero-invoice day shown as ¥0",
+          "result": "PASS"
+        },
+        {
+          "name": "a zero-invoice row is present",
+          "result": "PASS"
         }
       ]
     },
@@ -197,6 +209,10 @@
         },
         {
           "name": "bars, daily table and card agree exactly",
+          "result": "PASS"
+        },
+        {
+          "name": "daily table has exactly 90 consecutive calendar days",
           "result": "PASS"
         }
       ]
@@ -236,7 +252,11 @@
           "result": "PASS"
         },
         {
-          "name": "daily table keeps one row per day with invoices (more rows than bars)",
+          "name": "daily table keeps exactly 120 consecutive calendar days (far more rows than weekly bars)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 120-day table includes zero-invoice days",
           "result": "PASS"
         }
       ]
@@ -981,6 +1001,258 @@
         },
         {
           "name": "session-expired notice",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-USD-30d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "USD 30-day daily table: exactly 30 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 30-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 30-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-USD-90d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "USD 90-day daily table: exactly 90 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 90-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 90-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-USD-120d",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "USD 120-day daily table: exactly 120 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 120-day table = plotted weekly bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "USD 120-day mode is weekly",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-EUR-30d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "EUR 30-day daily table: exactly 30 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 30-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 30-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-EUR-90d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "EUR 90-day daily table: exactly 90 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 90-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 90-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-EUR-120d",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "EUR 120-day daily table: exactly 120 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 120-day table = plotted weekly bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "EUR 120-day mode is weekly",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-JPY-30d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "JPY 30-day daily table: exactly 30 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 30-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 30-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-JPY-90d",
+      "viewport": "1280x1856@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "JPY 90-day daily table: exactly 90 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 90-day table = plotted daily bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 90-day mode is daily",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "shot": "data-JPY-120d",
+      "viewport": "1280x1886@1x",
+      "checks": [
+        {
+          "name": "no page-level horizontal overflow",
+          "result": "PASS",
+          "detail": "0px"
+        },
+        {
+          "name": "no page errors",
+          "result": "PASS",
+          "detail": "0"
+        },
+        {
+          "name": "JPY 120-day daily table: exactly 120 consecutive calendar days incl. zero-invoice days with exact zero values",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 120-day table = plotted weekly bars = card (exact minor units)",
+          "result": "PASS"
+        },
+        {
+          "name": "JPY 120-day mode is weekly",
           "result": "PASS"
         }
       ]
