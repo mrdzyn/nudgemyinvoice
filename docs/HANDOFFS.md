@@ -1947,4 +1947,12 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no provider call, owner DB, Render, deployment, merge, production API/schema change.
 - **Next:** audit; owner merge decision. Hosted Studio only after written licence rights and a separate release gate.
 
+## Handoff: NMI-PROTOTYPE-10D-A5-I1-FIX1-01
+
+- **Task / PR:** `tasks/NMI-PROTOTYPE-10D-A5-I1-ag-studio-local-integration.md`; Draft [#38](https://github.com/mrdzyn/nudgemyinvoice/pull/38). **From / to:** implementation → independent focused re-audit. **Starting SHA:** `a1829462ae50b7a27c0cd1c9aae8a046e07d5060`.
+- **MINOR-1 fixed:** `StudioSlot.tsx` boundary now renders a dependency-free "Activity analytics → Charts unavailable" `role=status` notice (no badge, `data-studio="fallback"`) when the OUTER `StudioPanel` chunk fails. No Retry button (a cached rejected `React.lazy` cannot truthfully retry); the notice says to reload. The exact data stays in the authoritative cards and Community grid; the daily table needs the panel module and is not duplicated in this fallback.
+- **MINOR-2 fixed:** `StudioPanel.tsx` badge and `data-studio="active"` now derive from actual rendered Studio widgets (ready, module present, chart-safe currency). Over-limit shows the exact daily table and "Chart not drawn" with `data-studio="fallback"` and no badge; switching to a safe currency restores badge and charts.
+- **Tests:** new `StudioFallback.test.tsx` (4, happy-dom, licensed loader and licence fetch stubbed): outer-chunk rejection, healthy control, huge fixture with tab switching, single-currency all-huge. Control: the 4 fail on the pre-fix code (the file also needs the new `StudioSlotWith` export, so MINOR-2 failure there is partly structural). `pnpm validate` passed (1101 tests). The 96-check browser matrix was NOT rerun (changes do not touch its proven behaviours); no browser run of the outer-chunk failure was added.
+- **Unchanged:** design, analytics API, licence bridge, build guard. No provider call, owner DB, Render, deploy or merge.
+
 <!-- HANDOFF_ENTRIES_END -->

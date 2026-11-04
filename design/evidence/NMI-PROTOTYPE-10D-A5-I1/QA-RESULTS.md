@@ -160,3 +160,7 @@ All observations were made on 2026-11-04 (Asia/Manila). Synthetic data only; SIM
 | 94 | default off | flag off: no Studio module, licensed package, chart chunk or licence request was loaded by the browser | PASS |
 | 95 | boundaries | no uncaught browser exception during the whole run | PASS |
 | 96 | screenshots | screenshots were saved only from the UNLICENSED session (none from the licensed session) | PASS |
+
+## A5-I1-FIX1 addendum (audit MINOR-1 / MINOR-2)
+
+Not a rerun of the 96-check browser matrix. Targeted evidence: `apps/web/src/features/studio/StudioFallback.test.tsx` (4 tests, happy-dom, licensed packages and licence fetch stubbed) and `pnpm validate` (1101 passed). Covers outer `StudioPanel` chunk failure (accessible notice, no badge, no charts, no Retry), healthy control, and the huge-value fixture (no badge/"fallback" while over-limit, badge/"active" back on a safe currency). Browser-level outer-chunk failure injection is NOT RUN.

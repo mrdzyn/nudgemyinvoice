@@ -217,6 +217,9 @@ export default function StudioPanel({
 
   const retry = () => setAttempt((n) => n + 1);
 
+  // Studio is "active" only when real Studio widgets are actually rendered: ready, a usable module, and a
+  // chart-safe currency selected. Over-limit (not plotted) or failed states show the exact table without the badge.
+  let studioRendered = false;
   const body = (() => {
     if (!model.ok)
       return (
@@ -237,6 +240,7 @@ export default function StudioPanel({
     const failed = phase === "failed";
     const showCharts = phase === "ready" && mod !== null && active.chartSafe;
     const Studio = showCharts ? mod : null;
+    studioRendered = Studio !== null && !failed;
     const peakLine = peak && (
       <p className="hint hint-tight">
         Peak {weekly ? "week" : "day"}: {peak.title} · {peak.total} · {peak.count} invoice
@@ -333,14 +337,20 @@ export default function StudioPanel({
     );
   })();
 
-  const active = phase === "ready" && model.ok;
+  const active = studioRendered;
   return (
     <section
       className="card studio"
       id="studio-panel"
       aria-labelledby={titleId}
       aria-busy={open && phase === "loading" ? true : undefined}
-      data-studio={active ? "active" : phase === "failed" || !model.ok ? "fallback" : "pending"}
+      data-studio={
+        active
+          ? "active"
+          : phase === "failed" || !model.ok || phase === "ready"
+            ? "fallback"
+            : "pending"
+      }
       data-open={open ? "1" : "0"}
     >
       <div className="studio-head">
