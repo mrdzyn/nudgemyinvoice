@@ -157,8 +157,8 @@ function StatusList({ currencies }: { currencies: readonly StudioCurrency[] }) {
 type Phase = "idle" | "loading" | "ready" | "failed";
 
 /**
- * "Activity analytics": a view-only AG Studio region immediately below the shared dashboard filters,
- * above the full-population currency cards and the AG Grid Community table. It renders the EXISTING analytics answer only (no fetch of its own, no new endpoint) and keeps
+ * "Activity analytics": a view-only AG Studio region after the shared filters and before the currency cards
+ * and AG Grid Community table. It renders the EXISTING analytics answer only (no fetch of its own, no new endpoint) and keeps
  * everything exact: currencies are separate, amounts are minor-unit BigInt, zero days stay in the table.
  */
 export default function StudioPanel({
@@ -224,7 +224,7 @@ export default function StudioPanel({
     if (!model.ok)
       return (
         <Notice kind="info" role="status" id="studio-unavailable">
-          <strong>Charts unavailable.</strong> The totals above and the invoice table below are not
+          <strong>Charts unavailable.</strong> The totals below and the invoice table below are not
           affected.
         </Notice>
       );
@@ -267,7 +267,7 @@ export default function StudioPanel({
         ) : null}
         {failed ? (
           <Notice kind="info" role="status" id="studio-unavailable">
-            <strong>Charts unavailable.</strong> The totals above and the invoice table below are
+            <strong>Charts unavailable.</strong> The totals below and the invoice table below are
             not affected.
             <div className="mt-12">
               <button type="button" className="btn btn-secondary btn-sm" onClick={retry}>
@@ -318,10 +318,6 @@ export default function StudioPanel({
     );
     const inner = (
       <>
-        <p className="hint hint-tight">
-          The currency pills above filter these charts and the totals below. Invoice trends show
-          one currency at a time; under All currencies, the chart tabs switch the trend currency.
-        </p>
         <p className="hint hint-tight">
           Same filters and the same full-population server totals as the cards below. Values are
           invoice totals by creation day ({model.timeZone}), not payments.
