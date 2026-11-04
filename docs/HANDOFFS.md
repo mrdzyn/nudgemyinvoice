@@ -1955,4 +1955,23 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Tests:** new `StudioFallback.test.tsx` (4, happy-dom, licensed loader and licence fetch stubbed): outer-chunk rejection, healthy control, huge fixture with tab switching, single-currency all-huge. Control: the 4 fail on the pre-fix code (the file also needs the new `StudioSlotWith` export, so MINOR-2 failure there is partly structural). `pnpm validate` passed (1101 tests). The 96-check browser matrix was NOT rerun (changes do not touch its proven behaviours); no browser run of the outer-chunk failure was added.
 - **Unchanged:** design, analytics API, licence bridge, build guard. No provider call, owner DB, Render, deploy or merge.
 
+## Handoff: NMI-RENDER-P3-25-BUDGET-APPROVAL-PREP
+
+- **From / to:** owner $25 credit approval → Render P3 documentation/pricing/security preflight (separate from A5-I1 implementation).
+- **Base / branch:** `main@a231cd91534cceb0dc3946a0a34a8427192d204b`; `docs/nmi-render-p3-budget-25`. Draft docs-only PR; **NOT the active implementation handoff** (A5-I1 remains active).
+- **Budget:** up to **USD $25 total NMI hosting** through 2026-12-15 from available Render credit, user approval 2026-11-04. Actual live credit balance and eligibility unknown. Public list rates Hobby + Starter $7/month + Basic PG $6/month, 1 GB included; no hard billing cap for total usage.
+- **Read-only Render evidence:** Mrdzyn workspace found; no PostgreSQL instances; service inventory null. No resource provisioning, production code, release branch, initial deployment, paid charge, or deletion performed.
+- **Safety:** new P3 paid-resource proposal updates Free-tier selection **only if owner merges it**; all P1/P2 privacy, proxy, auth, DB roles, first-deploy and judge-sharing gates remain. Studio hosted licensing and client-visible key remain unapproved.
+- **Next:** independent docs exact-HEAD audit, owner squash merge decision; then later real checkout/credit verification and separate first-deploy authorization only after release gates.
+
+## Handoff: NMI-RENDER-P3-FIX1-01
+
+- **Task / PR:** `tasks/NMI-RENDER-P3-25-BUDGET-GATE.md`; existing Draft [#39](https://github.com/mrdzyn/nudgemyinvoice/pull/39). **From / to:** P3 remediation → independent exact-HEAD docs re-audit. Start `898dd8b467c361f0d8817b81a02e86eb16936613`; final head is reported in the PR comment.
+- **MAJOR-1:** merged `origin/main@e314bef` into the branch (normal merge, no force-push). STATUS/HANDOFFS conflicts resolved keeping all main entries and the earlier P3 entry.
+- **MINOR-1:** STATUS/P3 task now say A5-I1 PR #38 is merged and P4 PR #40 is audited but unmerged; P2 preface de-duplicated and framed as a superseded pricing preference (history kept, P1/P2 security untouched).
+- **MINOR-2:** P3 packet carries G1–G8, G5 and G7 as unresolved, states the $25 cap is manual, that stopping the web service may not stop PostgreSQL billing, requires an owner-approved teardown/retention plan before provisioning, and storage autoscaling OFF at 1 GB.
+- **Not changed:** the $25-through-2026-12-15 approval (a ceiling only), all code, dependencies and infrastructure. Docs-only diff. No Render action, release branch, deploy, provider call, merge or secret access.
+- **Pointer caveat:** STATUS Active task/handoff point to this P3 work while #39 is open; when PR #40 merges, restore its `NMI-RENDER-P4-FIX1-01` pointers.
+- **Next:** hosted CI at the final head, independent re-audit, owner merge decision.
+
 <!-- HANDOFF_ENTRIES_END -->
