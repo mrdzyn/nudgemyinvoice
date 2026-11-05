@@ -242,7 +242,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     ...extra,
   });
 
-  it("applied exactly the eight committed migrations in journal order, before the app started", async () => {
+  it("applied exactly the nine committed migrations in journal order, before the app started", async () => {
     const journal = JSON.parse(
       readFileSync(
         join(
@@ -268,8 +268,9 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       "0005",
       "0006",
       "0007",
+      "0008",
     ]);
-    expect(migrationStatements().length).toBeGreaterThan(8);
+    expect(migrationStatements().length).toBeGreaterThan(9);
     const tables = (
       await owner(
         `SELECT table_name FROM information_schema.tables WHERE table_schema='${scratch.schema}' ORDER BY 1`,
@@ -280,6 +281,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       "audit_log",
       "invoice_follow_ups",
       "invoice_items",
+      "invoice_nudges",
       "invoices",
       "operators",
       "paypal_draft_operations",
@@ -539,6 +541,15 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       `UPDATE ${s}.invoice_follow_ups SET operator_id = operator_id`,
       `UPDATE ${s}.invoice_follow_ups SET invoice_id = invoice_id`,
       `UPDATE ${s}.invoice_follow_ups SET created_at = now()`,
+      `DELETE FROM ${s}.invoice_nudges`,
+      `UPDATE ${s}.invoice_nudges SET ai_message = 'tampered'`,
+      `UPDATE ${s}.invoice_nudges SET rationale = 'tampered'`,
+      `UPDATE ${s}.invoice_nudges SET facts = '{}'::jsonb`,
+      `UPDATE ${s}.invoice_nudges SET model = 'x'`,
+      `UPDATE ${s}.invoice_nudges SET tone = 'firm'`,
+      `UPDATE ${s}.invoice_nudges SET operator_id = operator_id`,
+      `UPDATE ${s}.invoice_nudges SET invoice_id = invoice_id`,
+      `UPDATE ${s}.invoice_nudges SET created_at = now()`,
       `INSERT INTO ${s}.operators (username, password_hash) VALUES ('x','y')`,
       `UPDATE ${s}.operators SET password_hash = 'x'`,
       `UPDATE ${s}.operators SET credential_version = 9`,

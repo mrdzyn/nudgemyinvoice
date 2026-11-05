@@ -1,0 +1,974 @@
+{
+  "task": "NMI-P6",
+  "generatedBy": "design/evidence/NMI-P6/run-nudge-journey.mjs",
+  "info": {
+    "startedAt": "2026-11-05T13:58:37.291Z",
+    "synthetic": true,
+    "model": "DETERMINISTIC FAKE (not OpenAI)",
+    "migrations": [
+      "0000_young_mister_fear",
+      "0001_complete_spot",
+      "0002_light_proteus",
+      "0003_audit_log_immutable",
+      "0004_zippy_namorita",
+      "0005_glorious_giant_girl",
+      "0006_known_colleen_wing",
+      "0007_perfect_doomsday",
+      "0008_mushy_zarek"
+    ],
+    "nudgeRoutesUsed": [
+      "GET /api/nudges/summary",
+      "GET /api/nudges?…",
+      "POST /api/invoice-drafts/:id/nudges",
+      "POST /api/nudges/:id/approve",
+      "POST /api/nudges/:id/edit",
+      "POST /api/nudges/:id/reject"
+    ],
+    "modelCalls": 8,
+    "finishedAt": "2026-11-05T13:59:20.885Z",
+    "screenshots": [
+      "05-draft-card-idle-desktop-light.png",
+      "05-draft-card-drafting-desktop-light.png",
+      "05-draft-card-created-desktop-light.png",
+      "07-nudgey-confirm-desktop-light.png",
+      "07-nudgey-draft-ready-desktop-light.png",
+      "02-queue-pending-review-desktop-light.png",
+      "03-queue-approved-copy-desktop-light.png",
+      "04-queue-history-desktop-light.png",
+      "06-state-version-conflict-desktop-light.png",
+      "06-state-refused-desktop-light.png",
+      "06-state-pending-exists-desktop-light.png",
+      "06-state-loading-desktop-light.png",
+      "06-state-error-desktop-light.png",
+      "06-state-rate-limited-desktop-light.png",
+      "06-state-ai-off-draft-card-desktop-light.png",
+      "06-state-ai-off-queue-desktop-light.png",
+      "01-dashboard-queue-summary-mobile-light.png",
+      "02-queue-pending-review-mobile-light.png",
+      "03-queue-approved-copy-mobile-light.png",
+      "04-queue-history-mobile-light.png",
+      "05-draft-card-idle-mobile-light.png",
+      "07-nudgey-confirm-mobile-light.png",
+      "01-dashboard-queue-summary-mobile-dark.png",
+      "02-queue-pending-review-mobile-dark.png",
+      "03-queue-approved-copy-mobile-dark.png",
+      "04-queue-history-mobile-dark.png",
+      "05-draft-card-idle-mobile-dark.png",
+      "07-nudgey-confirm-mobile-dark.png",
+      "01-dashboard-queue-summary-desktop-dark.png",
+      "02-queue-pending-review-desktop-dark.png",
+      "03-queue-approved-copy-desktop-dark.png",
+      "04-queue-history-desktop-dark.png",
+      "05-draft-card-idle-desktop-dark.png",
+      "07-nudgey-confirm-desktop-dark.png",
+      "01-dashboard-queue-summary-desktop-light.png"
+    ]
+  },
+  "summary": {
+    "total": 150,
+    "passed": 150,
+    "failed": 0
+  },
+  "results": [
+    {
+      "group": "launcher",
+      "name": "the simulated launcher refuses to start without NMI_P6_SIMULATED=1 and refuses NODE_ENV=production (exit 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "seed",
+      "name": "7 synthetic invoices (USD/EUR/JPY/GBP/AUD/CAD) saved through the real route",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "dashboard",
+      "name": "the AI Nudge Queue card sits directly under the page heading and ABOVE the unchanged P5 filters (D1)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "dashboard",
+      "name": "an empty queue shows real zero counts and the empty hint (no fictional numbers)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "dashboard",
+      "name": "the nav has a 'Nudge queue' tab",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "dashboard (empty queue): no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "dashboard (empty queue): text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "dashboard (empty queue): every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "draft-card",
+      "name": "the saved invoice shows the AI payment nudge card with three tones and the privacy note",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "saved invoice: AI payment nudge card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "saved invoice: AI payment nudge card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "saved invoice: AI payment nudge card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "draft-card",
+      "name": "Draft nudge made exactly ONE POST and ONE model call",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "draft-card",
+      "name": "the stored draft is pending, professional, and carries the VERIFIED amount, due date and customer from the saved invoice",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "draft-card",
+      "name": "the model input carried ONLY tone, currency, a date-only due status and the repeat flag: no name, e-mail, amount, date or id",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "draft-card",
+      "name": "Open in queue lands on Pending review with that draft open",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "nudgey",
+      "name": "'send it' is refused clearly and nothing is drafted",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "nudgey",
+      "name": "the draft request found the operator's matching invoice and asks for confirmation before the costed call",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: draft proposal: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: draft proposal: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: draft proposal: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: draft proposal: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "nudgey",
+      "name": "confirming drafted exactly one friendly nudge for Northwind Studio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "nudgey",
+      "name": "Open in queue opens the queue on the new draft",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "counts are the real server counts (5 pending, 0 approved, 0 history)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "the nav badge shows the real pending count",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "pending drafts cannot be copied (D2) and there is no Send button anywhere",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "the review panel shows verified facts with date-only wording (no payment-status claim)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: pending review: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: pending review: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: pending review: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: pending review: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "with unsaved edits, Approve is disabled and says to save first",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "saving edits bumps the version, marks it edited and keeps the AI original unchanged",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "approval applied to the reviewed version (v2 -> approved v3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "Approved shows the locked text, 'Not sent', and a Copy button",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "review",
+      "name": "Copy put exactly the approved message on the clipboard",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: approved: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: approved: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: approved: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "history",
+      "name": "Reject asks for confirmation first (nothing rejected yet)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "reject confirmation dialog: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "reject confirmation dialog: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "reject confirmation dialog: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "reject confirmation dialog: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "history",
+      "name": "the rejected draft is stored as rejected",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "history",
+      "name": "Regenerate confirms the costed call before making it",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "history",
+      "name": "regenerate replaced the pending draft: the old one is superseded, the new firm one pending",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "history",
+      "name": "History lists the rejected and the replaced drafts and says nothing in it was sent",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: history: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: history: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "queue: history: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "ArrowLeft on the History tab moves focus to and selects 'Approved' (ARIA tablist)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "conflict",
+      "name": "another session edited the same draft (v1 -> v2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "conflict",
+      "name": "approving the stale version is refused with a clear message, and nothing was approved",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "conflict",
+      "name": "Reload shows the latest text, which can then be approved",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "refusal",
+      "name": "a 'still unpaid' draft is refused (422) and nothing is stored",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "refusal",
+      "name": "the refusal is audited with a content-free reason (payment_status_claim)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "draft card: refused: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "draft card: refused: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "draft card: refused: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-exists",
+      "name": "an invoice with a waiting draft says so up front and offers Replace or Review existing (no costed call yet)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "states",
+      "name": "the queue shows a loading skeleton while reading",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "states",
+      "name": "a failed read shows an error with Retry and says the invoices are unaffected",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "states",
+      "name": "Retry recovers and shows the real History (the rejected and the replaced draft)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "rate-limit",
+      "name": "past the per-operator budget a REAL 429 is shown with the wait time, no model call is made and nothing is stored",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "ai-off",
+      "name": "the saved-invoice card says AI drafting isn't available and disables Draft nudge",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "ai-off",
+      "name": "the queue explains AI is off; Regenerate is disabled but approval still works",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "ai-off",
+      "name": "a pending draft can still be approved for manual use with AI off",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "the app renders in light theme",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "dashboard summary card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "dashboard summary card: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "dashboard summary card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "dashboard summary card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: pending review: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: pending review: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: pending review: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: pending review: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: pending review: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: approved: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: approved: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: approved: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: approved: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: history: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: history: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: history: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "queue: history: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "saved invoice: AI payment nudge card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "saved invoice: AI payment nudge card: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "saved invoice: AI payment nudge card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "saved invoice: AI payment nudge card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "Nudgey: draft proposal: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "Nudgey: draft proposal: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "Nudgey: draft proposal: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "Nudgey: draft proposal: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "Nudgey: draft proposal: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "the app renders in dark theme",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "dashboard summary card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "dashboard summary card: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "dashboard summary card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "dashboard summary card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: pending review: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: pending review: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: pending review: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: pending review: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: pending review: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: approved: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: approved: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: approved: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: approved: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: history: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: history: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: history: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "queue: history: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "saved invoice: AI payment nudge card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "saved invoice: AI payment nudge card: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "saved invoice: AI payment nudge card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "saved invoice: AI payment nudge card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "Nudgey: draft proposal: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "Nudgey: draft proposal: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "Nudgey: draft proposal: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "Nudgey: draft proposal: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "Nudgey: draft proposal: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "the app renders in dark theme",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "dashboard summary card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "dashboard summary card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "dashboard summary card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: pending review: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: pending review: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: pending review: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: pending review: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: approved: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: approved: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: approved: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: history: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: history: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "queue: history: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "saved invoice: AI payment nudge card: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "saved invoice: AI payment nudge card: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "saved invoice: AI payment nudge card: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "Nudgey: draft proposal: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "Nudgey: draft proposal: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "Nudgey: draft proposal: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "Nudgey: draft proposal: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser contacted no foreign host (no OpenAI, PayPal, CDN or analytics)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser used only the P6 queue routes; nothing that sends, schedules or dispatches",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "nudge audit records are content-free (no message text or customer names)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "every one of the 8 model inputs is customer-free (no names, e-mails, digits)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "every stored nudge says nothing was sent: no sent/dispatch column or state exists",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no uncaught exceptions or console errors (expected 4xx/5xx resource logs excluded)",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

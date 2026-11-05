@@ -2049,4 +2049,42 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Residual:** licence extractable by the signed-in operator and not recallable; hash upkeep on vendor upgrade; no automated expiry enforcement; G7 owner-attested only; Safari/Firefox/devices/AT not tested; owner visual acceptance pending.
 - **Unchanged / not done:** licensed variant, visuals, authentication, PR #41 layout. No merge, deploy, Render action or provider call.
 
+## Handoff: NMI-P6-DESIGN-01
+
+- **Task / branch:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`; `feat/nmi-p6-ai-nudges`, Draft PR stacked on P5 #42 (`7ab0dcd`). **From / to:** P6 backend + design proposal → **owner visual approval** (D1–D7 in `design/screens/NMI-P6-AI-NUDGE-QUEUE.md`), then the UI shell.
+- **Delivered:**
+  - migration `0008` `invoice_nudges` with constraints and least-privilege grants;
+  - `PostgresNudgeStore` (operator-scoped, one pending per invoice, version-bound transitions);
+  - `packages/ai/src/nudge.ts` (the model sees tone/currency/due-status only; output validated against digits, links, symbols, unbacked claims and placeholders; verified values substituted);
+  - nudge routes with budget, concurrency cap and content-free audit;
+  - a static design preview (7 frames × desktop/mobile, 24/24 design checks).
+- **Evidence:** AI package tests, store 7, API 12, runtime-role denials, migration/constraint guards updated; `pnpm validate` and `pnpm test:db`; hosted CI at the final head (in the PR).
+- **Not started:** queue UI, dashboard card, saved-invoice card, Nudgey intent, browser QA (all gated on approval). No live provider, sending, Render, deploy or merge.
+- **Next:** owner approves or amends D1–D7 → UI shell against the approved previews → wiring → browser QA → CI → independent review.
+
+## Handoff: NMI-P6-IMPL-01
+
+- **Task / branch:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`; `feat/nmi-p6-ai-nudges`, Draft PR #43 stacked on P5 #42. **From / to:** implementation agent → **independent exact-HEAD audit** (then owner merge sequencing). Design gate CLOSED (owner approval, PR #43 comment 6652365002).
+- **Delivered since `NMI-P6-DESIGN-01`:** owner refinements 1–3; `maxRetries: 0` with a one-request proof; the approved UI (`apps/web/src/nudges/`, `nudgey/nudgeIntent.ts`, `nudgey/NudgeDraftFlow.tsx`, nav, dashboard slot, saved-invoice card); test-only launcher + browser journey under `design/evidence/NMI-P6/`.
+- **Audit focus:** `packages/ai/src/nudge.ts` (`PAYMENT_STATUS` guard, `DUE_TEXT`, retries); `apps/web/src/nudges/api.ts` strict parsing (`sentToCustomer === false`); version binding in `PendingReviewPanel` (approve disabled while dirty); every costed call behind an explicit click (+ confirm dialog for Regenerate, confirm step in chat); boundary-test updates (`boundaries.test.ts`, `StatusPicker.test.tsx` fetch allowlist) are deliberate; P5 dashboard change is only the `nudgeCard` slot.
+- **Evidence:** validate 1341, test:db 366, journey 150/150 (`design/evidence/NMI-P6/qa-results.json`), preview 25/25; hosted CI at the final head (in the PR).
+- **Not done / not authorized:** live OpenAI (Gate A), PayPal, sending/scheduling of any kind, Render, deploy, merge.
+
+## Handoff: NMI-P6-FIX1-01
+
+- **Task / branch:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`; `feat/nmi-p6-ai-nudges` (Draft PR #43, base unchanged). **From / to:** implementation agent → **independent exact-HEAD re-audit** of the P6-AUD-01/02/03 remediation (audit comment 6658712501 at `d6f3d68`).
+- **Changed:**
+  - `packages/ai/src/nudge.ts`: `PAYMENT_STATE_WORDS` / `PAYMENT_STATUS` and the prompt vocabulary;
+  - `apps/api/src/config.ts` + `server.ts`: `NUDGE_AI_DRAFTING_ENABLED` → `config.nudgeDrafting`;
+  - `.env.example`;
+  - `apps/web/src/nudges/api.ts` and `controller.ts`, and `nudgey/NudgeDraftFlow.tsx`: 401 takes precedence over abort;
+  - the fake model and mockup wording, reworded to the neutral vocabulary.
+- **Tests added:**
+  - P6-AUD-01: AI cases;
+  - P6-AUD-02: `nudge-drafting-config.test.ts` and one PostgreSQL API test;
+  - P6-AUD-03: `nudges/controller.test.ts` and a chat-flow test.
+  - Negative controls against the audited code: 20 AI cases and 3 late-401 cases fail there.
+- **Evidence:** validate 1383, test:db 367, journey 150/150, preview 25/25; hosted CI at the final head (in the PR).
+- **Not done / not authorized:** live OpenAI (Gate A; the new flag stays `false`), PayPal, sending, Render, deploy, merge or rebase.
+
 <!-- HANDOFF_ENTRIES_END -->

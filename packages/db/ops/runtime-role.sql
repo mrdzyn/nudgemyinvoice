@@ -1,6 +1,6 @@
 -- NudgeMyInvoice runtime role: the ONLY database privileges the running API needs.
 --
--- Run once as the migration/owner role, AFTER migrations 0000-0007 have been applied. It changes
+-- Run once as the migration/owner role, AFTER migrations 0000-0008 have been applied. It changes
 -- privileges only (no table, column or constraint is created or altered). The role is created
 -- separately and WITHOUT a password in any statement, file or command line:
 --
@@ -44,3 +44,9 @@ GRANT INSERT ON "public"."audit_log" TO nmi_runtime;
 -- active / completed / canceled. It cannot delete them or change which invoice or operator owns one.
 GRANT SELECT, INSERT ON "public"."invoice_follow_ups" TO nmi_runtime;
 GRANT UPDATE ("due_at", "timezone", "note", "message", "status", "updated_at", "completed_at", "canceled_at") ON "public"."invoice_follow_ups" TO nmi_runtime;
+
+-- NMI-P6 AI-drafted payment nudges held for review (never sent). The AI original (ai_message), rationale,
+-- facts snapshot, model, prompt version, tone and ownership are immutable after insert; only the reviewed text
+-- and the review state can change. No DELETE.
+GRANT SELECT, INSERT ON "public"."invoice_nudges" TO nmi_runtime;
+GRANT UPDATE ("message", "edited", "status", "version", "updated_at", "approved_at", "rejected_at", "superseded_at") ON "public"."invoice_nudges" TO nmi_runtime;

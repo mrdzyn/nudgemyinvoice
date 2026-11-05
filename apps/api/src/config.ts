@@ -39,6 +39,9 @@ const envSchema = z.object({
   OPENAI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(64).max(4096).default(1024),
   // Real PayPal sandbox calls are OFF unless explicitly enabled, and then credentials are mandatory.
   PAYPAL_DRAFTS_ENABLED: z.enum(["true", "false"]).default("false"),
+  // NMI-P6 (P6-AUD-02): live AI nudge drafting needs its OWN explicit opt-in. Parser credentials alone never
+  // enable it. Default OFF; "true" is valid only together with OPENAI_API_KEY + OPENAI_MODEL.
+  NUDGE_AI_DRAFTING_ENABLED: z.enum(["true", "false"]).default("false"),
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   // P5: the owner's AG Studio deployment licence, delivered at runtime only to an authenticated operator by
@@ -77,6 +80,11 @@ export interface AppConfig {
   trustProxy: boolean | number;
   /** Server-only. Null unless both OPENAI_API_KEY and OPENAI_MODEL are set; never logged or returned. */
   openai: { apiKey: string; model: string; maxOutputTokens: number } | null;
+  /**
+   * Server-only. Live NMI-P6 nudge drafting: non-null ONLY when NUDGE_AI_DRAFTING_ENABLED=true AND the OpenAI key
+   * and model are set. Otherwise drafting answers 503 ai_unavailable while review/approve/copy keep working.
+   */
+  nudgeDrafting: { apiKey: string; model: string; maxOutputTokens: number } | null;
   /** True only when the owner explicitly enabled real PayPal sandbox draft creation. */
   paypalDraftsEnabled: boolean;
   /** Server-only. Present only when drafts are enabled. */
@@ -96,6 +104,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error(
       "PAYPAL_DRAFTS_ENABLED=true requires PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET",
     );
+  }
+  const nudgeDraftingEnabled = e.NUDGE_AI_DRAFTING_ENABLED === "true";
+  if (nudgeDraftingEnabled && !(e.OPENAI_API_KEY && e.OPENAI_MODEL)) {
+    // Fail closed: never start claiming AI nudge drafting is enabled without a configured model.
+    throw new Error("NUDGE_AI_DRAFTING_ENABLED=true requires OPENAI_API_KEY and OPENAI_MODEL");
   }
   if (WILDCARD_HOSTS.has(e.HOST) && e.NODE_ENV !== "production") {
     throw new Error("HOST=0.0.0.0 or :: is only accepted with NODE_ENV=production");
@@ -135,6 +148,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
             apiKey: e.OPENAI_API_KEY,
             model: e.OPENAI_MODEL,
             maxOutputTokens: e.OPENAI_MAX_OUTPUT_TOKENS,
+          }
+        : null,
+    nudgeDrafting:
+      nudgeDraftingEnabled && e.OPENAI_API_KEY && e.OPENAI_MODEL
+        ? {
+            apiKey: e.OPENAI_API_KEY,
+            model: e.OPENAI_MODEL,
+            maxOutputTokens: Math.min(e.OPENAI_MAX_OUTPUT_TOKENS, 600),
           }
         : null,
     paypalDraftsEnabled: draftsEnabled,

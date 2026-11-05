@@ -1,6 +1,6 @@
 import pg from "pg";
 import { createDb } from "@nmi/db";
-import { createOpenAIInvoiceClient } from "@nmi/ai";
+import { createOpenAIInvoiceClient, createOpenAINudgeClient } from "@nmi/ai";
 import { PayPalSandboxClient } from "@nmi/paypal";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
@@ -16,6 +16,17 @@ const app = buildApp(config, {
           apiKey: config.openai.apiKey,
           model: config.openai.model,
           maxOutputTokens: config.openai.maxOutputTokens,
+        }),
+      }
+    : {}),
+  // NMI-P6 live nudge drafting ONLY with its own explicit opt-in (NUDGE_AI_DRAFTING_ENABLED=true, default off).
+  // Parser credentials alone never enable it; without it drafting answers 503 and review still works.
+  ...(config.nudgeDrafting
+    ? {
+        nudgeClient: createOpenAINudgeClient({
+          apiKey: config.nudgeDrafting.apiKey,
+          model: config.nudgeDrafting.model,
+          maxOutputTokens: config.nudgeDrafting.maxOutputTokens,
         }),
       }
     : {}),

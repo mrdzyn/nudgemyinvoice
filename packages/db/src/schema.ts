@@ -11,6 +11,7 @@ import {
   uuid,
   jsonb,
   date,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { CURRENCY_CODES } from "@nmi/shared";
@@ -352,5 +353,66 @@ export const invoiceFollowUps = pgTable(
       sql`${t.note} is null or (length(${t.note}) between 1 and 500)`,
     ),
     check("invoice_follow_ups_message_len", sql`length(${t.message}) between 1 and 2000`),
+  ],
+);
+
+/**
+ * NMI-P6: an AI-DRAFTED payment follow-up message for one saved invoice, held for the operator's review.
+ * It is never a sent message: nothing in the application emails, texts or otherwise contacts a customer, and
+ * nothing schedules or dispatches it. "approved" means approved FOR THE OPERATOR'S OWN MANUAL USE only.
+ *
+ * `ai_message` is the validated model draft rendered with verified invoice facts (immutable); `message` is the
+ * operator-reviewed text (equal to `ai_message` until edited). `facts` is a snapshot of the verified facts the
+ * draft was rendered from (no customer contact data). `version` increases on every change so an approval can
+ * be bound to exactly the text the operator saw. At most ONE pending draft per invoice.
+ */
+export const invoiceNudges = pgTable(
+  "invoice_nudges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "restrict" }),
+    operatorId: uuid("operator_id")
+      .notNull()
+      .references(() => operators.id),
+    tone: text("tone").notNull(),
+    status: text("status").notNull().default("pending_review"),
+    message: text("message").notNull(),
+    aiMessage: text("ai_message").notNull(),
+    rationale: text("rationale").notNull(),
+    facts: jsonb("facts").notNull(),
+    model: text("model").notNull(),
+    promptVersion: text("prompt_version").notNull(),
+    edited: boolean("edited").notNull().default(false),
+    version: integer("version").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    rejectedAt: timestamp("rejected_at", { withTimezone: true }),
+    supersededAt: timestamp("superseded_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("invoice_nudges_one_pending_uq")
+      .on(t.invoiceId)
+      .where(sql`${t.status} = 'pending_review'`),
+    index("invoice_nudges_operator_idx").on(t.operatorId, t.status, t.createdAt),
+    index("invoice_nudges_invoice_idx").on(t.invoiceId),
+    check("invoice_nudges_tone_chk", sql`${t.tone} in ('friendly','professional','firm')`),
+    check(
+      "invoice_nudges_status_chk",
+      sql`${t.status} in ('pending_review','approved','rejected','superseded')`,
+    ),
+    check(
+      "invoice_nudges_closed_at_chk",
+      sql`(${t.status} = 'approved') = (${t.approvedAt} is not null) and (${t.status} = 'rejected') = (${t.rejectedAt} is not null) and (${t.status} = 'superseded') = (${t.supersededAt} is not null)`,
+    ),
+    check("invoice_nudges_message_len", sql`length(${t.message}) between 1 and 2000`),
+    check("invoice_nudges_ai_message_len", sql`length(${t.aiMessage}) between 1 and 2000`),
+    check("invoice_nudges_rationale_len", sql`length(${t.rationale}) between 1 and 600`),
+    check("invoice_nudges_model_len", sql`length(${t.model}) between 1 and 100`),
+    check("invoice_nudges_prompt_version_len", sql`length(${t.promptVersion}) between 1 and 40`),
+    check("invoice_nudges_version_pos", sql`${t.version} >= 1`),
+    check("invoice_nudges_facts_object", sql`jsonb_typeof(${t.facts}) = 'object'`),
   ],
 );

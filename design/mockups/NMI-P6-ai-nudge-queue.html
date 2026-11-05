@@ -1,0 +1,2548 @@
+<!doctype html>
+<html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>NMI P6 AI Nudge Queue design</title>
+<style>/* ===== real tokens.css (verbatim) ===== */
+/* Semantic tokens: the visual source of truth is design/tokens/design-tokens.json (v1.1.0),
+   mirrored here as CSS custom properties exactly as approved in NMI-UI-01A. */
+:root {
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --surface-sunken: #f1f5f9;
+  --border: #e2e8f0;
+  --border-input: #64748b;
+  --text: #0f172a;
+  --text-2: #475569;
+  --text-muted: #55657a;
+  --link: #1d4ed8;
+  --action-bg: #2563eb;
+  --action-bg-hover: #1d4ed8;
+  --action-text: #ffffff;
+  --focus: #1d4ed8;
+  --accent: #6d28d9;
+  --sandbox-bg: #fffbeb;
+  --sandbox-border: #d97706;
+  --sandbox-text: #78350f;
+  --sandbox-pill-bg: #fef3c7;
+  --ok-bg: #ecfdf5;
+  --ok-text: #065f46;
+  --ok-border: #059669;
+  --warn-bg: #fffbeb;
+  --warn-text: #92400e;
+  --warn-border: #d97706;
+  --err-bg: #fef2f2;
+  --err-text: #991b1b;
+  --err-border: #dc2626;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  --info-border: #93c5fd;
+  --neutral-bg: #f1f5f9;
+  --neutral-text: #334155;
+  --neutral-border: #94a3b8;
+  --ai-bg: #f5f3ff;
+  --ai-text: #5b21b6;
+  --ai-border: #c4b5fd;
+  --bar-bg: #0f172a;
+  --bar-text: #e2e8f0;
+  --bar-control: #1e293b;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "Roboto Mono", "SF Mono", Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+:root[data-theme="dark"] {
+  --canvas: #0b0f19;
+  --surface: #131b2e;
+  --surface-sunken: #0d1424;
+  --border: #25324a;
+  --border-input: #8798ad;
+  --text: #f8fafc;
+  --text-2: #cbd5e1;
+  --text-muted: #a3b2c6;
+  --link: #7cb0ff;
+  --action-bg: #2563eb;
+  --action-bg-hover: #3b73f0;
+  --action-text: #ffffff;
+  --focus: #93c5fd;
+  --accent: #c4b5fd;
+  --sandbox-bg: #261604;
+  --sandbox-border: #b45309;
+  --sandbox-text: #fde68a;
+  --sandbox-pill-bg: #451a03;
+  --ok-bg: #064e3b;
+  --ok-text: #a7f3d0;
+  --ok-border: #059669;
+  --warn-bg: #3b2205;
+  --warn-text: #fcd34d;
+  --warn-border: #b45309;
+  --err-bg: #450a0a;
+  --err-text: #fecaca;
+  --err-border: #dc2626;
+  --info-bg: #172554;
+  --info-text: #bfdbfe;
+  --info-border: #3b82f6;
+  --neutral-bg: #1e293b;
+  --neutral-text: #e2e8f0;
+  --neutral-border: #64748b;
+  --ai-bg: #1e1b4b;
+  --ai-text: #ddd6fe;
+  --ai-border: #6d28d9;
+  --bar-bg: #020617;
+  --bar-text: #e2e8f0;
+  --bar-control: #1e293b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== real app.css (verbatim) ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  background: var(--canvas);
+  color: var(--text);
+  min-height: 100vh;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+a {
+  color: var(--link);
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.mono,
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+:focus-visible,
+input[type="date"]:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -64px;
+  background: var(--action-bg);
+  color: var(--action-text);
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  z-index: 3000;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/* ------------------------------ review controls ------------------------------ */
+.review-controls {
+  background: var(--bar-bg);
+  color: var(--bar-text);
+  border-bottom: 1px solid #334155;
+  font-size: 13px;
+}
+.review-controls summary {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  list-style-position: inside;
+}
+.review-controls-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 0 16px 12px;
+  align-items: center;
+}
+.rc-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.rc-label {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+.rc-btn,
+.rc-select {
+  background: var(--bar-control);
+  color: var(--bar-text);
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.rc-btn[aria-pressed="true"],
+.rc-btn[aria-current="true"] {
+  background: #2563eb;
+  border-color: #93c5fd;
+  color: #fff;
+  font-weight: 600;
+}
+.review-controls :focus-visible {
+  outline-color: #93c5fd;
+}
+.rc-note {
+  color: #cbd5e1;
+  flex-basis: 100%;
+}
+
+/* ------------------------------ app shell ------------------------------ */
+.sandbox-banner {
+  background: var(--sandbox-bg);
+  color: var(--sandbox-text);
+  border-bottom: 1px solid var(--sandbox-border);
+  padding: 8px 24px;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  justify-content: space-between;
+}
+.banner-offline {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-bottom: 1px solid var(--warn-border);
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  text-decoration: none;
+}
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #2563eb, #6d28d9);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sandbox-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sandbox-pill-bg);
+  color: var(--sandbox-text);
+  border: 1px solid var(--sandbox-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.app-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 20px;
+}
+.nav-link {
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 12px 4px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.nav-link[aria-current="page"] {
+  color: var(--link);
+  border-bottom-color: var(--link);
+  font-weight: 700;
+}
+.mobile-nav {
+  display: none;
+}
+main {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+main:focus {
+  outline: none;
+}
+.screen-title {
+  font-size: 24px;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.screen-title:focus {
+  outline: none;
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* ------------------------------ components ------------------------------ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card + .card {
+  margin-top: 16px;
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  background: transparent;
+}
+.btn-primary {
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+.btn-primary:hover {
+  background: var(--action-bg-hover);
+}
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border-input);
+  color: var(--text);
+}
+.btn-secondary:hover {
+  background: var(--surface-sunken);
+}
+.btn-danger {
+  background: var(--err-bg);
+  color: var(--err-text);
+  border-color: var(--err-border);
+}
+.btn-link {
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  text-align: left;
+  color: var(--link);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn[disabled],
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-sm {
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-ok {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-border);
+}
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-color: var(--warn-border);
+}
+.badge-err {
+  background: var(--err-bg);
+  color: var(--err-text);
+  border-color: var(--err-border);
+}
+.badge-neutral {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+  border-color: var(--neutral-border);
+}
+.badge-info {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+.notice {
+  display: flex;
+  gap: 10px;
+  border: 1px solid;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.notice > div {
+  flex: 1;
+  min-width: 0;
+}
+.notice-info {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+}
+.notice-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-color: var(--warn-border);
+}
+.notice-err {
+  background: var(--err-bg);
+  color: var(--err-text);
+  border-color: var(--err-border);
+}
+.notice-ok {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-border);
+}
+.notice-ai {
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  border-color: var(--ai-border);
+}
+.notice ul,
+.notice ol {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+.notice .btn-link {
+  color: inherit;
+}
+
+/* forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+.field > label,
+.field > .label {
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  gap: 4px;
+}
+.field > label.spread {
+  justify-content: space-between;
+}
+.req {
+  color: var(--err-text);
+}
+.hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-input);
+  background: var(--surface);
+  color: var(--text);
+}
+.textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--err-border);
+  border-width: 2px;
+  background: var(--err-bg);
+}
+.input[disabled],
+.textarea[disabled] {
+  opacity: 0.6;
+}
+.field-error {
+  color: var(--err-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+.field-error::before {
+  content: "\26A0\FE0E  ";
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.counter {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.counter.over {
+  color: var(--err-text);
+  font-weight: 700;
+}
+
+/* tabs */
+.tablist {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-weight: 500;
+  min-height: 44px;
+}
+.tab[aria-selected="true"] {
+  color: var(--link);
+  border-bottom-color: var(--link);
+  font-weight: 700;
+}
+
+/* login */
+.login-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 60vh;
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+}
+.login-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.login-head .brand-mark {
+  margin: 0 auto 10px;
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+}
+
+/* dashboard */
+.currency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.currency-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.currency-card .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.currency-card .amount {
+  font-size: 26px;
+  font-weight: 700;
+}
+.currency-card .meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pill {
+  background: var(--surface);
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 32px;
+}
+.pill[aria-pressed="true"] {
+  background: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-border);
+  font-weight: 700;
+}
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-top: 16px;
+  overflow-x: auto;
+  position: relative;
+}
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+table.data caption {
+  text-align: left;
+}
+table.data th {
+  text-align: left;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+table.data td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+table.data tbody tr:last-child td {
+  border-bottom: 0;
+}
+table.data th.r,
+table.data td.r {
+  text-align: right;
+}
+.cell-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.grid-footer {
+  padding: 10px 16px;
+  border-top: 1px dashed var(--border-input);
+  background: var(--surface-sunken);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+/* Dev-only Activity analytics slot (absent in production: the slot renders nothing there). It lives here, not in
+   studio.css, so the spacing also holds for the fallback/placeholder when the Studio chunk never loads. The
+   panel sits above the currency cards, which have no top margin of their own. */
+.studio-slot {
+  margin: 12px 0 16px;
+}
+.studio-slot .studio {
+  margin-top: 0;
+}
+.studio-placeholder-body {
+  /* Matches the loaded desktop panel (hints, headline figures, 252px trend chart, daily-table toggle). */
+  height: 495px;
+}
+@media (max-width: 767px) {
+  /* The panel starts collapsed on narrow screens, so only its header is reserved. */
+  .studio-placeholder-body {
+    display: none;
+  }
+  .studio-placeholder .studio-head {
+    margin-bottom: 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-sunken), var(--border), var(--surface-sunken));
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+}
+.empty h2 {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.empty p {
+  color: var(--text-muted);
+  max-width: 420px;
+  margin: 0 auto 16px;
+}
+
+/* composer */
+.composer {
+  max-width: 820px;
+  margin: 0 auto;
+}
+.chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.chip {
+  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  min-height: 44px;
+  color: var(--text-2);
+}
+.chip:hover {
+  border-color: var(--link);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.actions .spacer {
+  margin-right: auto;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* review */
+.review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.line-head,
+.line-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) 90px 130px 120px 84px;
+  gap: 10px;
+  align-items: start;
+}
+.line-head {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.line-row {
+  padding-bottom: 10px;
+}
+.line-row .field {
+  margin-bottom: 0;
+}
+.line-total {
+  padding-top: 10px;
+  text-align: right;
+  font-weight: 600;
+}
+.m-label {
+  display: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.totals {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  position: sticky;
+  top: 12px;
+}
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  color: var(--text-2);
+}
+.totals-row.final {
+  border-top: 2px solid var(--border-input);
+  margin-top: 8px;
+  padding-top: 10px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+}
+.discount-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+/* detail */
+.meta-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+.meta-list dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.meta-list dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.paypal-panel {
+  border: 2px solid var(--sandbox-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 20px;
+  margin: 16px 0;
+}
+.paypal-panel .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.paypal-status {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+
+/* dialog */
+dialog {
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  padding: 24px;
+  max-width: 480px;
+  width: calc(100% - 32px);
+}
+dialog::backdrop {
+  background: rgba(2, 6, 23, 0.65);
+}
+dialog h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+dialog .actions {
+  border: 0;
+  padding-top: 0;
+}
+
+/* ------------------------------ responsive ------------------------------ */
+@media (max-width: 1023px) {
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+  .totals {
+    position: static;
+  }
+}
+@media (max-width: 767px) {
+  body {
+    font-size: 16px;
+    padding-bottom: 68px;
+  }
+  main {
+    padding: 16px;
+  }
+  .sandbox-banner,
+  .app-header {
+    padding: 10px 16px;
+  }
+  .app-nav {
+    display: none;
+  }
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    z-index: 500;
+    justify-content: space-around;
+  }
+  .mobile-nav button {
+    background: none;
+    border: 0;
+    min-height: 48px;
+    min-width: 80px;
+    padding: 4px 10px;
+    color: var(--text-2);
+    font-weight: 500;
+    font-size: 13px;
+    border-radius: var(--radius);
+  }
+  .mobile-nav button[aria-current="page"] {
+    color: var(--link);
+    font-weight: 700;
+  }
+  .btn,
+  .input,
+  .select,
+  .pill,
+  .chip,
+  .tab {
+    min-height: 44px;
+  }
+  .btn-sm,
+  .btn-link,
+  .brand {
+    min-height: 44px;
+  }
+  .grid-2,
+  .discount-grid {
+    grid-template-columns: 1fr;
+  }
+  .currency-grid {
+    grid-template-columns: 1fr;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .actions .btn {
+    width: 100%;
+  }
+  .actions .spacer {
+    margin: 0;
+  }
+  .line-head {
+    display: none;
+  }
+  .line-row {
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .line-row .f-desc {
+    grid-column: 1 / -1;
+  }
+  .line-row .f-total {
+    grid-column: 1 / 2;
+  }
+  .line-row .f-remove {
+    grid-column: 2 / 3;
+    justify-self: end;
+    align-self: end;
+  }
+  .line-total {
+    text-align: left;
+    padding-top: 0;
+  }
+  .m-label {
+    display: block;
+  }
+  table.data thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  table.data.stack tr {
+    display: block;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.data.stack td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    padding: 4px 0;
+    text-align: right;
+  }
+  table.data.stack td::before {
+    font-family: var(--font-sans);
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    flex: 0 0 auto;
+  }
+  table.data.stack td.r {
+    text-align: right;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .spinner {
+    border-right-color: currentColor;
+  }
+}
+
+/* ==========================================================================
+   React shell additions (NMI-UI-01B): utilities replace the prototype's inline styles so the
+   production CSP can forbid inline style attributes.
+   ========================================================================== */
+.brand-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  font-size: 17px;
+}
+.mt-4 {
+  margin-top: 4px;
+}
+.mt-8 {
+  margin-top: 8px;
+}
+.mt-12 {
+  margin-top: 12px;
+}
+.mt-14 {
+  margin-top: 14px;
+}
+.mt-16 {
+  margin-top: 16px;
+}
+.mb-0 {
+  margin-bottom: 0;
+}
+.mb-10 {
+  margin-bottom: 10px;
+}
+.mb-12 {
+  margin-bottom: 12px;
+}
+.w-full {
+  width: 100%;
+}
+.text-center {
+  text-align: center;
+}
+.text-right {
+  text-align: right;
+}
+.pad-16 {
+  padding: 16px;
+}
+.hint-normal {
+  font-weight: 400;
+}
+.notice-flush {
+  margin: 0;
+}
+.notice-flush.mt-12 {
+  margin-top: 12px;
+}
+.notice-compact {
+  font-size: 13px;
+}
+.label-strong {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.card-head .card-title {
+  margin: 0;
+}
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.date-range-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.date-range-filter legend,
+.date-range-filter label span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.date-range-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.date-range-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.date-range-input {
+  min-width: 145px;
+  min-height: 40px;
+}
+.date-range-error {
+  margin: 0;
+  color: var(--err-text);
+  font-size: 12px;
+}
+.search-input {
+  min-width: 230px;
+}
+.actions-plain {
+  border: 0;
+  padding-top: 0;
+  margin-top: 8px;
+}
+.plain-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.stack-buttons {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.totals-box {
+  max-width: 340px;
+  margin: 16px 0 0 auto;
+}
+.sk-h14 {
+  height: 14px;
+  margin-top: 12px;
+}
+.sk-h18 {
+  height: 18px;
+}
+.sk-h22 {
+  height: 22px;
+  margin: 14px 0;
+}
+.sk-h30 {
+  height: 30px;
+  margin-top: 12px;
+}
+.sk-w40 {
+  width: 40%;
+}
+.sk-w55 {
+  width: 55%;
+}
+.sk-w70 {
+  width: 70%;
+}
+@media (max-width: 767px) {
+  .search-input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  table.data th,
+  table.data td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .filters {
+    padding: 12px;
+  }
+}
+
+/* AG Grid Community, mapped onto the app's own tokens so light and dark follow the page theme. */
+.nmi-grid.ag-theme-quartz {
+  --ag-background-color: var(--surface);
+  --ag-foreground-color: var(--text);
+  --ag-secondary-foreground-color: var(--text-2);
+  --ag-header-background-color: var(--surface-sunken);
+  --ag-header-foreground-color: var(--text-muted);
+  --ag-border-color: var(--border);
+  --ag-secondary-border-color: var(--border);
+  --ag-row-border-color: var(--border);
+  --ag-row-hover-color: var(--surface-sunken);
+  --ag-active-color: var(--focus);
+  --ag-icon-font-color: var(--text-muted);
+  --ag-header-column-resize-handle-color: var(--border-input);
+  --ag-font-family: var(--font-sans);
+  --ag-font-size: 14px;
+  --ag-wrapper-border-radius: 0;
+  --ag-borders: none;
+  --ag-cell-horizontal-padding: 16px;
+  /* Read by the auto-height measurement; the legacy stylesheet does not define it. */
+  --ag-auto-height-max-body-height: 100000px;
+  border: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.nmi-grid .ag-header-cell-text {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.nmi-grid .ag-header-cell-label {
+  gap: 6px;
+}
+.nmi-grid .ag-sort-indicator-icon {
+  color: var(--text-2);
+  font-size: 11px;
+}
+.nmi-grid .ag-right-aligned-header .ag-header-cell-label {
+  justify-content: flex-end;
+}
+.nmi-grid .ag-cell {
+  display: flex;
+  align-items: center;
+  line-height: 1.35;
+}
+.nmi-grid .ag-cell.ag-right-aligned-cell {
+  justify-content: flex-end;
+}
+.nmi-grid .cell-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nmi-grid .cell-stack > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nmi-grid.ag-theme-quartz .ag-cell:focus-visible,
+.nmi-grid.ag-theme-quartz .ag-header-cell:focus-visible,
+.nmi-grid.ag-theme-quartz .ag-cell.ag-cell-focus:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.grid-note {
+  margin: 0;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* NMI-UX-02 — Nudgey: authenticated quick-action popover, no provider calls. */
+.nudgey {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: none;
+}
+.nudgey > * {
+  pointer-events: auto;
+}
+.nudgey-launcher {
+  min-height: 48px;
+  min-width: 124px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--action-bg);
+  color: var(--action-text);
+  box-shadow: 0 6px 22px rgba(15, 23, 42, 0.2);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.nudgey-launcher:hover {
+  background: var(--action-bg-hover);
+}
+.nudgey-sparkle {
+  font-size: 19px;
+  line-height: 1;
+}
+.nudgey-panel {
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 116px);
+  overflow-y: auto;
+  padding: 18px;
+  border: 1px solid var(--border-input);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 44px rgba(15, 23, 42, 0.25);
+}
+.nudgey-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.nudgey-title {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 750;
+}
+.nudgey-kicker {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.nudgey-close {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.nudgey-greeting {
+  padding-top: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.nudgey-question {
+  margin: 3px 0 14px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+.nudgey-actions {
+  display: grid;
+  gap: 9px;
+}
+.nudgey-action {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 64px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.nudgey-action:hover {
+  border-color: var(--link);
+}
+.nudgey-action-icon {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 18px;
+}
+.nudgey-action-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.nudgey-action-copy strong {
+  font-size: 13.5px;
+}
+.nudgey-action-copy small {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+.nudgey-footnote {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  text-align: center;
+  padding-top: 14px;
+}
+@media (max-width: 767px) {
+  .nudgey {
+    right: 12px;
+    bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+  .nudgey-panel {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 164px);
+  }
+}
+
+/* NMI-FUP-01 follow-up scheduling (inside Nudgey and on the saved-invoice page). Existing tokens only. */
+.nudgey-panel {
+  width: min(400px, calc(100vw - 32px));
+}
+.nudgey-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--err-bg);
+  color: var(--err-text);
+  border: 1px solid var(--err-border);
+  font-size: 12px;
+  font-weight: 800;
+}
+.followup-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.followup-title,
+.followup-form-title {
+  font-size: 15px;
+  font-weight: 750;
+}
+.followup-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.followup-count {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+}
+.followup-count-due {
+  border-color: var(--err-border);
+  background: var(--err-bg);
+  color: var(--err-text);
+}
+.followup-group-title {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-2);
+}
+.followup-items,
+.followup-history {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.followup-history {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.followup-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+}
+.followup-due {
+  border-color: var(--err-border);
+}
+.followup-upcoming {
+  border-color: var(--info-border);
+}
+.followup-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.followup-state {
+  font-size: 11.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.followup-when,
+.followup-inv,
+.followup-note {
+  margin-top: 2px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.followup-empty,
+.followup-hint,
+.followup-tz {
+  margin: 8px 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.followup-error {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--err-text);
+}
+.followup-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.followup-btn {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.followup-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.followup-btn-primary {
+  border-color: transparent;
+  background: var(--action-bg);
+  color: var(--action-text);
+}
+.followup-btn-danger {
+  border-color: var(--err-border);
+  color: var(--err-text);
+}
+.followup-form {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+}
+.followup-form label {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.followup-form input,
+.followup-form select,
+.followup-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.followup-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.followup-fixed {
+  font-weight: 650;
+}
+.followup-message {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 13px;
+}
+.followup-card .followup-item {
+  max-width: 640px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .followup-btn {
+    transition: none;
+  }
+}
+
+/* Nudgey "Check invoice status" selector (existing tokens only). */
+.status-picker {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+}
+.status-picker label {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.status-picker input[type="search"] {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.status-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 34dvh;
+  overflow-y: auto;
+}
+.status-option {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.status-option[aria-pressed="true"] {
+  border: 2px solid var(--focus);
+  background: var(--info-bg);
+}
+.status-option-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.status-option-meta {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.status-selected {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.status-selected p {
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+
+/* NMI-NDG-02 C1 conversational lookup (inside the Nudgey panel). Existing tokens only. */
+.chat {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+}
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chat-chip {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.chat-log {
+  display: grid;
+  gap: 8px;
+  max-height: 46dvh;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.chat-msg {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.chat-user {
+  justify-self: end;
+  max-width: 92%;
+  background: var(--info-bg);
+  color: var(--info-text);
+  border: 1px solid var(--info-border);
+}
+.chat-bot {
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.chat-bot p {
+  margin: 0 0 6px;
+}
+.chat-title {
+  font-weight: 700;
+}
+.chat-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.chat-limit {
+  padding: 8px 10px;
+  border: 1px solid var(--warn-border);
+  border-radius: 10px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+.chat-group {
+  margin-top: 8px;
+}
+.chat-group-title {
+  font-size: 13px;
+  font-weight: 750;
+}
+.chat-cards {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.chat-card {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+}
+.chat-card-due {
+  border-color: var(--err-border);
+}
+.chat-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.chat-amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.chat-card-meta {
+  margin: 2px 0 4px;
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.schedule-candidate {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.schedule-candidate h4 {
+  margin: 0;
+  font-size: 13px;
+}
+.schedule-candidate-badge {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid var(--info-border);
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.schedule-candidate-list li {
+  min-width: 0;
+}
+.schedule-candidate-option {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.schedule-candidate-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--action-bg);
+  grid-row: span 2;
+}
+.schedule-candidate-option.is-selected {
+  border-color: var(--action-bg);
+  box-shadow: 0 0 0 2px var(--action-bg);
+}
+.schedule-candidate-option-head {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 8px;
+}
+.schedule-candidate-option .chat-card-meta {
+  grid-column: 2;
+}
+.schedule-candidate .followup-error {
+  overflow-wrap: anywhere;
+}
+.schedule-candidate .followup-error .followup-btn {
+  display: block;
+  margin-top: 8px;
+}
+.chat-form {
+  display: grid;
+  gap: 4px;
+}
+.chat-form label {
+  font-size: 13px;
+  font-weight: 650;
+}
+.chat-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+/* NMI-NDG-02 V1: small progressive enhancement of the approved Ask text field. */
+.chat-voice-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.chat-voice-controls .followup-btn {
+  min-height: 40px;
+}
+.chat-voice-controls .chat-hint {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+/* ===== NMI-P6 AI Nudge Queue (approved design D1–D7; tokens only, ≥44px targets on phones) ===== */
+.nq-count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.nq-tight {
+  margin: 4px 0 0;
+}
+.nq-summary {
+  margin-bottom: 16px;
+}
+.nq-summary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.nq-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.nq-counters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.nq-counters div {
+  background: var(--surface-sunken);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.nq-counters dt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.nq-counters dd {
+  margin: 2px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.nq-mini {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.nq-mini li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.nq-mini-main,
+.nq-mini-side,
+.nq-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.nq-tabs {
+  margin: 4px 0 14px;
+}
+.nq-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+.nq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.nq-row {
+  width: 100%;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+}
+.nq-row:hover {
+  background: var(--surface-sunken);
+}
+.nq-row[aria-current="true"] {
+  border-color: var(--action-bg);
+  box-shadow: 0 0 0 2px var(--info-bg);
+}
+.nq-row-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.nq-row-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.nq-review,
+.nq-draft {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.nq-h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 4px 0 0;
+  color: var(--text-2);
+}
+.nq-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.nq-facts div {
+  background: var(--surface-sunken);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  min-width: 0;
+}
+.nq-facts dt {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.nq-facts dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.nq-text {
+  min-height: 190px;
+  font: inherit;
+}
+.nq-why summary {
+  cursor: pointer;
+  color: var(--link);
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.nq-why p {
+  margin: 6px 0 0;
+  color: var(--text-2);
+}
+.nq-regen {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+/* Owner refinement 2: the tone select never clips its longest label ("Professional"). */
+.nq-tone-select {
+  width: auto;
+  min-width: 10.5rem;
+  padding-right: 32px;
+}
+.nq-reject {
+  color: var(--err-text);
+}
+.nq-final {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.5;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+.nq-original {
+  margin-top: 6px;
+}
+.nq-copied {
+  color: var(--ok-text);
+  font-weight: 600;
+}
+.nq-busy {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+.nq-tones {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.nq-tone {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-height: 44px;
+  cursor: pointer;
+}
+.nq-tone input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.nq-tone span {
+  display: grid;
+}
+.nq-tone:has(input:checked) {
+  border-color: var(--action-bg);
+  box-shadow: 0 0 0 1px var(--action-bg);
+}
+.nq-history {
+  overflow-x: auto;
+}
+.nq-chat {
+  display: grid;
+  gap: 8px;
+}
+.nq-chat-tone {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.nq-quote {
+  margin: 4px 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--ai-text);
+  background: var(--ai-bg);
+  color: var(--text);
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mobile-nav .nq-count {
+  margin-left: 4px;
+}
+@media (max-width: 1023px) {
+  .nq-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .nq-split {
+    grid-template-columns: 1fr;
+  }
+  .nq-counters {
+    gap: 6px;
+  }
+  .nq-counters div {
+    padding: 8px;
+  }
+  .nq-counters dd {
+    font-size: 18px;
+  }
+  .nq-actions .btn {
+    flex: 1 1 auto;
+  }
+  .nq-regen {
+    flex: 1 1 100%;
+  }
+  .nq-regen .select {
+    flex: 1 1 auto;
+  }
+  .nq-regen .btn {
+    flex: 0 0 auto;
+  }
+  .nq-summary-head .nq-actions {
+    width: 100%;
+  }
+  .mobile-nav button {
+    min-width: 64px;
+  }
+}
+@media (max-width: 767px) {
+  /* NMI-P6 refinement 3: every interactive target in the Nudgey drafting flow is at least 44px on phones. */
+  .chat-voice-controls .followup-btn {
+    min-height: 44px;
+  }
+}
+
+/* ===== P6 review-only preview styles ===== */
+
+.p6-count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:var(--info-bg);color:var(--info-text);font-size:12px;font-weight:700;text-align:center}
+.p6-summary{margin-top:16px}.p6-summary-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.p6-summary-actions,.p6-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.p6-tight{margin:4px 0 0}
+.p6-counters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.p6-counters div{background:var(--surface-sunken);border-radius:var(--radius);padding:10px 12px}.p6-counters dt{font-size:12px;color:var(--text-muted)}.p6-counters dd{margin:2px 0 0;font-size:22px;font-weight:700;color:var(--text)}
+.p6-mini{list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}.p6-mini li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.p6-mini-main,.p6-mini-side{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.p6-p5{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:14px 16px;border:1px dashed var(--border-input);border-radius:var(--radius-lg);color:var(--text-2);background:var(--surface)}
+.p6-tabs{margin:14px 0}.p6-split{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:16px;align-items:start}
+.p6-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}.p6-row{width:100%;text-align:left;display:grid;gap:6px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);color:var(--text);font:inherit;cursor:pointer;min-height:44px}
+.p6-row[aria-current=true]{border-color:var(--action-bg);box-shadow:0 0 0 2px var(--info-bg)}.p6-row-top{display:flex;justify-content:space-between;gap:8px}.p6-row-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.p6-review{display:grid;gap:10px}.p6-h3{margin-top:4px}.p6-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}.p6-facts div{background:var(--surface-sunken);border-radius:var(--radius);padding:8px 10px}.p6-facts dt{font-size:12px;color:var(--text-muted)}.p6-facts dd{margin:2px 0 0;font-weight:700;font-size:14px}
+.p6-text{width:100%;min-height:190px;font:inherit;line-height:1.5}.p6-why summary{cursor:pointer;color:var(--link);font-weight:600;min-height:44px;display:flex;align-items:center}.p6-why p{margin:6px 0 0;color:var(--text-2)}
+.p6-regen{display:flex;gap:6px}.p6-reject{color:var(--err-text)}.p6-final{white-space:pre-wrap;font:inherit;line-height:1.5;margin:0;padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-sunken);color:var(--text)}
+.p6-copied{color:var(--ok-text);font-weight:600}.p6-notsent{font-size:12px;color:var(--text-muted)}
+.p6-grid2{margin-top:16px;gap:16px}.p6-tones{display:grid;gap:8px;margin:10px 0}.p6-tone{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:var(--radius);min-height:44px}.p6-tone span{display:grid}
+.p6-draft{display:grid;gap:10px}.p6-busy{display:flex;gap:8px;align-items:center;margin:0}
+.p6-states{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}.p6-state{display:grid;gap:8px}
+.p6-nudgey{position:fixed;right:16px;bottom:16px;width:min(400px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;z-index:20;display:grid;gap:10px}
+.p6-chatlog{display:grid;gap:10px}.p6-quote{margin:6px 0;padding:8px 10px;border-left:3px solid var(--ai-text);background:var(--ai-bg);color:var(--text);font-size:13px}
+.p6-chatform{display:flex;gap:6px}.p6-chatform .input{flex:1;min-width:0}
+.h3{font-size:14px;font-weight:700;margin:0;color:var(--text-2)}
+@media (max-width:767px){.p6-split{grid-template-columns:1fr}.p6-counters dd{font-size:18px}.p6-facts{grid-template-columns:1fr 1fr}.p6-actions .btn{flex:1 1 auto;min-height:44px}.p6-regen{flex:1 1 100%}.p6-regen .select{flex:1;min-width:10.5rem}.p6-p5{flex-direction:column;align-items:flex-start;gap:4px}.p6-nudgey{position:static;width:auto;margin-top:12px}}
+</style></head>
+<body>
+<section class="p6-frame" id="01-dashboard-queue-summary" data-label="Dashboard: AI Nudge Queue above the unchanged P5 filters and charts" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link" aria-current="page" href="#">Invoice drafts</a>
+  <a class="nav-link"  href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Saved invoices and their PayPal Sandbox draft status</p></div><button type="button" class="btn btn-primary">New invoice</button></div>
+
+<section class="card p6-summary" aria-labelledby="p6-sum-title">
+  <div class="p6-summary-head">
+    <div><h2 class="card-title" id="p6-sum-title">AI Nudge Queue</h2>
+    <p class="hint p6-tight">AI-drafted payment follow-ups waiting for your review. <strong>Nothing is ever sent</strong> — approved messages are yours to copy and send yourself.</p></div>
+    <div class="p6-summary-actions"><button type="button" class="btn btn-secondary btn-sm">Draft a nudge</button><button type="button" class="btn btn-primary btn-sm">Open queue</button></div>
+  </div>
+  
+<dl class="p6-counters">
+  <div><dt>Pending review</dt><dd class="num">3</dd></div>
+  <div><dt>Approved for manual use</dt><dd class="num">5</dd></div>
+  <div><dt>History</dt><dd class="num">4</dd></div>
+</dl>
+  <ul class="p6-mini" aria-label="Pending review">
+    <li><div class="p6-mini-main"><strong>Zorblax Industries</strong> <span class="num">USD 1,200.00</span> <span class="badge badge-warn">6 days after the due date</span> <span class="badge badge-info">Professional</span></div><div class="p6-mini-side"><span class="cell-sub">12 min ago</span><button type="button" class="btn btn-secondary btn-sm">Review</button></div></li><li><div class="p6-mini-main"><strong>Northwind Studio</strong> <span class="num">EUR 860.00</span> <span class="badge badge-warn">2 days after the due date</span> <span class="badge badge-ok">Friendly</span></div><div class="p6-mini-side"><span class="cell-sub">1 h ago</span><button type="button" class="btn btn-secondary btn-sm">Review</button></div></li><li><div class="p6-mini-main"><strong>Bluebird Bakery</strong> <span class="num">JPY 188,837</span> <span class="badge badge-neutral">Due in 7 days</span> <span class="badge badge-ok">Friendly</span></div><div class="p6-mini-side"><span class="cell-sub">Yesterday</span><button type="button" class="btn btn-secondary btn-sm">Review</button></div></li>
+  </ul>
+</section>
+<div class="p6-p5"><span>Currency · date · search · PayPal status filters</span><span class="cell-sub">P5 — unchanged</span></div>
+<div class="p6-p5"><span>Activity analytics (licensed AG Studio charts)</span><span class="cell-sub">P5 — unchanged</span></div>
+<div class="p6-p5"><span>Per-currency totals cards</span><span class="cell-sub">P5 — unchanged</span></div>
+<div class="p6-p5"><span>AG Grid invoice table</span><span class="cell-sub">P5 — unchanged</span></div></main></section>
+<section class="p6-frame" id="02-queue-pending-review" data-label="Nudge queue — Pending review with the review/edit panel" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link"  href="#">Invoice drafts</a>
+  <a class="nav-link" aria-current="page" href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Nudge queue</h1><p class="subtitle">AI-drafted payment follow-ups for your review — never sent automatically</p></div><button type="button" class="btn btn-primary">Draft a nudge</button></div>
+
+<dl class="p6-counters">
+  <div><dt>Pending review</dt><dd class="num">3</dd></div>
+  <div><dt>Approved for manual use</dt><dd class="num">5</dd></div>
+  <div><dt>History</dt><dd class="num">4</dd></div>
+</dl>
+
+<div class="tablist p6-tabs" role="tablist" aria-label="Nudge queue">
+  <button type="button" role="tab" class="tab" aria-selected="true">Pending review <span class="p6-count">3</span></button><button type="button" role="tab" class="tab" aria-selected="false">Approved <span class="p6-count">5</span></button><button type="button" role="tab" class="tab" aria-selected="false">History <span class="p6-count">4</span></button>
+</div>
+<div class="p6-split"><ul class="p6-list" aria-label="Pending review"><li><button type="button" class="p6-row" aria-current="true"><span class="p6-row-top"><strong>Zorblax Industries</strong><span class="num">USD 1,200.00</span></span><span class="p6-row-meta"><span class="badge badge-warn">6 days after the due date</span> <span class="badge badge-info">Professional</span> <span class="cell-sub">12 min ago</span></span></button></li><li><button type="button" class="p6-row" ><span class="p6-row-top"><strong>Northwind Studio</strong><span class="num">EUR 860.00</span></span><span class="p6-row-meta"><span class="badge badge-warn">2 days after the due date</span> <span class="badge badge-ok">Friendly</span> <span class="cell-sub">1 h ago</span></span></button></li><li><button type="button" class="p6-row" ><span class="p6-row-top"><strong>Bluebird Bakery</strong><span class="num">JPY 188,837</span></span><span class="p6-row-meta"><span class="badge badge-neutral">Due in 7 days</span> <span class="badge badge-ok">Friendly</span> <span class="cell-sub">Yesterday</span></span></button></li></ul>
+<section class="card p6-review" aria-labelledby="p6-rev-title">
+  <div class="p6-review-head"><div><h2 class="card-title" id="p6-rev-title">Zorblax Industries</h2><p class="cell-sub">Drafted 12 min ago · <span class="badge badge-info">Professional</span> <span class="badge badge-info">Pending review</span></p></div></div>
+  <div class="notice notice-ai notice-compact" role="note"><strong>AI draft — review before use.</strong> Amount, date and reference were filled in from your saved invoice; the AI never saw them. Nothing is sent.</div>
+  <h3 class="h3 p6-h3">Verified facts used</h3>
+  
+<dl class="p6-facts">
+  <div><dt>Amount</dt><dd class="num">USD 1,200.00</dd></div>
+  <div><dt>Due date</dt><dd>October 30, 2026</dd></div>
+  <div><dt>As of November 5, 2026</dt><dd>6 days after the due date</dd></div>
+  <div><dt>Invoice</dt><dd class="mono">c615eb2b</dd></div>
+</dl>
+  <label class="label-strong" for="p6-msg">Message</label>
+  <textarea id="p6-msg" class="textarea p6-text" rows="9">Hi Zorblax Industries,
+
+A quick reminder that invoice c615eb2b for USD 1,200.00 was due on October 30, 2026. Could you let me know when payment is on its way, or whether anything is holding it up?
+
+Thank you for your help.
+
+Kind regards,</textarea>
+  <p class="cell-sub p6-tight">237 / 2000 characters · Unsaved edits are kept until you save or leave.</p>
+  <details class="p6-why" open><summary>Why this wording (AI rationale)</summary><p>A professional, concise reminder: the due date passed recently and this is the first follow-up, so it names the invoice and asks for an update without pressure.</p></details>
+  <div class="p6-actions">
+    <button type="button" class="btn btn-primary">Approve for manual use</button>
+    <button type="button" class="btn btn-secondary">Save edits</button>
+    <div class="p6-regen"><label class="sr-only" for="p6-tone">Tone for a new draft</label><select id="p6-tone" class="select"><option>Friendly</option><option selected>Professional</option><option>Firm</option></select><button type="button" class="btn btn-secondary">Regenerate</button></div>
+    <button type="button" class="btn btn-secondary p6-reject">Reject</button>
+  </div>
+  <p class="hint p6-tight">Copy becomes available after approval. Approving does not send anything.</p>
+</section></div></main></section>
+<section class="p6-frame" id="03-queue-approved-copy" data-label="Nudge queue — Approved for manual use, Copy" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link"  href="#">Invoice drafts</a>
+  <a class="nav-link" aria-current="page" href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Nudge queue</h1><p class="subtitle">AI-drafted payment follow-ups for your review — never sent automatically</p></div><button type="button" class="btn btn-primary">Draft a nudge</button></div>
+
+<dl class="p6-counters">
+  <div><dt>Pending review</dt><dd class="num">3</dd></div>
+  <div><dt>Approved for manual use</dt><dd class="num">5</dd></div>
+  <div><dt>History</dt><dd class="num">4</dd></div>
+</dl>
+
+<div class="tablist p6-tabs" role="tablist" aria-label="Nudge queue">
+  <button type="button" role="tab" class="tab" aria-selected="false">Pending review <span class="p6-count">3</span></button><button type="button" role="tab" class="tab" aria-selected="true">Approved <span class="p6-count">5</span></button><button type="button" role="tab" class="tab" aria-selected="false">History <span class="p6-count">4</span></button>
+</div>
+<div class="p6-split"><ul class="p6-list" aria-label="Approved"><li><button type="button" class="p6-row" aria-current="true"><span class="p6-row-top"><strong>Lumen Labs</strong><span class="num">USD 2,450.00</span></span><span class="p6-row-meta"><span class="badge badge-ok">Approved</span> <span class="badge badge-warn">Firm</span> <span class="badge badge-neutral">Edited</span></span><span class="cell-sub">Nov 4, 2026, 3:12 PM · <span class="p6-notsent">Not sent · for your manual use</span></span></button></li><li><button type="button" class="p6-row" ><span class="p6-row-top"><strong>Quill &amp; Co</strong><span class="num">GBP 540.00</span></span><span class="p6-row-meta"><span class="badge badge-ok">Approved</span> <span class="badge badge-info">Professional</span> </span><span class="cell-sub">Nov 3, 2026, 10:05 AM · <span class="p6-notsent">Not sent · for your manual use</span></span></button></li></ul>
+<section class="card p6-review" aria-labelledby="p6-ap-title">
+  <div class="p6-review-head"><div><h2 class="card-title" id="p6-ap-title">Lumen Labs</h2><p class="cell-sub"><span class="badge badge-warn">Firm</span> <span class="badge badge-ok">Approved</span> <span class="badge badge-neutral">Edited by you</span></p></div></div>
+  <div class="notice notice-ok notice-compact" role="status"><strong>Approved for manual use on Nov 4, 2026, 3:12 PM.</strong> Not sent — copy it into your own email or messaging app.</div>
+  <pre class="p6-final">Hi Lumen Labs,
+
+Invoice 4e63810d for USD 2,450.00 was due on October 12, 2026. Please reply this week with the date payment will be made, or let me know if you have any questions.
+
+Kind regards,</pre>
+  <div class="p6-actions"><button type="button" class="btn btn-primary">Copy message</button><span class="p6-copied" role="status">✓ Copied to clipboard</span></div>
+  <details class="p6-why"><summary>Original AI draft and rationale</summary><p class="cell-sub">Kept unchanged for your records.</p></details>
+</section></div></main></section>
+<section class="p6-frame" id="04-queue-history" data-label="Nudge queue — History (rejected and replaced)" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link"  href="#">Invoice drafts</a>
+  <a class="nav-link" aria-current="page" href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Nudge queue</h1><p class="subtitle">AI-drafted payment follow-ups for your review — never sent automatically</p></div></div>
+
+<dl class="p6-counters">
+  <div><dt>Pending review</dt><dd class="num">3</dd></div>
+  <div><dt>Approved for manual use</dt><dd class="num">5</dd></div>
+  <div><dt>History</dt><dd class="num">4</dd></div>
+</dl>
+
+<div class="tablist p6-tabs" role="tablist" aria-label="Nudge queue">
+  <button type="button" role="tab" class="tab" aria-selected="false">Pending review <span class="p6-count">3</span></button><button type="button" role="tab" class="tab" aria-selected="false">Approved <span class="p6-count">5</span></button><button type="button" role="tab" class="tab" aria-selected="true">History <span class="p6-count">4</span></button>
+</div>
+<div class="table-card"><table class="data"><caption class="sr-only">Closed nudges</caption><thead><tr><th scope="col">Customer</th><th scope="col">Amount</th><th scope="col">Tone</th><th scope="col">Outcome</th><th scope="col">When</th></tr></thead>
+<tbody><tr><td>Zorblax Industries</td><td class="num">USD 1,200.00</td><td><span class="badge badge-warn">Firm</span></td><td><span class="badge badge-neutral">Replaced by a newer draft</span></td><td class="cell-sub">Nov 5, 2026, 11:58 AM</td></tr><tr><td>Harbor Coffee</td><td class="num">AUD 310.00</td><td><span class="badge badge-ok">Friendly</span></td><td><span class="badge badge-err">Rejected</span></td><td class="cell-sub">Nov 2, 2026, 9:40 AM</td></tr></tbody></table></div>
+<p class="hint">History keeps rejected drafts and drafts replaced by a newer one. Nothing in history was sent.</p></main></section>
+<section class="p6-frame" id="05-draft-from-invoice" data-label="Draft a nudge from a saved invoice (tone choice, privacy note, drafting state)" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link" aria-current="page" href="#">Invoice drafts</a>
+  <a class="nav-link"  href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Zorblax Industries</h1><p class="subtitle">Saved invoice c615eb2b · USD 1,200.00 · due October 30, 2026</p></div></div>
+<div class="p6-p5"><span>Saved invoice details, PayPal draft panel, follow-up reminders</span><span class="cell-sub">P5 — unchanged</span></div>
+<div class="grid-2 p6-grid2">
+<section class="card p6-draft" aria-labelledby="p6-d-title">
+  <h2 class="card-title" id="p6-d-title">AI payment nudge</h2>
+  <p class="hint p6-tight">Draft a follow-up for this invoice. You review and approve it; nothing is sent.</p>
+  <fieldset class="plain-fieldset p6-tones"><legend class="label-strong">Tone</legend>
+    <label class="p6-tone"><input type="radio" name="tone" > <span><strong>Friendly</strong><span class="cell-sub">Warm and relaxed — good before or just after the due date.</span></span></label><label class="p6-tone"><input type="radio" name="tone" checked> <span><strong>Professional</strong><span class="cell-sub">Courteous and concise — a safe default.</span></span></label><label class="p6-tone"><input type="radio" name="tone" > <span><strong>Firm</strong><span class="cell-sub">Direct about asking for a payment update, still polite. Never threatening.</span></span></label>
+  </fieldset>
+  <div class="notice notice-info notice-compact" role="note"><strong>Privacy:</strong> the AI receives only the tone, the currency code and where today falls relative to the due date — not the customer's name, e-mail, items, amount or dates. Those are filled in from your saved invoice afterwards.</div>
+  <button type="button" class="btn btn-primary">Draft nudge</button>
+</section>
+<section class="card p6-draft" aria-labelledby="p6-d-title">
+  <h2 class="card-title" id="p6-d-title">AI payment nudge</h2>
+  <p class="hint p6-tight">Draft a follow-up for this invoice. You review and approve it; nothing is sent.</p>
+  <fieldset class="plain-fieldset p6-tones"><legend class="label-strong">Tone</legend>
+    <label class="p6-tone"><input type="radio" name="tone" > <span><strong>Friendly</strong><span class="cell-sub">Warm and relaxed — good before or just after the due date.</span></span></label><label class="p6-tone"><input type="radio" name="tone" checked> <span><strong>Professional</strong><span class="cell-sub">Courteous and concise — a safe default.</span></span></label><label class="p6-tone"><input type="radio" name="tone" > <span><strong>Firm</strong><span class="cell-sub">Direct about asking for a payment update, still polite. Never threatening.</span></span></label>
+  </fieldset>
+  <div class="notice notice-info notice-compact" role="note"><strong>Privacy:</strong> the AI receives only the tone, the currency code and where today falls relative to the due date — not the customer's name, e-mail, items, amount or dates. Those are filled in from your saved invoice afterwards.</div>
+  <p role="status" class="p6-busy"><span class="spinner" aria-hidden="true"></span> Drafting a professional nudge… this usually takes a few seconds.</p><button type="button" class="btn btn-primary" disabled>Drafting…</button>
+</section></div></main></section>
+<section class="p6-frame" id="06-required-states" data-label="Required loading / empty / error / refusal states" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link" aria-current="page" href="#">Invoice drafts</a>
+  <a class="nav-link"  href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Required states</h1><p class="subtitle">Loading, empty, error and refusal states for the queue and drafting. In every state, nothing is sent.</p></div></div>
+<div class="p6-states">
+<section class="card p6-state"><h3 class="h3">Loading</h3><div aria-busy="true"><div class="skeleton sk-h18 sk-w40"></div><div class="skeleton sk-h30 sk-w70 mt-8"></div><div class="skeleton sk-h14 sk-w55 mt-8"></div></div></section>
+<section class="card p6-state"><h3 class="h3">Empty queue</h3><div class="notice notice-info notice-compact" role="status"><strong>No nudges waiting for review.</strong> Draft one from a saved invoice or ask Nudgey: “draft a friendly nudge for Northwind”.</div><button type="button" class="btn btn-primary btn-sm mt-12">Draft a nudge</button></section>
+<section class="card p6-state"><h3 class="h3">Queue could not load</h3><div class="notice notice-err notice-compact" role="alert"><strong>Could not load your nudges.</strong> Your invoices are unaffected.</div><button type="button" class="btn btn-secondary btn-sm mt-12">Retry</button></section>
+<section class="card p6-state"><h3 class="h3">AI drafting is off</h3><div class="notice notice-warn notice-compact" role="status"><strong>AI drafting isn't available on this server.</strong> You can still review, approve and copy existing drafts.</div></section>
+<section class="card p6-state"><h3 class="h3">Draft limit reached</h3><div class="notice notice-warn notice-compact" role="status"><strong>You've reached the drafting limit for now.</strong> Try again in about 8 minutes. This keeps AI cost bounded.</div></section>
+<section class="card p6-state"><h3 class="h3">Draft refused</h3><div class="notice notice-warn notice-compact" role="status"><strong>The AI's draft didn't pass our checks</strong> (for example it invented a number, a link or a payment-status claim), so nothing was saved. Try again or choose another tone.</div><button type="button" class="btn btn-secondary btn-sm mt-12">Try again</button></section>
+<section class="card p6-state"><h3 class="h3">Changed elsewhere</h3><div class="notice notice-warn notice-compact" role="status"><strong>This draft changed in another tab.</strong> Reload it to see the latest text before approving.</div><button type="button" class="btn btn-secondary btn-sm mt-12">Reload draft</button></section>
+<section class="card p6-state"><h3 class="h3">A draft is already pending</h3><div class="notice notice-info notice-compact" role="status"><strong>This invoice already has a draft waiting for review.</strong> Regenerating replaces it (the old one moves to History).</div><div class="p6-actions mt-12"><button type="button" class="btn btn-primary btn-sm">Replace with a new draft</button><button type="button" class="btn btn-secondary btn-sm">Review existing</button></div></section>
+</div></main></section>
+<section class="p6-frame" id="07-nudgey-chat-draft" data-label="Nudgey chat connected to the drafting workflow (voice reuses on-device input)" hidden>
+<div class="sandbox-banner" role="note"><span><strong>PayPal Sandbox only.</strong> Nothing here moves real money. Creating a PayPal draft does not email the customer.</span><span class="mono">sandbox · draft-only</span></div>
+<header class="app-header"><div class="brand"><span class="brand-mark" aria-hidden="true">N</span><span>NudgeMyInvoice</span></div>
+<div class="header-controls"><span class="sandbox-pill">PayPal Sandbox</span><span class="cell-sub">Signed in as operator</span><button type="button" class="btn btn-secondary btn-sm">Sign out</button></div></header>
+<nav class="app-nav" aria-label="Main">
+  <a class="nav-link" aria-current="page" href="#">Invoice drafts</a>
+  <a class="nav-link"  href="#">Nudge queue <span class="p6-count" aria-label="3 pending review">3</span></a>
+  <a class="nav-link" href="#">New invoice</a>
+</nav>
+<main>
+<div class="page-head"><div><h1 class="screen-title">Invoice drafts</h1><p class="subtitle">Nudgey connects to the same drafting workflow</p></div></div>
+<div class="p6-p5"><span>Dashboard (unchanged) behind the Nudgey panel</span><span class="cell-sub">P5 — unchanged</span></div></main>
+<aside class="p6-nudgey card" aria-label="Nudgey">
+  <div class="nudgey-heading"><div><h2 class="nudgey-title">Nudgey</h2><p class="nudgey-kicker">Your invoice companion</p></div><button type="button" class="nudgey-close" aria-label="Close Nudgey">×</button></div>
+  <div class="chat-log p6-chatlog">
+    <div class="chat-msg chat-user">draft a firm nudge for zorblax</div>
+    <div class="chat-msg chat-bot"><p class="chat-title">I found 1 matching invoice</p>
+      <ul class="chat-cards"><li class="chat-card"><div class="chat-card-head"><strong>Zorblax Industries</strong><span class="chat-amount">USD 1,200.00</span></div><div class="chat-card-meta">Invoice due October 30, 2026</div></li></ul>
+      <p class="chat-hint">Draft a <strong>firm</strong> nudge for this invoice? It goes to your queue for review — nothing is sent.</p>
+      <div class="chat-chips"><button type="button" class="btn btn-primary btn-sm">Draft firm nudge</button><button type="button" class="chat-chip">Change tone</button><button type="button" class="chat-chip">Cancel</button></div></div>
+    <div class="chat-msg chat-bot"><p class="chat-title">Draft ready for review</p>
+      <blockquote class="p6-quote">Hi Zorblax Industries, invoice c615eb2b for USD 1,200.00 which was due on October 30, 2026. Please reply this week with the date payment will be made…</blockquote>
+      <p class="chat-hint"><span class="badge badge-info">Pending review</span> in your Nudge queue. Approve it there; copying is up to you.</p>
+      <div class="chat-chips"><button type="button" class="btn btn-secondary btn-sm">Open in queue</button></div></div>
+  </div>
+  <form class="chat-form p6-chatform" onsubmit="return false"><label class="sr-only" for="p6-ask">Ask Nudgey</label><input id="p6-ask" class="input" placeholder="e.g. draft a friendly nudge for Northwind"><button type="button" class="btn btn-secondary btn-sm" aria-label="Speak (on-device)">🎤</button><button type="button" class="btn btn-primary btn-sm">Ask</button></form>
+  <p class="nudgey-footnote">You're in control. Nothing is sent automatically. Voice stays on this device.</p>
+</aside></section>
+<script>
+const show = () => { const id = location.hash.slice(1) || "01-dashboard-queue-summary"; document.querySelectorAll('.p6-frame').forEach((f) => (f.hidden = f.id !== id)); };
+addEventListener('hashchange', show); show();
+</script>
+</body></html>

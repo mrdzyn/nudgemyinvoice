@@ -1,0 +1,132 @@
+{
+  "task": "NMI-P6",
+  "generatedBy": "design/evidence/NMI-P6/build-and-capture-preview.mjs",
+  "synthetic": true,
+  "checks": [
+    {
+      "name": "desktop 01-dashboard-queue-summary: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "desktop 02-queue-pending-review: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "desktop 03-queue-approved-copy: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "desktop 04-queue-history: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "desktop 05-draft-from-invoice: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "desktop 06-required-states: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "desktop 07-nudgey-chat-draft: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 01-dashboard-queue-summary: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 01-dashboard-queue-summary: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 02-queue-pending-review: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 02-queue-pending-review: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 03-queue-approved-copy: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 03-queue-approved-copy: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 04-queue-history: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 04-queue-history: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 05-draft-from-invoice: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 05-draft-from-invoice: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 06-required-states: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 06-required-states: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 07-nudgey-chat-draft: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "mobile 07-nudgey-chat-draft: interactive controls are at least 44px tall (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "every screen states that nothing is sent automatically",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "approval is labelled 'for manual use', never 'send'",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "no unsupported payment-status claims (owner refinement 1: a due date does not establish payment status)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "no fictional recovered cash, delivery, payment confirmation or risk prediction",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

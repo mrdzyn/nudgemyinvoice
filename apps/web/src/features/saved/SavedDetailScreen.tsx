@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { InvoiceFollowUpCard, type InvoiceFollowUpLoad } from "../../followups/FollowUpUi.js";
+import type { NudgesController } from "../../nudges/controller.js";
+import { NudgeDraftCard } from "../../nudges/NudgeDraftCard.js";
 import { PayPalStatusBadge } from "../../components/Badge.js";
 import type { PayPalDraftResult } from "../../invoices/api.js";
 import { PayPalDraftPanel, type RefreshOutcome } from "./PayPalDraftPanel.js";
@@ -44,6 +46,7 @@ export function SavedDetailView({
   headingRef,
   paypal,
   followUp,
+  nudges,
 }: {
   savedRef: SavedRef;
   load: SavedLoad;
@@ -54,6 +57,8 @@ export function SavedDetailView({
   paypal?: PayPalCapability;
   /** The invoice's local follow-up reminder (real mode). Absent => no card. */
   followUp?: InvoiceFollowUpLoad;
+  /** NMI-P6 AI nudge drafting (real mode). Absent => no card. */
+  nudges?: NudgesController;
 }) {
   const inv = load.status === "ok" ? load.invoice : null;
   return (
@@ -118,7 +123,7 @@ export function SavedDetailView({
           </div>
         </Notice>
       ) : null}
-      {inv ? <SavedBody inv={inv} paypal={paypal} followUp={followUp} /> : null}
+      {inv ? <SavedBody inv={inv} paypal={paypal} followUp={followUp} nudges={nudges} /> : null}
     </section>
   );
 }
@@ -127,10 +132,12 @@ function SavedBody({
   inv,
   paypal,
   followUp,
+  nudges,
 }: {
   inv: ServerInvoice;
   paypal: PayPalCapability | undefined;
   followUp: InvoiceFollowUpLoad | undefined;
+  nudges: NudgesController | undefined;
 }) {
   const d = inv.draft;
   const t = inv.totals;
@@ -182,6 +189,7 @@ function SavedBody({
         </section>
       )}
       {followUp ? <InvoiceFollowUpCard load={followUp} at={new Date()} /> : null}
+      {nudges ? <NudgeDraftCard key={inv.id} invoiceId={inv.id} controller={nudges} /> : null}
       <div className="card">
         <h2 className="card-title">Invoice</h2>
         <dl className="meta-list">
@@ -393,6 +401,7 @@ export function SavedDetailScreen() {
       onBack={() => dispatch({ type: "navigate", screen: "dashboard" })}
       headingRef={headingRef}
       {...(followUps ? { followUp } : {})}
+      {...(session?.nudges ? { nudges: session.nudges } : {})}
       {...(createPayPalDraft ? { paypal: { create, refresh, onExpired: () => expired?.() } } : {})}
     />
   );

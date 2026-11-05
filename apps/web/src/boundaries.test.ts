@@ -34,6 +34,8 @@ const FORBIDDEN: [string, RegExp, string[]?][] = [
       "src/parse/api.ts",
       "src/invoices/api.ts",
       "src/followups/api.ts",
+      // NMI-P6: the AI nudge queue transport (review routes only; nothing that sends or dispatches).
+      "src/nudges/api.ts",
       // A5-I1: dev-server-only licence fetch; unreachable in production (see the AG Studio boundaries below).
       "src/features/studio/studioLicence.ts",
     ],
@@ -75,6 +77,7 @@ describe("UI shell boundaries", () => {
       "src/features/studio/studioLicence.ts",
       "src/followups/api.ts",
       "src/invoices/api.ts",
+      "src/nudges/api.ts",
       "src/parse/api.ts",
     ]);
     const routes = (f: string) =>
@@ -93,6 +96,20 @@ describe("UI shell boundaries", () => {
         "/api/follow-ups/${id}/cancel",
       ]),
     );
+    // NMI-P6 AI nudge queue: summary, list, ONE costed draft route and three version-bound review transitions.
+    // There is deliberately no route that sends, schedules or dispatches anything.
+    expect(new Set(routes("nudges/api.ts"))).toEqual(
+      new Set([
+        "/api/nudges/summary",
+        "/api/nudges?view=${view}",
+        "/api/nudges?view=${view}&invoiceId=${invoiceId}",
+        "/api/invoice-drafts/${invoiceId}/nudges",
+        "/api/nudges/${id}/edit",
+        "/api/nudges/${id}/approve",
+        "/api/nudges/${id}/reject",
+      ]),
+    );
+    expect(read(join(root, "nudges/api.ts"))).not.toMatch(/\/(send|dispatch|schedule|remind)\b/i);
     expect(new Set(routes("invoices/api.ts"))).toEqual(
       new Set([
         "/api/invoice-drafts",
@@ -110,7 +127,7 @@ describe("UI shell boundaries", () => {
     expect(
       apiPaths.filter(
         (p) =>
-          !/^\/api\/(auth\/(session|login|logout)|analytics\/summary|studio\/licence|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/follow-ups)?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?)$/.test(
+          !/^\/api\/(auth\/(session|login|logout)|analytics\/summary|studio\/licence|invoice-drafts(\/parse|\/search|\/\$\{id\}(\/paypal-draft)?|\/\$\{invoiceId\}\/(follow-ups|nudges))?|follow-ups(\/\$\{id\}\/(reschedule|complete|cancel))?|nudges(\/summary|\?view=\$\{view\}(&invoiceId=\$\{invoiceId\})?|\/\$\{id\}\/(edit|approve|reject))?)$/.test(
             p,
           ),
       ),

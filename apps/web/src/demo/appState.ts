@@ -1,10 +1,16 @@
 import { formFromDraft, type FormState } from "../domain/invoiceForm.js";
 import { paypalRefusal } from "../domain/money.js";
 import type { InvoiceDraft, PayPalViewState, SavedInvoice, Totals } from "../domain/types.js";
+import type { NudgeView } from "../nudges/api.js";
 import { draftOf, FIXTURE_IDS, FIXTURE_INVOICES, scenarioById } from "./fixtures.js";
 import type { ScenarioId } from "./scenarios.js";
 
-export type Screen = "login" | "dashboard" | "composer" | "review" | "detail" | "saved";
+export type Screen = "login" | "dashboard" | "composer" | "review" | "detail" | "saved" | "nudges";
+/** NMI-P6: which queue tab (and optionally which nudge) the Nudge queue opens on. Ids only, never content. */
+export interface NudgeFocus {
+  view: NudgeView;
+  id: string | null;
+}
 export type Theme = "light" | "dark";
 export type ComposerTab = "ai" | "manual";
 export type DashMode = "normal" | "empty" | "loading" | "error";
@@ -68,6 +74,7 @@ export interface AppState {
   composer: ComposerState;
   review: ReviewSeed | null;
   saved: SavedRef | null;
+  nudgeFocus: NudgeFocus | null;
   /** Bumped whenever a screen must re-initialise from its seed. */
   seedKey: number;
   ppOverride: PayPalOverride | null;
@@ -104,6 +111,7 @@ export function initialState(theme: Theme): AppState {
     composer: idleComposer(),
     review: null,
     saved: null,
+    nudgeFocus: null,
     seedKey: 0,
     ppOverride: null,
     ppDisabled: false,
@@ -126,6 +134,7 @@ export type Action =
   | { type: "start-review"; form: FormState; source: "ai" | "manual" }
   | { type: "discard-review" }
   | { type: "open-saved"; id: string; notice: SavedNotice }
+  | { type: "open-nudges"; view: NudgeView; id: string | null }
   | { type: "save-invoice"; key: string; draft: InvoiceDraft; totals: Totals }
   | { type: "paypal-created"; id: string }
   | { type: "paypal-override"; override: PayPalOverride | null };
@@ -321,6 +330,7 @@ export function reducer(state: AppState, action: Action): AppState {
         screen: action.screen,
         authed: action.screen === "login" ? false : true,
         navigated: true,
+        nudgeFocus: action.screen === "nudges" ? null : state.nudgeFocus,
         detailNotice: action.screen === "dashboard" ? null : state.detailNotice,
         composer: resetComposer ? idleComposer() : state.composer,
         seedKey:
@@ -392,6 +402,15 @@ export function reducer(state: AppState, action: Action): AppState {
         saved: { id: action.id, notice: action.notice },
         review: null,
         composer: idleComposer(),
+        navigated: true,
+        seedKey: state.seedKey + 1,
+      };
+    case "open-nudges":
+      return {
+        ...state,
+        screen: "nudges",
+        authed: true,
+        nudgeFocus: { view: action.view, id: action.id },
         navigated: true,
         seedKey: state.seedKey + 1,
       };
