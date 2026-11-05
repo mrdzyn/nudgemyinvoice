@@ -1,6 +1,6 @@
 # NMI-P5 — Licensed AG Studio production dashboard
 
-**State:** implemented on a Draft PR and awaiting independent security review and owner visual acceptance. Nothing is deployed, no Render resource exists, and no judge URL is published.
+**State (2026-11-05):** code merged to `main` (PR #42, squash `c575a0dc9bf158a477d71976a614f8df802d6110`) after independent P5-FIX1 re-audit PASS. **Release is not authorized:** nothing is deployed, no Render resource exists and no judge URL is published. The licence scope below remains owner-attested; the P4 gates (including G5 and G7) remain open.
 
 ## 1. Licence scope (owner-controlled release evidence)
 

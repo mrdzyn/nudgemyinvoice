@@ -1,6 +1,6 @@
 # NMI-UI-ANALYTICS-FIRST-01 — Analytics-first authenticated dashboard
 
-**Status:** Implemented in Draft PR (pending exact-HEAD CI, independent review and owner visual QA).
+**Status:** **COMPLETE — merged.** PR #41 was owner-approved and squash-merged to `main` as `08bd5ad63f26e95414c864d14bc14f4c84cef65d` on 2026-11-05. The squash tree is identical to the audited head `f52483699593be24a78728133b0f22a60eaee42a`. Independent exact-HEAD audit: **PASS WITH MINOR QA FOLLOW-UP** (PR #41 comment 6633839151). Hosted Project Baseline CI 41849124293 and Stack CI 41849124024 passed at that head. The historical 95/96 local result below is preserved; its one failure checked the superseded order and was corrected in P5. No deployment.
 **Owner visual direction:** Screenshot and instruction on 2026-11-04: “activity analytics should be at the top, it should be filterable by currency which is the one on the top.”
 **Starting base:** `main@8cc2f4db945af5449d99c01236baca9a21396a50` after P4 release readiness PR #40 squash merge.
 **Scope:** Small, targeted layout correction to the real authenticated dashboard, **not** the separate full Receivables Command Center visual redesign.

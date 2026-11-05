@@ -2087,4 +2087,20 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Evidence:** validate 1383, test:db 367, journey 150/150, preview 25/25; hosted CI at the final head (in the PR).
 - **Not done / not authorized:** live OpenAI (Gate A; the new flag stays `false`), PayPal, sending, Render, deploy, merge or rebase.
 
+## Handoff: NMI-POSTMERGE-41-43-01
+
+- **Task / branch:** NMI-POSTMERGE-41-43-01 (post-merge documentation reconciliation); `docs/nmi-postmerge-41-43` from `main@fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38`; Draft PR to `main` (link in the PR). **From / to:** implementation agent → **independent focused documentation audit**, then the owner's merge decision.
+- **Verified before editing:** `origin/main` = `fbd2d8e`. The #41/#42/#43 squash trees equal their audited heads `f524836`/`7ab0dcd`/`a68f77b`. All three PRs are MERGED. The #41 SHA given in the task brief was malformed; the actual SHA is `08bd5ad63f26e95414c864d14bc14f4c84cef65d`.
+- **Changed (docs only):**
+  - `docs/STATUS.md`: merged table with evidence attribution, open Codex P2 findings, next action and release gates.
+  - Status lines in the three task files.
+  - Stale state lines in `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md` and `docs/NMI-RENDER-P4-RELEASE-READINESS.md`.
+  - No source, migration, lockfile, workflow, dependency or secret changes.
+- **Release separation confirmed:** P4 remains "ready for owner hosting approval, conditional on G1–G8". The P5 doc states that release is not authorized. G5/G7 are open, the licence is owner-attested, `NUDGE_AI_DRAFTING_ENABLED` and `PAYPAL_DRAFTS_ENABLED` are `false`, and Gates A/B/C are NOT AUTHORIZED.
+- **Open:**
+  - Two automated Codex P2 UX findings on #43 (review 5787025325), unverified.
+  - The P4 restore drill predates migration `0008`.
+  - The preflight does not name `NUDGE_AI_DRAFTING_ENABLED`.
+- **Next:** focused doc audit → owner merge → owner-approved P7 release-readiness refresh task. No deploy, Render action or provider call.
+
 <!-- HANDOFF_ENTRIES_END -->

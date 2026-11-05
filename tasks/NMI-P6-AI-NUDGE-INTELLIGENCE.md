@@ -1,7 +1,13 @@
 # NMI-P6 — AI Nudge Intelligence
 
-**Status:** backend + approved UI implemented and tested; **awaiting independent exact-HEAD audit**. Not merged or deployed, not complete.
-**Base:** stacked on accepted P5 (Draft PR #42 at `7ab0dcd50e35e12f4f579be4929c5a7753221e2a`, itself on PR #41). P5 is preserved exactly.
+**Status:** **COMPLETE — merged (approved scope).** PR #43 was owner-approved and squash-merged to `main` as `fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38` on 2026-11-05. The squash tree is identical to the audited head `a68f77b7ebe0c9ce269ec543b4687ae1476fa5bf`.
+  - Audit at `d6f3d68`: PARTIAL (comment 6658712501).
+  - P6-FIX1 re-audit: **PASS** (comment 6660211152).
+  - Hosted Project Baseline CI 42040813151 and Stack CI 42040812743 passed at `a68f77b`.
+  - Local counts are implementation-agent evidence, not independently rerun.
+  - Not deployed. `NUDGE_AI_DRAFTING_ENABLED` stays `false`, and live OpenAI (Gate A) is NOT AUTHORIZED.
+  - Post-merge, the automated Codex review 5787025325 raised two unverified P2 UX findings: queue focus is not re-applied when already mounted, and Nudgey keeps a stale pending-exists state after the invoice changes. Both are tracked in `docs/STATUS.md` for a follow-up task.
+**Base (historical):** stacked on accepted P5 (Draft PR #42 at `7ab0dcd50e35e12f4f579be4929c5a7753221e2a`, itself on PR #41). P5 is preserved exactly.
 **UI design gate:** **CLOSED / APPROVED** by the owner (D1–D7) on PR #43, https://github.com/mrdzyn/nudgemyinvoice/pull/43#issuecomment-6652365002 (2026-11-05), with three mandatory refinements (below), all implemented.
 
 ## Scope
@@ -55,4 +61,4 @@
   - **P6-AUD-02:** live P6 drafting has its own opt-in, `NUDGE_AI_DRAFTING_ENABLED` (default `false`; only `true`/`false` accepted; `true` without `OPENAI_API_KEY`+`OPENAI_MODEL` refuses to start). `server.ts` builds the nudge client only from `config.nudgeDrafting`. Tests prove parser credentials alone give 503 with no model call while parsing still reaches its model, and that the opt-in enables drafting (`nudge-drafting-config.test.ts`, `nudges.pg.test.ts`). The variable is documented in `.env.example`.
   - **P6-AUD-03:** a received 401 now takes precedence over cancellation in the transport (`generate`), the controller (a superseded refresh and caller-aborted mutations; only `stop()` suppresses it) and the chat invoice lookup. Deterministic regressions (`nudges/controller.test.ts`, `NudgeDraftFlow.test.tsx`) fail against the audited code.
   - **Evidence:** `pnpm validate` 1383 passed, `pnpm test:db` 367 passed, browser journey 150/150, preview 25/25.
-- **Next:** independent exact-HEAD re-audit → owner merge sequencing (#41 → #42 → #43). No merge or deploy by the implementation agent.
+- **Next (historical):** independent exact-HEAD re-audit → owner merge sequencing (#41 → #42 → #43). **Done:** re-audit PASS, merged 2026-11-05; see Status.

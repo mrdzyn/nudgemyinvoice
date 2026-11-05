@@ -5,26 +5,39 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** **NMI-P5 licensed AG Studio production dashboard** (Draft PR stacked on Draft PR #41; not merged, not deployed). The owner attested on 2026-11-04 that the AG Studio deployment licence covers the judge-facing production environment through the December judging window (not independently verified). The licensed build (`NMI_WEB_STUDIO=licensed`) renders real Studio charts after operator sign-in. The licence is released only to the authenticated operator by `GET /api/studio/licence` (`no-store`) and is never built in, logged or stored. The production CSP keeps no `'unsafe-inline'`: a per-response style nonce plus the exact hashes of four static vendor stylesheets (the page-wide createElement shim was removed in P5-FIX1). Dashboard visuals were improved (headline strip, sized charts, compact status table, mobile fixes). Evidence: licensed production QA 43/43 (including negative-CSP checks) and A5-I1 dev QA re-run 96/96. Independent audit at `2bbc5a8`: code/CI PASS, release conditional. SEC-N1/SEC-N2 were remediated in P5-FIX1, which awaits re-audit and owner visual acceptance. Details: `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md`. PR #41 (analytics-first, `f524836`) stays Draft; P5 includes its commits.
-- **P6 AI Nudge Intelligence (2026-11-05, Draft PR stacked on P5 #42 at `7ab0dcd`):**
-  - **Backend implemented and tested:** `invoice_nudges` (migration `0008`), operator-scoped store, privacy-first validated AI drafting (the model sees only tone/currency/due-status; real values are filled in from the saved invoice), and an authenticated, CSRF/Origin-protected, cost-bounded review API with content-free audit.
-  - **UI design approved by the owner** (D1–D7, PR #43 comment 6652365002) with three refinements, all implemented: date-only wording + server `payment_status_claim` guard, full "Professional" tone label at 390px, ≥ 44px mobile targets.
-  - **UI implemented:** dashboard AI Nudge Queue card above the unchanged P5 filters, Nudge queue (Pending / Approved / History), version-bound review/edit/approve-for-manual-use/reject/regenerate, Copy only after approval, saved-invoice drafting card, Nudgey draft intent with confirmation (on-device speech reused). OpenAI nudge client now `maxRetries: 0` (D6).
-  - **Audit at `d6f3d68`: PARTIAL.** P6-FIX1 remediates all three findings:
-    - P6-AUD-01: the payment-status guard is now a conservative word-level filter covering both directions;
-    - P6-AUD-02: live P6 drafting needs its own default-off `NUDGE_AI_DRAFTING_ENABLED` opt-in, so parser credentials alone don't enable it;
-    - P6-AUD-03: a received 401 now takes precedence over cancellation.
-  - **Evidence:** `pnpm validate` 1383 passed, `pnpm test:db` 367 passed, browser journey 150/150 (fake model, disposable PostgreSQL). **Awaiting independent re-audit**; not complete.
-  - **Never sent:** no outbound messaging, dispatch or background jobs. Live OpenAI is still Gate A NOT AUTHORIZED.
+- **Current phase:** **Post-merge reconciliation of #41/#42/#43 (2026-11-05); next: P7 release-readiness refresh (not started).** The analytics-first layout, P5 licensed AG Studio dashboard and P6 AI Nudge Intelligence are **merged on `main` and complete for their approved scopes**. Nothing is deployed, no Render resource exists and no judge URL is published. Code readiness on `main` is not release authorization; see "Remaining release gates" below.
+- **Merged (owner-approved squash merges, 2026-11-05; each squash tree verified identical to its audited head):**
+
+  | PR | Scope | Squash commit on `main` | Audited head (tree-identical) | Independent review | Hosted CI at audited head |
+  |---|---|---|---|---|---|
+  | #41 | Analytics-first dashboard layout | `08bd5ad63f26e95414c864d14bc14f4c84cef65d` | `f52483699593be24a78728133b0f22a60eaee42a` | Exact-HEAD audit **PASS WITH MINOR QA FOLLOW-UP** (PR #41 comment 6633839151) | Project Baseline 41849124293, Stack 41849124024: SUCCESS |
+  | #42 | P5 licensed AG Studio dashboard + CSP hardening | `c575a0dc9bf158a477d71976a614f8df802d6110` | `7ab0dcd50e35e12f4f579be4929c5a7753221e2a` | Audit 5771745273 at `2bbc5a8` (code/CI PASS, release conditional); P5-FIX1 re-audit **PASS** (reviews 5772616121, 5772623165) | Project Baseline 41872812618, Stack 41872812494: SUCCESS |
+  | #43 | P6 AI Nudge Intelligence | `fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38` | `a68f77b7ebe0c9ce269ec543b4687ae1476fa5bf` | Audit at `d6f3d68` PARTIAL (comment 6658712501); P6-FIX1 re-audit **PASS** (comment 6660211152) | Project Baseline 42040813151, Stack 42040812743: SUCCESS |
+
+  The merged PR heads (`2f63cb2`, `58c496f`) were owner stack-reconciliation commits whose trees equal the audited heads; required CI is `pull_request`-triggered only, so there is no separate push run on `main`.
+- **Evidence attribution:** the independent reviewers verified source and hosted CI only. Local counts are **implementation-agent evidence, not independently rerun**:
+  - P5: licensed production QA 43/43 and A5-I1 dev QA 96/96.
+  - P6: `pnpm validate` 1383, `pnpm test:db` 367, browser journey 150/150 and design preview 25/25, all with a fake model and disposable PostgreSQL.
+  - #41: the historical 95/96 browser result checked the superseded card order and was corrected in P5.
+- **P6 shipped behavior and limits:** queue, review, edit, approve-for-manual-use, reject, regenerate and copy-after-approval; migration `0008` `invoice_nudges`.
+  - **Never sends, schedules or dispatches anything.**
+  - Live drafting needs `NUDGE_AI_DRAFTING_ENABLED=true` (default **false**, not authorized); without it the drafting endpoint answers 503.
+  - The payment-status guard is a documented conservative word filter, not a semantic guarantee; operator review is the final control.
+  - Live OpenAI output quality is unproven (fake model only).
+- **Post-merge open findings (not fixed, not independently verified):** the automated Codex review of #43's merged head `58c496f` (review 5787025325) raised two P2 UX findings:
+  1. **"Open in queue" focus:** when the queue is already mounted, "Open in queue" from Nudgey does not re-apply its tab and selection (`NudgeQueueScreen.tsx`).
+  2. **Stale pending-exists state:** after choosing invoice A then B in a multi-match Nudgey flow, a stale A pending-exists state can produce a `version_conflict` (`NudgeDraftFlow.tsx`).
+
+  Both fail safe, with no send and no wrong-invoice write, but they need a bounded follow-up fix task.
 - **Render P3 funding decision (2026-11-04):** owner approved **up to $25 of eligible Render credits** for NMI hosting through 2026-12-15; P3 budget policy independently audited and **squash-merged as PR #39** to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. Proposed **Hobby + Starter web ($7/month) + paid PostgreSQL 16 Basic 256 MB ($6/month, explicitly 1 GB storage and autoscaling OFF)**, subject to real Billing/credit applicability/checkout. This is a manual ceiling **not** permission to provision, trigger an initial deploy, exceed budget or share a judge URL. Pausing the web service may not stop paid database charges: a feasible owner-approved teardown/export/retention plan is required before provisioning; deletion itself still requires separate owner approval. G5 Hobby request-log residual risk and G7 vendor Studio package download rights remain OPEN. P2 Free-tier choice is historical.
 - **Render P2 (historical, merged as PR #23):** the original Hobby Free web/Free PostgreSQL configuration and the old `652cf702fd93b05a9b9d64ee9b4c2151c30833b2` code candidate were only earlier proposals. The Free database's 30-day lifetime/no backups does **not** meet the through-Dec-15 requirement; this pricing preference was superseded by owner-approved P3 paid-plan budget PR #39. Do not use that historical SHA for a new release. All P1/P2 proxy, authentication, privacy, logging and database security controls remain applicable; no P2 or P3 packet authorizes provisioning.
 - **Hosting controls:** P1 hosting/preflight PRs #21/#22 and P2 PR #23 were previously audited and owner-merged; the P3 cost policy PR #39 is now merged. User's Oct 29 screenshot reported $50 promotional credit expiring 2027-10-01, but the **current** balance, charges, tax, credits eligibility and checkout remain unverified. Hobby cannot independently expose native Pro-only HTTP request logs, so G5 alternative-evidence checks and explicit residual-risk acceptance remain necessary before judge sharing. Provider-disabled, synthetic-only, single-operator, least-privilege PostgreSQL, HTTPS same-origin, CSRF and trusted-proxy controls remain. **No Render resource creation, deployment, release branch or billable action completed in this reconciliation.**
-- **Primary branch:** `main@8cc2f4db945af5449d99c01236baca9a21396a50` (owner squash-merged P4 PR #40).
-- **Working branch:** `feat/nmi-p6-ai-nudges` (P6 Draft PR, stacked on `feat/nmi-p5-licensed-studio` / PR #42, itself on PR #41); no deployment.
+- **Primary branch:** `main@fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38` (owner squash-merged P6 PR #43, after #41 and #42).
+- **Working branch:** `docs/nmi-postmerge-41-43` (documentation-only reconciliation, Draft PR to `main`). `feat/nmi-ui-analytics-first-01`, `feat/nmi-p5-licensed-studio` and `feat/nmi-p6-ai-nudges` are merged; do not reuse, rebase or force-push them.
 - **C1 delivered (PR #27):** read-only Ask Nudgey independently audited PASS, combined synthetic no-provider browser QA 195/195 (29 chat, 26 status, 23 follow-up, 117 save-guard), both required hosted CI checks passed at exact audited C1 head `a3d5c4cb44038efc29a92a81cf4afcab57a01459`; owner approved squash merge to `main` `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`. This is historical completion evidence, not C2 test evidence.
 - **PR #26 review remediation:** FIX1 backported the read-generation guard and four regressions from PR #27; CI passed at `1a8cfadd2`, but an independent re-audit found that an internally-aborted refresh could discard a returned 401. FIX2 handles that 401 before the ordinary aborted-result short circuit and adds a deterministic late-401 regression. FIX2 passed independent re-audit and PR #26 was owner-approved and squash-merged.
-- **Active task:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md` (P5 task `tasks/NMI-P5-LICENSED-STUDIO-PRODUCTION.md` is accepted, awaiting merge sequencing).
-- **Active handoff:** `NMI-P6-FIX1-01`.
+- **Active task:** none in progress. Completed for their approved scopes: `tasks/NMI-UI-ANALYTICS-FIRST-01.md`, `tasks/NMI-P5-LICENSED-STUDIO-PRODUCTION.md`, `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`. Next: a P7 release-readiness refresh task (to be written and approved).
+- **Active handoff:** `NMI-POSTMERGE-41-43-01`.
 - **Render hosting opportunity:** Owner-supplied Mrdzyn Billing screenshot verifies **$50** promotional credit expiring **2027-10-01** (no pending charges or past invoices at screenshot time). Coverage of Pro subscription/compute and future charges remains **unverified**. Option B has become more economically feasible and could support Render sponsor consideration **only after actual tool use**; however, the local judge runbook Option A remains valid. Render HTTPS/same-origin/static+API serving, single-operator demo access, `q` request-URL log redaction (Render HTTP request logs may include requested URL), paid-database/Dec-15 lifespan (**superseded for the selected Hobby Free staging**: Free PG expires 30 days after creation, no backups; see P2 packet §1B), provider-disabled public demo, and safe automatic-deploy controls are **NOT VERIFIED**. No Render provision/deploy authorized. See `docs/NMI-DEMO-DEPLOYMENT-DECISION.md`.
 - **Owner decisions:** D1a AG Studio 45-day trial owner-confirmed expiry 2026-12-16; issue/start and hosted judge rights remain unverified; Community fallback remains approved. D1b owner approved a bounded AG Grid **Community** replacement of the real dashboard invoice table for the hackathon; D2 no default browser persistence of unsaved customer data; D3 read-only owner-scoped list delivered in C4; D4 editing saved drafts deferred.
 
@@ -46,7 +59,8 @@
 ## Delivered on main
 - Single-operator authenticated sessions, rotation protection, rate limits and Origin/CSRF controls.
 - Strict invoice parsing/proposal validation with manual-entry fallback; integer-minor-unit totals and per-invoice currency boundaries.
-- PostgreSQL transactions, audited invoice draft persistence, and eight committed migrations (`0000`–`0007`).
+- PostgreSQL transactions, audited invoice draft persistence, and nine committed migrations (`0000`–`0008`; `0008` adds `invoice_nudges`, with runtime grants in `packages/db/ops/runtime-role.sql`).
+- Analytics-first dashboard (#41), licensed AG Studio production variant with nonce + pinned-hash CSP (#42), and the P6 AI Nudge Queue (#43), all merged; see "Merged" above.
 - PayPal Sandbox-only draft-create adapter, explicit authenticated trigger, durable operation fencing, exact remote verification, and fail-closed reconciliation without blind recreates.
 - Browser CORS preflight explicitly authorizing `Idempotency-Key` on authenticated invoice draft routes.
 - Frontend `apps/web`: approved NMI-UI-01B design, authenticated C1 browser sessions, C2 parsing, C3 save/detail, C4 owner-scoped dashboard, C5-P0 PayPal ownership gate and C5-P1 explicit PayPal Sandbox DRAFT UI are **merged on main**. The real dashboard renders genuine AG Grid Community on `main` (PR #17 merged); the dev-only synthetic preview retains its native table.
@@ -79,11 +93,24 @@
 - **Implementation:** A2 wires authenticated `POST /api/analytics/summary` aggregates to the approved dashboard and synchronizes them with the paginated list through one owner-scoped filter epoch. Native local-date controls use a 30-day browser-timezone default and UTC half-open SQL bounds. The invoice-list GET contract, no-provider boundaries, local-only follow-up semantics, and one-create authorization are unchanged; no migration or schema changes.
 - **Validation:** focused web/Nudgey suite 235/235; focused invoice transport suite after MINOR-1 remediation 142/142; disposable PostgreSQL list/store/analytics integration 96/96; browser QA 12/12 with synthetic data in `design/evidence/NMI-PROTOTYPE-10D-A2/`; lint, format, typecheck, build, bundle-secret scan and diff check passed. The previous exact-head CI outcomes and initial unrelated timeout are recorded in the task/handoff. The updated timeout fix requires both hosted workflows on its final exact PR SHA. Build has a non-failing Vite chunk-size advisory; see the task record.
 - **Data and provider safety:** only task-created disposable `nmi_test_a2_*` databases were used and dropped after QA. Existing local databases were not touched. PayPal drafting was disabled; OpenAI and SMTP were unavailable and no provider requests were made.
-- **Review gate:** exact implementation head and hosted checks are recorded in the active handoff. Stop for independent exact-head review before any owner merge decision.
+- **Review gate:** closed. PR #33 was independently reviewed and owner-merged as `dd6d5723eadba5c55afe9d0a6912f1510b2bb9de`.
 
 ## Next action
-1. Confirm both required hosted CI workflows pass for Draft PR #33 at its exact final head, then conduct an independent A2 correctness/security audit.
-2. No provider call, AG Studio/Render resource, migration, merge or deployment is part of A2. The PayPal one-create budget remains exhausted and OpenAI Gate A remains consumed.
+1. **Independent focused documentation audit** of this reconciliation PR, at its exact head.
+2. **Owner writes and approves a P7 release-readiness refresh task (documentation, preflight and evidence; no deploy).** It must at least:
+   - Re-run the P4 backup/restore drill, which covered `0000`–`0007`, now including migration `0008` and the `invoice_nudges` runtime grants.
+   - Confirm that `release-preflight env` keeps `NUDGE_AI_DRAFTING_ENABLED` unset or `false`. The OpenAI names are already forbidden, so a `true` value would fail at startup, but the flag is not named explicitly.
+   - Refresh the P4 release-readiness and P5 release docs for the merged state.
+   - Decide on the two open Codex P2 UX findings.
+   - Re-confirm the hosted build at the owner-chosen release SHA.
+3. **Remaining release gates, unchanged and all owner-controlled:**
+   - P4 G1–G8, including G5 (Hobby request-log residual risk) and G7 (vendor Studio package download rights). Both remain **OPEN**.
+   - AG Studio licence scope is **owner-attested, not independently legally verified**.
+   - $25 budget actuals and checkout, and the teardown/export/retention plan.
+   - Render provisioning, billing, first deploy, production activation and judge URL sharing.
+   - Manual QA: Safari/Firefox, real devices, screen readers, 400% zoom, HTTPS `__Host-` cookie behind the real proxy.
+   - Gate A (OpenAI, including `NUDGE_AI_DRAFTING_ENABLED`), Gate B and Gate C stay NOT AUTHORIZED; `PAYPAL_DRAFTS_ENABLED=false`.
+   - Devpost and video publication.
 
 ## NMI-NDG-02 V1 — local-only English speech transcription
 
