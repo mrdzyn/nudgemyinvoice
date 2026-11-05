@@ -5,7 +5,7 @@
 ## Project
 - **Name:** NudgeMyInvoice
 - **Mode:** Public MIT-licensed PayPal Sandbox hackathon MVP; not production ready.
-- **Current phase:** **Post-merge reconciliation of #41/#42/#43 (2026-11-05); next: P7 release-readiness refresh (not started).** The analytics-first layout, P5 licensed AG Studio dashboard and P6 AI Nudge Intelligence are **merged on `main` and complete for their approved scopes**. Nothing is deployed, no Render resource exists and no judge URL is published. Code readiness on `main` is not release authorization; see "Remaining release gates" below.
+- **Current phase:** **NMI-P7 release-readiness refresh (started 2026-11-06; no release or deployment authorized).** The analytics-first layout, P5 licensed AG Studio dashboard and P6 AI Nudge Intelligence are **merged on `main` and complete for their approved scopes**. Nothing is deployed, no Render resource exists and no judge URL is published. Code readiness on `main` is not release authorization; see "Remaining release gates" below.
 - **Merged (owner-approved squash merges, 2026-11-05; each squash tree verified identical to its audited head):**
 
   | PR | Scope | Squash commit on `main` | Audited head (tree-identical) | Independent review | Hosted CI at audited head |
@@ -33,11 +33,11 @@
 - **Render P2 (historical, merged as PR #23):** the original Hobby Free web/Free PostgreSQL configuration and the old `652cf702fd93b05a9b9d64ee9b4c2151c30833b2` code candidate were only earlier proposals. The Free database's 30-day lifetime/no backups does **not** meet the through-Dec-15 requirement; this pricing preference was superseded by owner-approved P3 paid-plan budget PR #39. Do not use that historical SHA for a new release. All P1/P2 proxy, authentication, privacy, logging and database security controls remain applicable; no P2 or P3 packet authorizes provisioning.
 - **Hosting controls:** P1 hosting/preflight PRs #21/#22 and P2 PR #23 were previously audited and owner-merged; the P3 cost policy PR #39 is now merged. User's Oct 29 screenshot reported $50 promotional credit expiring 2027-10-01, but the **current** balance, charges, tax, credits eligibility and checkout remain unverified. Hobby cannot independently expose native Pro-only HTTP request logs, so G5 alternative-evidence checks and explicit residual-risk acceptance remain necessary before judge sharing. Provider-disabled, synthetic-only, single-operator, least-privilege PostgreSQL, HTTPS same-origin, CSRF and trusted-proxy controls remain. **No Render resource creation, deployment, release branch or billable action completed in this reconciliation.**
 - **Primary branch:** `main@fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38` (owner squash-merged P6 PR #43, after #41 and #42).
-- **Working branch:** `docs/nmi-postmerge-41-43` (documentation-only reconciliation, Draft PR to `main`). `feat/nmi-ui-analytics-first-01`, `feat/nmi-p5-licensed-studio` and `feat/nmi-p6-ai-nudges` are merged; do not reuse, rebase or force-push them.
+- **Working branch:** `phase-7/nmi-release-readiness` (P7 Draft PR from `main@7c56b078eb997744fd1d9bdb7668114f490171c7`). PR #44 and the earlier feature branches are merged; do not reuse or force-push them.
 - **C1 delivered (PR #27):** read-only Ask Nudgey independently audited PASS, combined synthetic no-provider browser QA 195/195 (29 chat, 26 status, 23 follow-up, 117 save-guard), both required hosted CI checks passed at exact audited C1 head `a3d5c4cb44038efc29a92a81cf4afcab57a01459`; owner approved squash merge to `main` `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`. This is historical completion evidence, not C2 test evidence.
 - **PR #26 review remediation:** FIX1 backported the read-generation guard and four regressions from PR #27; CI passed at `1a8cfadd2`, but an independent re-audit found that an internally-aborted refresh could discard a returned 401. FIX2 handles that 401 before the ordinary aborted-result short circuit and adds a deterministic late-401 regression. FIX2 passed independent re-audit and PR #26 was owner-approved and squash-merged.
-- **Active task:** none in progress. Completed for their approved scopes: `tasks/NMI-UI-ANALYTICS-FIRST-01.md`, `tasks/NMI-P5-LICENSED-STUDIO-PRODUCTION.md`, `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`. Next: a P7 release-readiness refresh task (to be written and approved).
-- **Active handoff:** `NMI-POSTMERGE-41-43-02`.
+- **Active task:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` (approved for bounded offline/repository implementation only). #41/#42/#43 feature scopes and #44 documentation reconciliation are merged; P7 is not release authorization.
+- **Active handoff:** `NMI-P7-START-01`.
 - **Render hosting opportunity:** Owner-supplied Mrdzyn Billing screenshot verifies **$50** promotional credit expiring **2027-10-01** (no pending charges or past invoices at screenshot time). Coverage of Pro subscription/compute and future charges remains **unverified**. Option B has become more economically feasible and could support Render sponsor consideration **only after actual tool use**; however, the local judge runbook Option A remains valid. Render HTTPS/same-origin/static+API serving, single-operator demo access, `q` request-URL log redaction (Render HTTP request logs may include requested URL), paid-database/Dec-15 lifespan (**superseded for the selected Hobby Free staging**: Free PG expires 30 days after creation, no backups; see P2 packet §1B), provider-disabled public demo, and safe automatic-deploy controls are **NOT VERIFIED**. No Render provision/deploy authorized. See `docs/NMI-DEMO-DEPLOYMENT-DECISION.md`.
 - **Owner decisions:** D1a AG Studio 45-day trial owner-confirmed expiry 2026-12-16; issue/start and hosted judge rights remain unverified; Community fallback remains approved. D1b owner approved a bounded AG Grid **Community** replacement of the real dashboard invoice table for the hackathon; D2 no default browser persistence of unsaved customer data; D3 read-only owner-scoped list delivered in C4; D4 editing saved drafts deferred.
 
@@ -96,14 +96,11 @@
 - **Review gate:** closed. PR #33 was independently reviewed and owner-merged as `dd6d5723eadba5c55afe9d0a6912f1510b2bb9de`.
 
 ## Next action
-1. **Independent focused documentation audit** of this reconciliation PR, at its exact head.
-2. **Owner writes and approves a P7 release-readiness refresh task (documentation, preflight and evidence; no deploy).** It must at least:
-   - Re-run the P4 backup/restore drill, which covered `0000`–`0007`, now including migration `0008` and the `invoice_nudges` runtime grants.
-   - Confirm that `release-preflight env` keeps `NUDGE_AI_DRAFTING_ENABLED` unset or `false`. The OpenAI names are already forbidden, so a `true` value would fail at startup, but the flag is not named explicitly.
-   - Refresh the P4 release-readiness and P5 release docs for the merged state.
-   - Decide on the two open Codex P2 UX findings.
-   - Re-confirm the hosted build at the owner-chosen release SHA.
-3. **Remaining release gates, unchanged and all owner-controlled:**
+1. **P7-A:** Fix and test both open P6 Codex P2 UX defects (already-mounted queue focus; invoice-bound pending-exists reference), without new outbound or provider behavior.
+2. **P7-B:** Explicitly reject `NUDGE_AI_DRAFTING_ENABLED=true` or invalid flag values in the release preflight; preserve the required provider-disabled environment.
+3. **P7-C:** Run a newly versioned disposable PostgreSQL 16 backup/restore drill for migrations `0000`–`0008`, synthetic `invoice_nudges` and restored runtime role permissions. Preserve the original P4 26/26 historical record.
+4. **P7-D:** Reconcile release docs and exact-head tests/CI, verify synthetic web variants and document manual QA gaps. Request independent review in the existing P7 Draft PR, then a separate owner merge decision. No release SHA or hosting action is approved.
+5. **Remaining release gates, unchanged and all owner-controlled:**
    - P4 G1–G8, including G5 (Hobby request-log residual risk) and G7 (vendor Studio package download rights). Both remain **OPEN**.
    - AG Studio licence scope is **owner-attested, not independently legally verified**.
    - $25 budget actuals and checkout, and the teardown/export/retention plan.
