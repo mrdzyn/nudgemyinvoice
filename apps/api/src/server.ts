@@ -17,11 +17,16 @@ const app = buildApp(config, {
           model: config.openai.model,
           maxOutputTokens: config.openai.maxOutputTokens,
         }),
-        // NMI-P6 nudge drafting uses the same configured model; without it drafting answers 503.
+      }
+    : {}),
+  // NMI-P6 live nudge drafting ONLY with its own explicit opt-in (NUDGE_AI_DRAFTING_ENABLED=true, default off).
+  // Parser credentials alone never enable it; without it drafting answers 503 and review still works.
+  ...(config.nudgeDrafting
+    ? {
         nudgeClient: createOpenAINudgeClient({
-          apiKey: config.openai.apiKey,
-          model: config.openai.model,
-          maxOutputTokens: Math.min(config.openai.maxOutputTokens, 600),
+          apiKey: config.nudgeDrafting.apiKey,
+          model: config.nudgeDrafting.model,
+          maxOutputTokens: config.nudgeDrafting.maxOutputTokens,
         }),
       }
     : {}),

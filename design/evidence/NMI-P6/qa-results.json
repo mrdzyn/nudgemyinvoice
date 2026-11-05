@@ -2,7 +2,7 @@
   "task": "NMI-P6",
   "generatedBy": "design/evidence/NMI-P6/run-nudge-journey.mjs",
   "info": {
-    "startedAt": "2026-11-05T12:49:12.163Z",
+    "startedAt": "2026-11-05T13:58:37.291Z",
     "synthetic": true,
     "model": "DETERMINISTIC FAKE (not OpenAI)",
     "migrations": [
@@ -25,7 +25,7 @@
       "POST /api/nudges/:id/reject"
     ],
     "modelCalls": 8,
-    "finishedAt": "2026-11-05T12:49:58.594Z",
+    "finishedAt": "2026-11-05T13:59:20.885Z",
     "screenshots": [
       "05-draft-card-idle-desktop-light.png",
       "05-draft-card-drafting-desktop-light.png",

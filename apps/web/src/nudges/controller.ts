@@ -65,11 +65,13 @@ export class NudgesController {
     const ac = new AbortController();
     const p = this.api.summary(ac.signal).then((r) => {
       if (this.inflight?.ac === ac) this.inflight = null;
-      if (ac.signal.aborted || r.kind === "aborted" || this.stopped) return;
+      // P6-AUD-03: a received 401 ends the session even when this read was superseded (aborted by a newer
+      // refresh); only disposal of the workspace (stop) suppresses it.
       if (r.kind === "unauthorized") {
-        this.expire();
+        if (!this.stopped) this.expire();
         return;
       }
+      if (ac.signal.aborted || r.kind === "aborted" || this.stopped) return;
       if (r.kind === "ok") this.set({ counts: r.counts, aiAvailable: r.aiAvailable, status: "ok" });
       else this.set({ status: "error" });
     });
@@ -85,8 +87,9 @@ export class NudgesController {
     void this.refresh();
   }
 
+  /** Any received 401 ends the session, even if the caller has since aborted (P6-AUD-03), unless disposed. */
   private guard<T extends { kind: string }>(r: T): T {
-    if (r.kind === "unauthorized") this.expire();
+    if (r.kind === "unauthorized" && !this.stopped) this.expire();
     return r;
   }
 

@@ -33,16 +33,16 @@ const { createDb } = await import(resolve(root, "packages/db/src/index.ts"));
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const BODY: Record<string, string> = {
   friendly:
-    "Hi {{customer_name}},\n\nI hope your week is going well! Just a quick note about invoice {{invoice_ref}} for {{amount}}, which was due on {{due_date}}. Could you let me know when payment is planned, or whether it is already taken care of?\n\nThanks so much,",
+    "Hi {{customer_name}},\n\nI hope your week is going well! Just a quick note about invoice {{invoice_ref}} for {{amount}}, which was due on {{due_date}}. Could you let me know when payment is planned, or if you have any questions?\n\nThanks so much,",
   professional:
     "Hi {{customer_name}},\n\nA quick reminder that invoice {{invoice_ref}} for {{amount}} was due on {{due_date}}. Could you let me know when payment is planned, or whether anything is holding it up?\n\nThank you for your help.\n\nKind regards,",
   firm:
-    "Hello {{customer_name}},\n\nI am following up on invoice {{invoice_ref}} for {{amount}}, which was due on {{due_date}}. Please reply this week with the date payment will be made, or let me know if anything needs to be resolved first.\n\nKind regards,",
+    "Hello {{customer_name}},\n\nI am following up on invoice {{invoice_ref}} for {{amount}}, which was due on {{due_date}}. Please reply this week with the date payment will be made, or let me know if you have any questions first.\n\nKind regards,",
 };
 const RATIONALE: Record<string, string> = {
   friendly: "A warm, relaxed note that names the invoice and asks for an update without any pressure.",
   professional: "A courteous, concise reminder that names the invoice and asks for an update on timing.",
-  firm: "A direct but polite follow-up that asks for a clear payment date, with no threats or claims.",
+  firm: "A direct but polite follow-up that asks for a specific payment date, with no threats or claims.",
 };
 
 const nudgeClient = {

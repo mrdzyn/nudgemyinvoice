@@ -261,6 +261,54 @@ describe.skipIf(!url)("AI nudge queue API (real PostgreSQL)", () => {
     expect((await s.get("/api/nudges/summary")).json().aiAvailable).toBe(false);
   });
 
+  it("P6-AUD-02: parser OpenAI credentials alone leave P6 drafting at 503 (no model call) while parsing still reaches its model; only the explicit opt-in enables drafting", async () => {
+    // Mirrors server.ts exactly: modelClient from config.openai, nudgeClient ONLY from config.nudgeDrafting.
+    const parseCalls: string[] = [];
+    const wired = (flag: "true" | "false") => {
+      const config = loadConfig({
+        ...baseEnv,
+        DATABASE_URL: url,
+        PAYPAL_DRAFTS_ENABLED: "false",
+        NUDGE_AI_DRAFTING_ENABLED: flag,
+      });
+      const a = buildApp(config, {
+        db: createDb(scratch.pool),
+        passwordParams: weak,
+        ...(config.openai
+          ? {
+              modelClient: {
+                generate: async (r: { input: string }) => {
+                  parseCalls.push(r.input);
+                  throw new Error("synthetic parser outage");
+                },
+              },
+            }
+          : {}),
+        ...(config.nudgeDrafting ? { nudgeClient: model } : {}),
+        clock: () => NOW,
+      });
+      apps.push(a);
+      return { a, config };
+    };
+    const off = wired("false");
+    expect(off.config.openai).not.toBeNull();
+    expect(off.config.nudgeDrafting).toBeNull();
+    const s = await login(off.a, "operator-a", PW_A);
+    const inv = await saveInvoice(s);
+    const before = model.calls.length;
+    const r = await generate(s, inv);
+    expect([r.statusCode, r.json()]).toEqual([503, { error: "ai_unavailable" }]);
+    expect(model.calls.length).toBe(before);
+    expect((await s.get("/api/nudges/summary")).json().aiAvailable).toBe(false);
+    await s.post("/api/invoice-drafts/parse", { text: "Invoice Acme for logo work" });
+    expect(parseCalls.length).toBe(1); // existing parsing is untouched by the P6 gate
+    const on = wired("true");
+    const s2 = await login(on.a, "operator-a", PW_A);
+    expect((await s2.get("/api/nudges/summary")).json().aiAvailable).toBe(true);
+    const inv2 = await saveInvoice(s2);
+    expect((await generate(s2, inv2)).statusCode).toBe(201);
+  });
+
   it("another operator's invoice or nudge is indistinguishable from a missing one, and costs no model call", async () => {
     const inv = await saveInvoice(sA);
     const nd = (await generate(sA, inv)).json() as N;

@@ -76,11 +76,12 @@ export function NudgeDraftFlow({
       { limit: NUDGE_CANDIDATE_PAGE, cursor: null, currency: null, status: null, q: request.term },
       ac.signal,
     ).then((r) => {
-      if (ac.signal.aborted || r.kind === "aborted") return;
+      // P6-AUD-03: a received 401 ends the session even if this lookup was cancelled meanwhile.
       if (r.kind === "unauthorized") {
         expired?.();
         return;
       }
+      if (ac.signal.aborted || r.kind === "aborted") return;
       if (r.kind !== "ok") setPhase({ kind: "error" });
       else if (r.page.nextCursor !== null) setPhase({ kind: "truncated" });
       else if (r.page.items.length === 0) setPhase({ kind: "empty" });

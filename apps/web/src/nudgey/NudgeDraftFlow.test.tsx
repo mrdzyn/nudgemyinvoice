@@ -217,3 +217,42 @@ describe("ChatSession nudge intents", () => {
     expect(d.announce).toHaveBeenCalledWith(SEND_REFUSAL);
   });
 });
+
+describe("P6-AUD-03 in the chat flow", () => {
+  it("a lookup cancelled (unmounted) after its 401 was received still ends the session", async () => {
+    let release!: (v: ListResult) => void;
+    const expired = vi.fn();
+    const listInvoices = vi.fn(() => new Promise<ListResult>((r) => (release = r)));
+    const nudges = new NudgesController(
+      {
+        summary: async () => ({ kind: "aborted" }),
+      } as unknown as NudgeApi,
+      "csrf",
+      () => undefined,
+      () => "UTC",
+    );
+    await act(async () =>
+      root.render(
+        <AppProvider
+          state={{ ...initialState("light"), authed: true, screen: "dashboard" }}
+          dispatch={() => undefined}
+          session={{
+            username: "op",
+            signOut: () => undefined,
+            listInvoices,
+            nudges,
+            sessionExpired: expired,
+          }}
+        >
+          <NudgeDraftFlow
+            request={{ tone: "firm", term: "zorblax" }}
+            onOpenQueue={() => undefined}
+          />
+        </AppProvider>,
+      ),
+    );
+    act(() => root.render(<></>)); // the chat closes: the lookup is aborted
+    await act(async () => release({ kind: "unauthorized" }));
+    expect(expired).toHaveBeenCalledTimes(1);
+  });
+});

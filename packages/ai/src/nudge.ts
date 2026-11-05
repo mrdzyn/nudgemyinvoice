@@ -14,7 +14,7 @@ import type { CurrencyCode } from "@nmi/shared";
  *    or alter an amount, a date or an invoice reference.
  *  - Output is untrusted: schema-checked, then rejected if it contains digits, links, e-mail addresses, currency
  *    symbols, unknown placeholders, claims the application cannot back (attachments, payment links, PayPal,
- *    late fees, interest, legal or collections action), or ANY statement about payment status ("still unpaid",
+ *    late fees, interest, legal or collections action), or payment-state vocabulary ("still unpaid",
  *    "outstanding", "overdue", "we received your payment"...). A due date does not establish whether an invoice
  *    has been paid and this application has no payment reconciliation, so drafts may only refer to the due date
  *    and ask for an update. Nothing is ever sent: the draft is held for review.
@@ -125,11 +125,14 @@ export const NUDGE_INSTRUCTIONS = [
   "Do not mention attachments, payment links, PayPal, card details, late fees, interest, penalties, legal,",
   "court or collections action, credit reports, or anything you were not told. Do not say the invoice was sent.",
   "You do NOT know whether the invoice has been paid: a due date says nothing about payment. Never state or imply",
-  "payment status, so never write words like unpaid, outstanding, overdue, past due, late, owed, arrears, missed,",
-  "not received or thank you for your payment. Refer only to the due date (for example 'was due on {{due_date}}')",
-  "and politely ask for an update, such as whether payment is planned or already taken care of.",
-  "Tone: friendly = warm and relaxed; professional = courteous and concise; firm = direct and clear in asking",
-  "for a payment update, still polite and never threatening.",
+  "payment status in either direction. Never use these words in any form: paid, unpaid, settled, cleared,",
+  "processed, received, receipt, completed, confirmed, successful, outstanding, overdue, past due, arrears,",
+  "balance, owe, owed, late, missed, missing, pending, refund, credit, deposit, transfer, remit, collected,",
+  "resolved, handled, sorted, done, in full, taken care of, gone through, thank you for your payment.",
+  "Refer only to the due date (for example 'was due on {{due_date}}') and politely ask for an update, such as",
+  "when payment is planned, or invite any questions.",
+  "Tone: friendly = warm and relaxed; professional = courteous and concise; firm = direct in asking for a",
+  "payment date, still polite and never threatening.",
   "Keep it under about one hundred and twenty words, plain text, a greeting, two or three short paragraphs and",
   "a closing line such as 'Kind regards,' without a name.",
   "rationale: one or two sentences for the freelancer explaining the tone and structure chosen, based only on",
@@ -158,22 +161,42 @@ export function nudgeModelInput(f: NudgeModelFacts): string {
 const UNBACKED =
   /\b(attach(ed|ment|ments)?|payment link|pay(pal)?\s*link|paypal|card details|late fees?|interest|penalt(y|ies)|legal|lawyer|attorney|court|collections?|debt collector|credit (report|score|bureau)|lawsuit|sue)\b/i;
 /**
- * Statements about PAYMENT STATUS. The application cannot know whether an invoice was paid (a due date or a
- * due-date bucket does not establish it, and there is no payment reconciliation), so any claim either way —
- * unpaid, outstanding, overdue, late, owed, not received, or received/thank-you-for-payment — is refused.
+ * PAYMENT-STATE vocabulary (P6-AUD-01). The application cannot know whether an invoice was paid — a due date or
+ * due-date bucket does not establish it and there is no payment reconciliation — so a draft must not assert
+ * payment state in EITHER direction ("still unpaid", "has been settled", "payment processed", "balance cleared",
+ * "thank you for your payment"...).
+ *
+ * This is a deliberately CONSERVATIVE, word-level heuristic, NOT a semantic guarantee: rather than trying to
+ * recognise every claim, it refuses any draft (message or rationale) that uses payment-state words at all, so a
+ * few harmless sentences are refused too (the operator simply drafts again). The neutral, date-only vocabulary the
+ * model is told to use ("was due on", "payment is planned", "share an update", "any questions") stays allowed.
+ * Operator review before approval remains the final control; nothing is ever sent by the application.
  */
+const PAYMENT_STATE_WORDS = [
+  // paid / unpaid / settled / cleared / processed / received / completed and their forms
+  String.raw`(?:un|pre|re)?paid`,
+  String.raw`(?:un)?settle(?:d|s|ment|ments|ing)?`,
+  String.raw`clear(?:s|ed|ing|ance)?`,
+  String.raw`process(?:es|ed|ing)?`,
+  String.raw`receiv(?:e|es|ed|ing)|receipts?`,
+  String.raw`complet(?:e|es|ed|ing|ion)`,
+  String.raw`confirm(?:s|ed|ing|ation|ations)?`,
+  String.raw`success(?:ful|fully)?`,
+  // balance / debt state
+  String.raw`outstanding|overdue|arrears|delinquen(?:t|cy)|default(?:s|ed)?|balances?`,
+  String.raw`ow(?:e|es|ed|ing)`,
+  String.raw`late(?:ness)?|missed|missing|pending`,
+  // money movement
+  String.raw`refund(?:s|ed|ing)?|credit(?:s|ed)?|deposit(?:s|ed)?|transfer(?:s|red|ring)?|remit(?:s|ted|tance)?|collected`,
+  // "it's handled" phrasings
+  String.raw`resolved|handled|sorted|done|in\s+full|taken\s+care\s+of|(?:went|gone|come|came|go|goes)\s+through`,
+].join("|");
 const PAYMENT_STATUS = new RegExp(
   [
-    String.raw`\b(un-?paid|unsettled|outstanding|overdue|past[- ]due|arrears|owed?|owing|delinquent|defaulted)\b`,
-    String.raw`\b(not|never)\s+(yet\s+)?(been\s+)?(paid|settled|received|cleared)\b`,
-    String.raw`\b(has|have|had|is|was)(n['’]t|\s+not)\s+(yet\s+)?(been\s+)?(paid|settled|received|cleared|arrived|come through)\b`,
-    String.raw`\b(still|remains?|remained)\s+(un\w+|due|open|pending|owing|awaiting)\b`,
-    String.raw`\b(missed|missing|late|overdue|no)\s+payments?\b`,
-    String.raw`\bpayments?\s+(is|was|are|were|has|have)\s+(been\s+)?(late|missing|missed|received|made|cleared|confirmed)\b`,
-    String.raw`\b(received|got|have|confirmed)\s+(your|the)\s+payments?\b`,
-    String.raw`\bthanks?(\s+you)?\s+for\s+(your\s+|the\s+)?payments?\b`,
-    String.raw`\b(is|was|been|already|fully)\s+paid\b`,
-    String.raw`\b(paid|settled)\s+(in\s+full|already)\b`,
+    String.raw`\b(?:${PAYMENT_STATE_WORDS})\b`,
+    String.raw`\bpast[- ]due\b`,
+    String.raw`\b(?:still|remains?|remained)\s+(?:due|open|unpaid)\b`,
+    String.raw`\bthanks?(?:\s+you)?\s+for\s+(?:your\s+|the\s+)?payments?\b`,
   ].join("|"),
   "i",
 );

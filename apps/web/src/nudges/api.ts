@@ -446,6 +446,9 @@ export function createNudgeApi(doFetch: FetchLike = (input, init) => fetch(input
           : {}),
       });
       if (res === "aborted" || res === "offline") return { kind: res };
+      // P6-AUD-03: a RECEIVED 401 outranks cancellation (it must still end the session), so it is decided from the
+      // status line before the body is read and before the abort check.
+      if (res.status === 401) return { kind: "unauthorized" };
       const b = await body(res);
       if (signal.aborted) return { kind: "aborted" };
       const e = isRecord(b) ? b["error"] : null;

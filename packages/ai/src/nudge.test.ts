@@ -159,6 +159,26 @@ describe("payment-status claims (owner refinement 1: a due date does not establi
     "Thank you for your payment.",
     "The invoice was paid in full.",
     "It seems the invoice is already paid.",
+    // P6-AUD-01 bypasses found by the independent audit at d6f3d68:
+    "Your invoice has been settled.",
+    "Your payment has been processed.",
+    "We confirm the balance has been cleared.",
+    // ...and related phrasings the word-level filter now also refuses:
+    "The payment went through yesterday.",
+    "Your transfer was successful.",
+    "We have your remittance on file.",
+    "The amount was credited to our account.",
+    "Your deposit arrived safely.",
+    "The invoice is now complete.",
+    "Payment is pending on our side.",
+    "Everything is taken care of.",
+    "If this is already taken care of, please let me know and disregard this note.",
+    "This invoice is resolved.",
+    "It's all done.",
+    "Your account shows a remaining balance.",
+    "A refund was issued.",
+    "Your PAYMENT has been RECEIVED.",
+    "The invoice was settled in full.",
   ])("refuses the message claim %j", (sentence) => {
     expect(validateNudgeOutput(withSentence(sentence))).toEqual({
       ok: false,
@@ -170,6 +190,9 @@ describe("payment-status claims (owner refinement 1: a due date does not establi
     "Because the balance is outstanding, the wording is direct.",
     "It is overdue, so the message asks for payment.",
     "The customer has not paid yet, so it is firm but polite.",
+    "The invoice has been settled, so this is only a courtesy note.",
+    "Their payment has been processed, so it thanks them warmly.",
+    "The balance has been cleared, so the tone is relaxed.",
   ])("refuses the rationale claim %j", (rationale) => {
     expect(validateNudgeOutput({ ...GOOD, rationale })).toEqual({
       ok: false,
@@ -178,9 +201,12 @@ describe("payment-status claims (owner refinement 1: a due date does not establi
   });
   it.each([
     "Just checking in on this one.",
-    "If this is already taken care of, please let me know and disregard this note.",
     "Could you share an update on when payment is planned?",
     "I wanted to follow up now that the due date has passed.",
+    "Please reply this week with the date payment will be made.",
+    "If you have any questions about it, I am happy to help.",
+    "Could you let me know when payment is planned, or whether anything is holding it up?",
+    "Thank you for your help.",
   ])("accepts neutral, date-oriented wording %j", (sentence) => {
     expect(validateNudgeOutput(withSentence(sentence))).toMatchObject({ ok: true });
   });
@@ -287,6 +313,10 @@ describe("model input privacy", () => {
       expect(text).toMatch(/due date/);
       expect(text).not.toMatch(/unpaid|overdue|outstanding|late|owed|paid/i);
     }
+  });
+  it("the instructions name the refused payment-state vocabulary so a compliant model can avoid it", () => {
+    for (const w of ["settled", "processed", "cleared", "received", "taken care of", "balance"])
+      expect(NUDGE_INSTRUCTIONS).toContain(w);
   });
   it("the instructions forbid payment-status claims", () => {
     expect(NUDGE_INSTRUCTIONS).toMatch(/You do NOT know whether the invoice has been paid/);

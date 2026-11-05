@@ -2070,4 +2070,21 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Evidence:** validate 1341, test:db 366, journey 150/150 (`design/evidence/NMI-P6/qa-results.json`), preview 25/25; hosted CI at the final head (in the PR).
 - **Not done / not authorized:** live OpenAI (Gate A), PayPal, sending/scheduling of any kind, Render, deploy, merge.
 
+## Handoff: NMI-P6-FIX1-01
+
+- **Task / branch:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`; `feat/nmi-p6-ai-nudges` (Draft PR #43, base unchanged). **From / to:** implementation agent → **independent exact-HEAD re-audit** of the P6-AUD-01/02/03 remediation (audit comment 6658712501 at `d6f3d68`).
+- **Changed:**
+  - `packages/ai/src/nudge.ts`: `PAYMENT_STATE_WORDS` / `PAYMENT_STATUS` and the prompt vocabulary;
+  - `apps/api/src/config.ts` + `server.ts`: `NUDGE_AI_DRAFTING_ENABLED` → `config.nudgeDrafting`;
+  - `.env.example`;
+  - `apps/web/src/nudges/api.ts` and `controller.ts`, and `nudgey/NudgeDraftFlow.tsx`: 401 takes precedence over abort;
+  - the fake model and mockup wording, reworded to the neutral vocabulary.
+- **Tests added:**
+  - P6-AUD-01: AI cases;
+  - P6-AUD-02: `nudge-drafting-config.test.ts` and one PostgreSQL API test;
+  - P6-AUD-03: `nudges/controller.test.ts` and a chat-flow test.
+  - Negative controls against the audited code: 20 AI cases and 3 late-401 cases fail there.
+- **Evidence:** validate 1383, test:db 367, journey 150/150, preview 25/25; hosted CI at the final head (in the PR).
+- **Not done / not authorized:** live OpenAI (Gate A; the new flag stays `false`), PayPal, sending, Render, deploy, merge or rebase.
+
 <!-- HANDOFF_ENTRIES_END -->
