@@ -7,6 +7,8 @@ import {
   buildTrendData,
   buildTrendState,
   STATUS_SERIES,
+  statusHeightPx,
+  TREND_HEIGHT_PX,
   trendRows,
 } from "./studioReport.js";
 
@@ -108,5 +110,36 @@ describe("studioReport (what AG Studio receives)", () => {
       buildTrendState(usd, "#fff", false).pages[0]?.widgets ?? {},
     )[0] as { type: string };
     expect(widget.type).toBe("column-chart-grouped");
+  });
+
+  it("P5 sizing: the Studio widget fits its container; status bars stay slim and grow per currency", () => {
+    const [usd] = currencies(30);
+    if (!usd) throw new Error("no currency");
+    const layout = (st: ReturnType<typeof buildTrendState>) =>
+      Object.values(st.pages[0]?.widgetLayout ?? {})[0] as { ySpan: number };
+    for (const compact of [false, true]) {
+      const row = compact ? 11 : 14;
+      const box = compact ? TREND_HEIGHT_PX.compact : TREND_HEIGHT_PX.desktop;
+      const span = layout(buildTrendState(usd, "#fff", compact)).ySpan;
+      expect(span * row).toBeLessThanOrEqual(box);
+      expect(span * row).toBeGreaterThan(box - row);
+      for (const rows of [1, 3, 8]) {
+        const s = layout(buildStatusState("#fff", compact, rows)).ySpan;
+        expect(s * row).toBeLessThanOrEqual(statusHeightPx(rows));
+      }
+    }
+    expect([1, 2, 3, 8, 12].map(statusHeightPx)).toEqual([82, 108, 134, 264, 264]);
+  });
+
+  it("P5 labels: no rotated duplicate axis title (the page heading names measure and currency)", () => {
+    const [usd] = currencies(30);
+    if (!usd) throw new Error("no currency");
+    for (const st of [buildTrendState(usd, "#fff", false), buildStatusState("#fff", false, 3)]) {
+      const w = Object.values(st.pages[0]?.widgets ?? {})[0] as {
+        format?: { style?: { custom?: Record<string, { title?: { enabled?: boolean } }> } };
+      };
+      expect(w.format?.style?.custom?.["valueAxis"]?.title?.enabled).toBe(false);
+      expect(w.format?.style?.custom?.["categoryAxis"]?.title?.enabled).toBe(false);
+    }
   });
 });

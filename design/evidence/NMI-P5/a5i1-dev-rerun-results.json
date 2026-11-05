@@ -1,0 +1,611 @@
+{
+  "task": "NMI-PROTOTYPE-10D-A5-I1",
+  "environment": {
+    "licenceKeyPresent": true,
+    "node": "v24.21.0",
+    "pnpm": "10.28.0",
+    "postgres": "postgres (PostgreSQL) 16.15 (Homebrew)",
+    "chrome": "Google Chrome 156.0.8078.80",
+    "os": "Darwin 27.2.0 arm64",
+    "sourceSha": "f52483699593be24a78728133b0f22a60eaee42a",
+    "studioPackages": {
+      "ag-grid-community": "36.2.0",
+      "ag-grid-react": "36.2.0",
+      "ag-studio": "3.0.0",
+      "ag-studio-react": "3.0.0",
+      "react": "19.3.1",
+      "react-dom": "19.3.1"
+    },
+    "startedAt": "2026-11-04T15:42:27.341Z",
+    "database": "nmi_test_a5i1_20261104 on 127.0.0.1:54388 (private cluster in a temp directory)",
+    "watermarkLicensedSession": "hidden by Studio (ag-hidden)",
+    "licenceConsoleMessagesLicensedSession": 0,
+    "zeroBucketsSeen": 87,
+    "watermarkUnlicensedSession": "hidden by Studio (ag-hidden)",
+    "sessionExpiredNoticeShownAfter401": false,
+    "finishedAt": "2026-11-04T15:44:31.205Z",
+    "passed": 96,
+    "total": 96,
+    "failed": 0,
+    "stack": "real Fastify (SIMULATED launcher: fake parser, fake PayPal) in a sandbox-exec no-egress profile + the real web app on the Vite DEV server (VITE_NMI_STUDIO_LOCAL=1) + real AG Studio 3.0.0 + headless Chrome (CDP, Asia/Manila emulated) + private PostgreSQL 16"
+  },
+  "simulated": true,
+  "results": [
+    {
+      "group": "environment",
+      "name": "AG Studio 3.0.0 packages are installed with exact pins and the lockfile resolves matching AG Grid 36.2.0 and AG Charts 14.2.0",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "environment",
+      "name": "the licence variable was found in the untracked .env.local (value never read into any output)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "database",
+      "name": "a NEW disposable PostgreSQL 16 database (nmi_test_a5i1_20261104) was created in a private temp cluster and all 8 journal migrations were applied once",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "database",
+      "name": "one synthetic operator was provisioned with the real CLI (random password, never printed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "isolation",
+      "name": "the network sandbox the API runs in denies non-loopback egress (192.0.2.1 is refused with EPERM)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "simulated mode",
+      "name": "the SIMULATED API (fake parser + fake PayPal) is up behind the web dev server; /health says aiConfigured=false; no real provider credential exists in its environment",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence bridge",
+      "name": "the dev bridge answers a same-origin flagged GET with 200, no-store and a key present (value not shown)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence bridge",
+      "name": "every disallowed request shape (no header, foreign Host, cross-site, POST) is 403 and carries no key",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence bridge",
+      "name": "the untracked .env.local (which also holds provider secrets) is not servable by the dev server",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "seed",
+      "name": "170 synthetic invoices (USD/EUR/JPY) were saved through the real POST route; created_at spread over 118 days; ownerless and other-operator rows exist as negative controls; SIMULATED status rows cover every group",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "sign-in",
+      "name": "the real sign-in reaches the real dashboard on the Vite DEV server with the Studio flag on",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "studio render",
+      "name": "real AG Studio rendered inside the authenticated dashboard (panel state 'active', Studio badge shown)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "studio render",
+      "name": "the panel sits under the shared currency filters and before the authoritative currency cards and the AG Grid Community table, and nothing else moved (filters, cards and grid markup are the existing ones)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "studio render",
+      "name": "Studio is in VIEW mode and offers no export/edit chrome: no widget toolbar buttons, no filter panel, no AI panel, no menus",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "studio render",
+      "name": "the licensed session: any Studio watermark element is either hidden by Studio itself or visible; the NMI page never hides a watermark Studio shows (observed: hidden by Studio (ag-hidden))",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "studio render",
+      "name": "the licensed session logged no AG Studio licence warning or error to the browser console (the key is accepted; entitlement itself is not observable by this QA)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "the existing full-population currency cards equal independent SQL (A2 baseline carried into A5)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "the chart-currency selector is a view-only roving tablist (busiest currency first, one tab per currency, no filter change)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (default 30-day range): the accessible table has exactly 30 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (default 30-day range): zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (default 30-day range): a 30-day range is plotted DAILY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (default 30-day range): every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL local-day buckets: label, exact value and invoice count; 15 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (default 30-day range): the plotted bars add up to the card total (USD only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (default 30-day range): the accessible table has exactly 30 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (default 30-day range): zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (default 30-day range): a 30-day range is plotted DAILY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (default 30-day range): every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL local-day buckets: label, exact value and invoice count; 19 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (default 30-day range): the plotted bars add up to the card total (EUR only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (default 30-day range): the accessible table has exactly 30 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (default 30-day range): zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (default 30-day range): a 30-day range is plotted DAILY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (default 30-day range): every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL local-day buckets: label, exact value and invoice count; 26 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (default 30-day range): the plotted bars add up to the card total (JPY only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "keyboard",
+      "name": "the currency tablist moves and selects with the arrow keys (roving tabindex) and announces aria-selected",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "the draft-status breakdown counts per currency equal independent SQL for none / in progress / draft created / needs attention, and 'created' is described as a Sandbox DRAFT (not sent, not paid)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "the Studio status chart is a real stacked chart keyed by currency (its keyboard tooltip names a currency and a SQL-matching count)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "currency pill EUR: exactly ONE analytics request was made (the panel adds no fetch of its own)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "currency pill EUR: the chart-currency selector is not rendered and the panel shows EUR only, equal to SQL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR pill: the accessible table has exactly 30 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR pill: zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR pill: a 30-day range is plotted DAILY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR pill: every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL local-day buckets: label, exact value and invoice count; 19 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR pill: the plotted bars add up to the card total (EUR only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "status filter = PayPal draft created: exactly ONE analytics request was made (the panel adds no fetch of its own)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "status filter 'PayPal draft created': cards and panel show only matching invoices (status counts equal SQL, every other group is zero)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "search 'Client 0': exactly ONE analytics request was made (the panel adds no fetch of its own)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "search text: cards and panel equal independent SQL (the search term itself is never sent to Studio)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "no customer name, e-mail or search term appears in any element of the Studio panel (and the panel is present)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "date range: one analytics request for the 120-day range",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (120-day range): the accessible table has exactly 120 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (120-day range): zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (120-day range): a 120-day range is plotted WEEKLY (Monday start) with the Weekly view note",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (120-day range): every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL date_trunc('week') buckets: label, exact value and invoice count; 1 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "EUR (120-day range): the plotted bars add up to the card total (EUR only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (120-day range): the accessible table has exactly 120 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (120-day range): zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (120-day range): a 120-day range is plotted WEEKLY (Monday start) with the Weekly view note",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (120-day range): every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL date_trunc('week') buckets: label, exact value and invoice count; 7 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "JPY (120-day range): the plotted bars add up to the card total (JPY only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (120-day range): the accessible table has exactly 120 rows = every calendar day, zero-invoice days included, each equal to independent SQL (count and exact minor units)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (120-day range): zero-invoice days appear as real rows with the exact zero",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (120-day range): a 120-day range is plotted WEEKLY (Monday start) with the Weekly view note",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (120-day range): every NON-ZERO bar PLOTTED BY STUDIO (read through the chart's own keyboard navigation and tooltip) equals independent SQL date_trunc('week') buckets: label, exact value and invoice count; 0 zero-invoice bucket(s) have no plotted height and never a non-zero value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "exactness",
+      "name": "USD (120-day range): the plotted bars add up to the card total (USD only, never mixed with another currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "a 90-day range is plotted daily (owner rule: daily up to 90 days, weekly beyond)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "a 91-day range is plotted weekly (owner rule: daily up to 90 days, weekly beyond)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "stale answers",
+      "name": "a late answer for a superseded filter (held, then released after the newer filter) never replaces the current panel: it still shows EUR and equals SQL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "failure",
+      "name": "analytics failure: the existing error + Retry appears, NO Studio panel is rendered, no loaded-row estimate is substituted",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "failure",
+      "name": "after Retry the panel returns with the new answer",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "failure",
+      "name": "Studio module load failure: 'Charts unavailable' fallback with Retry, no Studio badge, and the currency cards and the AG Grid Community table are untouched",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "failure",
+      "name": "fallback keeps the exact accessible daily table available",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "failure",
+      "name": "after the module can load again, 'Try loading charts again' recovers real Studio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "failure",
+      "name": "licence request blocked (no key): Studio still renders real charts, any Studio watermark is not hidden by the NMI page (observed: hidden by Studio (ag-hidden)), and the dashboard stays correct",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "network",
+      "name": "the browser talked only to its own origin during the whole Studio session (no third-party, telemetry, CDN or provider request)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "network",
+      "name": "no request to any AG Grid / AG Studio host (licence validation is offline in the browser)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "no browser storage holds anything (the licence key, report state and customer data are never persisted)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "the licence key value is not in the page URL, DOM, storage or console output",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "the licence key value is not in the API log, the Vite dev-server log or the runner's own output",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "privacy",
+      "name": "the Studio panel carries no personal data from the invoice list: no customer names/e-mails and no invoice ids in its DOM",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser never requested a send, remind, cancel, refund, payment or webhook route",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no provider call was made: the fake PayPal and fake model logs are empty",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "<=767px: the panel is COLLAPSED by default (Show charts, aria-expanded=false, body hidden) with the heading visible, and Studio is NOT loaded while collapsed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "collapsed controls are out of the tab order (no focusable element inside the hidden body)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "no page-level horizontal overflow while collapsed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "keyboard Enter on Show charts expands the panel, aria-expanded=true, focus stays on the button, Studio loads on demand and shows its badge",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "expanded at 390px: no page-level horizontal overflow, the currency selector targets are >= 44px, and the Studio canvas fits the card",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "on mobile the Studio chart reads the same exact values as SQL (the bars reached through keyboard tooltips are matched by label)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile 390",
+      "name": "Hide charts collapses it again",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "evidence",
+      "name": "UNLICENSED evidence session (licence request blocked): real Studio renders; this is the only session whose screenshots are saved (watermark observed: hidden by Studio (ag-hidden))",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "evidence",
+      "name": "a Studio tooltip appears only after keyboard focus/arrow (hover and tap are the pointer equivalents), never idle",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "401",
+      "name": "a revoked server session (late 401 on the next analytics refresh) removes the workspace at once: the sign-in screen shows (the existing notice wording is recorded, not required), and no Studio panel, chart or customer total remains in the DOM",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "default off",
+      "name": "without VITE_NMI_STUDIO_LOCAL=1 the dev server has no licence bridge: the route returns no key (the SPA shell, not JSON)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "default off",
+      "name": "flag off: the dashboard is the Community dashboard: no Activity analytics panel, cards and the AG Grid Community table present",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "default off",
+      "name": "flag off: no Studio module, licensed package, chart chunk or licence request was loaded by the browser",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no uncaught browser exception during the whole run",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "screenshots",
+      "name": "screenshots were saved only from the UNLICENSED session (none from the licensed session)",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

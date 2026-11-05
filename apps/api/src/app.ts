@@ -10,6 +10,7 @@ import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
 import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-drafts.js";
 import { followUpRoutes } from "./routes/follow-ups.js";
 import { analyticsRoutes } from "./routes/analytics.js";
+import { studioLicenceRoutes } from "./routes/studio-licence.js";
 import type { InvoiceModelClient } from "@nmi/ai";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import { healthRoutes } from "./routes/health.js";
@@ -91,7 +92,12 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     void reply.header("x-content-type-options", "nosniff");
     // Header-level policy for every response (a <meta> CSP cannot carry frame-ancestors).
     const type = String(reply.getHeader("content-type") ?? "");
-    void reply.header("content-security-policy", type.startsWith("text/html") ? PAGE_CSP : API_CSP);
+    // The SPA shell sets its own per-response nonce policy (web-static.ts); everything else gets the fixed one.
+    if (!reply.hasHeader("content-security-policy"))
+      void reply.header(
+        "content-security-policy",
+        type.startsWith("text/html") ? PAGE_CSP : API_CSP,
+      );
     void reply.header("referrer-policy", "no-referrer");
     void reply.header("x-frame-options", "DENY");
     void reply.header("cross-origin-opener-policy", "same-origin");
@@ -150,6 +156,7 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
   });
   followUpRoutes(app, { db: deps.db, audit, clock: deps.clock });
   analyticsRoutes(app, deps.db);
+  studioLicenceRoutes(app, config);
   if (config.webDistDir) registerWebStatic(app, config.webDistDir);
   return app;
 }

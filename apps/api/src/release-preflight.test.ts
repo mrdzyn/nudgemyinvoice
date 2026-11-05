@@ -15,7 +15,7 @@ import {
 } from "./release-preflight.js";
 
 /**
- * Objective (NMI-RENDER-P4, offline): the hosted release matrix is provider-disabled and Community-only, the
+ * Objective (NMI-RENDER-P4 + P5, offline): the hosted release matrix is provider-disabled and licensed-Studio, the
  * exact-SHA controls fail closed, and neither check can echo a value. No network, no Render, no provider.
  */
 const SECRET = "Zq9-synthetic-secret-value-0123456789abcdef";
@@ -30,6 +30,9 @@ const good: Record<string, string> = {
   PAYPAL_ENV: "sandbox",
   PAYPAL_API_BASE_URL: "https://api-m.sandbox.paypal.com",
   PAYPAL_DRAFTS_ENABLED: "false",
+  NMI_WEB_STUDIO: "licensed",
+  // Synthetic stand-in shaped like a licence; never the owner's key.
+  AG_STUDIO_LICENSE_KEY: "Synthetic [Studio] licence with spaces 0123456789abcdef",
 };
 const failing = (env: Record<string, string | undefined>) =>
   checkReleaseEnv(env)
@@ -47,7 +50,8 @@ describe("release environment matrix", () => {
       c.paypalCredentials,
       c.trustProxy,
       c.cookieSecure,
-    ]).toEqual([null, false, null, 1, true]);
+      c.studioLicenceKey !== null,
+    ]).toEqual([null, false, null, 1, true, true]);
   });
 
   it.each([
@@ -84,6 +88,16 @@ describe("release environment matrix", () => {
     ["short session secret", { SESSION_SECRET: "short" }, "env.SESSION_SECRET"],
     ["low-entropy secret", { SESSION_SECRET: "a".repeat(40) }, "env.SESSION_SECRET"],
     ["bad PORT", { PORT: "ten" }, "env.PORT"],
+    ["Community build selected", { NMI_WEB_STUDIO: undefined }, "env.NMI_WEB_STUDIO"],
+    ["mistyped variant", { NMI_WEB_STUDIO: "Licensed" }, "env.NMI_WEB_STUDIO"],
+    ["no licence", { AG_STUDIO_LICENSE_KEY: undefined }, "env.AG_STUDIO_LICENSE_KEY"],
+    ["blank licence", { AG_STUDIO_LICENSE_KEY: "   " }, "env.AG_STUDIO_LICENSE_KEY"],
+    [
+      "malformed licence",
+      { AG_STUDIO_LICENSE_KEY: "has\ta tab 0123456789abcdef" },
+      "env.AG_STUDIO_LICENSE_KEY",
+    ],
+    ["short licence", { AG_STUDIO_LICENSE_KEY: "short" }, "env.AG_STUDIO_LICENSE_KEY"],
   ])("fails closed: %s", (_n, patch, id) => {
     expect(failing({ ...good, ...patch })).toContain(id);
   });
@@ -93,7 +107,9 @@ describe("release environment matrix", () => {
     "OPENAI_MODEL",
     "PAYPAL_CLIENT_ID",
     "PAYPAL_CLIENT_SECRET",
-    "AG_STUDIO_LICENSE_KEY",
+    "AG_STUDIO_TRIAL_KEY",
+    "AG_STUDIO_LICENSE_KEY_BACKUP",
+    "NMI_WEB_STUDIO_OVERRIDE",
     "VITE_NMI_STUDIO_LOCAL",
     "VITE_ANYTHING",
     "NMI_SIMULATED_EVAL",
@@ -114,6 +130,7 @@ describe("release environment matrix", () => {
       SESSION_SECRET: SECRET.slice(0, 8),
       DATABASE_URL: `postgres://nmi_owner:${SECRET}@h/x`,
       OPENAI_API_KEY: SECRET,
+      AG_STUDIO_LICENSE_KEY: `${SECRET}\twith a tab`,
     });
     expect(JSON.stringify(all)).not.toContain(SECRET);
     expect(JSON.stringify(all)).not.toContain(SECRET.slice(0, 8));
@@ -403,5 +420,13 @@ describe("release-preflight CLI against a disposable Git remote", () => {
     expect(ok.status).toBe(0);
     expect(ok.stdout).toContain("RESULT: PASS");
     expect(ok.stdout + ok.stderr).not.toContain(SECRET);
+  });
+});
+
+describe("P5 licensed Studio release", () => {
+  it("the licence value is never part of any finding, passing or failing", () => {
+    const pass = checkReleaseEnv(good);
+    expect(allOk(pass)).toBe(true);
+    expect(JSON.stringify(pass)).not.toContain(good["AG_STUDIO_LICENSE_KEY"]);
   });
 });

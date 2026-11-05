@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDb } from "@nmi/db";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
+import { STUDIO_STYLE_HASHES } from "./plugins/studio-style-hashes.js";
 import { baseEnv } from "./test-support.js";
 
 /**
@@ -97,7 +98,7 @@ describe("single-origin static serving", () => {
       ...(method === "POST" ? { headers: { origin: "https://nmi-staging.example.com" } } : {}),
     });
 
-  it("serves the shell at / and for deep links, no-cache, as HTML", async () => {
+  it("serves the shell at / and for deep links, no-store (it carries a one-time nonce), as HTML", async () => {
     for (const u of [
       "/",
       "/dashboard",
@@ -108,7 +109,7 @@ describe("single-origin static serving", () => {
       const r = await get(u);
       expect(r.statusCode, u).toBe(200);
       expect(r.headers["content-type"], u).toBe("text/html; charset=utf-8");
-      expect(r.headers["cache-control"], u).toBe("no-cache");
+      expect(r.headers["cache-control"], u).toBe("no-store");
       expect(r.body, u).toContain("<title>shell</title>");
     }
     expect((await get("/", "HEAD")).statusCode).toBe(200);
@@ -181,8 +182,11 @@ describe("single-origin static serving", () => {
   });
   it("every response carries the header-level security policy", async () => {
     const page = await get("/");
-    expect(page.headers["content-security-policy"]).toBe(
-      "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'",
+    const pageCspHeader = String(page.headers["content-security-policy"]);
+    const n = /'nonce-([A-Za-z0-9+/]{22}==)'/.exec(pageCspHeader)?.[1];
+    expect(n).toBeDefined();
+    expect(pageCspHeader).toBe(
+      `default-src 'none'; script-src 'self'; style-src 'self' 'nonce-${n}' ${STUDIO_STYLE_HASHES.map((h) => `'${h}'`).join(" ")}; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'`,
     );
     for (const r of [
       page,
@@ -335,4 +339,91 @@ describe("real server process: listen host and PORT", () => {
     expect(code).not.toBe(0);
     expect(await reach("127.0.0.1", port)).toBe(false);
   }, 30_000);
+});
+
+describe("P5 per-response style nonce (AG Studio theming under the production CSP)", () => {
+  const META_CSP =
+    "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'";
+  const dist = mkdtempSync(join(tmpdir(), "nmi-dist-nonce-"));
+  const pool = new pg.Pool({ connectionString: baseEnv.DATABASE_URL });
+  let app: ReturnType<typeof buildApp>;
+  beforeAll(async () => {
+    mkdirSync(join(dist, "assets"));
+    writeFileSync(
+      join(dist, "index.html"),
+      `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${META_CSP}"><title>shell</title></head><body></body></html>`,
+    );
+    writeFileSync(join(dist, "assets", "app-abc123.js"), "console.log(1)");
+    app = buildApp(loadConfig({ ...prodEnv, WEB_DIST_DIR: dist }), { db: createDb(pool) });
+    await app.ready();
+  });
+  afterAll(async () => {
+    await app.close();
+    await pool.end();
+    rmSync(dist, { recursive: true, force: true });
+  });
+  const nonceOf = (csp: string) => /'nonce-([A-Za-z0-9+/=]+)'/.exec(csp)?.[1];
+
+  it("header CSP, build-time meta CSP and the nonce meta all carry the SAME fresh nonce", async () => {
+    const r = await app.inject({ method: "GET", url: "/" });
+    const header = String(r.headers["content-security-policy"]);
+    const n = nonceOf(header);
+    expect(n).toMatch(/^[A-Za-z0-9+/]{22}==$/);
+    expect(r.body).toContain(`<meta name="nmi-style-nonce" content="${n}">`);
+    const hashes = STUDIO_STYLE_HASHES.map((h) => `'${h}'`).join(" ");
+    expect(r.body).toContain(`style-src 'self' 'nonce-${n}' ${hashes};`);
+    expect(header).toContain(`style-src 'self' 'nonce-${n}' ${hashes};`);
+    expect(r.body).not.toContain("style-src 'self'; img-src");
+  });
+
+  it("every shell response gets a different nonce and is never stored", async () => {
+    const seen = new Set<string | undefined>();
+    for (let i = 0; i < 5; i++) {
+      const r = await app.inject({ method: "GET", url: i % 2 ? "/dashboard" : "/" });
+      expect(r.headers["cache-control"]).toBe("no-store");
+      seen.add(nonceOf(String(r.headers["content-security-policy"])));
+    }
+    expect(seen.size).toBe(5);
+  });
+
+  it("the nonce only relaxes <style> elements: scripts stay 'self', no unsafe-inline/eval anywhere", async () => {
+    const csp = String(
+      (await app.inject({ method: "GET", url: "/" })).headers["content-security-policy"],
+    );
+    expect(csp).toContain("script-src 'self';");
+    expect(csp).not.toMatch(/unsafe|script-src[^;]*nonce|https?:|\*/);
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
+
+  it("handles the HTML-escaped meta CSP that Vite actually emits, and refuses an unextendable one", async () => {
+    const d2 = mkdtempSync(join(tmpdir(), "nmi-dist-escaped-"));
+    const esc = META_CSP.replaceAll("'", "&#39;");
+    writeFileSync(
+      join(d2, "index.html"),
+      `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${esc}"><title>s</title></head></html>`,
+    );
+    const a2 = buildApp(loadConfig({ ...prodEnv, WEB_DIST_DIR: d2 }), { db: createDb(pool) });
+    const r = await a2.inject({ method: "GET", url: "/" });
+    const n = nonceOf(String(r.headers["content-security-policy"]));
+    const hashes = STUDIO_STYLE_HASHES.map((h) => `&#39;${h}&#39;`).join(" ");
+    expect(r.body).toContain(`style-src &#39;self&#39; &#39;nonce-${n}&#39; ${hashes};`);
+    await a2.close();
+    writeFileSync(
+      join(d2, "index.html"),
+      `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'sha256-x'"></head></html>`,
+    );
+    expect(() =>
+      buildApp(loadConfig({ ...prodEnv, WEB_DIST_DIR: d2 }), { db: createDb(pool) }),
+    ).toThrow(/cannot carry the per-response nonce/);
+    rmSync(d2, { recursive: true, force: true });
+  });
+
+  it("assets and API responses keep their fixed policies without any nonce", async () => {
+    const js = await app.inject({ method: "GET", url: "/assets/app-abc123.js" });
+    expect(String(js.headers["content-security-policy"])).not.toContain("nonce");
+    const health = await app.inject({ method: "GET", url: "/health" });
+    expect(health.headers["content-security-policy"]).toBe(
+      "default-src 'none'; frame-ancestors 'none'",
+    );
+  });
 });

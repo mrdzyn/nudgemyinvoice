@@ -379,7 +379,9 @@ const f0 = await ev("({ from: document.querySelector('#dash-date-start').value, 
 const F = { from: f0.from, to: f0.to, currency: "ALL", status: "ALL", q: "" };
 await waitActive();
 check("studio render", "real AG Studio rendered inside the authenticated dashboard (panel state 'active', Studio badge shown)", (await panelState()) === "active" && (await ev("[...document.querySelectorAll('#studio-panel .studio-title .badge')].some((b) => b.textContent === 'Studio · view only')")) === true);
-check("studio render", "the panel sits between the authoritative currency cards and the AG Grid Community table, and nothing else moved (filters, cards and grid markup are the existing ones)", await ev(`(() => { const p = document.querySelector('#studio-panel'); const cards = document.querySelector('#dash-cards'); const note = document.querySelector('#dash-card-note'); const grid = document.querySelector('.ag-root-wrapper')?.closest('.table-card'); const pos = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING); return !!(p && cards && note && grid) && pos(cards, p) && pos(note, p) && pos(p, grid) && document.querySelectorAll('#dash-cards .currency-card').length >= 2; })()`));
+// Updated for NMI-UI-ANALYTICS-FIRST-01 / P5 (owner-directed order; P5 status counts are a table, read by row/cell): the panel now sits directly under the shared
+// currency filters, BEFORE the currency cards; the original A5-I1 run asserted the earlier cards -> panel -> grid order.
+check("studio render", "the panel sits under the shared currency filters and before the authoritative currency cards and the AG Grid Community table, and nothing else moved (filters, cards and grid markup are the existing ones)", await ev(`(() => { const p = document.querySelector('#studio-panel'); const filters = document.querySelector('[aria-label="Filter by currency"]'); const cards = document.querySelector('#dash-cards'); const note = document.querySelector('#dash-card-note'); const grid = document.querySelector('.ag-root-wrapper')?.closest('.table-card'); const pos = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING); return !!(p && filters && cards && note && grid) && pos(filters, p) && pos(p, cards) && pos(cards, note) && pos(note, grid) && document.querySelectorAll('#dash-cards .currency-card').length >= 2; })()`));
 check("studio render", "Studio is in VIEW mode and offers no export/edit chrome: no widget toolbar buttons, no filter panel, no AI panel, no menus", await ev(`(() => { const r = document.querySelector('#studio-panel'); return r.querySelectorAll('[class*=toolbar] button, [class*=toolbar] [role=button]').length === 0 && !r.querySelector('.ag-studio-root-panel-container:not([class*=hidden]) [class*=panel-header]') && !r.querySelector('[class*=ai-panel]'); })()`));
 const WM_EXPR = "[...document.querySelectorAll('#studio-panel .ag-studio-watermark')].map((w) => ({ hiddenByStudio: w.classList.contains('ag-hidden'), visible: w.offsetParent !== null && w.getBoundingClientRect().width > 0 }))";
 const wmL = await ev(WM_EXPR);
@@ -448,7 +450,7 @@ for (const c of curs.filter((c) => c !== first)) {
   check("keyboard", "the currency tablist moves and selects with the arrow keys (roving tabindex) and announces aria-selected", t.filter((x) => x[1] === "true").length === 1 && (await ev("document.activeElement.getAttribute('role')")) === "tab");
 }
 const st = statesSql(F);
-const statusDom = await ev(`[...document.querySelectorAll('[data-testid=studio-status-list] .status-row')].map((r) => [r.querySelector('strong').textContent, ...[...r.querySelectorAll('.cnt')].map((c) => Number(c.textContent))])`);
+const statusDom = await ev(`[...document.querySelectorAll('[data-testid=studio-status-list] tbody tr')].map((r) => [r.querySelector('th').textContent, ...[...r.querySelectorAll('td')].slice(0, 4).map((c) => Number(c.textContent))])`);
 check("exactness", "the draft-status breakdown counts per currency equal independent SQL for none / in progress / draft created / needs attention, and 'created' is described as a Sandbox DRAFT (not sent, not paid)", statusDom.every((r) => JSON.stringify(r.slice(1)) === JSON.stringify(st[r[0]])) && /Sandbox DRAFT exists\. It is not sent, not paid and not overdue/.test(await ev("document.querySelector('#studio-panel .studio-status').textContent")), JSON.stringify({ statusDom, st }));
 {
   const tipsStatus = await walkChart("studio-status", 1);
@@ -480,7 +482,7 @@ const pill = (c) => click(`.pills button[aria-pressed]:nth-child(${["ALL", "USD"
 await countDrive("currency pill EUR", () => pill("EUR"), async () => {
   const f = { ...F, currency: "EUR" };
   const tabsNow = await tabs();
-  check("filters", "currency pill EUR: the chart-currency selector is not rendered and the panel shows EUR only, equal to SQL", tabsNow.length === 0 && (await ev("document.querySelector('#studio-panel .cur-now')?.textContent")) === "EUR" && (await ev("document.querySelectorAll('[data-testid=studio-status-list] .status-row').length")) === 1);
+  check("filters", "currency pill EUR: the chart-currency selector is not rendered and the panel shows EUR only, equal to SQL", tabsNow.length === 0 && (await ev("document.querySelector('#studio-panel .cur-now')?.textContent")) === "EUR" && (await ev("document.querySelectorAll('[data-testid=studio-status-list] tbody tr').length")) === 1);
   await verifyCurrency("EUR", f, "EUR pill");
 });
 await resetFilters();
@@ -488,7 +490,7 @@ await countDrive("status filter = PayPal draft created", async () => { await ev(
   const f = { ...F, status: "created" };
   const cardsNow = await ev(`[...document.querySelectorAll('#dash-cards .currency-card')].map((c) => [c.querySelector('.top span').textContent, c.querySelector('.amount').textContent])`);
   const sqlNow = totalsSql(f);
-  check("filters", "status filter 'PayPal draft created': cards and panel show only matching invoices (status counts equal SQL, every other group is zero)", cardsNow.every(([c, a]) => minorOf(a) === minorOf(sqlNow[c]?.s)) && JSON.stringify(await ev(`[...document.querySelectorAll('[data-testid=studio-status-list] .status-row')].map((r) => [r.querySelector('strong').textContent, ...[...r.querySelectorAll('.cnt')].map((c) => Number(c.textContent))])`)).length > 0 && (await ev(`[...document.querySelectorAll('[data-testid=studio-status-list] .status-row')].every((r) => { const n = [...r.querySelectorAll('.cnt')].map((c) => Number(c.textContent)); return n[0] === 0 && n[1] === 0 && n[3] === 0 && n[2] > 0; })`)));
+  check("filters", "status filter 'PayPal draft created': cards and panel show only matching invoices (status counts equal SQL, every other group is zero)", cardsNow.every(([c, a]) => minorOf(a) === minorOf(sqlNow[c]?.s)) && JSON.stringify(await ev(`[...document.querySelectorAll('[data-testid=studio-status-list] tbody tr')].map((r) => [r.querySelector('th').textContent, ...[...r.querySelectorAll('td')].slice(0, 4).map((c) => Number(c.textContent))])`)).length > 0 && (await ev(`[...document.querySelectorAll('[data-testid=studio-status-list] tbody tr')].every((r) => { const n = [...r.querySelectorAll('td')].slice(0, 4).map((c) => Number(c.textContent)); return n[0] === 0 && n[1] === 0 && n[3] === 0 && n[2] > 0; })`)));
 });
 await resetFilters();
 await countDrive("search 'Client 0'", async () => { await setInput("#dash-search", "Client 0"); }, async () => {
@@ -544,7 +546,7 @@ await settle().catch(() => {});
 await waitActive(60000);
 for (const h of staleHeld) await send("Fetch.continueRequest", { requestId: h.requestId }).catch(() => {});
 await sleep(2500);
-check("stale answers", "a late answer for a superseded filter (held, then released after the newer filter) never replaces the current panel: it still shows EUR and equals SQL", (await ev("document.querySelector('#studio-panel .cur-now')?.textContent")) === "EUR" && (await ev("document.querySelectorAll('[data-testid=studio-status-list] .status-row').length")) === 1 && staleHeld.length >= 1, `held=${staleHeld.length}`);
+check("stale answers", "a late answer for a superseded filter (held, then released after the newer filter) never replaces the current panel: it still shows EUR and equals SQL", (await ev("document.querySelector('#studio-panel .cur-now')?.textContent")) === "EUR" && (await ev("document.querySelectorAll('[data-testid=studio-status-list] tbody tr').length")) === 1 && staleHeld.length >= 1, `held=${staleHeld.length}`);
 
 // ---- failure states
 {
@@ -562,8 +564,9 @@ check("stale answers", "a late answer for a superseded filter (held, then releas
 }
 {
   // Studio chunk cannot load (e.g. broken module): cards and grid stay correct, fallback wording, then recovery.
-  await goto("/");
+  // Rule BEFORE navigation (P5 fix): registering it after goto() raced the page's own chunk request.
   rules.push({ test: (u) => /StudioCharts|\/node_modules\/\.vite\/deps\/ag-studio/.test(u), action: "fail" });
+  await goto("/");
   await waitFor("!!document.querySelector('#dash-cards')", 30000);
   await waitFor("document.querySelector('#studio-panel')?.dataset.studio === 'fallback'", 30000, "fallback");
   check("failure", "Studio module load failure: 'Charts unavailable' fallback with Retry, no Studio badge, and the currency cards and the AG Grid Community table are untouched", (await ev(`(() => { const p = document.querySelector('#studio-panel'); return !!p.querySelector('#studio-unavailable') && !p.querySelector('.studio-title .badge') && document.querySelectorAll('#dash-cards .currency-card').length >= 2 && !!document.querySelector('.ag-root-wrapper') && /Charts unavailable/.test(p.textContent); })()`)) === true);

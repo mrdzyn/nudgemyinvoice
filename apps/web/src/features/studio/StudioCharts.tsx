@@ -146,6 +146,25 @@ export function StudioRoot({ licenseKey, onFailure, children }: StudioRootProps)
   );
 }
 
+/**
+ * P5: the per-response CSP nonce the production server publishes in `<meta name="nmi-style-nonce">`. Studio's
+ * theming injects <style> elements; with this nonce they satisfy `style-src 'self' 'nonce-…'` without
+ * `'unsafe-inline'`. Absent on the dev server (no CSP there), which is fine. Every Studio instance on a page must
+ * carry the same nonce, so it is read once.
+ */
+const styleNonce =
+  typeof document === "undefined"
+    ? undefined
+    : (document.querySelector('meta[name="nmi-style-nonce"]')?.getAttribute("content") ??
+      undefined);
+
+/*
+ * AG Studio 3.0.0 does not forward `styleNonce` to its colour sensor or to the AG Charts DOM manager. Those few
+ * static vendor stylesheets are allowed by exact SHA-256 hash in the server's CSP (apps/api/src/plugins/
+ * studio-style-hashes.ts). There is deliberately NO page-wide createElement patch (SEC-N1): any other <style>
+ * without the nonce stays blocked.
+ */
+
 /** View-only: remove every widget toolbar item (CSV/image export, duplicate, delete). */
 const viewOnlyWidgets: NonNullable<AgStudioProperties["widgets"]> = (defaults) => ({
   ...defaults,
@@ -157,6 +176,7 @@ function useCommon(trendSeries: boolean) {
   const panels = useMemo(() => ({ view: { left: [], right: [] } }), []);
   return {
     mode: "view" as const,
+    ...(styleNonce ? { styleNonce } : {}),
     style: { height: "100%", width: "100%" },
     theme: trendSeries ? trendTheme : theme,
     panels,
@@ -204,7 +224,8 @@ export function StatusChart({
   const common = useCommon(false);
   const data = useMemo(() => buildStatusData(all), [all]);
   const { surface } = useTokens();
-  const state = useMemo(() => buildStatusState(surface, compact), [surface, compact]);
+  const rows = all.length;
+  const state = useMemo(() => buildStatusState(surface, compact, rows), [surface, compact, rows]);
   return (
     <div
       className={`studio-canvas studio-canvas-status studio-rows-${Math.min(all.length, 8)}`}

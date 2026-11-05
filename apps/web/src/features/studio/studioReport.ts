@@ -5,12 +5,13 @@ import type { StudioCurrency } from "./studioModel.js";
 // Type-only imports: nothing from the licensed packages is bundled by this module.
 
 /** Display order and wording of the draft states. "created" means a Sandbox DRAFT exists: not sent, not paid. */
-export const STATUS_SERIES: ReadonlyArray<{ state: AnalyticsState; label: string }> = [
-  { state: "none", label: "No PayPal draft" },
-  { state: "progress", label: "In progress" },
-  { state: "created", label: "PayPal draft created" },
-  { state: "attention", label: "Needs attention" },
-];
+export const STATUS_SERIES: ReadonlyArray<{ state: AnalyticsState; label: string; short: string }> =
+  [
+    { state: "none", label: "No PayPal draft", short: "No draft" },
+    { state: "progress", label: "In progress", short: "In progress" },
+    { state: "created", label: "PayPal draft created", short: "Draft created" },
+    { state: "attention", label: "Needs attention", short: "Attention" },
+  ];
 
 type StudioData = NonNullable<AgStudioProperties["data"]>;
 
@@ -118,6 +119,21 @@ const pageLayout = (surface: string, compact: boolean) => ({
   widgetBorderEnabled: false,
 });
 
+/** Desktop / narrow-screen Studio row height (px) used by `pageLayout`. */
+const rowPx = (compact: boolean) => (compact ? 11 : 14);
+
+/** Trend chart container height in px (studio.css .studio-canvas-trend uses the same numbers). */
+export const TREND_HEIGHT_PX = { desktop: 252, compact: 220 } as const;
+
+/**
+ * Status chart height in px for `rows` currencies: one slim bar per currency plus room for the axis. Matches the
+ * .studio-rows-N classes in studio.css, so bars stay proportionate instead of filling a fixed tall box.
+ */
+export const statusHeightPx = (rows: number): number => 56 + 26 * Math.min(Math.max(rows, 1), 8);
+
+/** Muted, smaller axis text; the page heading already names the measure and currency. */
+const axisLabel = { fontSize: 11 } as const;
+
 export function buildTrendState(
   cur: StudioCurrency,
   surface: string,
@@ -148,21 +164,34 @@ export function buildTrendState(
               style: {
                 theme: quiet,
                 custom: {
-                  valueAxis: { title: { enabled: true, text: `Invoice value (${cur.currency})` } },
+                  // The heading above says "Daily invoice value · USD"; a rotated duplicate title only costs width.
+                  valueAxis: { title: { enabled: false }, label: axisLabel },
+                  categoryAxis: { title: { enabled: false }, label: axisLabel },
                 },
               },
             },
           },
         },
         widgetLayout: {
-          trend: { xTrack: 0, yTrack: 0, xSpan: 24, ySpan: cur.mode === "weekly" ? 20 : 20 },
+          trend: {
+            xTrack: 0,
+            yTrack: 0,
+            xSpan: 24,
+            ySpan: Math.floor(
+              (compact ? TREND_HEIGHT_PX.compact : TREND_HEIGHT_PX.desktop) / rowPx(compact),
+            ),
+          },
         },
       },
     ],
   } as AgReportState;
 }
 
-export function buildStatusState(surface: string, compact: boolean): AgReportState {
+export function buildStatusState(
+  surface: string,
+  compact: boolean,
+  rows: number = 1,
+): AgReportState {
   return {
     selectedPageId: "page",
     pages: [
@@ -191,11 +220,22 @@ export function buildStatusState(surface: string, compact: boolean): AgReportSta
                     navigator: { enabled: false },
                   },
                 },
+                custom: {
+                  valueAxis: { title: { enabled: false }, label: axisLabel },
+                  categoryAxis: { title: { enabled: false }, label: axisLabel },
+                },
               },
             },
           },
         },
-        widgetLayout: { status: { xTrack: 0, yTrack: 0, xSpan: 24, ySpan: 14 } },
+        widgetLayout: {
+          status: {
+            xTrack: 0,
+            yTrack: 0,
+            xSpan: 24,
+            ySpan: Math.floor(statusHeightPx(rows) / rowPx(compact)),
+          },
+        },
       },
     ],
   } as AgReportState;

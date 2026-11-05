@@ -1,0 +1,304 @@
+{
+  "task": "NMI-P5",
+  "environment": {
+    "startedAt": "2026-11-04T16:55:42.166Z",
+    "build": {
+      "assets": 5,
+      "studioChunk": "StudioCharts-DH_I5SOd.js",
+      "entryScripts": [
+        "index-Be9OGpy4.js"
+      ]
+    },
+    "simulatedProviders": true,
+    "chrome": "headless",
+    "viewport": [
+      {
+        "width": 1280,
+        "height": 900,
+        "deviceScaleFactor": 1,
+        "mobile": false
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 2,
+        "mobile": true
+      }
+    ],
+    "zone": "Asia/Manila"
+  },
+  "consoleSample": [
+    "log.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "log.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "log.error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "log.error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-qxwdS+HZdt3p4Y1LLPN36XD9TgMASqCPgUj+y2gEbvk='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-qxwdS+HZdt3p4Y1LLPN36XD9TgMASqCPgUj+y2gEbvk='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-zOem1GN19ofTz9Vb71LLbGjoOM1C4YUwnJIkdYk7lzw='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-zOem1GN19ofTz9Vb71LLbGjoOM1C4YUwnJIkdYk7lzw='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-snspZzJwajxmVGtGVZjGJDx9bGhIE4ujm3I7n8tkcYI='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-snspZzJwajxmVGtGVZjGJDx9bGhIE4ujm3I7n8tkcYI='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-ss/91Zzxz4MLhWTgU/Ztz3Ic87C72sqGtTFeoNCun5o='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "log.error: Applying inline style violates the following Content Security Policy directive 'style-src 'self' 'nonce-O+6uWO2IT0DfvMWQPvSS9Q==' 'sha256-gFhlONN7LEyfyY478NiUzvXS0/XFt07LeQXXIpYVfZo=' 'sha256-nbXpXHHmAf92rUhkdb3Ydxs/7nySPckbQ+oqXxq5aWY=' 'sha256-ydedGqCb79ipYJuuWRyOTMrKbkjYWv8WIjG7SRdnEPU=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=''. Either the 'unsafe-inline' keyword, a hash ('sha256-ss/91Zzxz4MLhWTgU/Ztz3Ic87C72sqGtTFeoNCun5o='), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+  ],
+  "results": [
+    {
+      "group": "build",
+      "name": "the HTML shell and the scripts it loads directly carry no AG Studio code and no licence (Studio is a lazy chunk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "build",
+      "name": "no built file contains the licence value, the dev-only bridge or the licence variable name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "build",
+      "name": "the repository bundle scan (licensed variant) passes and confirms the local licence value is absent from every file",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "seed",
+      "name": "96 synthetic invoices (USD/EUR/JPY) saved through the real route over HTTPS; created_at spread across the default 30-day window with zero days; SIMULATED status rows for every group",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "anonymous GET /api/studio/licence through the proxy is 401, no-store, and carries no licence",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "the sign-in page loads no Studio chunk and requests no licence",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "render",
+      "name": "after operator sign-in the PRODUCTION build renders real AG Studio charts (panel active, Studio badge, trend + status canvases)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "exactly one licence request after sign-in: 200, no-store, private",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "the licence is not in the DOM, a cookie, localStorage or sessionStorage",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "security",
+      "name": "no Content-Security-Policy violation while the licensed Studio loads and renders",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "AG Studio reports no licence problem in the console (invalid / expired / missing / trial)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "network",
+      "name": "no request leaves the single origin (no CDN, licence server or telemetry host)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "layout",
+      "name": "reading and visual order is currency filters -> Activity analytics -> currency cards -> invoice grid",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "layout",
+      "name": "desktop 1280: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "figures",
+      "name": "each currency card shows the exact SQL count and total for its own currency only (no cross-currency sum)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "figures",
+      "name": "the exact daily table for USD has one row per local day (zero days included) matching independent SQL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "keyboard",
+      "name": "ArrowRight on the chart currency tabs moves focus and selection to the next currency and redraws that currency",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "keyboard",
+      "name": "Enter on 'Hide charts' collapses the panel (aria-expanded=false, body hidden) and Enter again reopens it",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "keyboard",
+      "name": "the focused chart tab shows a visible focus ring (>= 2px outline)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "loading",
+      "name": "while analytics reloads after a filter change, an aria-hidden placeholder holds the panel's place below the filters (height within 15% of the loaded panel) and shows no figures",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "choosing EUR in the top filter updates BOTH the analytics and the cards to EUR only (no chart tabs, no other currency)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "filters",
+      "name": "one shared analytics request served the filter change (no parallel chart fetch)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "the filter change re-authorised the licence at most once (no request storm), always no-store",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "theme",
+      "name": "dark theme: the panel uses the dark surface token and the Studio canvas repaints dark (no white chart box)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "security",
+      "name": "no CSP violation after the theme switch",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "fallback",
+      "name": "without a licence the production panel fails closed: 'Charts unavailable' + Retry, no Studio canvas or badge, exact tables, cards and grid intact",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "fallback",
+      "name": "Retry recovers once the licence is available again",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile",
+      "name": "390px: the panel starts collapsed and no licence or Studio chunk is requested until the operator opens it",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile",
+      "name": "390px: no horizontal page overflow with the panel collapsed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile",
+      "name": "390px: opening the panel loads the licence once and renders real Studio charts",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile",
+      "name": "390px: no horizontal page overflow with the charts open",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile",
+      "name": "390px: the status table, headline figures and currency tabs fit their width (no inner horizontal scroll) and the table headers are visible",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "licence",
+      "name": "after sign-out the previous session cookie no longer obtains the licence (401, no licence in body)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "logs",
+      "name": "the production server log never contains the licence value",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "logs",
+      "name": "the edge request-line log never contains the licence value and records the licence route by path only",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "security",
+      "name": "no CSP violation for the whole session",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "console",
+      "name": "no uncaught exception in the whole session",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "csp-negative",
+      "name": "positive control: a <style> carrying THIS page's nonce applies (the harness can observe an applied style)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "csp-negative",
+      "name": "a <style> injected through HTML markup stays blocked while licensed Studio is loaded",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "csp-negative",
+      "name": "a script-created <style> WITHOUT the nonce stays blocked (no page-wide createElement shim exists)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "csp-negative",
+      "name": "a <style> with a wrong nonce stays blocked",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "csp-negative",
+      "name": "an inline style ATTRIBUTE stays blocked",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "csp-negative",
+      "name": "BOTH enforcing policies (header CSP and the build-time meta CSP) independently report each blocked attempt: 3 style-src-elem + 1 style-src-attr per policy, nothing else",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

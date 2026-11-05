@@ -4,20 +4,27 @@ import type { AnalyticsSummary } from "../../domain/serverAnalytics.js";
 import type { StudioRange } from "./studioModel.js";
 
 /**
- * Opt-in, development-only "Activity analytics" (AG Studio) slot for the real dashboard.
+ * "Activity analytics" (AG Studio) slot for the real authenticated dashboard. Two ways in, both decided at build time:
  *
- * `import.meta.env.DEV` is a build-time constant, so a production build contains neither this feature's panel,
- * the licensed packages, the licence fetch nor any key (the build additionally fails if a Studio package is ever
- * resolved, see vite.studio-dev.ts). Default OFF: without VITE_NMI_STUDIO_LOCAL=1 this renders nothing and the
- * dashboard is exactly the Community one. If the lazy chunk or the panel fails, the slot shows a short
+ * - **Licensed production variant (P5):** `NMI_WEB_STUDIO=licensed` at `vite build` defines
+ *   `__NMI_STUDIO_LICENSED__ = true`. The panel and the licensed packages then ship as LAZY chunks loaded only
+ *   after sign-in; the licence itself is never in the build and is fetched at runtime from the authenticated
+ *   `/api/studio/licence` route (studioLicence.ts). The build guard and bundle scan verify this variant.
+ * - **Local development (A5-I1):** the Vite dev server with `VITE_NMI_STUDIO_LOCAL=1`; licence via the
+ *   loopback-only dev bridge.
+ *
+ * Any other build (the default, CI's ordinary build, tests) is the Community dashboard: this renders nothing and
+ * the build fails if a Studio package is resolved. If the lazy chunk or the panel fails, the slot shows a short
  * "Charts unavailable" notice and the cards and the AG Grid Community table are untouched.
  */
-const StudioPanel =
-  import.meta.env.DEV && import.meta.env["VITE_NMI_STUDIO_LOCAL"] === "1"
-    ? lazy(() => import("./StudioPanel.js"))
-    : null;
+export const studioLicensedBuild =
+  typeof __NMI_STUDIO_LICENSED__ !== "undefined" && __NMI_STUDIO_LICENSED__ === true;
+const studioDevLocal = import.meta.env.DEV && import.meta.env["VITE_NMI_STUDIO_LOCAL"] === "1";
 
-export const studioLocalEnabled = StudioPanel !== null;
+const StudioPanel =
+  studioLicensedBuild || studioDevLocal ? lazy(() => import("./StudioPanel.js")) : null;
+
+export const studioEnabled = StudioPanel !== null;
 
 /**
  * Dependency-free fallback for when the outer StudioPanel chunk itself cannot load or render. It makes no claim
@@ -93,7 +100,7 @@ export function StudioSlot({ summary, range }: { summary: AnalyticsSummary; rang
  * shows no figures (never stale ones) and the dashboard's own loading status is the announced state.
  */
 export function StudioSlotPlaceholder() {
-  if (!studioLocalEnabled) return null;
+  if (!studioEnabled) return null;
   return (
     <div className="studio-slot" aria-hidden="true" data-testid="studio-placeholder">
       <div className="card studio studio-placeholder">

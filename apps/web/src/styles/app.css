@@ -641,7 +641,8 @@ table.data td.r {
   margin-top: 0;
 }
 .studio-placeholder-body {
-  height: 360px;
+  /* Matches the loaded desktop panel (hints, headline figures, 252px trend chart, daily-table toggle). */
+  height: 495px;
 }
 @media (max-width: 767px) {
   /* The panel starts collapsed on narrow screens, so only its header is reserved. */

@@ -47,6 +47,10 @@ jobs:
         run: pnpm test:db
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/nmi_test
+      - name: P5 licensed Studio web build (no licence value involved) and its bundle scan
+        run: |
+          pnpm build:web:licensed
+          pnpm check:bundle:licensed
       - run: pnpm build
       - run: pnpm check:bundle
       - name: Migration is in sync with schema

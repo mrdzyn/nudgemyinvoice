@@ -85,30 +85,62 @@ export function studioDevLicence(flagOn: boolean, dirs?: readonly string[]): Plu
 const LICENSED = /^ag-(studio|studio-react|charts-enterprise|grid-enterprise)(\/|$)/;
 const LICENSED_PATH =
   /node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?ag-(?:studio|studio-react|charts-enterprise|grid-enterprise)\//;
+/** Strings that only the dev-server licence bridge uses; no built bundle (either variant) may contain them. */
+const DEV_ONLY_MARKERS = ["__nmi_dev", "x-nmi-dev-studio"] as const;
+
+export type StudioVariant = "community" | "licensed";
 
 /**
- * Defence in depth for ordinary builds: the licensed AG Studio packages (and the enterprise grid/charts they
- * pull in) exist only behind the dev-gated Studio slot, which is removed from production builds at build time.
- * If anything ever resolves or bundles one of them in `vite build` (any mode, any env), the build FAILS rather
- * than silently shipping licensed code.
+ * The ONLY switch for the licensed production dashboard (P5): `NMI_WEB_STUDIO=licensed` at build time. Unset or
+ * empty is the Community build. Anything else fails the build, so a typo can never silently pick a variant.
+ * (No VITE_ prefix: the setting itself is not exposed to the browser; only the derived boolean is defined.)
  */
-export function studioBuildGuard(): Plugin {
+export function studioVariant(raw: string | undefined): StudioVariant {
+  if (raw === undefined || raw === "") return "community";
+  if (raw === "licensed") return "licensed";
+  throw new Error('NMI_WEB_STUDIO must be unset (Community build) or exactly "licensed"');
+}
+
+/**
+ * Production-build guard for both variants.
+ *
+ * - **community** (default): the licensed AG Studio packages (and the enterprise grid/charts they pull in) must
+ *   never be resolved or bundled; the build FAILS otherwise.
+ * - **licensed** (P5): they MUST be present, but only in lazy (non-entry) chunks, so the sign-in page and the
+ *   initial shell never carry them; the licence is fetched at runtime and is never part of any build input.
+ *
+ * In both variants a chunk containing a dev-only licence-bridge marker fails the build.
+ */
+export function studioBuildGuard(variant: StudioVariant = "community"): Plugin {
   return {
     name: "nmi-studio-build-guard",
     apply: "build",
     resolveId(source) {
-      if (LICENSED.test(source))
+      if (variant === "community" && LICENSED.test(source))
         this.error(
-          `A licensed AG Studio package ("${source}") must never be part of a production build.`,
+          `A licensed AG Studio package ("${source}") must never be part of a Community production build.`,
         );
       return null;
     },
     generateBundle(_options, bundle) {
+      let lazyStudio = false;
       for (const chunk of Object.values(bundle)) {
         if (chunk.type !== "chunk") continue;
-        const hit = chunk.moduleIds.find((id) => LICENSED_PATH.test(id));
-        if (hit) this.error("A licensed AG Studio module reached the production bundle.");
+        for (const m of DEV_ONLY_MARKERS)
+          if (chunk.code.includes(m))
+            this.error(`A dev-only Studio licence marker reached the production bundle (${m}).`);
+        const hit = chunk.moduleIds.some((id) => LICENSED_PATH.test(id));
+        if (!hit) continue;
+        if (variant === "community")
+          this.error("A licensed AG Studio module reached the Community production bundle.");
+        if (chunk.isEntry)
+          this.error(
+            "Licensed AG Studio code must load lazily after sign-in, not in an entry chunk.",
+          );
+        lazyStudio = true;
       }
+      if (variant === "licensed" && !lazyStudio)
+        this.error("NMI_WEB_STUDIO=licensed but no lazy AG Studio chunk was produced.");
     },
   };
 }

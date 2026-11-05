@@ -48,7 +48,9 @@ Enforced by `release-preflight env` (prints rule ids and *names*, never values).
 | `DATABASE_URL` | runtime-role URL, user `nmi_runtime`, with password | internal URL; owner credential never on the web service |
 | `SESSION_SECRET` | ≥ 32 chars, real entropy | secret |
 | `PAYPAL_ENV` / `PAYPAL_API_BASE_URL` / `PAYPAL_DRAFTS_ENABLED` | `sandbox` / `https://api-m.sandbox.paypal.com` / `false` | |
-| **Must be absent** | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_MAX_OUTPUT_TOKENS`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `WEB_DIST_DIR`, `TEST_DATABASE_URL`, `REQUIRE_DB_TESTS`, `PGPASSFILE`, `PGPASSWORD`, anything starting `AG_STUDIO`, `VITE_`, `NMI_` | Studio licence, Vite-exposed values, simulated switches |
+| `NMI_WEB_STUDIO` (**P5**) | `licensed` | selects the licensed AG Studio web build; shared by Render's build and runtime |
+| `AG_STUDIO_LICENSE_KEY` (**P5**) | owner's deployment licence, secret store only | released at runtime only to the signed-in operator; never in a build, log or document |
+| **Must be absent** | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_MAX_OUTPUT_TOKENS`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `WEB_DIST_DIR`, `TEST_DATABASE_URL`, `REQUIRE_DB_TESTS`, `PGPASSFILE`, `PGPASSWORD`, anything else starting `AG_STUDIO`, `VITE_`, `NMI_` (P5: only the two names above are allowed) | other Studio settings, Vite-exposed values, simulated switches |
 
 Gap noted, not changed: `loadConfig` itself does not refuse provider keys in production (the app must stay usable with them for the owner's later gated gates). The preflight is the enforcement point and must be run by the operator against the *service's* environment (dashboard-exported names, or the shell used to dry-run) before go-live.
 
@@ -104,7 +106,7 @@ Create (manual, region Singapore if available; Hobby; Starter web; Basic 256 MB 
 | G4 | Owner picks the release SHA and creates `release/nmi-render-judges-2026` (§2). |
 | G5 | Owner accepts the Hobby request-log residual risk (§6) in writing. |
 | G6 | Separate approval for resource creation and the unavoidable first build; separate approval to share the URL; judge-access method (supervised credentials or video) decided. |
-| G7 | Owner decides on Studio packages being downloaded by Render's build (§3). Hosted Studio *use* remains NOT AUTHORIZED. |
+| G7 | Owner decides on Studio packages being downloaded by Render's build (§3). Hosted Studio *use* remains NOT AUTHORIZED. **P5 (2026-11-04): owner attests the AG Studio deployment licence covers the judge-facing production environment through the December judging window; see `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md`. Independent audit and the remaining gates still apply.** |
 | G8 | Gates A, B, C stay NOT AUTHORIZED: no OpenAI/PayPal credentials on Render. |
 
 ## 11. Commands to reproduce
@@ -119,3 +121,13 @@ Independent audit of `ddac915…` found MAJOR-1 (release branch tip judged from 
 - Owner-approved P3 budget PR #39 was independently audited PASS and squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. The original P4 source/checker and local QA artifacts were kept unchanged; PR #40 receives a normal **two-parent merge commit** to integrate P3's five documentation files and preserve both P3 and P4 handoff histories. G3 is now closed; **G1/G2 owner P4 merge/G4/G5/G6/G7 remain OPEN** and G8 provider prohibition continues.
 - `docs/STATUS.md` now points to the P4 release-readiness task and `NMI-RENDER-P4-FIX1-01`; the P2 Free-tier choice remains historical and cannot be used for the proposed judge release. No current Render cost quote, eligible credit check, Studio vendor consent, host request-log evidence, release branch or production deployment was created by this reconciliation.
 - Reconciliation changes documentation only; run both hosted CI workflows on the **new PR #40 exact HEAD**, confirm mergeability and obtain focused independent audit before requesting any owner squash merge. No merge, deploy, billing approval escalation, provider calls or judge URL publication follows automatically.
+
+## 13. P5 supersession (licensed AG Studio production dashboard)
+
+This P4 record describes the Community-only release as it was audited. P5 (Draft PR, unmerged) changes the release target to the **licensed AG Studio dashboard**, on owner attestation of the deployment licence. Where P5 differs, `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md` governs once P5 is audited and merged:
+
+- **Build:** `pnpm install --frozen-lockfile --prod=false && pnpm build:web:licensed && pnpm check:bundle:licensed`, with `NMI_WEB_STUDIO=licensed` in the service environment. The bundle scan runs in the Render build, where `AG_STUDIO_LICENSE_KEY` is set, so the hosted build itself proves the licence value is absent from every built file.
+- **Row 1 of §1** ("Community-only") is superseded for the release: Studio ships in lazy chunks loaded only after sign-in. The Community build remains the default and is still checked in CI.
+- **Environment matrix (§4):** `NMI_WEB_STUDIO=licensed` and a well-formed `AG_STUDIO_LICENSE_KEY` are **required**; every other `AG_STUDIO*`, `VITE_*` and `NMI_*` name stays forbidden. `release-preflight env` enforces this.
+- **CSP (§5):** unchanged, except the HTML shell's `style-src` now also allows a fresh per-response nonce and the exact SHA-256 hashes of four static vendor stylesheets, for runtime-injected `<style>` elements. Scripts stay `'self'`, there is no `'unsafe-inline'`, and the shell is `no-store`.
+- Gates G1–G6 and G8 are unchanged. G7 is recorded above as owner-attested; it is not independently verified.

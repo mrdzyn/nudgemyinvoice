@@ -1,7 +1,9 @@
 /**
  * NMI-RENDER-P4 release preflight (pure, offline). Two independent checks an operator runs BEFORE any Render
  * action; neither calls Render, a provider or the network, and neither ever returns an environment VALUE:
- *  - `checkReleaseEnv`: the provider-disabled, Community-only hosted environment matrix (names + verdicts only).
+ *  - `checkReleaseEnv`: the provider-disabled hosted environment matrix (names + verdicts only). Since P5 the release
+ *    is the LICENSED AG Studio dashboard: `NMI_WEB_STUDIO=licensed` and a well-formed `AG_STUDIO_LICENSE_KEY` are
+ *    REQUIRED; every other Studio/Vite/simulated variable stays forbidden.
  *  - `checkReleaseSource`: the exact-SHA controls (deploy only an audited commit that is on `main`, never a tip).
  */
 
@@ -15,7 +17,7 @@ export interface Finding {
 export const SANDBOX_API = "https://api-m.sandbox.paypal.com";
 export const RUNTIME_ROLE = "nmi_runtime";
 
-/** Variables that must be ABSENT from the hosted web service (provider-disabled, Community-only build). */
+/** Variables that must be ABSENT from the hosted web service (provider-disabled build). */
 const FORBIDDEN_NAMES = new Set([
   "OPENAI_API_KEY",
   "OPENAI_MODEL",
@@ -28,11 +30,22 @@ const FORBIDDEN_NAMES = new Set([
   "PGPASSFILE",
   "PGPASSWORD",
 ]);
-/** Prefix families that must be absent: Studio licence/flags, any Vite-exposed variable, simulated switches. */
+/** Prefix families that must be absent: other Studio settings, any Vite-exposed variable, simulated switches. */
 const FORBIDDEN_PREFIXES = ["AG_STUDIO", "VITE_", "NMI_"] as const;
+/**
+ * P5 licensed release: the ONLY two names allowed inside those families, and both are required. Render shares one
+ * variable set between build and runtime, so `NMI_WEB_STUDIO` selects the licensed web build and the API serves
+ * `AG_STUDIO_LICENSE_KEY` to the signed-in operator only. The key is a secret-store value; it never reaches a build.
+ */
+export const STUDIO_VARIANT_NAME = "NMI_WEB_STUDIO";
+export const STUDIO_LICENCE_NAME = "AG_STUDIO_LICENSE_KEY";
+const ALLOWED_IN_FAMILIES = new Set([STUDIO_VARIANT_NAME, STUDIO_LICENCE_NAME]);
+/** Same shape the API config accepts (config.ts); the value itself is never reported. */
+const LICENCE_SHAPE = /^[\x20-\x7e]{16,8192}$/;
 
 const isForbidden = (name: string) =>
-  FORBIDDEN_NAMES.has(name) || FORBIDDEN_PREFIXES.some((p) => name.startsWith(p));
+  !ALLOWED_IN_FAMILIES.has(name) &&
+  (FORBIDDEN_NAMES.has(name) || FORBIDDEN_PREFIXES.some((p) => name.startsWith(p)));
 
 function parseUrl(v: string | undefined): URL | null {
   if (!v) return null;
@@ -106,6 +119,13 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
     "PORT is injected by the host; if present it must be a port number (never hard-coded here)",
   );
 
+  eq(STUDIO_VARIANT_NAME, "licensed");
+  add(
+    `env.${STUDIO_LICENCE_NAME}`,
+    LICENCE_SHAPE.test((env[STUDIO_LICENCE_NAME] ?? "").trim()),
+    `${STUDIO_LICENCE_NAME} must hold the owner's AG Studio deployment licence (16-8192 printable ASCII characters, set in the host secret store; value never shown)`,
+  );
+
   const present = Object.keys(env)
     .filter((n) => env[n] !== undefined && isForbidden(n))
     .sort();
@@ -113,7 +133,7 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
     "env.forbidden-absent",
     present.length === 0,
     present.length === 0
-      ? "No provider key, Studio licence, Vite-exposed, simulated-evaluation or test variable is set"
+      ? "No provider key, other Studio setting, Vite-exposed, simulated-evaluation or test variable is set"
       : `Forbidden variable names present (values not shown): ${present.join(", ")}`,
   );
   return out;
