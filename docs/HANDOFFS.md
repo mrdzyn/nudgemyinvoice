@@ -2062,4 +2062,12 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Not started:** queue UI, dashboard card, saved-invoice card, Nudgey intent, browser QA (all gated on approval). No live provider, sending, Render, deploy or merge.
 - **Next:** owner approves or amends D1–D7 → UI shell against the approved previews → wiring → browser QA → CI → independent review.
 
+## Handoff: NMI-P6-IMPL-01
+
+- **Task / branch:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`; `feat/nmi-p6-ai-nudges`, Draft PR #43 stacked on P5 #42. **From / to:** implementation agent → **independent exact-HEAD audit** (then owner merge sequencing). Design gate CLOSED (owner approval, PR #43 comment 6652365002).
+- **Delivered since `NMI-P6-DESIGN-01`:** owner refinements 1–3; `maxRetries: 0` with a one-request proof; the approved UI (`apps/web/src/nudges/`, `nudgey/nudgeIntent.ts`, `nudgey/NudgeDraftFlow.tsx`, nav, dashboard slot, saved-invoice card); test-only launcher + browser journey under `design/evidence/NMI-P6/`.
+- **Audit focus:** `packages/ai/src/nudge.ts` (`PAYMENT_STATUS` guard, `DUE_TEXT`, retries); `apps/web/src/nudges/api.ts` strict parsing (`sentToCustomer === false`); version binding in `PendingReviewPanel` (approve disabled while dirty); every costed call behind an explicit click (+ confirm dialog for Regenerate, confirm step in chat); boundary-test updates (`boundaries.test.ts`, `StatusPicker.test.tsx` fetch allowlist) are deliberate; P5 dashboard change is only the `nudgeCard` slot.
+- **Evidence:** validate 1341, test:db 366, journey 150/150 (`design/evidence/NMI-P6/qa-results.json`), preview 25/25; hosted CI at the final head (in the PR).
+- **Not done / not authorized:** live OpenAI (Gate A), PayPal, sending/scheduling of any kind, Render, deploy, merge.
+
 <!-- HANDOFF_ENTRIES_END -->

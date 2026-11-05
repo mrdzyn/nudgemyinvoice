@@ -1,8 +1,8 @@
 # NMI-P6 — AI Nudge Intelligence
 
-**Status:** backend implemented and tested; **UI design awaiting owner approval** (`design/screens/NMI-P6-AI-NUDGE-QUEUE.md`). Not merged or deployed.
+**Status:** backend + approved UI implemented and tested; **awaiting independent exact-HEAD audit**. Not merged or deployed, not complete.
 **Base:** stacked on accepted P5 (Draft PR #42 at `7ab0dcd50e35e12f4f579be4929c5a7753221e2a`, itself on PR #41). P5 is preserved exactly.
-**UI design gate:** **required and OPEN.** The screen map, flows, states and previews are submitted. The UI shell, dashboard integration and Nudgey wiring start only after owner approval.
+**UI design gate:** **CLOSED / APPROVED** by the owner (D1–D7) on PR #43, https://github.com/mrdzyn/nudgemyinvoice/pull/43#issuecomment-6652365002 (2026-11-05), with three mandatory refinements (below), all implemented.
 
 ## Scope
 - **Allowed:**
@@ -38,4 +38,16 @@
   - routes in `apps/api/src/routes/nudges.ts`;
   - nudge audit actions.
 - **Tests:** AI 79 (package), store 7 (PostgreSQL), API 12 (PostgreSQL), plus updated migration/constraint/runtime-role guards.
-- **Next (after approval):** UI shell → wiring → browser QA → CI → independent review.
+- **Done (owner refinements):**
+  1. Unsupported payment-status claims removed: date-only wording in the prompt, the model input (`due_status`) and the UI; a server-side `payment_status_claim` guard on the message AND rationale, with positive and negative tests (AI package) and an API 422 test; prompt version `p6-nudge-v2`.
+  2. The tone select keeps "Professional" fully visible at 390px (`min-width: 10.5rem`); measured in browser QA.
+  3. Mobile targets ≥ 44px, asserted in browser QA for every P6 surface (and in the corrected preview builder).
+- **Done (D6 contract):** OpenAI nudge client `maxRetries: 0`, proven to make exactly one request on 429/500/503 via an injected `fetch` (negative control with `maxRetries: 1` fails the test); output cap 600 and `store: false` asserted.
+- **Done (UI, approved frames 01–07):**
+  - `apps/web/src/nudges/` — typed strict transport (`api.ts`), controller (real counts, 401 → session end, no polling), queue screen (Pending / Approved / History tabs, ARIA tablist, review panel with verified facts, edit/save, approve-for-manual-use, reject with confirmation, regenerate with confirmation, Copy only after approval), dashboard summary card (slot above the unchanged P5 filters), saved-invoice drafting card.
+  - Nav "Nudge queue" tab with real pending badge (desktop) and "Nudges" (mobile).
+  - Nudgey: deterministic draft intent (`nudgey/nudgeIntent.ts`), explicit invoice choice + confirmation before each costed draft (`NudgeDraftFlow.tsx`), clear refusal of send/e-mail/text/schedule requests; existing on-device speech reused unchanged.
+  - All states: loading, empty, error + Retry, AI off, refused, rate-limited, busy, pending-exists, version-conflict / not-pending.
+- **Evidence:** web unit/DOM tests (transport 29, intent 27, queue/card UI 22, chat flow 7); `pnpm validate` (1341 passed); `pnpm test:db` (366 passed, disposable PostgreSQL 16); browser journey `design/evidence/NMI-P6/run-nudge-journey.mjs` 150/150 with 35 synthetic screenshots (desktop + 390px, light + dark) — see `design/evidence/NMI-P6/QA-RESULTS.md`; corrected design preview 25/25.
+- **Limitations:** fake model only (live OpenAI = Gate A, NOT AUTHORIZED); drafts cannot mention line items (D4); no axe-core in the repo (contrast is computed in-page, plus structural checks); the queue re-reads on open and after your own changes, not on a timer (no polling by design).
+- **Next:** independent exact-HEAD audit → owner merge sequencing (#41 → #42 → #43). No merge or deploy by the implementation agent.

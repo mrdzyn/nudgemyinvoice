@@ -15,6 +15,9 @@ import {
 import { createParseApi, type ParseApi } from "./parse/api.js";
 import { createFollowUpApi, type FollowUpApi } from "./followups/api.js";
 import { FollowUpsController } from "./followups/controller.js";
+import { createNudgeApi, type NudgeApi } from "./nudges/api.js";
+import { NudgesController } from "./nudges/controller.js";
+import { browserTimeZoneOrNull } from "./nudgey/scheduleIntent.js";
 import { AppProvider } from "./demo/AppContext.js";
 import { initialState, reducer, type Action, type Screen, type Theme } from "./demo/appState.js";
 import type { InvoiceDraft } from "./domain/types.js";
@@ -25,6 +28,7 @@ const defaultApi = createAuthApi();
 const defaultParseApi = createParseApi();
 const defaultInvoiceApi = createInvoiceApi();
 const defaultFollowUpApi = createFollowUpApi();
+const defaultNudgeApi = createNudgeApi();
 
 function systemTheme(): Theme {
   return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
@@ -64,6 +68,7 @@ function Workspace({
   parseApi,
   invoiceApi,
   followUpApi,
+  nudgeApi,
   theme,
 }: {
   session: Session;
@@ -73,6 +78,7 @@ function Workspace({
   parseApi: ParseApi;
   invoiceApi: InvoiceApi;
   followUpApi: FollowUpApi;
+  nudgeApi: NudgeApi;
   theme: Theme;
 }) {
   const csrfToken = session.csrfToken;
@@ -87,6 +93,21 @@ function Workspace({
     followUps.start();
     return () => followUps.stop();
   }, [followUps]);
+  // NMI-P6: the AI nudge queue for this workspace. Its counts are read on demand (no polling, no dispatch).
+  const [nudges] = useState(
+    () =>
+      new NudgesController(
+        nudgeApi,
+        csrfToken,
+        () => expireRef.current(),
+        () => browserTimeZoneOrNull() ?? "UTC",
+      ),
+  );
+  useEffect(() => {
+    nudges.start();
+    void nudges.refresh();
+    return () => nudges.stop();
+  }, [nudges]);
   const save = useCallback(
     (draft: InvoiceDraft, key: string, signal: AbortSignal) =>
       invoiceApi.save(draft, key, csrfToken, signal),
@@ -174,6 +195,7 @@ function Workspace({
         createPayPalDraft,
         sessionExpired: expire,
         followUps,
+        nudges,
         setSaveGuard,
       }}
     >
@@ -213,6 +235,7 @@ export interface RealViewProps {
   parseApi?: ParseApi;
   invoiceApi?: InvoiceApi;
   followUpApi?: FollowUpApi;
+  nudgeApi?: NudgeApi;
 }
 
 function StatusCard({ id, children }: { id: string; children: string }) {
@@ -242,6 +265,7 @@ export function RealView({
   parseApi = defaultParseApi,
   invoiceApi = defaultInvoiceApi,
   followUpApi = defaultFollowUpApi,
+  nudgeApi = defaultNudgeApi,
 }: RealViewProps) {
   if (state.status === "authenticated") {
     const epoch = state.epoch;
@@ -255,6 +279,7 @@ export function RealView({
         parseApi={parseApi}
         invoiceApi={invoiceApi}
         followUpApi={followUpApi}
+        nudgeApi={nudgeApi}
         theme={theme}
       />
     );
@@ -289,11 +314,13 @@ export function RealApp({
   parseApi = defaultParseApi,
   invoiceApi = defaultInvoiceApi,
   followUpApi = defaultFollowUpApi,
+  nudgeApi = defaultNudgeApi,
 }: {
   api?: AuthApi;
   parseApi?: ParseApi;
   invoiceApi?: InvoiceApi;
   followUpApi?: FollowUpApi;
+  nudgeApi?: NudgeApi;
 }) {
   const auth = useAuthController(api);
   const [theme] = useState(systemTheme);
@@ -323,6 +350,7 @@ export function RealApp({
       parseApi={parseApi}
       invoiceApi={invoiceApi}
       followUpApi={followUpApi}
+      nudgeApi={nudgeApi}
     />
   );
 }

@@ -1,17 +1,39 @@
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { useApp } from "../demo/AppContext.js";
 import { Notice } from "./Notice.js";
 import { Nudgey } from "./Nudgey.js";
 import type { Screen } from "../demo/appState.js";
+import type { NudgesController, NudgeSnapshot } from "../nudges/controller.js";
+
+const noSubscribe = () => () => undefined;
+const NO_NUDGES: NudgeSnapshot = {
+  counts: null,
+  aiAvailable: false,
+  status: "loading",
+  version: 0,
+};
+const noNudges = () => NO_NUDGES;
+
+/** Real pending-review count for the nav badge (NMI-P6); null until the server has answered. */
+function usePendingCount(nudges: NudgesController | undefined): number | null {
+  const snap = useSyncExternalStore(
+    nudges ? nudges.subscribe : noSubscribe,
+    nudges ? nudges.getSnapshot : noNudges,
+    noNudges,
+  );
+  return snap.counts?.pending ?? null;
+}
 
 function NavButton({
   target,
   label,
   current,
+  count,
 }: {
   target: Screen;
   label: string;
   current: boolean;
+  count?: number | null;
 }) {
   const { dispatch } = useApp();
   return (
@@ -24,6 +46,12 @@ function NavButton({
       }
     >
       {label}
+      {count ? (
+        <span className="nq-count" data-testid="nav-nudge-count">
+          {count}
+          <span className="sr-only"> pending review</span>
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -35,6 +63,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const shell = state.screen !== "login";
   const onDashboard = state.screen === "dashboard" || state.screen === "detail";
   const onComposer = state.screen === "composer" || state.screen === "review";
+  const onNudges = state.screen === "nudges";
+  const nudges = session?.nudges;
+  const pending = usePendingCount(nudges);
   return (
     <>
       <div className="sandbox-banner" role="note" aria-label="PayPal Sandbox notice">
@@ -90,6 +121,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {shell ? (
         <nav className="app-nav" aria-label="Main">
           <NavButton target="dashboard" label="Invoice drafts" current={onDashboard} />
+          {nudges ? (
+            <NavButton target="nudges" label="Nudge queue" current={onNudges} count={pending} />
+          ) : null}
           <NavButton target="composer" label="New invoice" current={onComposer} />
         </nav>
       ) : null}
@@ -115,6 +149,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             Drafts
           </button>
+          {nudges ? (
+            <button
+              type="button"
+              aria-current={onNudges ? "page" : undefined}
+              onClick={() => dispatch({ type: "navigate", screen: "nudges" })}
+            >
+              Nudges
+              {pending ? (
+                <span className="nq-count">
+                  {pending}
+                  <span className="sr-only"> pending review</span>
+                </span>
+              ) : null}
+            </button>
+          ) : null}
           <button
             type="button"
             aria-current={onComposer ? "page" : undefined}

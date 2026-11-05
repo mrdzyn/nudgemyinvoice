@@ -218,7 +218,7 @@ describe.skipIf(!url)("AI nudge queue API (real PostgreSQL)", () => {
     expect(JSON.parse(model.calls.at(-1)?.input ?? "{}")).toEqual({
       tone: "professional",
       currency: "USD",
-      due_status: "overdue by up to one week",
+      due_status: "the due date passed up to one week ago",
       earlier_reminder_approved: false,
     });
   });
@@ -233,6 +233,15 @@ describe.skipIf(!url)("AI nudge queue API (real PostgreSQL)", () => {
       ),
     });
     expect((await generate(sA, inv)).statusCode).toBe(422);
+    // Owner refinement 1: an unsupported payment-status claim, in the message or the rationale, is refused.
+    model.next = () => ({
+      ...GOOD,
+      message: GOOD.message.replace("Could you", "The invoice is still unpaid. Could you"),
+    });
+    expect([(await generate(sA, inv)).statusCode]).toEqual([422]);
+    model.next = () => ({ ...GOOD, rationale: "The balance is outstanding, so it is direct." });
+    const rs = await generate(sA, inv);
+    expect([rs.statusCode, rs.json()]).toEqual([422, { error: "ai_output_rejected" }]);
     model.next = () => {
       throw new Error("provider said: sk-secret Zorblax");
     };

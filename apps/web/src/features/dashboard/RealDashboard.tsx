@@ -9,6 +9,7 @@ import { MAX_SEARCH_CHARS } from "../../domain/serverList.js";
 import { CURRENCY_CODES } from "../../domain/types.js";
 import { buildDashboardDateRange } from "../../domain/dateRange.js";
 import { StudioSlot, StudioSlotPlaceholder } from "../studio/StudioSlot.js";
+import { NudgeSummaryCard } from "../../nudges/NudgeSummaryCard.js";
 import { InvoiceGrid } from "./InvoiceGrid.js";
 import {
   hasFilters,
@@ -122,6 +123,7 @@ export function RealDashboardView({
   onOpen,
   onNew,
   headingRef,
+  nudgeCard,
 }: {
   state: DashState;
   searchText: string;
@@ -137,6 +139,8 @@ export function RealDashboardView({
   onOpen: (id: string) => void;
   onNew: () => void;
   headingRef?: React.Ref<HTMLHeadingElement>;
+  /** NMI-P6 AI Nudge Queue summary (approved D1), rendered above the unchanged P5 filters. */
+  nudgeCard?: React.ReactNode;
 }) {
   const f = state.filters;
   const filtered = hasFilters(f) || searchText.trim() !== "";
@@ -444,6 +448,8 @@ export function RealDashboardView({
           New invoice
         </button>
       </div>
+      {/* NMI-P6 (approved D1): the AI Nudge Queue card sits ABOVE the unchanged P5 filters/analytics/grid. */}
+      {nudgeCard ?? null}
       {!showBar && state.status === "loading" ? skeleton : body}
     </>
   );
@@ -505,6 +511,7 @@ export function RealDashboard({ list, analytics }: { list: ListFn; analytics: An
       onOpen={(id) => appDispatch({ type: "open-saved", id, notice: "opened" })}
       onNew={() => appDispatch({ type: "navigate", screen: "composer", resetComposer: true })}
       headingRef={headingRef}
+      nudgeCard={session?.nudges ? <NudgeSummaryCard controller={session.nudges} /> : null}
     />
   );
 }

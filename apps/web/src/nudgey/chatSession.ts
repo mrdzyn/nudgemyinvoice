@@ -3,6 +3,8 @@ import type { ListQuery, ListResult } from "../invoices/api.js";
 import { MAX_PROMPT_CHARS, parseIntent } from "./intent.js";
 import { runLookup, summarizeForAnnouncement, type LookupResult } from "./lookup.js";
 import { browserTimeZoneOrNull, parseScheduleIntent } from "./scheduleIntent.js";
+import { parseNudgeIntent } from "./nudgeIntent.js";
+import type { NudgeTone } from "../nudges/api.js";
 import {
   ScheduleCandidateController,
   type ScheduleCandidateState,
@@ -19,6 +21,11 @@ export interface ChatMessage {
   schedule?: ScheduleCandidateState;
   /** A lookup is running for this question. */
   pending?: boolean;
+  /**
+   * NMI-P6: a proposed nudge draft (tone + customer term only). The reply renders an explicit invoice choice and
+   * a confirmation step; nothing is drafted, and no AI call is made, without the operator's click.
+   */
+  nudge?: { tone: NudgeTone | null; term: string };
 }
 
 export const MAX_MESSAGES = 20;
@@ -112,6 +119,26 @@ export class ChatSession {
     this.work = null;
     this.deps.scheduleCandidates?.abortSuperseded();
     this.scheduleReplyId = null;
+    const nudgeIntent = parseNudgeIntent(raw);
+    if (nudgeIntent.kind !== "not-nudge") {
+      this.deps.scheduleCandidates?.supersedeCandidate();
+      const user: ChatMessage = {
+        id: this.nextId++,
+        role: "user",
+        text: raw.slice(0, MAX_PROMPT_CHARS),
+      };
+      const reply: ChatMessage =
+        nudgeIntent.kind === "draft"
+          ? {
+              id: this.nextId++,
+              role: "nudgey",
+              nudge: { tone: nudgeIntent.tone, term: nudgeIntent.term },
+            }
+          : { id: this.nextId++, role: "nudgey", text: nudgeIntent.message };
+      this.set([...this.dropReplaceableAttempt(), user, reply]);
+      if (reply.text) this.deps.announce(reply.text);
+      return;
+    }
     const scheduleIntent = parseScheduleIntent(
       raw,
       (this.deps.now ?? (() => new Date()))(),

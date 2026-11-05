@@ -7,6 +7,8 @@ import { statusLabel, type Failure, type InvoiceGroup, type LookupResult } from 
 import type { ChatMessage } from "./chatSession.js";
 import type { ScheduleCandidateState } from "./scheduleCandidate.js";
 import { useLocalSpeech } from "./useLocalSpeech.js";
+import { NudgeDraftFlow } from "./NudgeDraftFlow.js";
+import { NUDGE_EXAMPLE } from "./nudgeIntent.js";
 
 export const DRAFT_STATE_NOTE =
   "PayPal draft state is not payment status: nothing here says whether an invoice has been paid.";
@@ -346,6 +348,8 @@ export function ChatView({
   onReviewSchedule,
   onRetrySchedule,
   onDraftChange,
+  onOpenQueue,
+  initialText = "",
 }: {
   messages: ChatMessage[];
   busy: boolean;
@@ -359,12 +363,16 @@ export function ChatView({
   onReviewSchedule: () => void;
   onRetrySchedule: () => void;
   onDraftChange: () => void;
+  /** NMI-P6: open the Nudge queue (optionally on one draft). Absent => nudge drafting is not offered. */
+  onOpenQueue?: (id: string | null) => void;
+  /** NMI-P6: an editable prefill (e.g. from "Draft a nudge"). Never submitted automatically. */
+  initialText?: string;
 }) {
   const inputId = useId();
   const speechStatusId = useId();
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText.slice(0, MAX_PROMPT_CHARS));
   const speech = useLocalSpeech((transcript) => {
     if (!transcript.trim()) return;
     // A new transcript is a new draft: invalidate any old actionable C2 candidate first.
@@ -401,8 +409,9 @@ export function ChatView({
     <section className="chat" aria-label="Ask Nudgey">
       <h3 className="followup-form-title">Ask Nudgey</h3>
       <p className="followup-hint">
-        Read-only lookups of your own saved invoices and follow-ups. Nothing is sent, changed or
-        scheduled from here.
+        {onOpenQueue
+          ? `Look up your own saved invoices and follow-ups, or draft a payment nudge for your review — try “${NUDGE_EXAMPLE}”. You confirm every draft first. Nothing is sent, changed or scheduled from here without your click, and drafts are never sent.`
+          : "Read-only lookups of your own saved invoices and follow-ups. Nothing is sent, changed or scheduled from here."}
       </p>
       <div className="chat-chips" role="group" aria-label="Example questions">
         {EXAMPLE_QUESTIONS.map((q) => (
@@ -442,6 +451,11 @@ export function ChatView({
                   onOpenInvoice={onOpenInvoice}
                   onOpenDashboard={onOpenDashboard}
                 />
+              ) : null}
+              {m.nudge && onOpenQueue ? (
+                <NudgeDraftFlow request={m.nudge} onOpenQueue={onOpenQueue} />
+              ) : m.nudge ? (
+                <p>Nudge drafting isn't available here.</p>
               ) : null}
               {m.schedule ? (
                 <ScheduleCandidateView

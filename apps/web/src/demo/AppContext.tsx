@@ -22,6 +22,7 @@ import type {
 import type { InvoiceDraft } from "../domain/types.js";
 import type { ParseResult } from "../parse/api.js";
 import type { FollowUpsController } from "../followups/controller.js";
+import type { NudgesController } from "../nudges/controller.js";
 
 /** Present only in real (server-authenticated) mode. */
 export interface SessionInfo {
@@ -44,6 +45,8 @@ export interface SessionInfo {
   getInvoice?: (id: string, signal: AbortSignal) => Promise<GetResult>;
   /** Local follow-up reminders (NMI-FUP-01), CSRF bound in memory. Real mode only. */
   followUps?: FollowUpsController;
+  /** NMI-P6 AI nudge queue (drafts for the operator's own manual use; nothing is ever sent). Real mode only. */
+  nudges?: NudgesController;
   /** Review reports whether a save is unresolved so leaving the screen can ask first. */
   setSaveGuard?: (guard: SaveGuard) => void;
   /** The server said 401: end the whole session (and discard every in-memory draft). */

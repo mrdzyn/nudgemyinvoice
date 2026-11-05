@@ -29,8 +29,8 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 /* ------------------------------------------------------------------ synthetic data */
 const NUDGES = [
-  { id: "a1", customer: "Zorblax Industries", amount: "USD 1,200.00", due: "Oct 30, 2026", status: "Overdue 6 days", sev: "warn", tone: "Professional", age: "12 min ago", ref: "c615eb2b" },
-  { id: "a2", customer: "Northwind Studio", amount: "EUR 860.00", due: "Nov 3, 2026", status: "Overdue 2 days", sev: "warn", tone: "Friendly", age: "1 h ago", ref: "9ab76d16" },
+  { id: "a1", customer: "Zorblax Industries", amount: "USD 1,200.00", due: "Oct 30, 2026", status: "6 days after the due date", sev: "warn", tone: "Professional", age: "12 min ago", ref: "c615eb2b" },
+  { id: "a2", customer: "Northwind Studio", amount: "EUR 860.00", due: "Nov 3, 2026", status: "2 days after the due date", sev: "warn", tone: "Friendly", age: "1 h ago", ref: "9ab76d16" },
   { id: "a3", customer: "Bluebird Bakery", amount: "JPY 188,837", due: "Nov 12, 2026", status: "Due in 7 days", sev: "neutral", tone: "Friendly", age: "Yesterday", ref: "438b0420" },
 ];
 const APPROVED = [
@@ -48,7 +48,7 @@ A quick reminder that invoice c615eb2b for USD 1,200.00 was due on October 30, 2
 Thank you for your help.
 
 Kind regards,`;
-const RATIONALE = "A professional, concise reminder: the invoice is a little overdue and this is the first follow-up, so it names the invoice and asks for an update without pressure.";
+const RATIONALE = "A professional, concise reminder: the due date passed recently and this is the first follow-up, so it names the invoice and asks for an update without pressure.";
 
 /* ------------------------------------------------------------------ building blocks */
 const shell = (body, { nav = "dash", nudgey = "" } = {}) => `
@@ -107,7 +107,7 @@ const facts = `
 <dl class="p6-facts">
   <div><dt>Amount</dt><dd class="num">USD 1,200.00</dd></div>
   <div><dt>Due date</dt><dd>October 30, 2026</dd></div>
-  <div><dt>Status as of Nov 5, 2026</dt><dd>Overdue 6 days</dd></div>
+  <div><dt>As of November 5, 2026</dt><dd>6 days after the due date</dd></div>
   <div><dt>Invoice</dt><dd class="mono">c615eb2b</dd></div>
 </dl>`;
 
@@ -142,7 +142,7 @@ const approvedPanel = `
   <div class="notice notice-ok notice-compact" role="status"><strong>Approved for manual use on Nov 4, 2026, 3:12 PM.</strong> Not sent — copy it into your own email or messaging app.</div>
   <pre class="p6-final">Hi Lumen Labs,
 
-Invoice 4e63810d for USD 2,450.00 was due on October 12, 2026 and remains unpaid. Please arrange payment this week or tell me what is holding it up so we can resolve it.
+Invoice 4e63810d for USD 2,450.00 was due on October 12, 2026. Please reply this week with the date payment will be made, or let me know if anything needs to be resolved first.
 
 Kind regards,</pre>
   <div class="p6-actions"><button type="button" class="btn btn-primary">Copy message</button><span class="p6-copied" role="status">✓ Copied to clipboard</span></div>
@@ -167,9 +167,9 @@ const draftCard = (state) => `
   <h2 class="card-title" id="p6-d-title">AI payment nudge</h2>
   <p class="hint p6-tight">Draft a follow-up for this invoice. You review and approve it; nothing is sent.</p>
   <fieldset class="plain-fieldset p6-tones"><legend class="label-strong">Tone</legend>
-    ${[["Friendly", "Warm and relaxed — good before or just after the due date."], ["Professional", "Courteous and concise — a safe default."], ["Firm", "Direct about the need to pay, still polite. Never threatening."]].map(([t, d], i) => `<label class="p6-tone"><input type="radio" name="tone" ${i === 1 ? "checked" : ""}> <span><strong>${t}</strong><span class="cell-sub">${d}</span></span></label>`).join("")}
+    ${[["Friendly", "Warm and relaxed — good before or just after the due date."], ["Professional", "Courteous and concise — a safe default."], ["Firm", "Direct about asking for a payment update, still polite. Never threatening."]].map(([t, d], i) => `<label class="p6-tone"><input type="radio" name="tone" ${i === 1 ? "checked" : ""}> <span><strong>${t}</strong><span class="cell-sub">${d}</span></span></label>`).join("")}
   </fieldset>
-  <div class="notice notice-info notice-compact" role="note"><strong>Privacy:</strong> the AI receives only the tone, the currency and whether the invoice is overdue — not the customer's name, e-mail, items, amount or dates. Those are filled in from your saved invoice afterwards.</div>
+  <div class="notice notice-info notice-compact" role="note"><strong>Privacy:</strong> the AI receives only the tone, the currency code and where today falls relative to the due date — not the customer's name, e-mail, items, amount or dates. Those are filled in from your saved invoice afterwards.</div>
   ${state === "busy" ? `<p role="status" class="p6-busy"><span class="spinner" aria-hidden="true"></span> Drafting a professional nudge… this usually takes a few seconds.</p><button type="button" class="btn btn-primary" disabled>Drafting…</button>` : `<button type="button" class="btn btn-primary">Draft nudge</button>`}
 </section>`;
 const draftScreen = shell(`
@@ -186,7 +186,7 @@ ${stateCard("Empty queue", "<strong>No nudges waiting for review.</strong> Draft
 ${stateCard("Queue could not load", "<strong>Could not load your nudges.</strong> Your invoices are unaffected.", "err", `<button type="button" class="btn btn-secondary btn-sm mt-12">Retry</button>`)}
 ${stateCard("AI drafting is off", "<strong>AI drafting isn't available on this server.</strong> You can still review, approve and copy existing drafts.", "warn")}
 ${stateCard("Draft limit reached", "<strong>You've reached the drafting limit for now.</strong> Try again in about 8 minutes. This keeps AI cost bounded.", "warn")}
-${stateCard("Draft refused", "<strong>The AI's draft didn't pass our checks</strong> (for example it invented a number or a link), so nothing was saved. Try again or choose another tone.", "warn", `<button type="button" class="btn btn-secondary btn-sm mt-12">Try again</button>`)}
+${stateCard("Draft refused", "<strong>The AI's draft didn't pass our checks</strong> (for example it invented a number, a link or a payment-status claim), so nothing was saved. Try again or choose another tone.", "warn", `<button type="button" class="btn btn-secondary btn-sm mt-12">Try again</button>`)}
 ${stateCard("Changed elsewhere", "<strong>This draft changed in another tab.</strong> Reload it to see the latest text before approving.", "warn", `<button type="button" class="btn btn-secondary btn-sm mt-12">Reload draft</button>`)}
 ${stateCard("A draft is already pending", "<strong>This invoice already has a draft waiting for review.</strong> Regenerating replaces it (the old one moves to History).", "info", `<div class="p6-actions mt-12"><button type="button" class="btn btn-primary btn-sm">Replace with a new draft</button><button type="button" class="btn btn-secondary btn-sm">Review existing</button></div>`)}
 </div>`);
@@ -200,11 +200,11 @@ ${p5Placeholder("Dashboard (unchanged) behind the Nudgey panel")}`, {
   <div class="chat-log p6-chatlog">
     <div class="chat-msg chat-user">draft a firm nudge for zorblax</div>
     <div class="chat-msg chat-bot"><p class="chat-title">I found 1 matching invoice</p>
-      <ul class="chat-cards"><li class="chat-card"><div class="chat-card-head"><strong>Zorblax Industries</strong><span class="chat-amount">USD 1,200.00</span></div><div class="chat-card-meta">Due Oct 30, 2026 · overdue 6 days · no pending draft</div></li></ul>
+      <ul class="chat-cards"><li class="chat-card"><div class="chat-card-head"><strong>Zorblax Industries</strong><span class="chat-amount">USD 1,200.00</span></div><div class="chat-card-meta">Invoice due October 30, 2026</div></li></ul>
       <p class="chat-hint">Draft a <strong>firm</strong> nudge for this invoice? It goes to your queue for review — nothing is sent.</p>
       <div class="chat-chips"><button type="button" class="btn btn-primary btn-sm">Draft firm nudge</button><button type="button" class="chat-chip">Change tone</button><button type="button" class="chat-chip">Cancel</button></div></div>
     <div class="chat-msg chat-bot"><p class="chat-title">Draft ready for review</p>
-      <blockquote class="p6-quote">Hi Zorblax Industries, invoice c615eb2b for USD 1,200.00 was due on October 30, 2026 and is still unpaid. Please arrange payment…</blockquote>
+      <blockquote class="p6-quote">Hi Zorblax Industries, invoice c615eb2b for USD 1,200.00 which was due on October 30, 2026. Please reply this week with the date payment will be made…</blockquote>
       <p class="chat-hint">${badge("info", "Pending review")} in your Nudge queue. Approve it there; copying is up to you.</p>
       <div class="chat-chips"><button type="button" class="btn btn-secondary btn-sm">Open in queue</button></div></div>
   </div>
@@ -236,7 +236,7 @@ const previewCss = `
 .p6-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}.p6-row{width:100%;text-align:left;display:grid;gap:6px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface);color:var(--text);font:inherit;cursor:pointer;min-height:44px}
 .p6-row[aria-current=true]{border-color:var(--action-bg);box-shadow:0 0 0 2px var(--info-bg)}.p6-row-top{display:flex;justify-content:space-between;gap:8px}.p6-row-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .p6-review{display:grid;gap:10px}.p6-h3{margin-top:4px}.p6-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0}.p6-facts div{background:var(--surface-sunken);border-radius:var(--radius);padding:8px 10px}.p6-facts dt{font-size:12px;color:var(--text-muted)}.p6-facts dd{margin:2px 0 0;font-weight:700;font-size:14px}
-.p6-text{width:100%;min-height:190px;font:inherit;line-height:1.5}.p6-why summary{cursor:pointer;color:var(--link);font-weight:600;min-height:32px}.p6-why p{margin:6px 0 0;color:var(--text-2)}
+.p6-text{width:100%;min-height:190px;font:inherit;line-height:1.5}.p6-why summary{cursor:pointer;color:var(--link);font-weight:600;min-height:44px;display:flex;align-items:center}.p6-why p{margin:6px 0 0;color:var(--text-2)}
 .p6-regen{display:flex;gap:6px}.p6-reject{color:var(--err-text)}.p6-final{white-space:pre-wrap;font:inherit;line-height:1.5;margin:0;padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-sunken);color:var(--text)}
 .p6-copied{color:var(--ok-text);font-weight:600}.p6-notsent{font-size:12px;color:var(--text-muted)}
 .p6-grid2{margin-top:16px;gap:16px}.p6-tones{display:grid;gap:8px;margin:10px 0}.p6-tone{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:var(--radius);min-height:44px}.p6-tone span{display:grid}
@@ -246,7 +246,7 @@ const previewCss = `
 .p6-chatlog{display:grid;gap:10px}.p6-quote{margin:6px 0;padding:8px 10px;border-left:3px solid var(--ai-text);background:var(--ai-bg);color:var(--text);font-size:13px}
 .p6-chatform{display:flex;gap:6px}.p6-chatform .input{flex:1;min-width:0}
 .h3{font-size:14px;font-weight:700;margin:0;color:var(--text-2)}
-@media (max-width:767px){.p6-split{grid-template-columns:1fr}.p6-counters dd{font-size:18px}.p6-facts{grid-template-columns:1fr 1fr}.p6-actions .btn{flex:1 1 auto;min-height:44px}.p6-regen{flex:1 1 100%}.p6-regen .select{flex:1}.p6-p5{flex-direction:column;align-items:flex-start;gap:4px}.p6-nudgey{position:static;width:auto;margin-top:12px}}
+@media (max-width:767px){.p6-split{grid-template-columns:1fr}.p6-counters dd{font-size:18px}.p6-facts{grid-template-columns:1fr 1fr}.p6-actions .btn{flex:1 1 auto;min-height:44px}.p6-regen{flex:1 1 100%}.p6-regen .select{flex:1;min-width:10.5rem}.p6-p5{flex-direction:column;align-items:flex-start;gap:4px}.p6-nudgey{position:static;width:auto;margin-top:12px}}
 `;
 
 const html = `<!doctype html>
@@ -294,8 +294,8 @@ for (const [vname, v] of Object.entries(VIEWS)) {
     const over = await ev("document.scrollingElement.scrollWidth - innerWidth");
     check(`${vname} ${fid}: no horizontal page overflow`, over <= 0, String(over));
     if (vname === "mobile") {
-      const small = await ev(`[...document.querySelectorAll('.p6-frame:not([hidden]) button, .p6-frame:not([hidden]) [role=tab], .p6-frame:not([hidden]) select')].filter((b) => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height < 32; }).length`);
-      check(`${vname} ${fid}: interactive controls are at least 32px tall`, small === 0, String(small));
+      const small = await ev(`[...document.querySelectorAll('.p6-frame:not([hidden]) button, .p6-frame:not([hidden]) [role=tab], .p6-frame:not([hidden]) select')].filter((b) => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height < 44; }).length`);
+      check(`${vname} ${fid}: interactive controls are at least 44px tall (owner refinement 3)`, small === 0, String(small));
     }
     const h = await ev("Math.ceil(document.documentElement.scrollHeight)");
     await send("Emulation.setDeviceMetricsOverride", { ...v, height: Math.min(h, 4000) });
@@ -309,6 +309,7 @@ const all = FRAMES.map(([, , b]) => b).join("\n");
 const SAYS_NOT_SENT = /[Nn]othing (is|in history was) (ever )?sent|[Nn]ot sent|[Nn]othing is sent|never sent|[Nn]othing is sent automatically/;
 check("every screen states that nothing is sent automatically", FRAMES.every(([, , b]) => SAYS_NOT_SENT.test(b)), FRAMES.filter(([, , b]) => !SAYS_NOT_SENT.test(b)).map(([f]) => f).join(","));
 check("approval is labelled 'for manual use', never 'send'", /Approve for manual use/.test(all) && !/>\s*Send( nudge| now| reminder)?\s*</i.test(all.replace(/aria-label="Speak[^"]*"/g, "")));
+check("no unsupported payment-status claims (owner refinement 1: a due date does not establish payment status)", !/unpaid|overdue|outstanding|remains? (unpaid|due)|past due|not been paid/i.test(all));
 check("no fictional recovered cash, delivery, payment confirmation or risk prediction", !/recovered|delivered|opened|read receipt|paid via|likely to pay|risk score|probability/i.test(all));
 writeFileSync(join(here, "design-checks.json"), JSON.stringify({ task: "NMI-P6", generatedBy: "design/evidence/NMI-P6/build-and-capture-preview.mjs", synthetic: true, checks }, null, 2) + "\n");
 const fails = checks.filter((c) => c.result === "FAIL").length;

@@ -23,6 +23,7 @@ import { statusOpenAction } from "../nudgey/statusLookup.js";
 import { useStatusLookup } from "../nudgey/useStatusLookup.js";
 import { ChatView } from "../nudgey/NudgeyChat.js";
 import { useNudgeyChat } from "../nudgey/useChat.js";
+import { onNudgeyOpenRequest } from "../nudgey/openRequest.js";
 
 export type NudgeyChoice = "create" | "browse" | "status";
 
@@ -158,7 +159,7 @@ const emptySnapshot = () => NO_SNAPSHOT;
 type View =
   | { kind: "home" }
   | { kind: "status" }
-  | { kind: "ask" }
+  | { kind: "ask"; prefill?: string }
   | {
       kind: "schedule";
       prefill?: {
@@ -239,6 +240,19 @@ export function Nudgey() {
   useEffect(() => {
     if (open) void followUps?.refresh();
   }, [open, followUps]);
+
+  // NMI-P6 "Draft a nudge" buttons open the chat with an editable prefill (never submitted automatically).
+  const canDraftNudges = Boolean(session?.nudges && listInvoices);
+  useEffect(
+    () =>
+      canDraftNudges
+        ? onNudgeyOpenRequest((prefill) => {
+            setOpen(true);
+            setView({ kind: "ask", prefill });
+          })
+        : undefined,
+    [canDraftNudges],
+  );
 
   // The popover never survives navigation to another protected screen.
   useEffect(() => setOpen(false), [state.screen]);
@@ -469,6 +483,14 @@ export function Nudgey() {
                 </button>
               </div>
               <ChatView
+                key={view.prefill ?? ""}
+                {...(view.prefill ? { initialText: view.prefill } : {})}
+                {...(canDraftNudges
+                  ? {
+                      onOpenQueue: (id: string | null) =>
+                        dispatch({ type: "open-nudges", view: "pending", id }),
+                    }
+                  : {})}
                 messages={chat.messages}
                 busy={chat.busy}
                 at={now}

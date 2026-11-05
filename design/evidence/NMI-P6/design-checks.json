@@ -44,7 +44,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 01-dashboard-queue-summary: interactive controls are at least 32px tall",
+      "name": "mobile 01-dashboard-queue-summary: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -54,7 +54,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 02-queue-pending-review: interactive controls are at least 32px tall",
+      "name": "mobile 02-queue-pending-review: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -64,7 +64,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 03-queue-approved-copy: interactive controls are at least 32px tall",
+      "name": "mobile 03-queue-approved-copy: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -74,7 +74,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 04-queue-history: interactive controls are at least 32px tall",
+      "name": "mobile 04-queue-history: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -84,7 +84,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 05-draft-from-invoice: interactive controls are at least 32px tall",
+      "name": "mobile 05-draft-from-invoice: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -94,7 +94,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 06-required-states: interactive controls are at least 32px tall",
+      "name": "mobile 06-required-states: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -104,7 +104,7 @@
       "detail": ""
     },
     {
-      "name": "mobile 07-nudgey-chat-draft: interactive controls are at least 32px tall",
+      "name": "mobile 07-nudgey-chat-draft: interactive controls are at least 44px tall (owner refinement 3)",
       "result": "PASS",
       "detail": ""
     },
@@ -115,6 +115,11 @@
     },
     {
       "name": "approval is labelled 'for manual use', never 'send'",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "no unsupported payment-status claims (owner refinement 1: a due date does not establish payment status)",
       "result": "PASS",
       "detail": ""
     },

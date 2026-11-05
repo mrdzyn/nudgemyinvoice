@@ -13,6 +13,7 @@ export function isLeavingAction(a: Action): boolean {
   return (
     a.type === "navigate" ||
     a.type === "discard-review" ||
+    a.type === "open-nudges" ||
     (a.type === "open-saved" && a.notice === "opened")
   );
 }

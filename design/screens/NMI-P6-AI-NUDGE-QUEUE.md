@@ -1,6 +1,6 @@
-# NMI-P6 — AI Nudge Queue: screen map, flows and states (FOR OWNER VISUAL APPROVAL)
+# NMI-P6 — AI Nudge Queue: screen map, flows and states
 
-**Status:** proposed. The UI shell is **not** implemented until the owner approves this direction (AGENTS.md design-first gate). The backend described in §5 is implemented and tested on the same Draft PR.
+**Status:** **APPROVED** by the owner (D1–D7), https://github.com/mrdzyn/nudgemyinvoice/pull/43#issuecomment-6652365002 (2026-11-05), with three refinements that are now implemented: (1) no unsupported payment-status claims ("still unpaid") — date-only wording plus a server-side output guard; (2) the mobile tone select shows "Professional" in full at 390px; (3) mobile targets are checked at ≥ 44px. The preview below was corrected for (1) and (3) and re-captured (25/25 checks). The implemented UI is evidenced in `design/evidence/NMI-P6/QA-RESULTS.md`.
 **Preview:** `design/mockups/NMI-P6-ai-nudge-queue.html` (static, real `tokens.css` + `app.css`, synthetic data). Screenshots are in `design/evidence/NMI-P6/previews/` (desktop 1280 px and mobile 390 px, frames `01`–`07`), and objective checks in `design-checks.json` (24/24).
 
 ## 1. Screen map
@@ -35,10 +35,10 @@
 - **Accessibility:**
   - Tabs follow the ARIA tablist pattern, with the list as buttons with `aria-current`.
   - Notices use `role=status`/`alert`, the textarea has a label and a character count, and copy success is announced.
-  - All controls are ≥ 44 px on phones (checked ≥ 32 px in the preview).
+  - All controls are ≥ 44 px on phones (checked at 44 px in the preview and in browser QA).
   - Light and dark themes use tokens only.
 
-## 4. Decisions for the owner (please approve or amend)
+## 4. Decisions (approved by the owner)
 
 - **D1 — Placement:** a summary card above P5's filters on the dashboard, plus a "Nudge queue" nav tab. P5's charts, filters, licence and order are not changed.
 - **D2 — Copy only after approval:** pending drafts cannot be copied, to encourage review.

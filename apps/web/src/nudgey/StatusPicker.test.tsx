@@ -240,6 +240,8 @@ describe("security boundary of the status selector sources", () => {
       "features/studio/studioLicence.ts",
       "followups/api.ts",
       "invoices/api.ts",
+      // NMI-P6: the AI nudge queue transport (review routes only; the status selector does not use it).
+      "nudges/api.ts",
       "parse/api.ts",
     ]);
   });

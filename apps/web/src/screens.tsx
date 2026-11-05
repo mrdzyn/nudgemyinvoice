@@ -4,6 +4,7 @@ import { DashboardScreen } from "./features/dashboard/DashboardScreen.js";
 import { DetailScreen } from "./features/detail/DetailScreen.js";
 import { SavedDetailScreen } from "./features/saved/SavedDetailScreen.js";
 import { ReviewScreen } from "./features/review/ReviewScreen.js";
+import { NudgeQueueScreen } from "./nudges/NudgeQueueScreen.js";
 
 export const TITLES: Record<Screen, string> = {
   login: "Operator sign in",
@@ -12,6 +13,7 @@ export const TITLES: Record<Screen, string> = {
   review: "Review invoice",
   detail: "Invoice draft",
   saved: "Saved invoice",
+  nudges: "Nudge queue",
 };
 
 /** Protected screens only. The sign-in screens live with their owners (real: RealApp, preview: App). */
@@ -27,6 +29,8 @@ export function CurrentScreen({ screen }: { screen: Exclude<Screen, "login"> }) 
       return <DetailScreen />;
     case "saved":
       return <SavedDetailScreen />;
+    case "nudges":
+      return <NudgeQueueScreen />;
   }
 }
 
