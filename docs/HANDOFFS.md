@@ -2103,4 +2103,11 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
   - The preflight does not name `NUDGE_AI_DRAFTING_ENABLED`.
 - **Next:** focused doc audit → owner merge → owner-approved P7 release-readiness refresh task. No deploy, Render action or provider call.
 
+## Handoff: NMI-POSTMERGE-41-43-02
+
+- **Task / branch:** NMI-POSTMERGE-41-43-01 audit fixes; same branch `docs/nmi-postmerge-41-43`, same Draft PR #44. **From / to:** implementation agent → **focused re-audit** of audit comment 6662478420 (PARTIAL at `d41af19`).
+- **DOC-01:** `docs/NMI-RENDER-P4-RELEASE-READINESS.md`. Old procedural text at §header, §2.1 and §13 is labelled *historical*. G2 is marked CLOSED (#40 merged `8cc2f4d`), noting that the P4 evidence does not cover `0008`. P5 supersession now records #42 merged. G1 and G4–G8 stay open, and no release SHA is selected.
+- **DOC-02:** the P5 release doc §5 records owner acceptance via the #42 merge, and keeps Safari/Firefox/device/screen-reader/zoom QA as not performed. The STATUS NMI-FUP-01 line now gives eight migrations at the time and nine now.
+- **Unchanged:** Markdown only, with no other content changed. No merge, deploy or provider action.
+
 <!-- HANDOFF_ENTRIES_END -->
