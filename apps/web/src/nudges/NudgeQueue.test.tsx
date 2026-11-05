@@ -507,3 +507,87 @@ describe("date-only wording (owner refinement 1)", () => {
     expect(dueDateText(6)).toBe("6 days after the due date");
   });
 });
+
+describe("P7-A: an open-nudges request re-targets an ALREADY-MOUNTED queue", () => {
+  const selectedRow = () =>
+    host.querySelector('.nq-list [aria-current="true"]')?.closest("li")?.textContent ?? "";
+  const tab = (v: string) => host.querySelector(`#nq-tab-${v}`) as HTMLElement;
+  const rows = () => [
+    item(1, { status: "approved", approvedAt: "2026-11-04T04:00:00.000Z" }),
+    item(2),
+    item(3),
+    item(4, { status: "rejected" }),
+  ];
+
+  it("switches tab and nudge on each NEW request (Approved -> Pending -> History -> Pending again)", async () => {
+    const f = fakeApi(rows());
+    const c = controller(f.api);
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "approved", id: NID(1) } }),
+    );
+    expect(tab("approved").getAttribute("aria-selected")).toBe("true");
+
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "pending", id: NID(3) } }),
+    );
+    expect(tab("pending").getAttribute("aria-selected")).toBe("true");
+    expect(selectedRow()).toContain("Customer 3");
+
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "history", id: null } }),
+    );
+    expect(tab("history").getAttribute("aria-selected")).toBe("true");
+
+    // The SAME view and id requested again (a new request object) still re-targets after a manual change.
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "pending", id: NID(2) } }),
+    );
+    await act(async () => {
+      [...host.querySelectorAll<HTMLElement>(".nq-list button")]
+        .find((b) => b.textContent?.includes("Customer 3"))!
+        .click();
+    });
+    await flush();
+    expect(selectedRow()).toContain("Customer 3");
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "pending", id: NID(2) } }),
+    );
+    expect(selectedRow()).toContain("Customer 2");
+  });
+
+  it("does NOT overwrite the operator's manual tab/selection when no new request arrives", async () => {
+    const f = fakeApi(rows());
+    const c = controller(f.api);
+    const s = state({ nudgeFocus: { view: "pending", id: NID(2) } });
+    await mount(<NudgeQueue controller={c} />, s);
+    await act(async () => tab("approved").click());
+    await flush();
+    expect(tab("approved").getAttribute("aria-selected")).toBe("true");
+    // Re-render with the SAME state object (unrelated parent render): selection must stay.
+    await mount(<NudgeQueue controller={c} />, s);
+    await mount(<NudgeQueue controller={c} />, s);
+    expect(tab("approved").getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("first mount reads once (no duplicate reload) and the new request makes no model call or transition", async () => {
+    const f = fakeApi(rows());
+    const c = controller(f.api);
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "pending", id: NID(2) } }),
+    );
+    const firstMountSummaries = f.calls.filter((x) => x.op === "summary").length;
+    expect(firstMountSummaries).toBe(1);
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "approved", id: NID(1) } }),
+    );
+    expect(f.calls.some((x) => x.op === "generate")).toBe(false);
+    expect(f.calls.some((x) => ["approve", "reject", "edit"].includes(x.op))).toBe(false);
+  });
+});
