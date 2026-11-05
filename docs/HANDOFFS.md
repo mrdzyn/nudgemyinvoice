@@ -2110,4 +2110,12 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **DOC-02:** the P5 release doc §5 records owner acceptance via the #42 merge, and keeps Safari/Firefox/device/screen-reader/zoom QA as not performed. The STATUS NMI-FUP-01 line now gives eight migrations at the time and nine now.
 - **Unchanged:** Markdown only, with no other content changed. No merge, deploy or provider action.
 
+## Handoff: NMI-P7-START-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md`; `phase-7/nmi-release-readiness`, created from owner-merged `main@7c56b078eb997744fd1d9bdb7668114f490171c7`. **From / to:** owner/orchestrator kickoff → bounded P7 implementation agent, then independent exact-HEAD review.
+- **Authorization:** owner asked to *start P7*; safe repository changes and local/synthetic/disposable validation only. No deploy, billing, infrastructure, live OpenAI/PayPal, sending, release SHA, merge or publication.
+- **Four implementation slices:** P7-A close both Codex P2 Nudgey/queue UI findings with regression coverage; P7-B add explicit default-off `NUDGE_AI_DRAFTING_ENABLED` release-preflight guard; P7-C new PG16 recovery proof through migration `0008` and `invoice_nudges` runtime grants (old P4 26/26 remains historical); P7-D evidence, current docs, both exact-HEAD CI workflows and independent audit.
+- **State:** contract and STATUS updated, **no P7 application implementation or recovery drill has yet been run**. Existing P4 G1 and G4–G8 release gates and provider Gates A/B/C remain unapproved.
+- **Next:** implement the four slices on this **same Draft PR** without duplicating branches, then hand off the exact SHA and actual test results. Only owner approval permits eventual squash merge; no deployment is implied.
+
 <!-- HANDOFF_ENTRIES_END -->
