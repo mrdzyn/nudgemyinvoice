@@ -1,6 +1,6 @@
 # NMI-P5 — Licensed AG Studio production dashboard
 
-**State:** implemented on a Draft PR and awaiting independent security review and owner visual acceptance. Nothing is deployed, no Render resource exists, and no judge URL is published.
+**State (2026-11-05):** code merged to `main` (PR #42, squash `c575a0dc9bf158a477d71976a614f8df802d6110`) after independent P5-FIX1 re-audit PASS. **Release is not authorized:** nothing is deployed, no Render resource exists and no judge URL is published. The licence scope below remains owner-attested; the P4 gates (including G5 and G7) remain open.
 
 ## 1. Licence scope (owner-controlled release evidence)
 
@@ -64,7 +64,9 @@ Production QA found that AG Studio's theming, embedded AG Charts and grid core i
 - **Residual risk:** an attacker able to inject a `<style>` whose text is *byte-identical* to one of the four vendor sheets could insert that vendor CSS again. It is the same CSS the page already uses, so this has no practical effect. The hashes must be recaptured on any AG Studio/Charts upgrade (`P5_COLLECT_HASHES=1`). Until then, a version drift shows up as unstyled charts and a failing production QA, never as a silent relaxation.
 - **Result:** zero CSP violations across the full production QA session (desktop, mobile, dark theme, fallback and recovery).
 
-## 5. Dashboard visual changes (owner-directed; awaiting owner visual acceptance)
+## 5. Dashboard visual changes (owner-directed; accepted by the owner with the PR #42 merge on 2026-11-05)
+
+Owner acceptance covers the visual direction shown in the committed screenshots. Safari/Firefox, real-device, screen-reader and 400% zoom QA were **not performed** and remain open manual QA gates.
 
 The order is kept: page heading → **global currency/date/search/status filters** → coverage line → **Activity analytics** → exact per-currency cards → AG Grid invoice table.
 

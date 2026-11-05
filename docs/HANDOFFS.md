@@ -2087,4 +2087,27 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Evidence:** validate 1383, test:db 367, journey 150/150, preview 25/25; hosted CI at the final head (in the PR).
 - **Not done / not authorized:** live OpenAI (Gate A; the new flag stays `false`), PayPal, sending, Render, deploy, merge or rebase.
 
+## Handoff: NMI-POSTMERGE-41-43-01
+
+- **Task / branch:** NMI-POSTMERGE-41-43-01 (post-merge documentation reconciliation); `docs/nmi-postmerge-41-43` from `main@fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38`; Draft PR to `main` (link in the PR). **From / to:** implementation agent → **independent focused documentation audit**, then the owner's merge decision.
+- **Verified before editing:** `origin/main` = `fbd2d8e`. The #41/#42/#43 squash trees equal their audited heads `f524836`/`7ab0dcd`/`a68f77b`. All three PRs are MERGED. The #41 SHA given in the task brief was malformed; the actual SHA is `08bd5ad63f26e95414c864d14bc14f4c84cef65d`.
+- **Changed (docs only):**
+  - `docs/STATUS.md`: merged table with evidence attribution, open Codex P2 findings, next action and release gates.
+  - Status lines in the three task files.
+  - Stale state lines in `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md` and `docs/NMI-RENDER-P4-RELEASE-READINESS.md`.
+  - No source, migration, lockfile, workflow, dependency or secret changes.
+- **Release separation confirmed:** P4 remains "ready for owner hosting approval, conditional on G1–G8". The P5 doc states that release is not authorized. G5/G7 are open, the licence is owner-attested, `NUDGE_AI_DRAFTING_ENABLED` and `PAYPAL_DRAFTS_ENABLED` are `false`, and Gates A/B/C are NOT AUTHORIZED.
+- **Open:**
+  - Two automated Codex P2 UX findings on #43 (review 5787025325), unverified.
+  - The P4 restore drill predates migration `0008`.
+  - The preflight does not name `NUDGE_AI_DRAFTING_ENABLED`.
+- **Next:** focused doc audit → owner merge → owner-approved P7 release-readiness refresh task. No deploy, Render action or provider call.
+
+## Handoff: NMI-POSTMERGE-41-43-02
+
+- **Task / branch:** NMI-POSTMERGE-41-43-01 audit fixes; same branch `docs/nmi-postmerge-41-43`, same Draft PR #44. **From / to:** implementation agent → **focused re-audit** of audit comment 6662478420 (PARTIAL at `d41af19`).
+- **DOC-01:** `docs/NMI-RENDER-P4-RELEASE-READINESS.md`. Old procedural text at §header, §2.1 and §13 is labelled *historical*. G2 is marked CLOSED (#40 merged `8cc2f4d`), noting that the P4 evidence does not cover `0008`. P5 supersession now records #42 merged. G1 and G4–G8 stay open, and no release SHA is selected.
+- **DOC-02:** the P5 release doc §5 records owner acceptance via the #42 merge, and keeps Safari/Firefox/device/screen-reader/zoom QA as not performed. The STATUS NMI-FUP-01 line now gives eight migrations at the time and nine now.
+- **Unchanged:** Markdown only, with no other content changed. No merge, deploy or provider action.
+
 <!-- HANDOFF_ENTRIES_END -->

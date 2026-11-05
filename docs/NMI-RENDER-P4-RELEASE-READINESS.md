@@ -1,8 +1,10 @@
 # NMI-RENDER-P4 — Judge-hosted release readiness (evidence and checklist)
 
-**Verdict: READY FOR OWNER HOSTING APPROVAL, conditional on the owner-only gates in §10.** The original P4 implementation made no Render API call, no release branch, no deploy, no provider calls and no AG Studio key transfer; no Render resources or judge URL were created by this phase. **Subsequent documented change (2026-11-04):** P3 budget PR #39 was independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`; P4 PR #40 remains Draft and unmerged. This documentation reconciliation is not an initial deployment or hosting authorization.
+**Verdict: READY FOR OWNER HOSTING APPROVAL, conditional on the owner-only gates in §10.** The original P4 implementation made no Render API call, no release branch, no deploy, no provider calls and no AG Studio key transfer; no Render resources or judge URL were created by this phase. **Subsequent documented change (2026-11-04):** P3 budget PR #39 was independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`; P4 PR #40 was later owner squash-merged as `main@8cc2f4db945af5449d99c01236baca9a21396a50`. **Post-merge note (2026-11-05):** PRs #41, #42 and #43 are merged on `main@fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38`. The P4 evidence below predates them; in particular, the backup/restore drill covered migrations `0000`–`0007` only, not P6's `0008`. A P7 release-readiness refresh is required before any release SHA is chosen; see `docs/STATUS.md`. This documentation reconciliation is not an initial deployment or hosting authorization.
 
-Original P4 base: `main@e314bef381c66b4233576683c7f53dd248f58a86` (PR #38 merged). Reconciled P4 branch with `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7` (budget PR #39 merged). Implementation source and final reconciliation HEAD are recorded in PR #40. The **release SHA is not selected until P4's own owner-approved merge**, so this document names no release SHA.
+Original P4 base: `main@e314bef381c66b4233576683c7f53dd248f58a86` (PR #38 merged). Reconciled P4 branch with `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7` (budget PR #39 merged). Implementation source and final reconciliation HEAD are recorded in PR #40. *Historical (as of P4):* the release SHA was not to be selected until P4's own owner-approved merge.
+  - **Current (2026-11-05):** P4 PR #40 is merged (`main@8cc2f4db945af5449d99c01236baca9a21396a50`), and `main` is now `fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38`.
+  - **No release SHA has been selected (G4 open)**, so this document still names none.
 
 ## 1. What was verified, and how (all local, disposable, synthetic)
 
@@ -22,7 +24,7 @@ The P1 harness expected the filtered dashboard to emit only `POST /api/invoice-d
 
 ## 2. Exact-SHA release mechanism (design; nothing created)
 
-1. Budget PR #39 has been audited and owner-merged. After P4 PR #40 completes its new exact-HEAD validation, independent reconciliation review and a separately authorized owner merge, the owner (not an agent) picks the **full 40-character SHA** on `main` to release and records it privately.
+1. *Historical (as of P4); current state: #40 is merged, so G2 is closed, but no release SHA has been chosen (G4 open). A P7 release-readiness refresh covering migration `0008` comes first; see `docs/STATUS.md`.* Budget PR #39 has been audited and owner-merged. After P4 PR #40 completes its new exact-HEAD validation, independent reconciliation review and a separately authorized owner merge, the owner (not an agent) picks the **full 40-character SHA** on `main` to release and records it privately.
 2. Owner creates `release/nmi-render-judges-2026` pointing at exactly that SHA. Branch protection: no force-push, no deletion.
 3. On a clean clone, before provisioning and again before every deploy: `pnpm --filter @nmi/api release-preflight source --expect <SHA>` must print `RESULT: PASS`. It asks the authoritative remote (`git ls-remote`, never local tracking refs) for the CURRENT tips of `main` and `release/nmi-render-judges-2026`, and requires: HEAD equals the SHA, clean tree, the repository-root `pnpm-lock.yaml` unchanged (also when launched from `apps/api`), the SHA is an ancestor of the fresh `main` tip (fetch first if its object is missing), and the release-branch tip equals the SHA. The release branch is mandatory (there is no flag to omit it); an unreachable, unauthenticated or incomplete remote answer fails closed. The only network read is GitHub ref listing.
 4. Render service: **Auto-Deploy Off**, no Blueprint, no previews, one instance. **First-deploy risk:** creating a service from a branch triggers an initial build of the branch tip even with auto-deploy off, so the tip must equal the approved SHA at creation time (step 3 proves it). Any later change is a manual "Deploy a specific commit".
@@ -101,7 +103,7 @@ Create (manual, region Singapore if available; Hobby; Starter web; Basic 256 MB 
 | Gate | Needed |
 |---|---|
 | G1 | Owner confirms live Billing: Hobby, credit applicability, ≤ $25 forecast (C0). |
-| G2 | Independent exact-head audit of this P4 PR; owner decision to merge it. |
+| G2 | **CLOSED (recorded 2026-11-05):** P4 PR #40 was independently audited and owner squash-merged as `main@8cc2f4db945af5449d99c01236baca9a21396a50`. This closes only the P4 code/merge gate. The P4 evidence predates #41/#42/#43 and does **not** cover migration `0008`. *Original requirement:* independent exact-head audit of this P4 PR; owner decision to merge it. |
 | G3 | **CLOSED:** P3 budget PR #39 independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`; budget ceiling only. Live billing G1 is still OPEN. |
 | G4 | Owner picks the release SHA and creates `release/nmi-render-judges-2026` (§2). |
 | G5 | Owner accepts the Hobby request-log residual risk (§6) in writing. |
@@ -116,7 +118,9 @@ Create (manual, region Singapore if available; Hobby; Starter web; Basic 256 MB 
 ## 12. Audit remediation (P4-FIX1)
 Independent audit of `ddac915…` found MAJOR-1 (release branch tip judged from a stale local `origin/...` ref, and the branch proof was optional) and MINOR-1 (lockfile pathspec resolved against `apps/api` under `pnpm --filter`). Fixed in the source checker only: authoritative `git ls-remote`, mandatory release branch, root-anchored git calls, tests above. The `generatedBy` provenance of the P4 browser JSON now names the P4 harness. Hosting behaviour, other gates (G1–G8) and all scope exclusions are unchanged.
 
-## 13. Post-P3-merge reconciliation (2026-11-04)
+## 13. Post-P3-merge reconciliation (2026-11-04, historical)
+
+*Historical record, as of 2026-11-04.* PR #40 was later owner-merged, so G2 is now closed. G1 and G4–G7 remain **OPEN**, G8 continues, and no release SHA is selected.
 
 - Owner-approved P3 budget PR #39 was independently audited PASS and squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. The original P4 source/checker and local QA artifacts were kept unchanged; PR #40 receives a normal **two-parent merge commit** to integrate P3's five documentation files and preserve both P3 and P4 handoff histories. G3 is now closed; **G1/G2 owner P4 merge/G4/G5/G6/G7 remain OPEN** and G8 provider prohibition continues.
 - `docs/STATUS.md` now points to the P4 release-readiness task and `NMI-RENDER-P4-FIX1-01`; the P2 Free-tier choice remains historical and cannot be used for the proposed judge release. No current Render cost quote, eligible credit check, Studio vendor consent, host request-log evidence, release branch or production deployment was created by this reconciliation.
@@ -124,7 +128,7 @@ Independent audit of `ddac915…` found MAJOR-1 (release branch tip judged from 
 
 ## 13. P5 supersession (licensed AG Studio production dashboard)
 
-This P4 record describes the Community-only release as it was audited. P5 (Draft PR, unmerged) changes the release target to the **licensed AG Studio dashboard**, on owner attestation of the deployment licence. Where P5 differs, `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md` governs once P5 is audited and merged:
+This P4 record describes the Community-only release as it was audited. P5 changes the release target to the **licensed AG Studio dashboard**, on owner attestation of the deployment licence. P5 is PR #42, squash-merged as `c575a0dc9bf158a477d71976a614f8df802d6110` on 2026-11-05 after the independent P5-FIX1 re-audit PASS. Where P5 differs, `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md` governs. Release is still gated by G1 and G4–G8, and by the P7 refresh for migration `0008`:
 
 - **Build:** `pnpm install --frozen-lockfile --prod=false && pnpm build:web:licensed && pnpm check:bundle:licensed`, with `NMI_WEB_STUDIO=licensed` in the service environment. The bundle scan runs in the Render build, where `AG_STUDIO_LICENSE_KEY` is set, so the hosted build itself proves the licence value is absent from every built file.
 - **Row 1 of §1** ("Community-only") is superseded for the release: Studio ships in lazy chunks loaded only after sign-in. The Community build remains the default and is still checked in CI.
