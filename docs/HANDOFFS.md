@@ -2118,4 +2118,19 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **State:** contract and STATUS updated, **no P7 application implementation or recovery drill has yet been run**. Existing P4 G1 and G4–G8 release gates and provider Gates A/B/C remain unapproved.
 - **Next:** implement the four slices on this **same Draft PR** without duplicating branches, then hand off the exact SHA and actual test results. Only owner approval permits eventual squash merge; no deployment is implied.
 
+## Handoff: NMI-P7-A-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-A**; `phase-7/nmi-release-readiness`, Draft PR #45. **From / to:** implementation agent → **independent exact-HEAD review of P7-A** (P7-B/C/D not started).
+- **Implementation SHA:** `2b2c722fc2f164b6c56dd6349641b3dd1c9f8f74` (code and tests; this handoff commit follows it).
+- **Changed:** `apps/web/src/nudges/NudgeQueueScreen.tsx` (a NEW `nudgeFocus` request re-targets a mounted queue: tab, selection and one refresh; manual choices are untouched otherwise); `apps/web/src/nudgey/NudgeDraftFlow.tsx` (pending-exists carries its `invoiceId`; choosing another invoice clears it and any stale failure; a replacement reference is refused unless it belongs to the chosen invoice; in-flight guard). Tests: `NudgeQueue.test.tsx` (+3) and `NudgeDraftFlow.test.tsx` (+5).
+- **Evidence (implementation-agent, local):**
+  - `pnpm validate` passed (1391 tests, +8).
+  - Targeted `src/nudges` and `src/nudgey`: 203 passed.
+  - **Negative control:** 5 of the 8 new tests fail against the unfixed sources.
+  - The existing P6 synthetic browser journey re-ran 150/150 (fake model, disposable PostgreSQL); its committed evidence files were left unchanged.
+  - `pnpm test:db` was not run: no server, schema or migration code changed.
+- **Preserved:** received-401 expiry, explicit confirmation before every costed call, version binding, no-send boundaries.
+- **Limits:** the already-mounted and A→B→A cases are covered by DOM tests, not by new browser QA. The two Codex findings remain reported, not independently verified.
+- **Next:** independent review of P7-A, then P7-B (preflight flag). No merge, deploy or provider action.
+
 <!-- HANDOFF_ENTRIES_END -->
