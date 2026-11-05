@@ -42,7 +42,7 @@ export function StudioUnavailable() {
         </div>
       </div>
       <Notice kind="info" role="status" id="studio-unavailable">
-        <strong>Charts unavailable.</strong> The totals above and the invoice table below are not
+        <strong>Charts unavailable.</strong> The currency totals and invoice table below are not
         affected. Reload the page to try loading charts again.
       </Notice>
     </section>
@@ -72,15 +72,38 @@ export function StudioSlotWith({
   range: StudioRange;
 }) {
   return (
-    <SlotBoundary>
-      <Suspense fallback={null}>
-        <Panel summary={summary} range={range} />
-      </Suspense>
-    </SlotBoundary>
+    <div className="studio-slot">
+      <SlotBoundary>
+        <Suspense fallback={null}>
+          <Panel summary={summary} range={range} />
+        </Suspense>
+      </SlotBoundary>
+    </div>
   );
 }
 
 export function StudioSlot({ summary, range }: { summary: AnalyticsSummary; range: StudioRange }) {
   if (!StudioPanel) return null;
   return <StudioSlotWith Panel={StudioPanel} summary={summary} range={range} />;
+}
+
+/**
+ * Reserves the panel's space while the shared analytics answer reloads (every filter change clears it), so the
+ * cards and invoice table do not jump up and back down under the analytics-first layout. Decorative only: it
+ * shows no figures (never stale ones) and the dashboard's own loading status is the announced state.
+ */
+export function StudioSlotPlaceholder() {
+  if (!studioLocalEnabled) return null;
+  return (
+    <div className="studio-slot" aria-hidden="true" data-testid="studio-placeholder">
+      <div className="card studio studio-placeholder">
+        <div className="studio-head">
+          <div className="studio-title">
+            <span className="card-title">Activity analytics</span>
+          </div>
+        </div>
+        <div className="skeleton studio-placeholder-body" />
+      </div>
+    </div>
+  );
 }

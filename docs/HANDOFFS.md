@@ -2003,4 +2003,21 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Scope held:** no Render, release branch, deploy, provider call, key handling, budget change or merge during the original P4-FIX1 implementation.
 - **P3-to-P4 reconciliation (2026-11-04):** P3 PR #39 was independently audited and owner squash-merged to `main@5160dff9b0072913d3f12e20e81ac8d86d081cb7`. A non-force two-parent merge on this existing Draft P4 branch brings the **complete P3 budget docs, P2 historical preface, and both P3 handoffs** forward while preserving all P4 code/tests/evidence and the P4 active task/`NMI-RENDER-P4-FIX1-01` pointer. All G1–G8 persist; G3 (P3 audit/merge) is complete, but G1/G4/G5/G6/G7 and G2's P4 merge remain open. No release branch, Render action or first deployment; re-run exact-head hosted checks and request independent merge-specific audit.
 
+## Handoff: NMI-UI-ANALYTICS-FIRST-01-IMPL
+
+- **From / to:** owner screenshot direction → targeted authenticated UI implementation → independent exact-HEAD review and owner visual QA.
+- **Base / branch:** `main@8cc2f4db945af5449d99c01236baca9a21396a50`, `feat/nmi-ui-analytics-first-01`; task `tasks/NMI-UI-ANALYTICS-FIRST-01.md`.
+- **Changes:** Move the existing dev-only StudioSlot before currency KPI cards, directly after the shared filters/coverage; adapt explanatory/fallback copy to reflect new order. Preserve established top-level currency pill filtering and A5 chart tabs only for All currencies.
+- **Evidence:** targeted SSR order and currency-selection tests committed; hosted CI result must be verified on final HEAD. No local full browser / PG test performed in this connector-only environment. Do not claim visual QA until owner verifies `VITE_NMI_STUDIO_LOCAL=1` on desktop/mobile.
+- **Boundaries:** No AI/PayPal or Render calls, license-key access, DB/schema modification, public Studio enablement, merge, deployment or billing change.
+- **Next:** await mandatory CI, request independent code-focused audit, then owner authenticated screenshot QA before any squash merge.
+
+## Handoff: NMI-UI-ANALYTICS-FIRST-01-REV1
+
+- **From / to:** review-and-improve of Draft PR #41 at `be9bf347` → independent exact-HEAD review and owner visual QA.
+- **Changes:** panel/card spacing defect fixed (`.studio-slot`), reload placeholder prevents layout jump, duplicated copy fixed, visible chart-tabs note added, tests strengthened. Details are in the task's REV1 section.
+- **Evidence:** targeted web tests passed; local A5-I1 harness ran 95/96, with the one expected FAIL being the superseded old-order assertion; desktop and 390px screenshots reviewed (not committed).
+- **Boundaries:** dev-only Studio and production Community-only unchanged; no API/DB/dependency/provider/Render/merge change. G7 stays unresolved.
+- **Next:** hosted CI at the final head, independent review, owner signed-in visual QA.
+
 <!-- HANDOFF_ENTRIES_END -->

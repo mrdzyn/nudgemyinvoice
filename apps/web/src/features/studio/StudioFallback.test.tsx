@@ -115,3 +115,21 @@ describe("MINOR-2: badge reflects whether Studio charts actually render", () => 
     expect(panel()?.getAttribute("data-studio")).toBe("fallback");
   });
 });
+
+describe("analytics-first: chart tabs are explained as view-only", () => {
+  it("under All currencies, visible text says the tabs only switch the chart and points to the filter above", async () => {
+    const { summary, range } = labScenario({ days: 30 });
+    await mount(<StudioPanel summary={summary} range={range} />);
+    expect(host.querySelector("[role=tablist]")).not.toBeNull();
+    const note = host.querySelector("#studio-tabs-note")?.textContent ?? "";
+    expect(note).toContain("USD / EUR / JPY tabs only switch which currency the chart draws");
+    expect(note).toContain("choose a currency in the filter above");
+  });
+
+  it("with a single currency there are no tabs and no tabs note", async () => {
+    const { summary, range } = labScenario({ days: 30, currencies: ["EUR"] });
+    await mount(<StudioPanel summary={summary} range={range} />);
+    expect(host.querySelector("[role=tablist]")).toBeNull();
+    expect(host.querySelector("#studio-tabs-note")).toBeNull();
+  });
+});

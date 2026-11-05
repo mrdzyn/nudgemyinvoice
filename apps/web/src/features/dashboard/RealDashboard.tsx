@@ -8,7 +8,7 @@ import { formatCurrency, formatMinor } from "../../domain/money.js";
 import { MAX_SEARCH_CHARS } from "../../domain/serverList.js";
 import { CURRENCY_CODES } from "../../domain/types.js";
 import { buildDashboardDateRange } from "../../domain/dateRange.js";
-import { StudioSlot } from "../studio/StudioSlot.js";
+import { StudioSlot, StudioSlotPlaceholder } from "../studio/StudioSlot.js";
 import { InvoiceGrid } from "./InvoiceGrid.js";
 import {
   hasFilters,
@@ -276,21 +276,25 @@ export function RealDashboardView({
 
   const analyticsLoading =
     state.analyticsStatus === "loading" ? (
-      <div className="currency-grid" aria-busy="true" aria-label="Loading full-population totals">
-        {[1, 2, 3].map((n) => (
-          <div className="currency-card" key={n}>
-            <Skeleton h={18} w="40" />
-            <Skeleton h={30} w="70" />
-            <Skeleton h={14} w="55" />
-          </div>
-        ))}
-      </div>
+      <>
+        <StudioSlotPlaceholder />
+        <div className="currency-grid" aria-busy="true" aria-label="Loading full-population totals">
+          {[1, 2, 3].map((n) => (
+            <div className="currency-card" key={n}>
+              <Skeleton h={18} w="40" />
+              <Skeleton h={30} w="70" />
+              <Skeleton h={14} w="55" />
+            </div>
+          ))}
+        </div>
+      </>
     ) : null;
 
   const analyticsCards =
     state.analyticsStatus === "loaded" && state.analytics ? (
       state.analytics.currencies.length ? (
         <>
+          <StudioSlot summary={state.analytics} range={f} />
           <h2 className="sr-only" id="dash-totals-heading">
             Full matching totals by currency
           </h2>
@@ -317,7 +321,6 @@ export function RealDashboardView({
             Totals cover the full matching invoice population, not only rows loaded below. Each card
             uses one currency; currencies are never added together or converted.
           </p>
-          <StudioSlot summary={state.analytics} range={state.filters} />
         </>
       ) : (
         <div className="empty" id="dash-empty-range">

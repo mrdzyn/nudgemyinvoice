@@ -157,9 +157,9 @@ function StatusList({ currencies }: { currencies: readonly StudioCurrency[] }) {
 type Phase = "idle" | "loading" | "ready" | "failed";
 
 /**
- * "Activity analytics": a view-only AG Studio region between the full-population currency cards and the AG Grid
- * Community table. It renders the EXISTING analytics answer only (no fetch of its own, no new endpoint) and keeps
- * everything exact: currencies are separate, amounts are minor-unit BigInt, zero days stay in the table.
+ * "Activity analytics": a view-only AG Studio region after the shared filters and before the currency
+ * cards and AG Grid Community table. It renders the EXISTING analytics answer only (no fetch of its own, no
+ * new endpoint) and keeps everything exact: currencies are separate, amounts are minor-unit BigInt, zero days stay in the table.
  */
 export default function StudioPanel({
   summary,
@@ -224,7 +224,7 @@ export default function StudioPanel({
     if (!model.ok)
       return (
         <Notice kind="info" role="status" id="studio-unavailable">
-          <strong>Charts unavailable.</strong> The totals above and the invoice table below are not
+          <strong>Charts unavailable.</strong> The currency totals and invoice table below are not
           affected.
         </Notice>
       );
@@ -267,8 +267,8 @@ export default function StudioPanel({
         ) : null}
         {failed ? (
           <Notice kind="info" role="status" id="studio-unavailable">
-            <strong>Charts unavailable.</strong> The totals above and the invoice table below are
-            not affected.
+            <strong>Charts unavailable.</strong> The currency totals and invoice table below are not
+            affected.
             <div className="mt-12">
               <button type="button" className="btn btn-secondary btn-sm" onClick={retry}>
                 Try loading charts again
@@ -319,9 +319,15 @@ export default function StudioPanel({
     const inner = (
       <>
         <p className="hint hint-tight">
-          Same filters and the same full-population server totals as the cards above. Values are
+          Same filters and the same full-population server totals as the cards below. Values are
           invoice totals by creation day ({model.timeZone}), not payments.
         </p>
+        {names.length > 1 ? (
+          <p className="hint hint-tight" id="studio-tabs-note">
+            The {names.join(" / ")} tabs only switch which currency the chart draws. To filter the
+            totals and invoices too, choose a currency in the filter above.
+          </p>
+        ) : null}
         <div className="studio-grid">
           {chartColumn}
           {statusColumn}
