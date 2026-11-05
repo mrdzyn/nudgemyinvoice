@@ -2049,4 +2049,17 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Residual:** licence extractable by the signed-in operator and not recallable; hash upkeep on vendor upgrade; no automated expiry enforcement; G7 owner-attested only; Safari/Firefox/devices/AT not tested; owner visual acceptance pending.
 - **Unchanged / not done:** licensed variant, visuals, authentication, PR #41 layout. No merge, deploy, Render action or provider call.
 
+## Handoff: NMI-P6-DESIGN-01
+
+- **Task / branch:** `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md`; `feat/nmi-p6-ai-nudges`, Draft PR stacked on P5 #42 (`7ab0dcd`). **From / to:** P6 backend + design proposal → **owner visual approval** (D1–D7 in `design/screens/NMI-P6-AI-NUDGE-QUEUE.md`), then the UI shell.
+- **Delivered:**
+  - migration `0008` `invoice_nudges` with constraints and least-privilege grants;
+  - `PostgresNudgeStore` (operator-scoped, one pending per invoice, version-bound transitions);
+  - `packages/ai/src/nudge.ts` (the model sees tone/currency/due-status only; output validated against digits, links, symbols, unbacked claims and placeholders; verified values substituted);
+  - nudge routes with budget, concurrency cap and content-free audit;
+  - a static design preview (7 frames × desktop/mobile, 24/24 design checks).
+- **Evidence:** AI package tests, store 7, API 12, runtime-role denials, migration/constraint guards updated; `pnpm validate` and `pnpm test:db`; hosted CI at the final head (in the PR).
+- **Not started:** queue UI, dashboard card, saved-invoice card, Nudgey intent, browser QA (all gated on approval). No live provider, sending, Render, deploy or merge.
+- **Next:** owner approves or amends D1–D7 → UI shell against the approved previews → wiring → browser QA → CI → independent review.
+
 <!-- HANDOFF_ENTRIES_END -->
