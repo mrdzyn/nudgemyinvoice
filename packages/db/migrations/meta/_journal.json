@@ -57,6 +57,13 @@
       "when": 1793373340831,
       "tag": "0007_perfect_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793862691315,
+      "tag": "0008_mushy_zarek",
+      "breakpoints": true
     }
   ]
 }

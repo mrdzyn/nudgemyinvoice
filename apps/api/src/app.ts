@@ -11,7 +11,8 @@ import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-dra
 import { followUpRoutes } from "./routes/follow-ups.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { studioLicenceRoutes } from "./routes/studio-licence.js";
-import type { InvoiceModelClient } from "@nmi/ai";
+import { nudgeRoutes } from "./routes/nudges.js";
+import type { InvoiceModelClient, NudgeModelClient } from "@nmi/ai";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
 import { healthRoutes } from "./routes/health.js";
 import { API_CSP, PAGE_CSP, registerWebStatic } from "./plugins/web-static.js";
@@ -26,6 +27,9 @@ export interface AppDeps {
   authSeams?: AuthRouteSeams;
   /** OpenAI-backed parser client; absent => manual-entry fallback. */
   modelClient?: InvoiceModelClient;
+  /** OpenAI-backed nudge drafting client; absent => AI drafting unavailable (review still works). */
+  nudgeClient?: NudgeModelClient;
+  nudgeSeams?: { generateBudgetMax?: number; generateConcurrency?: number };
   /** Real (or fake in tests) PayPal sandbox client; absent => PayPal drafting is disabled. */
   paypal?: PayPalInvoicingReadDraft;
   clock?: ((req?: FastifyRequest) => Date) | undefined;
@@ -157,6 +161,13 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
   followUpRoutes(app, { db: deps.db, audit, clock: deps.clock });
   analyticsRoutes(app, deps.db);
   studioLicenceRoutes(app, config);
+  nudgeRoutes(app, {
+    db: deps.db,
+    audit,
+    nudgeClient: deps.nudgeClient,
+    clock: deps.clock,
+    seams: deps.nudgeSeams,
+  });
   if (config.webDistDir) registerWebStatic(app, config.webDistDir);
   return app;
 }

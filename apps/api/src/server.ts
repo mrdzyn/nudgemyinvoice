@@ -1,6 +1,6 @@
 import pg from "pg";
 import { createDb } from "@nmi/db";
-import { createOpenAIInvoiceClient } from "@nmi/ai";
+import { createOpenAIInvoiceClient, createOpenAINudgeClient } from "@nmi/ai";
 import { PayPalSandboxClient } from "@nmi/paypal";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
@@ -16,6 +16,12 @@ const app = buildApp(config, {
           apiKey: config.openai.apiKey,
           model: config.openai.model,
           maxOutputTokens: config.openai.maxOutputTokens,
+        }),
+        // NMI-P6 nudge drafting uses the same configured model; without it drafting answers 503.
+        nudgeClient: createOpenAINudgeClient({
+          apiKey: config.openai.apiKey,
+          model: config.openai.model,
+          maxOutputTokens: Math.min(config.openai.maxOutputTokens, 600),
         }),
       }
     : {}),

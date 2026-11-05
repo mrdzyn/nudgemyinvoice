@@ -17,6 +17,10 @@ export const AUDIT_ACTIONS = [
   "followup.reschedule",
   "followup.complete",
   "followup.cancel",
+  "nudge.generate",
+  "nudge.edit",
+  "nudge.approve",
+  "nudge.reject",
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
