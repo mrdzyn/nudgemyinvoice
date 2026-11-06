@@ -40,6 +40,8 @@ The P1 harness expected the filtered dashboard to emit only `POST /api/invoice-d
 
 Enforced by `release-preflight env` (prints rule ids and *names*, never values).
 
+*Historical note:* the 53-test count in §1 row 4 was recorded before P5 and P7-B; the P7-B rule adds named-flag tests (see handoff `NMI-P7-B-01`). The P4 evidence otherwise stands unchanged.
+
 | Variable | Required | Notes |
 |---|---|---|
 | `NODE_ENV` | `production` | |
@@ -50,6 +52,7 @@ Enforced by `release-preflight env` (prints rule ids and *names*, never values).
 | `DATABASE_URL` | runtime-role URL, user `nmi_runtime`, with password | internal URL; owner credential never on the web service |
 | `SESSION_SECRET` | ≥ 32 chars, real entropy | secret |
 | `PAYPAL_ENV` / `PAYPAL_API_BASE_URL` / `PAYPAL_DRAFTS_ENABLED` | `sandbox` / `https://api-m.sandbox.paypal.com` / `false` | |
+| `NUDGE_AI_DRAFTING_ENABLED` (**P7-B**) | absent or exactly `false` | live AI nudge drafting stays off and unauthorized (Gate A). Rule `env.NUDGE_AI_DRAFTING_ENABLED` rejects `true`, empty, wrong case and padded values; the config loader's own enum agrees. This is in addition to forbidding the OpenAI names below. |
 | `NMI_WEB_STUDIO` (**P5**) | `licensed` | selects the licensed AG Studio web build; shared by Render's build and runtime |
 | `AG_STUDIO_LICENSE_KEY` (**P5**) | owner's deployment licence, secret store only | released at runtime only to the signed-in operator; never in a build, log or document |
 | **Must be absent** | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_MAX_OUTPUT_TOKENS`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `WEB_DIST_DIR`, `TEST_DATABASE_URL`, `REQUIRE_DB_TESTS`, `PGPASSFILE`, `PGPASSWORD`, anything else starting `AG_STUDIO`, `VITE_`, `NMI_` (P5: only the two names above are allowed) | other Studio settings, Vite-exposed values, simulated switches |
