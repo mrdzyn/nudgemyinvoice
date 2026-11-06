@@ -85,13 +85,14 @@ Redact account identifiers and payment details before sharing; **never commit ra
 |---|---|---|---|
 | E1 | Workspace Billing shows the plan is **Hobby** | **EVIDENCED (owner-supplied)** | Nothing further for the plan itself |
 | E2 | Credit balance, expiry and the categories it covers | **PARTIAL:** $50.00 balance and 2027-10-01 expiry are evidenced; the October invoice is Paid at $0.00. **Applicability to Starter, PostgreSQL, overage and tax is UNVERIFIED**, as are November unbilled charges. | Owner confirms what the credit covers, and the November unbilled amount |
-| E3 | Checkout or price preview for the **Starter** web service and the **Basic 256 MB** PostgreSQL 16 | **NOT YET EVIDENCED** (P3 list prices carried) | Owner reads the checkout or preview before creating anything |
-| E4 | Database storage: **1 GB, autoscaling OFF**, no other add-on | **NOT YET EVIDENCED** (no database exists; the usage panel shows no services) | Owner confirms at creation |
+| E3 | **Pre-creation (G1):** the Starter web and Basic 256 MB PostgreSQL 16 prices as Render shows them at the create or checkout step, **reviewed without confirming creation**; or, if Render shows no price before the final confirm, the owner records that gap in writing | **NOT YET EVIDENCED** (P3 list prices carried; this packet does not assume a preview exists) | Owner reads the price where Render shows it, or records the gap |
+| E4 | **Pre-creation (G1): the intended database configuration**, recorded by the owner in writing: PostgreSQL 16 Basic 256 MB, **1 GB** storage, **autoscaling OFF**, no add-on, no second resource; and read from the create form if the form shows it before the final confirm | **NOT YET EVIDENCED**. No database exists, and nothing here says a form or preview has been seen. | Owner records the intended settings (and the form's values, if shown before confirming) |
+| E4b | **Post-creation (G6, not G1):** the **actual** storage size, autoscaling state and absence of add-ons on the created database, and the actual charge against the forecast | **NOT APPLICABLE until a resource exists** (it cannot be evidenced before a separately authorized creation) | Checked at C1 (+24 h after create) and recorded under the G6 creation approval |
 | E5 | Included allowances, overage rates and a build-pipeline spend limit | **PARTIAL:** 5 GB bandwidth and 500 pipeline minutes are shown, 0 used. **Overage rates and any spend-limit setting are UNVERIFIED.** | Owner reads the overage rates and decides whether to set the spend limit |
 | E6 | A written forecast of at most **$25 including tax**, for the planned teardown date | **PENDING** (owner) | Owner states it after E2, E3 and E5 |
-| E7 | The approved teardown and retention plan (§7), including a genuine owner-unavailability fallback (D4) | **PENDING** (owner) | Owner decisions D4 and D5 |
+| E7 | The approved teardown and retention plan (§7), including an **eligible, executable** owner-unavailability fallback (D4) | **PENDING** (owner) | Owner decisions D4 and D5; if no eligible fallback exists, E7 and G1 stay open |
 
-G1 does not close on E1, E2 and E5 alone.
+G1 does not close on E1, E2 and E5 alone. **E4 is split on purpose:** G1 needs the owner's *pre-creation* confirmation of the intended configuration and prices (E3, E4). Verifying what was *actually created* (E4b) can only happen after provisioning, which is a separate G6 approval, so E4b is not a G1 requirement.
 
 ## 6. Decisions the owner must make for G1 (all PENDING; none is answered by this packet)
 
@@ -100,16 +101,18 @@ G1 does not close on E1, E2 and E5 alone.
 | D1 | Confirm the exact configuration in §2, or change it (any change needs a new forecast) | Confirm as proposed |
 | D2 | The teardown date. P3 sets 15 Dec 23:59 Asia/Manila, subject to the official judging end | 15 Dec, or the day judging access ends |
 | D3 | The warning level and the stop level | $20 warn, $25 stop, as P3 |
-| D4 | **A genuine fallback if the owner is unavailable at teardown** (below). A calendar reminder is **not** a fallback. | D4-A or D4-B, with the latest-by date written down |
+| D4 | **An executable fallback if the owner is unavailable at teardown** (below). A reminder or a future commitment by the owner is **not** one, and deletion is never delegated in advance. | D4-A with a confirmed delegate. If none exists, G1 stays open. |
 | D5 | The private storage destination, the retention deadline and the destruction plan for the verified export (below) | Owner-private encrypted storage, a fixed destruction date |
 
-**D4: owner-unavailability fallback (the owner must choose one in writing).**
+**D4: owner-unavailability fallback (the owner must choose, in writing; PENDING, none chosen).**
+
+**Eligibility rule.** A fallback counts only if it is **operationally executable while the owner is unavailable**: someone other than the owner, with the authority and the actual access to act, can carry out the non-destructive teardown steps without the owner. A calendar reminder, a written future promise by the owner, or a latest-by date is **not** a fallback, because the owner is the unavailable party. **Without an eligible fallback, G1 cannot close and nothing may be provisioned.**
 
 | Option | What it means | Notes |
 |---|---|---|
-| **D4-A** | A **named delegate** holds written authority, limited to this teardown, and has the Render access needed, **including the verified-export and the deletion steps of §7c**. Deletion still requires the owner's explicit approval, which the owner pre-records in writing for the delegate. | The owner sets up the access. An agent does not. A delegate needs access that Render may or may not allow on a Hobby workspace, so the owner confirms it is possible. |
-| **D4-B** | **No delegate.** The owner pre-commits in writing to (1) a non-destructive containment step, **suspending the web service**, performed on a fixed date, and (2) a **latest-by date for deletion**. The database may keep billing until deletion, so the latest-by date is chosen against the forecast: with no overage and no tax, the $20 warning is reached about 24 Dec, and the $25 ceiling about 5 Jan; with the illustrative 9% tax, about 30 to 31 Dec. | Suspending the web service alone does not end database charges (billing after suspension is not stated by Render). |
-| **D4-C** | No fallback. | **G1 cannot be closed and nothing should be provisioned.** |
+| **D4-A** | A **named delegate**, who is not the owner, is reachable on the teardown dates and holds **written authority limited to the non-destructive steps of §7c (take and verify the export, revoke sessions, suspend the web service)**, with **confirmed, feasible Render and export-storage access**. The owner confirms that this access is possible, because Hobby workspace access for a second person is not established here. **Revoking sessions needs the database owner credential**, which the owner decides whether to share; if it is not shared, the delegate's steps are the export and the suspension only. | **Deletion is not delegated by this option.** Deleting the web service or the database still needs the owner's **separate explicit approval at teardown time** (§7c step 4). Neither general advance approval nor granted access substitutes for it. If the owner cannot be reached, the delegate does **not** delete: the resources stay, and the **continuing cost is outside the $25 ceiling** until the owner approves a deletion or renews the spending limit. |
+| **D4-B** | **Not eligible: no delegate, an unconfirmed delegate, or only a future commitment, reminder or latest-by date by the owner.** | **G1 cannot close and nothing may be provisioned.** Suspending the web service does not end database charges (Render does not state billing after suspension), so it is not a cost cap. |
+| **D4-C** | Any **other** mechanism | Eligible only if it is independently actionable without the owner, authorized in writing, and verified feasible. **None is proposed, and none has been verified.** |
 
 **D5: private export storage, retention and destruction (PENDING owner confirmation).** The owner decides, before G1 closes: (a) a private, **encrypted** destination and who can read it, (b) a retention deadline (for example, a fixed date after judging results are final), (c) the destruction method and date, and (d) that no copy is committed, emailed, uploaded or kept on a shared drive. The export holds the operator password hash and application rows.
 
@@ -147,8 +150,9 @@ Render keeps point-in-time recovery for 3 days and logical backups for 7 days on
 
 1. Take a **final** export and verify it by **7a, steps 1 to 9**. Do not proceed past a failure.
 2. Store it according to D5 and record its checksum. **A verified, independently restorable, off-Render private export must exist before deletion is requested.**
-3. Revoke sessions (`UPDATE sessions SET revoked_at = now()` as the owner) and **suspend** the web service. Do not treat this as ending database billing.
-4. **Separate explicit owner approval to delete** (or the D4-A delegate's pre-recorded approval, within the owner's written limits). Then delete the web service and the PostgreSQL database in the Render dashboard. This also deletes the Render-held backups, snapshots and recovery state.
+3. **Non-destructive containment** (the owner, or the D4-A delegate within the delegate's written limits): revoke sessions (`UPDATE sessions SET revoked_at = now()` as the owner role) and **suspend** the web service. Do not treat this as ending database billing.
+4. **Deletion needs the owner's separate explicit approval, given at teardown time, for that deletion, after the export is verified (steps 1 and 2).** Neither a pre-recorded or general advance approval nor delegated Render access substitutes for it. Only after that approval, the owner (or the delegate acting on that approval) deletes the web service and the PostgreSQL database in the Render dashboard. This also deletes the Render-held backups, snapshots and recovery state.
+   - **If the approval cannot be obtained:** nothing is deleted. The resources and their charges continue, **outside the $25 ceiling**, until the owner approves the deletion or renews the spending limit. That posture is a known cost risk, not a plan within the budget.
 5. Confirm in Billing that no resource is running and no further charge is accruing (C6).
 6. Remove secrets: delete the Render secret entries, rotate `SESSION_SECRET` and the database credentials, and note that the AG Studio licence key that was held in Render's secret store has been removed. If it was ever exposed beyond accepted use, the only remedy is the vendor's own process (see `docs/NMI-P5-LICENSED-STUDIO-RELEASE.md` §2).
 7. At the D5 destruction date, destroy the private export as decided, and record the outcome privately, with actual charges against this forecast.
@@ -184,20 +188,20 @@ The licence scope is **owner-attested, not independently legally verified**. The
 | Gate | State | Still required |
 |---|---|---|
 | **G4** | **OPEN** | The owner chooses a **full 40-character release SHA** on `main` and creates `release/nmi-render-judges-2026` at exactly that SHA, with no force-push or deletion. Then `pnpm --filter @nmi/api release-preflight source --expect <SHA>` must print PASS on a clean clone, and again before every deploy. **No release SHA has been chosen. This packet creates no branch.** |
-| **G6** | **OPEN** | Three **separate** owner approvals: (a) creating resources and the unavoidable first build (Render builds the branch tip at creation even with auto-deploy off, so the tip must equal the approved SHA); (b) sharing a URL, after the live checks and the §8 decision; (c) the judge-access method (supervised credentials or video). The live checks (cookie flags, one-hop proxy, `X-Forwarded-For` throttling, the log-marker check) are **unperformed**. |
+| **G6** | **OPEN** | Three **separate** owner approvals: (a) creating resources and the unavoidable first build, **after which the actual configuration is verified (E4b)** at C1 (Render builds the branch tip at creation even with auto-deploy off, so the tip must equal the approved SHA); (b) sharing a URL, after the live checks and the §8 decision; (c) the judge-access method (supervised credentials or video). The live checks (cookie flags, one-hop proxy, `X-Forwarded-For` throttling, the log-marker check) are **unperformed**. |
 | **G8** | **CONTINUING** | The service environment holds no OpenAI, PayPal-credential, test or simulated variables; `NUDGE_AI_DRAFTING_ENABLED` is absent or `false`; `PAYPAL_DRAFTS_ENABLED=false`; `PAYPAL_ENV=sandbox`. `release-preflight env` must be run against the **service's** actual variable names. **P7 ran it against synthetic inputs only.** Gates A, B and C remain NOT AUTHORIZED. |
-| G1 | **OPEN** | The remaining section 5 evidence (E3, E4, E6, E7 not yet evidenced; E2 and E5 only partial; E1 evidenced from an owner-supplied screenshot) and the section 6 decisions. |
+| G1 | **OPEN** | The remaining section 5 evidence: pre-creation E3 and E4, E6 and E7 not yet evidenced; E2 and E5 only partial; E1 evidenced from an owner-supplied screenshot; and the section 6 decisions, including an **eligible D4 fallback**. E4b is a G6 item, not a G1 item. |
 | G5 | **OPEN** | Section 8 decision. |
 | G7 | **OPEN** | Section 9 decisions. |
 
 ## 11. Approvals the owner must give, in order
 
 1. Confirm or amend the section 2 configuration and the section 6 decisions D1 to D5.
-2. **G1:** supply the remaining evidence (E3, E4, E6 and E7, and the unverified parts of E2 and E5), and approve the teardown and retention plan, including the D4 fallback and the D5 storage decision.
+2. **G1:** supply the remaining evidence (pre-creation E3 and E4, E6 and E7, and the unverified parts of E2 and E5), and approve the teardown and retention plan, including an **eligible D4 fallback** and the D5 storage decision. Without an eligible D4 fallback, G1 cannot close.
 3. **G5:** choose A, B or C in section 8.
 4. **G7:** answer G7-1 to G7-5 and attach the entitlement record privately.
 5. **G4:** choose the release SHA and create the release branch.
-6. **G6:** approve resource creation and the first build; then, after the live checks, the URL and judge-access method.
+6. **G6:** approve resource creation and the first build; after creation, verify the actual configuration and charge (E4b) at C1; then, after the live checks, approve the URL and the judge-access method.
 7. Throughout: Gates A, B and C stay off, and deletion needs its own approval at the time.
 
 ## 12. How this packet was checked
