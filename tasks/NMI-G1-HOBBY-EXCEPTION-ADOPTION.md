@@ -1,6 +1,6 @@
 # NMI-G1-HOBBY-ADOPT — Adoption record for the Hobby owner-only teardown exception
 
-**Status:** documentation only. Draft PR on `docs/nmi-g1-hobby-exception-adoption`, based on `main@6d16f45a95d1cafecb3aca2ac047ce7daab912ee` (PR #48, the proposal, independently audited PASS and squash-merged). **G1 stays OPEN.** The exception becomes effective **only** when this PR has passed independent review **and** the owner explicitly approves its merge. **UI design gate:** Not applicable (documentation only).
+**Status:** documentation only. Draft PR on `docs/nmi-g1-hobby-exception-adoption`, based on `main@6d16f45a95d1cafecb3aca2ac047ce7daab912ee` (PR #48, the proposal, independently audited PASS and squash-merged). **G1 stays OPEN.** The exception becomes effective **only** when this PR has passed independent review, both required CI workflows have passed at its final head, the owner has explicitly approved its merge, **and the merge has been completed on GitHub and verified**. **UI design gate:** Not applicable (documentation only).
 
 **Objective:** record the owner's reported 2026-11-06 ratification and reconcile the P3 pre-provisioning fallback condition and the G1 packet §6 D4, §5 E7 and §11 with the narrowly scoped, ratified exception, without rewriting any earlier decision and without changing the $25 authorized ceiling.
 
@@ -11,6 +11,6 @@
 **Acceptance:**
 1. The record states the owner's ratification as an **owner-reported decision made in conversation on 2026-11-06**, not as a GitHub comment by the owner.
 2. P3 is reconciled by an **additive** section that changes only the independent-fallback prerequisite, for this one deployment, and leaves the 2026-11-04 approval text and every financial restriction intact.
-3. G1 packet §6 D4, §5 E7 and §11 are updated together. D4 is satisfied by the exception **on merge**; E7 stays pending (D5 and the rest of the teardown plan); G1 stays OPEN.
-4. The exception is **not** effective before an independent PASS and the owner's explicit merge approval, and the record says so.
+3. G1 packet §6 D4, §5 E7 and §11 are updated together. D4 is satisfied by the exception **only once it is effective** (§7 of the record, including a verified completed merge), **for the one approved Hobby deployment and timebox only**, with the original requirement preserved for every other case; E7 stays pending (D5 and the rest of the teardown plan); G1 stays OPEN.
+4. The exception is **not** effective before all four conditions hold (independent PASS, exact-head CI, the owner's explicit merge approval and a verified completed merge), and the record, P3 and the G1 packet all say so consistently.
 5. Both required hosted CI workflows pass at the exact final head, and an independent review precedes any owner merge.

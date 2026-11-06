@@ -1,6 +1,6 @@
 # NMI-G1 — Adoption record: Hobby owner-only teardown exception
 
-**Status: EFFECTIVE ONLY WHEN this record's PR has passed independent exact-HEAD review and the owner has explicitly approved its merge. Before that, this document changes nothing: the P3 fallback prerequisite and the G1 packet §6 D4 requirement stay in force, and a Draft PR is not an adoption.** After it takes effect, **D4 is satisfied by this exception, for this one deployment only. G1 remains OPEN** (§6).
+**Status: EFFECTIVE ONLY WHEN **all four** of these hold: (1) an independent exact-HEAD review of the adoption-record PR has passed; (2) both required hosted CI workflows have passed at its exact final head; (3) the owner has given a new, explicit approval to merge it; and (4) **the merge has actually been completed on GitHub and verified** (the PR is MERGED and its merge commit is on `main`) (§7). Before then, this document changes nothing: the P3 fallback prerequisite and the G1 packet §6 D4 requirement stay in force, and a Draft or open PR, a review PASS, passing CI or an owner approval to merge is not an adoption.** After it takes effect, **D4 is satisfied by this exception for the one approved Hobby deployment and timebox only; the original executable-fallback requirement is preserved for every other case. G1 remains OPEN** (§6).
 
 **Base:** `main@6d16f45a95d1cafecb3aca2ac047ce7daab912ee`. **Proposal:** [`NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`](NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md), PR #48, independently audited PASS and squash-merged. **Task:** `tasks/NMI-G1-HOBBY-EXCEPTION-ADOPTION.md`.
 
@@ -23,7 +23,7 @@
 
 ## 3. What the exception satisfies, and what it does not
 
-**It satisfies only** the *independent, executable owner-unavailability fallback* requirement: the P3 pre-provisioning teardown-plan clause "the fallback if the owner is unavailable" and the G1 packet §6 D4 rule. It is accepted **instead of** a delegate, because a delegate is not possible on Hobby.
+**It satisfies only** the *independent, executable owner-unavailability fallback* requirement: the P3 pre-provisioning teardown-plan clause "the fallback if the owner is unavailable" and the G1 packet §6 D4 rule, **and only for the one approved Hobby deployment and timebox described next.** It is accepted **instead of** a delegate, because a delegate is not possible on Hobby. **For every other case, the ordinary requirement is preserved in full**: another workspace, another plan or resource shape, a deployment after the timebox, or any situation where an assumption below has stopped being true still needs an eligible, executable fallback, and without one G1 cannot close and nothing may be provisioned.
 
 **Its scope is one deployment:** the single-operator, synthetic-only NudgeMyInvoice demo in the existing **Mrdzyn Hobby** workspace, with one Starter web service and one PostgreSQL 16 Basic 256 MB (1 GB, autoscaling OFF), one instance each, no add-ons, no Blueprint, no Pro upgrade, provider-disabled (G8), target teardown by **15 December 2026 23:59 Asia/Manila**, subject to confirming the official end of judge access. Any change to that shape needs a new forecast and a new owner decision.
 
@@ -53,7 +53,7 @@ If Hobby later permits a second member, the workspace plan changes, the resource
 | Document | Change |
 |---|---|
 | `docs/NMI-RENDER-P3-25-BUDGET-GATE.md` | A new section, below the earlier non-operative addendum, states the reconciliation for the **one fallback prerequisite only**. The 2026-11-04 approval text and the earlier addendum are not edited. |
-| `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md` | §6 D4: new row **D4-X** (the adopted exception) and a status line, with D4-B kept as written; §5 **E7**: the fallback part is satisfied by the exception on merge and E7 stays PENDING; §11: the sequence is updated; §13: the "NOT ADOPTED" heading is replaced by a status pointing here. |
+| `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md` | §6 D4: new row **D4-X** (the adopted exception) and a status line, with D4-B kept as written; §5 **E7**: a qualification that D4-X substitutes for the fallback only for the one approved deployment once this record is effective (§7), and E7 stays PENDING; §11: the sequence is updated; §13: the "NOT ADOPTED" heading is replaced by a status pointing here. |
 | `docs/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md` | Status references only. The proposal text is kept as reviewed. |
 | `docs/STATUS.md`, `docs/HANDOFFS.md` | Status and the appended handoff `NMI-G1-HOBBY-ADOPT-01`. |
 
@@ -72,9 +72,14 @@ If Hobby later permits a second member, the workspace plan changes, the resource
 
 ## 7. Effectiveness checklist
 
-This record is effective only when **all** of these hold. None is assumed:
+This record is effective only when **all four** of these hold. None is assumed, and each must be checked, not inferred:
 1. An **independent exact-HEAD review of this PR** has passed.
-2. **Both required hosted CI workflows** have passed at the exact final head.
-3. **The owner explicitly approves the merge** of this PR on GitHub.
+2. **Both required hosted CI workflows** have passed at the exact final head of this PR.
+3. **The owner has given a new, explicit approval to merge** this PR. Approval to *prepare* the PR, the 2026-11-06 reported ratification and an independent review PASS do not count.
+4. **The merge has actually been completed on GitHub and verified**: the PR's state is MERGED and its merge commit is on `main`. A PR that is still Draft or open is not merged, even if the owner has approved it and every check has passed.
 
-Until then, the earlier statements stand: the P3 fallback prerequisite is unmet and binding, and the G1 packet §6 D4 requirement applies.
+**What does not make it effective:** a Draft or open PR; an independent PASS alone; passing CI alone; the owner's merge approval alone; an approved but unmerged PR. In each of those cases the exception is **not** in force, and D4 and the P3 fallback prerequisite remain unmet and binding.
+
+**Recording it.** Once the merge is verified, a status-only reconciliation records the merge commit SHA in `docs/STATUS.md`. If the reconciliation is delayed, the verified GitHub merge is still the fact that matters, and anyone relying on the exception checks the PR's merged state first.
+
+Until all four hold, the earlier statements stand: the P3 fallback prerequisite is unmet and binding, and the G1 packet §6 D4 requirement applies.
