@@ -2298,4 +2298,33 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 ### Next action
 Independent exact-HEAD review of Draft PR #48 and required CI, then an explicit owner decision on whether to **adopt** the exception. Keep G1 OPEN and do not create any Render resource until the separate gates are satisfied.
 
+## Handoff: NMI-G1-HOBBY-EXC-02
+
+- **Task / phase:** `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`.
+- **From:** implementing/orchestrating assistant (not the independent auditor).
+- **To:** independent focused documentation/policy reviewer, then project owner.
+- **Branch:** `docs/nmi-g1-hobby-owner-only-exception`, Draft PR #48, based on `main@e3b68e83dec899b7aa56afa9be3e8fbf5fd07d62`.
+- **Implementation head:** `680abb771d9d9019312f53343e4be193ae03a0f4` (before this handoff; verify exact PR head and CI).
+- **PR:** https://github.com/mrdzyn/nudgemyinvoice/pull/48.
+- **State:** independent report PARTIAL on `6c892689b236c47decc3a8da863119df1db3804e`; three documentation issues addressed, awaiting focused re-audit. `NMI-G1-HOBBY-EXC-01` retained unchanged.
+
+### Completed
+- **EXC-01:** Added G1-consistent dated cost/overrun examples (~$0.42/day, $20 warning Dec 24, pre-tax $25 crossing Jan 5, illustrative 9% tax $25 by Dec 31) and explained the Render workspace/payment-method exposure for noncreditable charges. No hard ceiling or reimbursement claimed; $25 remains authorized maximum.
+- **EXC-02:** Added an *informational, non-operative* appendix to `docs/NMI-RENDER-P3-25-BUDGET-GATE.md` recording the proposed narrowly scoped D4 owner-only exception to P3's existing feasible fallback condition. P3's original historic approval/controls remain intact and enforceable until separate adoption.
+- **EXC-03:** Defined exact post-review owner ratification and a separate audited/owner-merged **adoption record** explicitly reconciling P3 fallback, G1 packet §6 D4 / §5 E7 / §11 and STATUS. Merely merging proposal is NOT adoption and does NOT close G1; D5 and all remaining gates still require evidence.
+- Expanded bounded task to permit a P3 informational cross-reference, revised proposal and packet §13, updated STATUS. No application, DB, test or deployment change.
+
+### Validation
+- Read-only exact-head GitHub evidence for PR #47 PASS and #48 prior PARTIAL: confirmed; current new-head hosted CI **PENDING**, must be checked independently.
+- Local format/profile and full tests: **NOT RUN** by this tool-based docs update.
+- No Render service/database is created, no first build, provider call, secret, release SHA/branch, merge, URL share or deletion authorized.
+
+### Continuation notes
+- **G1/G4/G5/G6/G7 remain OPEN; G8 continues; provider Gates A/B/C remain NOT AUTHORIZED.** Owner only approved *preparing* the exception, not ratifying it. $25 authorized credit cap intact and no authorized over-budget charge.
+- PR #47 independently reported PASS at `586f7a76cdd62fff00ae50bc820561e59aee155d`, Stack CI attempt 1 timeout and attempt 2 PASS. Its **owner merge approval is missing**; PR #47 and #48 have overlapping STATUS and HANDOFFS, confirmed conflicts if both merged. **Do not merge out of order or drop prior handoffs.** If #47 merges first, reconcile this PR onto updated main without force-push and rerun exact-head mandatory CI.
+- Unfixed separate release blocker: `docs/NMI-DEMO-JUDGE-RUNBOOK.md` checks eight migrations and will abort against journal now containing nine; `scripts/preflight-provision-operator.mjs` similarly assumes eight. Scope separate task before any release or local judge demo.
+
+### Next action
+Focused **independent** exact-HEAD policy/documentation re-audit of revised PR #48 including the new P3 note and updated task. No merge, G1 closure or Render provisioning. Seek explicit owner decisions after independent acceptance.
+
 <!-- HANDOFF_ENTRIES_END -->
