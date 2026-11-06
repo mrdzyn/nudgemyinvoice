@@ -211,3 +211,7 @@ The licence scope is **owner-attested, not independently legally verified**. The
 - The Nov 6 Billing facts come from **owner-supplied screenshots**, described here without committing them. They were not checked against an authenticated Render account.
 - The forecast arithmetic is reproducible: $13 times the prorated month fractions, from 8 Nov. It is not a Render quote, and it is **unchanged** by the Billing evidence.
 - The Render connector was not used (it is unauthenticated), no Render API was called, and nothing was provisioned.
+
+## 13. Proposed Hobby owner-only exception (NOT ADOPTED)
+
+The owner on **2026-11-06** approved **preparing**, not adopting, a bounded owner-only exception to §6 D4 while retaining Hobby and the existing $25 authorized eligible-credit budget. The proposal and risk disclosure are in [`docs/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`](NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md). Render's Hobby plan cannot add team members; a reminder or owner commitment does not satisfy the existing independently executable fallback rule. **The existing D4 requirement remains effective until independent review and a separate, explicit owner adoption of that exception.** No declaration here closes G1, authorizes involuntary over-budget charges, approves resource creation/first deploy, delegates destruction, or changes G5/G7/G4/G6/G8. All other E1–E7 and D1–D5 owner conditions remain as written.
