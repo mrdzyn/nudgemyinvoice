@@ -2142,4 +2142,18 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Evidence:** the earlier local results stand as implementation-agent reports (`pnpm validate` 1391, targeted 203, negative control 5 of 8 new tests, P6 journey 150/150). The 150/150 run was a regression run only, and the new already-mounted and A→B→A flows have DOM evidence, not browser evidence.
 - **Next:** re-audit E1, then P7-B only after that. When the journey is re-run, restore or exclude `design/evidence/NMI-P6/` before committing. No merge, deploy or provider action.
 
+## Handoff: NMI-P7-B-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-B**; `phase-7/nmi-release-readiness`, Draft PR #45, started from `4e08fcc` (P7-A accepted; its implementation is untouched). **Implementation SHA:** `325a188736c0feaecbdc7821df905e3031ed5f93`. **From / to:** implementation agent → **independent exact-HEAD review of P7-B** (P7-C/D not started).
+- **Changed:** `apps/api/src/release-preflight.ts` adds rule `env.NUDGE_AI_DRAFTING_ENABLED`. The variable passes only when absent or exactly `"false"`; `"true"`, empty, `FALSE`/`False`/`TRUE`, padded (leading/trailing space or newline), numeric and malformed values fail. The finding names the variable only and never prints a value. Tests are in `release-preflight.test.ts`; the matrix row is added in `docs/NMI-RENDER-P4-RELEASE-READINESS.md` §4.
+- **Preserved:** the OpenAI/PayPal/test name prohibitions, `PAYPAL_ENV=sandbox`, `PAYPAL_DRAFTS_ENABLED=false`, the sandbox base URL and the licensed AG Studio rules. `config.ts` and the provider clients are unchanged.
+- **Tests (implementation-agent, local):**
+  - Targeted `release-preflight.test.ts`: 79 passed.
+  - **Negative control:** 12 of the new tests fail against the unchanged preflight.
+  - Accepted environments are also accepted by the real `loadConfig`, with `nudgeDrafting` and `openai` both null.
+  - Rejected non-`true` values are also refused by `loadConfig`.
+  - `true` is rejected by name, with and without parser credentials.
+- **Limits:** a pure offline check of names and verdicts. It does not inspect Render's real environment and proves nothing about the hosted service. `true` with the OpenAI names is reported by two rules by design.
+- **Next:** independent P7-B review, then P7-C (migration `0008` recovery proof) on the same PR. No merge, deploy, provider action or release SHA.
+
 <!-- HANDOFF_ENTRIES_END -->
