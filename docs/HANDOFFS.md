@@ -2270,4 +2270,32 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Preserved:** the accepted billing evidence, the restore guidance, the forecast figures and every release restriction (G1, G4, G5, G6, G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED). **No owner decision is recorded as made.** No application code was touched, and the separate P7-C runner cleanup finding was not addressed here.
 - **Next:** focused re-audit. No merge, Render provisioning, spend, release SHA, deployment, provider activation or deletion authorization.
 
+## Handoff: NMI-G1-HOBBY-EXC-01
+
+- **Task / phase:** `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`.
+- **From:** release-preparation assistant (proposal author; not independent reviewer).
+- **To:** independent governance / documentation reviewer, then owner for an explicit adoption and merge decision.
+- **Branch:** `docs/nmi-g1-hobby-owner-only-exception` (base `main@e3b68e83dec899b7aa56afa9be3e8fbf5fd07d62`).
+- **Implementation head:** `a84da7a105f0e85e03c312ea1c89d40c5728d3e0` before this handoff commit; verify the PR's final exact HEAD.
+- **PR:** Draft #48 — https://github.com/mrdzyn/nudgemyinvoice/pull/48.
+- **State:** **PROPOSED, NOT ADOPTED.** Existing G1 D4 independently executable fallback rule still governs; no Render resource may be provisioned by this task.
+
+### Completed
+- Recorded the owner's 2026-11-06 permission to **prepare** a limited owner-only Hobby D4 exception; did not infer final exception ratification, G5/G7 decision, budget increase or deployment authority.
+- Drafted `docs/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md` defining the Hobby one-member limitation, possible involuntary charges past the $25 approved ceiling if the owner is unavailable, non-executable reminders, controls/checkpoints and separate fresh deletion authorization.
+- Added a status-only cross-reference to the accepted G1 packet §13, added the bounded task and reconciled STATUS after owner-squash-merged PR #46. Separate migration-0008 Draft PR #47 remains untouched.
+
+### Validation
+- Read-only GitHub verification of merged `main@e3b68e8`, merged G1 packet, Render Hobby limitation from official public docs, and Draft PR #47 separation: PASS.
+- Required exact-head hosted CI: **PENDING / must check** after this handoff commit.
+- No local code/runtime/DB tests executed; all changes are documentation-only.
+
+### Continuation notes
+- Owner has not chosen D5 private export destination or retention/destruction dates or signed the final D4 exception. E2/E3/E4/E5/E6/E7 remain incomplete. G1/G4/G5/G6/G7 OPEN; G8 continuing; provider Gates A/B/C NOT AUTHORIZED.
+- Proposed **$25 eligible-credit spending ceiling stays unchanged**. A potential involuntary overrun if owner is unavailable is a *risk disclosure, not preapproval for excess charges*; no platform hard cap is claimed.
+- No cloud/Render provisioning, payment, release SHA/branch, migration, first build, judge URL, secret, provider call or deletion is authorized by this proposal.
+
+### Next action
+Independent exact-HEAD review of Draft PR #48 and required CI, then an explicit owner decision on whether to **adopt** the exception. Keep G1 OPEN and do not create any Render resource until the separate gates are satisfied.
+
 <!-- HANDOFF_ENTRIES_END -->
