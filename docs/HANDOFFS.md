@@ -2181,4 +2181,28 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** the same as `NMI-P7-C-01` (local PostgreSQL 16 only, about 100 rows, single-operator schema, no `pnpm test:db`).
 - **Next:** re-audit P7-C-AUD-01. P7-D only on owner direction. No merge, deploy, Render action, provider call or release SHA.
 
+## Handoff: NMI-P7-D-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-D**; `phase-7/nmi-release-readiness`, Draft PR #45, started from `6220411` (P7-A, P7-B and P7-C independently accepted; P7-C-AUD-01 closed). **From / to:** implementation agent → **independent exact-HEAD review of P7-D and of the integrated P7 PR**, then the owner's merge decision.
+- **Implementation SHAs:** journey runner `4c81a43ba46ed73db2b42adf3abdf4e2ab0d3e8f`; bundle-inspection runner `c4dd0df5dbfce1cbc3806504c44a61dd49fe03ac`; evidence and documents `15a3ec137c4f641fe2c1c0f234171b90c17d0791`. The final PR head (this handoff commit) is in the PR comment.
+- **Added (no application, migration or grant change; P4 and P6 evidence untouched):** `design/evidence/NMI-P7/run-p7a-journey.mjs`, `qa-results-p7a.json`, `screenshots-p7a/`, `run-bundle-inspection.mjs`, `bundle-inspection.json`, `P7-D-VERIFICATION.md`. Documents reconciled: P4 release doc (new §14 gate ledger), P5 release doc (§8), the P7 task status line, STATUS.
+- **Results (implementation-agent, local):**
+  - `pnpm validate` exit 0, 1408 tests passed.
+  - `pnpm test:db` 367 passed on a disposable PostgreSQL 16.15, shutdown confirmed.
+  - P7-A browser journey **46/46** (fake model, disposable PG16, headless Chrome at 1280 and 390 px). It covers re-targeting of an already-mounted queue, no overwrite of manual tabs, A→B→A after a pending warning, replace only for A, 44px targets, contrast and names, and the no-send boundaries. Negative controls against the pre-P7-A web sources fail.
+  - Bundle inspection **30/30** with a synthetic licence canary only: no licence name, secret marker or canary in either variant, Studio only in lazy chunks, scanner negative control.
+  - P7-C 116/116 is independently accepted and was not rerun.
+- **Gate ledger (P4 doc §14):**
+  - G2 and G3 CLOSED.
+  - G1, G4, G5, G6 and G7 OPEN, and G8 continues. No release SHA is selected.
+  - The AG Studio licence is owner-attested only.
+  - Gates A, B and C are NOT AUTHORIZED.
+- **Not performed:**
+  - Safari, Firefox, real devices and touch, screen readers, 400% zoom.
+  - The real `__Host-` cookie behind a Render proxy and Render request-log evidence.
+  - Render-managed backup and restore, live billing, and any live-provider run.
+  - The P6 journey was not rerun, so its recorded 150/150 stands.
+- **Recommended owner decisions:** see P4 doc §14, in order: the PR #45 merge decision after review, then G1, G5, G7, then choose the release SHA and branch (G4), then the manual QA plan. Keep Gate A off.
+- **Next:** independent review of PR #45 at its final head. No merge, deploy, Render action, payment, provider call, release SHA, judge URL or Devpost publication.
+
 <!-- HANDOFF_ENTRIES_END -->
