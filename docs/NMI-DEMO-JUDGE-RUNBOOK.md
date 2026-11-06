@@ -59,6 +59,7 @@ There is no `db:migrate` script. **Only on the empty, throw-away `nmi_judge` dat
 ```bash
 (
   [ -n "${DATABASE_URL:-}" ] || { echo "DATABASE_URL is required" >&2; exit 1; }
+  node -e 'try { const u = new URL(process.env.DATABASE_URL); if ((u.protocol === "postgres:" || u.protocol === "postgresql:") && u.hostname === "127.0.0.1" && u.port === "54370" && u.pathname === "/nmi_judge") process.exit(0); } catch {} process.exit(1)' || { echo "REFUSED: require loopback 127.0.0.1:54370/nmi_judge, not hosted SQL" >&2; exit 1; }
   tags="$(node scripts/migration-plan.mjs)" || exit 1
   [ -n "$tags" ] || { echo "empty migration plan" >&2; exit 1; }
   dbname="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT current_database()")" || exit 1
@@ -81,7 +82,7 @@ fi
 (exit "$rc")
 ```
 
-This block works in bash and zsh without closing an interactive shell: `exit 1` appears **only in the subshell** and `(exit "$rc")` preserves a nonzero exit status. The journal and database prechecks are read-only; if either fails, **no migration runs**. Each SQL file runs in its own transaction (`-1`) with `ON_ERROR_STOP=1`; the **first failed file stops later files**, and you must recreate the disposable database rather than rerun a partial sequence. Do not continue to §5 unless the success message includes `invoice_nudges verified`. A fixed public-table count is intentionally not used, because table counts may change with later ordered migrations.
+This block works in bash and zsh without closing an interactive shell: `exit 1` appears **only in the subshell** and `(exit "$rc")` preserves a nonzero exit status. The URL/host and journal/database prechecks are read-only; they **require 127.0.0.1:54370/nmi_judge** (the disposable local cluster in §3), and if any fails, **no migration runs**. Each SQL file runs in its own transaction (`-1`) with `ON_ERROR_STOP=1`; the **first failed file stops later files**, and you must recreate the disposable database rather than rerun a partial sequence. Do not continue to §5 unless the success message includes `invoice_nudges verified`. A fixed public-table count is intentionally not used, because table counts may change with later ordered migrations.
 
 ## 5. Provision the single operator
 
