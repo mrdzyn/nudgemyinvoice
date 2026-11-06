@@ -57,3 +57,11 @@ Sources (checked 2026-11-04): [Render pricing](https://render.com/pricing), [com
 - At checkout the owner reviews: credit applicability to each resource, tax, and the Postgres storage setting. **Database storage autoscaling must be OFF** and the disk must stay at the selected **1 GB** (a Render Blueprint may default to a larger disk if the size is omitted, so set it explicitly). No Pro upgrade, no paid add-on, no second instance or database.
 
 **Outcome of this phase:** budget decision recorded; no billing or deployment action executed.
+
+## Post-approval D4 owner-only exception proposal — NON-OPERATIVE (2026-11-06)
+
+The owner approved **preparing** (not ratifying) a narrowly bounded **Hobby owner-only exception** to the *independently executable owner-unavailability fallback* prerequisite in this P3 budget policy and the subsequently merged G1 packet §6 D4. See [`docs/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`](NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md), Draft PR #48. This is a **status-only cross-reference**, not a revision of the owner-approved 2026-11-04 P3 spending policy. The **$25 authorized eligible-credit limit, cost/checkout evidence, backup/retention, separate actual-at-teardown deletion approval, and all release/owner gates remain in force**.
+
+**Today the original pre-provisioning fallback condition remains unmet and binding.** Hobby cannot add a second workspace member; no alternative executable operator has been verified. The proposed exception discloses possible **unbounded ongoing billing exposure if the owner is unavailable** and possible collection from the workspace billing account/payment method; such exposure is not an increased spending authorization or a Render-enforced cap.
+
+**If and only if the owner separately ratifies the final exception after independent review**, a subsequent independently audited and owner-merged adoption-record change must expressly update this **one P3 fallback prerequisite**, the G1 packet §6 D4, E7/§11 and STATUS together, recording D4 as **satisfied by exception for this one Hobby deployment/timebox**, not by an imaginary delegate. **Proposal merge alone has no effect**. Until that adoption record and all remaining E1–E7/D1–D5 requirements pass, **G1 stays OPEN and no Render resource creation is authorized**.
