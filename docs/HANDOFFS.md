@@ -2270,4 +2270,33 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Preserved:** the accepted billing evidence, the restore guidance, the forecast figures and every release restriction (G1, G4, G5, G6, G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED). **No owner decision is recorded as made.** No application code was touched, and the separate P7-C runner cleanup finding was not addressed here.
 - **Next:** focused re-audit. No merge, Render provisioning, spend, release SHA, deployment, provider activation or deletion authorization.
 
+## Handoff: NMI-RENDER-MIG-0008-C1
+
+- **Task / phase:** `tasks/NMI-RENDER-MIG-0008-RUNBOOK.md`.
+- **From:** implementation / release-preparation assistant.
+- **To:** independent documentation reviewer.
+- **Branch:** `docs/nmi-render-migration-0008` (base `main@e3b68e83dec899b7aa56afa9be3e8fbf5fd07d62`).
+- **Implementation head:** `e9cfba9657e0992416384ad7ac5c7488cc865176` (runbook fix before operational docs; verify latest PR head and hosted CI on GitHub).
+- **PR:** #47, Draft — https://github.com/mrdzyn/nudgemyinvoice/pull/47.
+- **State:** documentation correction submitted for independent review; no release authorization.
+
+### Completed
+- Corrected P1 manual Render PostgreSQL journal/migration range to `0000`–`0008`, including `0008_mushy_zarek` (`invoice_nudges`) before runtime role grants.
+- Made the documented migration loop stop on failure instead of using `|| break`, and required an `invoice_nudges` existence check prior to runtime grants. No database command was executed.
+- Recorded that owner selected Hobby and retained the $25 eligible-credit ceiling, **not** an executable independent teardown fallback or an authorization to waive G1.
+
+### Validation
+- Verified the exact migration tag against `packages/db/migrations/meta/_journal.json` and its tracked SQL file (read-only): PASS.
+- Documentation file updates and Draft PR created; local full test suite NOT RUN.
+- Required hosted CI: PENDING at handoff creation; verify exact final PR head before audit.
+
+### Continuation notes
+- G1/G4/G5/G6/G7 remain OPEN; G8 continues, live provider Gates A/B/C NOT AUTHORIZED.
+- Render Hobby prohibits team members (Render docs). G1's executable non-owner fallback is not met; a future owner-approved and independently audited exception or feasible alternative is required before G1 closure.
+- G5 Hobby platform request-log residual-risk acceptance and G7 AG Studio external package/hosted-use rights are still owner-controlled; no choice was inferred.
+- No provisioning, billable resources, migrations, release SHA/branch, deployment, secrets, judge URL, or deletion.
+
+### Next action
+Independently audit PR #47's docs-only migration correction and exact-head hosted CI; return findings for the owner's explicit merge decision. Do not treat this PR as G1 closure or deployment authority.
+
 <!-- HANDOFF_ENTRIES_END -->
