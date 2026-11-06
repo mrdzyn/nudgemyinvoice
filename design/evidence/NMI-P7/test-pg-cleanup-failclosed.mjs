@@ -4,11 +4,11 @@
 // after confirmed shutdown, after partial startup, and when nothing was ever initialised.
 //   node design/evidence/NMI-P7/test-pg-cleanup-failclosed.mjs
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { makePgCtl, shutdownAndRemove } from "./pg-cleanup.mjs";
+import { isConfirmedStopped, makePgCtl, shutdownAndRemove } from "./pg-cleanup.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../..");
@@ -69,6 +69,72 @@ try {
     check("FAILURE CONTROL: a stop that claims success but leaves the server running does not delete the directory (status is authoritative)", r.confirmed === false && existsSync(data) && alive(), JSON.stringify(r));
     const fin = shutdownAndRemove({ dataDir: data, removePaths: [work], pgCtl: real });
     check("cleanup of the control cluster itself: confirmed down, then removed", fin.confirmed && fin.removed && !existsSync(work), JSON.stringify(fin));
+  }
+  // 6. P7-D-AUD-01 (status-command errors): INJECTED pg_ctl results on a real, initialised data directory that is NOT
+  //    running. Only a clean `status` exit 3 may permit deletion; 4, a launch error, a signal and any other code must not.
+  {
+    const mk = () => {
+      const work = tmp(); leftovers.push(work);
+      const data = join(work, "pg");
+      initdb(data);
+      return { work, data };
+    };
+    const inject = (statusResult) => (args) => (args.includes("status") ? statusResult : args.includes("stop") ? { status: 0, stdout: "", stderr: "" } : real(args));
+    const cases = [
+      ["status exit 4 (no accessible data directory)", { status: 4, signal: null }],
+      ["status exit 1", { status: 1, signal: null }],
+      ["status exit 2", { status: 2, signal: null }],
+      ["status exit 5", { status: 5, signal: null }],
+      ["status exit 127 (shell could not run it)", { status: 127, signal: null }],
+      ["status exit 255", { status: 255, signal: null }],
+      ["status null with a launch error (spawn ENOENT)", { status: null, signal: null, error: Object.assign(new Error("spawn pg_ctl ENOENT"), { code: "ENOENT" }) }],
+      ["status null with a launch error (spawn EACCES)", { status: null, signal: null, error: Object.assign(new Error("spawn pg_ctl EACCES"), { code: "EACCES" }) }],
+      ["status null killed by a signal", { status: null, signal: "SIGKILL" }],
+      ["status null with no error and no signal", { status: null, signal: null }],
+      ["status undefined", { status: undefined }],
+      ["status exit 3 BUT with a launch error reported", { status: 3, signal: null, error: new Error("spawn weirdness") }],
+      ["status exit 3 BUT killed by a signal", { status: 3, signal: "SIGTERM" }],
+      ["status result missing entirely", null],
+    ];
+    for (const [label, res] of cases) {
+      const { work, data } = mk();
+      const r = shutdownAndRemove({ dataDir: data, removePaths: [work], pgCtl: inject(res) });
+      check(`STATUS-ERROR CONTROL: ${label} -> shutdown NOT confirmed, the directory is PRESERVED`, r.confirmed === false && r.removed === false && existsSync(data) && existsSync(work), JSON.stringify(r));
+    }
+    // A status that first reports running (0) and, after the immediate stop, an error (4): still preserved.
+    {
+      const { work, data } = mk();
+      let n = 0;
+      const flaky = (args) => (args.includes("status") ? (++n === 1 ? { status: 0, signal: null } : { status: 4, signal: null }) : { status: 0, stdout: "", stderr: "" });
+      const r = shutdownAndRemove({ dataDir: data, removePaths: [work], pgCtl: flaky });
+      check("STATUS-ERROR CONTROL: running (0) after the fast stop, then status 4 after the immediate stop -> preserved", r.confirmed === false && existsSync(data), JSON.stringify(r));
+    }
+    // Positive control: an injected clean exit 3 (and nothing else) permits the removal.
+    {
+      const { work, data } = mk();
+      const r = shutdownAndRemove({ dataDir: data, removePaths: [work], pgCtl: inject({ status: 3, signal: null }) });
+      check("POSITIVE CONTROL: an injected clean `pg_ctl status` exit 3 confirms shutdown and the directory is removed", r.confirmed === true && r.removed === true && !existsSync(work), JSON.stringify(r));
+    }
+    check("isConfirmedStopped accepts only exit 3 with no error or signal", [0, 1, 2, 4, 5, 255, null, undefined].every((c) => !isConfirmedStopped({ status: c })) && isConfirmedStopped({ status: 3 }) && !isConfirmedStopped({ status: 3, error: new Error("x") }) && !isConfirmedStopped({ status: 3, signal: "SIGKILL" }) && !isConfirmedStopped(null));
+    // A REAL inaccessible data directory (permissions removed): pg_ctl status reports 4, and nothing may be deleted.
+    {
+      const work = tmp(); leftovers.push(work);
+      const data = join(work, "pg");
+      initdb(data);
+      chmodSync(data, 0o000);
+      const st = real(["-D", data, "status"]);
+      const r = shutdownAndRemove({ dataDir: data, removePaths: [work], pgCtl: real });
+      chmodSync(data, 0o700);
+      check("REAL INACCESSIBLE DIRECTORY: the real `pg_ctl status` does not report 3, shutdown is NOT confirmed and the directory is PRESERVED", st.status !== 3 && r.confirmed === false && existsSync(data), `status=${st.status} ${JSON.stringify(r)}`);
+    }
+    // Explicit uninitialised handling: a readable existing directory with no PG_VERSION / postmaster.pid.
+    {
+      const work = tmp(); leftovers.push(work);
+      mkdirSync(join(work, "pg"));
+      let consulted = false;
+      const r = shutdownAndRemove({ dataDir: join(work, "pg"), removePaths: [work], pgCtl: () => { consulted = true; return { status: 4 }; } });
+      check("UNINITIALISED DIRECTORY: a readable, empty data directory (initdb never completed) is removed without a pg_ctl claim", r.confirmed === true && r.removed === true && consulted === false && /not pg_ctl verified/.test(r.trail.join(" ")), JSON.stringify(r));
+    }
   }
 } catch (e) {
   check("control ran to completion without an exception", false, e && e.stack);
