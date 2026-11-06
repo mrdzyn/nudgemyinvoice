@@ -2230,4 +2230,44 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** unchanged from `NMI-P7-D-01`.
 - **Next:** focused re-audit. No merge, deploy, Render action, provider call or release SHA.
 
+## Handoff: NMI-G1-PACKET-01
+
+- **Task / branch:** `tasks/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`; `docs/nmi-g1-render-cost-teardown`, documentation-only Draft PR to `main` (link in the PR), based on `main@0e10e8d1f6d521bba9b0c503f4ce0fdf188ded19` (P7 PR #45 merged; tree identical to accepted head `3b5278c`). **From / to:** implementation agent → **independent documentation review**, then the owner's merge decision and the approvals in the packet.
+- **Delivered (docs only):** `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md` and its task file; STATUS reconciled post-P7 (primary `main`, P7 complete, active task and handoff, next action); a status line in the P7 task; an update note in the P4 release doc. Earlier handoffs and audit evidence are untouched.
+- **Packet content:**
+  - Verified versus unverified facts.
+  - The proposed Hobby, Starter, PostgreSQL 16 Basic 256 MB, 1 GB, autoscaling-OFF configuration.
+  - A forecast with fixed charges, run-on, tax and unknowns kept separate: planned **$16.26**, 5-day slip **$18.35**, and about **$20.00** with an illustrative 9% tax before bandwidth and build overages.
+  - Zero-overage, zero-tax breakeven against the $25 ceiling: about 5 Jan 2027, and about 24 Dec for the $20 warning.
+  - Credit assumptions; evidence E1 to E7 and decisions D1 to D5.
+  - Backup export, private retention, restore verification and teardown procedures.
+  - The exact G5 options and G7 questions; the G4, G6 and G8 requirements; and the approvals in order.
+- **Not verified:** Render's current list prices (the pricing page returned no figures; P3's 2026-11-04 figures are carried and labelled), bandwidth and build-minute allowances, credit applicability and balance, tax treatment, billing after suspension, and backup handling after deletion. These are labelled, not invented.
+- **Gates:** G1, G4, G5, G6 and G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED. No release branch or SHA, no Render connector or API call, no resource, no charge, no deletion and no provider enabled.
+- **Open item (recorded, not fixed here):** the Codex review of PR #45 reports that the P7-C recovery runner's cleanup treats any nonzero `pg_ctl status` as confirmed shutdown. The pattern is present in the code, and a small follow-up should reuse `shutdownAndRemove`.
+- **Next:** independent documentation review; then the owner decides on the PR and works through packet §11.
+
+## Handoff: NMI-G1-PACKET-02
+
+- **Task / branch:** `tasks/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`; `docs/nmi-g1-render-cost-teardown`, Draft PR #46, started from `f8822fe`. **From / to:** implementation agent → **focused re-audit of DOC-01 and DOC-02** (review comment 6679083297). Corrects `NMI-G1-PACKET-01`, which is not rewritten.
+- **DOC-01 (billing evidence):** the packet now records the owner-supplied 2026-11-06 Billing screenshots, described only and not committed: Hobby plan; $50.00 credit expiring 2027-10-01; October 2026 invoice Paid at $0.00; included usage 0 MB of 5 GB bandwidth and 0 of 500 pipeline minutes; no services or custom domains shown. They are labelled owner-supplied, not independently checked. **Credit applicability, November unbilled charges, checkout prices, tax and overage rates stay UNVERIFIED.** The E1 to E7 matrix has states: E1 evidenced; E2 and E5 partial; E3, E4, E6 and E7 not yet evidenced or pending. G1 stays OPEN.
+- **DOC-02 (backup and teardown safety):**
+  - §7a is now a source-specific procedure for a real Render `.dir.tar.gz` export: checksum, integrity and path-safety checks, safe extraction, `pg_restore --format=directory --list`, and an isolated disposable PostgreSQL 16 restore into an empty database.
+  - It documents roles and grants (create `nmi_runtime` first, or re-apply `runtime-role.sql` explicitly after `--no-privileges`), and verification of data, constraints, `invoice_nudges` (migration `0008`), and authorized and denied operations. `42501` is kept separate from `23505`, `23514`, `23503` and the trigger error.
+  - It states that the P7-C runner is synthetic and custom-format and is not a real-export verifier.
+  - It records, from Render's tutorial (fetched 2026-11-06), that deleting a database deletes its backups and snapshots and its point-in-time recovery, and treats export files as gone too. A verified, off-Render private export is mandatory before deletion, which still needs separate explicit owner approval.
+- **D4 and D5:** D4 now requires a genuine fallback (named delegate with written scoped authority, or a no-delegate contingency with suspension and a latest-by deletion date, or G1 cannot close). A reminder alone is not a fallback. D5 (private encrypted destination, retention deadline, destruction) stays **pending owner confirmation**. No owner decision was recorded as answered.
+- **Unchanged:** the forecast figures and every release restriction (G1, G4, G5, G6, G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED). No application code was touched, and the separate P7-C runner cleanup finding was not addressed here.
+- **Next:** focused re-audit. No merge, Render provisioning, spend, deployment, release SHA or provider activation.
+
+## Handoff: NMI-G1-PACKET-03
+
+- **Task / branch:** `tasks/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`; `docs/nmi-g1-render-cost-teardown`, Draft PR #46, started from `a9b77fa`. **From / to:** implementation agent → **focused re-audit of G1-DOC-03** (audit comment 6679478408; DOC-01 and DOC-02 were closed by that audit). Corrects `NMI-G1-PACKET-02`, which is not rewritten.
+- **D4-B:** it was labelled a fallback, but a future commitment, reminder or latest-by date by the owner is not executable while the owner is unavailable. It is now **not eligible**, and D4 has an explicit eligibility rule: someone other than the owner, with authority and real access, can do the non-destructive steps without the owner. **Without an eligible fallback, G1 cannot close and nothing may be provisioned.** The old "D4-C: no fallback" merged into D4-B. A new D4-C is "any other mechanism", eligible only if independently actionable and verified; none is proposed or verified. Suspending the web service is not presented as a database cost cap.
+- **D4-A:** a named delegate may take and verify the export, revoke sessions and suspend the web service, within written limits, with access the owner confirms feasible. **Deletion is not delegated.** It needs the owner's **separate explicit approval at teardown time**; general advance approval or granted access never substitutes. If approval cannot be obtained, nothing is deleted, and the continuing cost is **outside the $25 ceiling** until the owner approves deletion or renews the limit. Whether the delegate holds the database owner credential is the owner's decision.
+- **§7c:** step 3 is now non-destructive containment. Step 4 requires the owner's separate explicit approval for deletion, given at teardown after the verified export. The earlier allowance for a pre-recorded delegate approval is removed.
+- **E4 sequencing:** E3 and E4 are **pre-creation** G1 items. The owner records the intended configuration, and reads prices and settings only if Render shows them before the final confirm. The packet does not assume a preview exists. New **E4b** is **post-creation** verification of the actual storage, autoscaling and add-ons plus the actual charge, checked at C1 under G6 and not applicable until a separately authorized creation. G1, G6 and approvals rows are aligned.
+- **Preserved:** the accepted billing evidence, the restore guidance, the forecast figures and every release restriction (G1, G4, G5, G6, G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED). **No owner decision is recorded as made.** No application code was touched, and the separate P7-C runner cleanup finding was not addressed here.
+- **Next:** focused re-audit. No merge, Render provisioning, spend, release SHA, deployment, provider activation or deletion authorization.
+
 <!-- HANDOFF_ENTRIES_END -->
