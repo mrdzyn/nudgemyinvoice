@@ -2133,4 +2133,13 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** the already-mounted and A→B→A cases are covered by DOM tests, not by new browser QA. The two Codex findings remain reported, not independently verified.
 - **Next:** independent review of P7-A, then P7-B (preflight flag). No merge, deploy or provider action.
 
+## Handoff: NMI-P7-A-02
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-A; `phase-7/nmi-release-readiness`, Draft PR #45. **From / to:** implementation agent → **focused re-audit of P7-A-E1** (audit comment 6663676758). Corrects `NMI-P7-A-01`; that entry is not rewritten.
+- **Correction:** `NMI-P7-A-01` and the PR #45 report said the committed P6 evidence files were left unchanged. That was **wrong for `caa7765`**. Re-running the P6 browser journey rewrites its tracked screenshots, and my handoff commit (`git add -A`) included 32 of the 35 PNGs. I had restored only `qa-results.json`.
+- **Fix:** a normal follow-up commit restores `design/evidence/NMI-P6/` byte-for-byte from implementation commit `2b2c722f` (the same blobs as kickoff `6d9c25a`). All 35 screenshot blobs were verified identical to both. The PNGs captured by the re-run were not adopted, and no visual-equivalence claim is made.
+- **Unchanged:** the P7-A source fixes and tests (`2b2c722`) are untouched.
+- **Evidence:** the earlier local results stand as implementation-agent reports (`pnpm validate` 1391, targeted 203, negative control 5 of 8 new tests, P6 journey 150/150). The 150/150 run was a regression run only, and the new already-mounted and A→B→A flows have DOM evidence, not browser evidence.
+- **Next:** re-audit E1, then P7-B only after that. When the journey is re-run, restore or exclude `design/evidence/NMI-P6/` before committing. No merge, deploy or provider action.
+
 <!-- HANDOFF_ENTRIES_END -->
