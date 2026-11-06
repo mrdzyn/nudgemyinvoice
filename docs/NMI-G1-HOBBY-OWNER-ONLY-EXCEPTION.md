@@ -1,6 +1,8 @@
-# NMI-G1 — PROPOSED Hobby owner-only teardown exception (not authorized)
+# NMI-G1 — Hobby owner-only teardown exception (proposal text; adoption recorded separately)
 
-**Status: PROPOSED, NOT ADOPTED (2026-11-06).** This is a request to independently review a narrow exception to **D4 only** of `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`. Until the owner separately ratifies it following review, **the merged D4 executable-fallback requirement remains in force; G1 is OPEN, and resource creation is prohibited**.
+> **Adoption update:** the owner reports ratifying this exception on 2026-11-06 (in conversation, not a GitHub comment). It takes effect **only** through [`NMI-G1-HOBBY-EXCEPTION-ADOPTION-RECORD.md`](NMI-G1-HOBBY-EXCEPTION-ADOPTION-RECORD.md), when that record's PR has passed independent review and the owner has approved its merge. The text below is the proposal as reviewed and merged in PR #48 and is kept unchanged. Statements below that the exception is "not adopted" or "not authorized" describe the proposal stage and are superseded by the record once it takes effect. **G1 stays OPEN.**
+
+**Status at the proposal stage (2026-11-06): PROPOSED, NOT ADOPTED.** This is a request to independently review a narrow exception to **D4 only** of `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`. Until the owner separately ratifies it following review, **the merged D4 executable-fallback requirement remains in force; G1 is OPEN, and resource creation is prohibited**.
 
 **Provenance:** the owner on November 6 instructed us to **keep Render Hobby and the existing $25 eligible-credit budget and prepare** an owner-only risk exception. The owner acknowledged the possibility that charges might continue past $25 while unavailable. **That instruction authorized preparing this document only**: it was not an unconditional acceptance of the final exception terms, no release/host approval, and no increase in spending authority.
 
@@ -77,7 +79,7 @@ The owner must also choose/confirm **D5** (private encrypted backup location, ac
 
 ## 5. State and stop conditions
 
-- **Current status:** D4 exception **PROPOSED / NOT RATIFIED**, **G1 OPEN**. G4/G5/G6/G7 OPEN; G8 continues; Gates A/B/C NOT AUTHORIZED.
+- **Status at the proposal stage:** D4 exception **PROPOSED / NOT RATIFIED**, **G1 OPEN** (see the adoption update at the top). G4/G5/G6/G7 OPEN; G8 continues; Gates A/B/C NOT AUTHORIZED.
 - The active G1 packet §6 **still governs** until this proposal passes independent review and is expressly adopted by the owner; merely merging a proposal does not implicitly waive D4.
 - If owner does not approve the exception, or actual account charges/credit eligibility cannot support the $25 forecast, **do not provision**. Use the local judge/demo-video fallback rather than a hidden Pro upgrade.
 - No deployment/release SHA/resource creation/deletion/provider call took place when this proposal was prepared.

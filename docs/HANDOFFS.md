@@ -2412,4 +2412,33 @@ Independent exact-HEAD re-audit of PR #48. The owner's separate decisions on rat
 ### Next action
 Final focused independent re-audit of PR #48. The owner's separate decisions on ratification and merge follow only after that review.
 
+## Handoff: NMI-G1-HOBBY-ADOPT-01
+
+- **Task / phase:** `tasks/NMI-G1-HOBBY-EXCEPTION-ADOPTION.md`.
+- **From:** implementing assistant (not the independent reviewer).
+- **To:** independent exact-HEAD documentation and policy reviewer, then the project owner for the merge decision.
+- **Branch:** `docs/nmi-g1-hobby-exception-adoption`, Draft PR (link in the PR), based on `main@6d16f45a95d1cafecb3aca2ac047ce7daab912ee` (PR #48, the proposal, independently audited PASS and squash-merged). The final PR HEAD is stated in the PR comment.
+- **State:** adoption record prepared. **Not effective until an independent PASS and the owner's explicit merge approval.** G1 stays OPEN.
+
+### Completed
+- **Attribution recorded accurately:** the owner reports ratifying the exception on 2026-11-06 in conversation (ChatGPT) after reviewing the complete risk-acceptance statement, and authorized this PR. The record calls it an **owner-reported decision**, quotes no ratifying words, and does **not** present it as an owner-authored GitHub comment. A signed or owner-authored GitHub acknowledgment, if required, is requested separately and was not invented.
+- **New:** `docs/NMI-G1-HOBBY-EXCEPTION-ADOPTION-RECORD.md` (the owner's accepted exposure; what is and is not satisfied; mandatory conditions; effectiveness checklist) and the task file.
+- **P3:** an additive section reconciles only the "fallback if the owner is unavailable" prerequisite, for this one deployment. The 2026-11-04 approval text and the earlier non-operative addendum are not edited.
+- **G1 packet:** §6 D4 gains row D4-X (the adopted exception; D4-B kept as written); §5 E7's fallback part is satisfied on merge, and E7 stays PENDING for D5 and the rest of §7; §11 is updated; §13 is relabelled as proposal history, with a new §13a.
+- **Exception document:** status references only. The proposal text is unchanged.
+- **STATUS:** updated, active handoff `NMI-G1-HOBBY-ADOPT-01`.
+
+### Validation (implementation-agent, local, documentation only)
+- Documentation checks are recorded in the PR comment with the final exact-HEAD hosted CI results. Nothing but Markdown changed.
+
+### Continuation notes
+- **G1, G4, G5, G6 and G7 stay OPEN; G8 continues; Gates A, B and C stay NOT AUTHORIZED.** D4 is satisfied by exception **only after merge**. E7 needs D5 (encrypted destination, retention deadline, destruction method and date). E2 to E6 and D1 to D3 are unchanged.
+- The **$25 ceiling is unchanged** and is not a Render-enforced cap. Charges beyond $25 are possible with no guaranteed maximum if the owner is unavailable, and uncovered charges fall on the workspace payment method.
+- **No delegated or automated deletion.** Deletion needs a fresh, explicit owner approval at teardown time.
+- No release branch or SHA, no Render resource, first build or deployment, no provider enabled, no public URL, no spend beyond $25. Issue #49 is a separate release blocker and is not fixed here.
+- **The task text I received ended mid-sentence** ("...only after this adoption-record PR completes independent review and"). I read the missing end as "the owner's explicit merge approval", which matches the proposal's adoption sequence §4 step 4. The owner should confirm that reading.
+
+### Next action
+Independent exact-HEAD review of this PR, then the owner's explicit merge decision. Do not treat the Draft PR as an adoption.
+
 <!-- HANDOFF_ENTRIES_END -->
