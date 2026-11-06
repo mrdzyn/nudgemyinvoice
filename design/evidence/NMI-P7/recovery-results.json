@@ -1,0 +1,531 @@
+{
+  "at": "2026-11-06T02:15:22.565Z",
+  "scope": "local PostgreSQL 16 only; not Render-managed recovery",
+  "total": 99,
+  "failed": 0,
+  "sourceSha": "eca6b6b28eca90541448d4eb3b79d03a252ec58f",
+  "sourceTreeDirtyAtRun": false,
+  "migrations": {
+    "0000_young_mister_fear.sql": "ca385d8ba725a7ed5c63289519f214223cdcffc1d651ec2dbdae5d767cd61a04",
+    "0001_complete_spot.sql": "147ddbc7df1c3c2c2b8631aa14a2a97d04167caf552ffa0ab1789338c88d01da",
+    "0002_light_proteus.sql": "91547db620ea688724906efbdbec558c0da747e01ff34a428e088ba16f2e8836",
+    "0003_audit_log_immutable.sql": "91880c7894420dc02fb92f016d041d2e607bc5943a9b76734f5be0a68dd14850",
+    "0004_zippy_namorita.sql": "ddbcaa978e6f990addbc8bbad06f6336f2d3f98fe039300a51b0ed43bf821f24",
+    "0005_glorious_giant_girl.sql": "810c93119fac5ef3e6c633a70c858a99ae90b7fdcbe5e6c8fe6bed169d2a69a2",
+    "0006_known_colleen_wing.sql": "462ab56230c706b338a6b5352aca97be7bf7ad0bc97ab7f525e10c2a6e00f5df",
+    "0007_perfect_doomsday.sql": "a376432419f78c16c8fd79d3cc7253b0b8e041e3fcff52fe2e8ffae81f8c1d37",
+    "0008_mushy_zarek.sql": "df62ceda864c91a78081f7edefde723ae5897ddaa7e2ccc394a4260a10c95d5e",
+    "runtime-role.sql": "81d8c424f0d7c608e5997396212a9debe9b32e1ce96d147f5a4bf3376869db05"
+  },
+  "node": "v24.21.0",
+  "pgServer": "PostgreSQL 16.15 (Homebrew) on aarch64-apple-darwin25.6.0, compiled by Apple clang version 21.0.0 (clang-2100.1.1.101), 64-bit",
+  "pgDump": "pg_dump (PostgreSQL) 16.15 (Homebrew)",
+  "pgRestore": "pg_restore (PostgreSQL) 16.15 (Homebrew)",
+  "host": "darwin-arm64",
+  "pgBin": "/opt/homebrew/opt/postgresql@16/bin",
+  "port": 54392,
+  "runner": "node design/evidence/NMI-P7/run-nudge-recovery-drill.mjs",
+  "commands": [
+    "initdb -D <tmp>/data -A trust -U p7super",
+    "pg_ctl -D <tmp>/data -o \"-p 54392 -c listen_addresses=127.0.0.1 -k <short sock dir>\" -w start",
+    "pg_dump -h 127.0.0.1 -p 54392 -U nmi_owner -d nmi_p7_src -Fc --no-owner -f <tmp>/backup.dump",
+    "pg_restore -h 127.0.0.1 -p 54392 -U nmi_owner -d nmi_p7_restored --no-owner --exit-on-error <tmp>/backup.dump"
+  ],
+  "results": [
+    {
+      "name": "disposable PostgreSQL 16 cluster started (loopback only, private temp dir)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "owner role is not a superuser",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "runtime role is not a superuser and cannot create databases or roles",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "migrations 0000-0008 (9 files, incl. 0008_mushy_zarek) apply as the non-superuser owner, one transaction each",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "runtime-role.sql applies as the owner",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "invoice_nudges exists and is owned by the non-superuser owner",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "synthetic rows seeded by the owner (1 operator, 12 invoices, 12 items, 12 nudges)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "nudges cover all four states (3 pending, 3 approved, 2 rejected, 4 superseded), all owned by the operator",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: one-pending-per-invoice: a second pending draft for invoice 2 is rejected by invoice_nudges_one_pending_uq",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: one-pending-per-invoice also binds the owner (invoice 5 already has a pending draft)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime DELETE FROM invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime TRUNCATE invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column ai_message denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column rationale denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column facts denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column model denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column prompt_version denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column tone denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column invoice_id denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column operator_id denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column id denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE of immutable column created_at denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime CREATE TABLE (schema change) denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime ALTER TABLE invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime DROP TABLE invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime UPDATE audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime DELETE FROM audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime TRUNCATE audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime cannot change operator credentials (password_hash)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime cannot change credential_version or disabled_at",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime cannot rewrite saved invoices (customer_name)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: runtime DELETE FROM invoices denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: append-only trigger rejects even the OWNER's UPDATE of audit_log",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: single-operator rule: a second operators row is rejected (operators_single_row_uq), so no cross-operator nudge ownership can exist",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: check constraint: an unknown status is rejected (invoice_nudges_status_chk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: check constraint: approved without approved_at is rejected (invoice_nudges_closed_at_chk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: foreign key: a nudge for an unknown operator is rejected (invoice_nudges_operator_id_operators_id_fk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: foreign key: a nudge for an unknown invoice is rejected (invoice_nudges_invoice_id_invoices_id_fk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source: foreign key ON DELETE RESTRICT: the OWNER cannot delete an invoice that has nudges",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source fingerprints taken (10 tables incl. invoice_nudges)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "source invoice_nudges shape: 10 check constraints, 2 foreign keys, 4 indexes (pkey + 3), 18 columns",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "pg_dump (custom format) succeeded as the non-superuser owner; file mode 0600",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "pg_restore --list can read the archive and lists invoice_nudges",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "simulated data loss (superuser deletes every nudge; the runtime role could not)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "lost database dropped",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "pg_restore as the non-superuser owner succeeded (backup + disaster + restore 0.3s on synthetic data)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored CONTENT fingerprint equals the pre-loss source (every table, rows + md5)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored invoice_nudges CONTENT equals the source (12 rows, ai_message/facts/rationale/state/version/timestamps)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored SCHEMA fingerprint equals the source (columns+defaults, constraints, triggers, indexes)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored invoice_nudges shape equals the source (10c/2f/4i/18col)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored runtime GRANTS (table, column and schema privileges) equal the source",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored ownership: table owner is the non-superuser owner; nudge operator and invoice references resolve",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored one-pending-per-invoice index exists and is partial/unique",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored ownership scoping: every nudge's operator_id and its invoice's created_by are the one operator",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "SENSITIVITY CONTROL: changing one nudge message in a second restore changes the nudge fingerprint",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: one-pending-per-invoice: a second pending draft for invoice 2 is rejected by invoice_nudges_one_pending_uq",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: one-pending-per-invoice also binds the owner (invoice 5 already has a pending draft)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime DELETE FROM invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime TRUNCATE invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column ai_message denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column rationale denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column facts denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column model denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column prompt_version denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column tone denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column invoice_id denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column operator_id denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column id denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE of immutable column created_at denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime CREATE TABLE (schema change) denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime ALTER TABLE invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime DROP TABLE invoice_nudges denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime UPDATE audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime DELETE FROM audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime TRUNCATE audit_log denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime cannot change operator credentials (password_hash)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime cannot change credential_version or disabled_at",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime cannot rewrite saved invoices (customer_name)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime DELETE FROM invoices denied",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: append-only trigger rejects even the OWNER's UPDATE of audit_log",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: single-operator rule: a second operators row is rejected (operators_single_row_uq), so no cross-operator nudge ownership can exist",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: check constraint: an unknown status is rejected (invoice_nudges_status_chk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: check constraint: approved without approved_at is rejected (invoice_nudges_closed_at_chk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: foreign key: a nudge for an unknown operator is rejected (invoice_nudges_operator_id_operators_id_fk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: foreign key: a nudge for an unknown invoice is rejected (invoice_nudges_invoice_id_invoices_id_fk)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: foreign key ON DELETE RESTRICT: the OWNER cannot delete an invoice that has nudges",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime can read nudges (SELECT)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime can INSERT a pending nudge for an invoice without one",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime can edit the reviewed text of a pending nudge (message, edited, version, updated_at)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime can approve it (status, approved_at, version)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: the AI original of that nudge is untouched by the edit and approval",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: once approved, a NEW pending draft for the same invoice is allowed (the partial index frees the slot)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "restored: runtime audit INSERT still works",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: a truncated archive is rejected by pg_restore (non-zero exit)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: the truncated restore does not reproduce the source fingerprint",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: a wrong-header archive is rejected by pg_restore (non-zero exit)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: the wrong-header restore does not reproduce the source fingerprint",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "the archive contains operator credential hashes and customer rows (must be stored privately)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "cleanup: PostgreSQL shutdown confirmed before the data directory was deleted",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

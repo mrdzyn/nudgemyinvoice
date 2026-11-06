@@ -2156,4 +2156,19 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** a pure offline check of names and verdicts. It does not inspect Render's real environment and proves nothing about the hosted service. `true` with the OpenAI names is reported by two rules by design.
 - **Next:** independent P7-B review, then P7-C (migration `0008` recovery proof) on the same PR. No merge, deploy, provider action or release SHA.
 
+## Handoff: NMI-P7-C-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-C**; `phase-7/nmi-release-readiness`, Draft PR #45, started from `d2b8903` (P7-A and P7-B accepted and untouched). **From / to:** implementation agent → **independent exact-HEAD review of P7-C** (P7-D not started).
+- **Implementation SHA:** runner `eca6b6b28eca90541448d4eb3b79d03a252ec58f`; the evidence run was made from that clean tree, so `recovery-results.json` records it as `sourceSha`.
+- **Added (new files only; the P4 runner and its 26/26 result are untouched):** `design/evidence/NMI-P7/run-nudge-recovery-drill.mjs`, `recovery-results.json`, `RECOVERY-RESULTS.md`. Docs updated: the P7 task status line and a P7-C note under row 3 of the P4 release doc §1.
+- **Result (implementation-agent, local):** 99/99 on a private PostgreSQL 16.15 with a non-superuser owner.
+  - Migrations `0000`–`0008` and `runtime-role.sql` apply. Synthetic nudges cover pending, approved, rejected and superseded.
+  - `pg_dump -Fc`, simulated loss and restore as the owner give matching content, schema and runtime-grant fingerprints.
+  - A 31-check denial and constraint battery passes on the source and again on the restored database.
+  - The one-pending index, the sensitivity control, and the truncated and wrong-header archive controls pass.
+  - PostgreSQL shutdown was confirmed before the temp directories were deleted.
+- **Negative control:** a one-off run, not committed, with `DELETE` and `UPDATE(ai_message, facts)` granted to the runtime role failed 14 checks (85/99).
+- **Limits:** local PG16 only, not Render-managed recovery. About 100 rows. The schema allows one operator, so cross-operator isolation is covered by the API tests, not by this drill. `pnpm test:db` was not run, because no schema, migration or app code changed.
+- **Next:** independent P7-C review, then P7-D (integrated verification and docs) only on owner direction. No merge, deploy, Render action, provider call or release SHA. P6 screenshot evidence is untouched.
+
 <!-- HANDOFF_ENTRIES_END -->
