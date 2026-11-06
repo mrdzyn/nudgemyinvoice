@@ -25,22 +25,14 @@ import net from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { clearInterval, setInterval } from "node:timers";
+import { migrationTags } from "./migration-plan.mjs";
 
 const PG_BIN = process.env.PG_BIN || "/opt/homebrew/opt/postgresql@16/bin";
 const ROOT = process.cwd();
 const DB = "nmi_preflight";
 const OWNER = "nmi_owner";
 const HOST = "127.0.0.1";
-const MIGRATIONS = [
-  "0000_young_mister_fear",
-  "0001_complete_spot",
-  "0002_light_proteus",
-  "0003_audit_log_immutable",
-  "0004_zippy_namorita",
-  "0005_glorious_giant_girl",
-  "0006_known_colleen_wing",
-  "0007_perfect_doomsday",
-];
+// The plan is validated from the committed journal before starting any disposable PostgreSQL.
 
 const rnd = (n) => randomBytes(n).toString("hex");
 // Both special characters the runbook must escape (':' and '\') are guaranteed present.
@@ -322,6 +314,20 @@ async function main() {
       t.name,
       t.ok,
     );
+  // Fail closed before starting any database or attempting operator provisioning.
+  let migrations;
+  try {
+    migrations = migrationTags(ROOT);
+    check(
+      "migrate.plan",
+      "committed PostgreSQL journal is ordered, has 0008 and has all SQL files",
+      true,
+      `count=${migrations.length}`,
+    );
+  } catch (error) {
+    check("migrate.plan", "migration plan is complete and valid", false, error.message);
+    return;
+  }
   work = mkdtempSync(join(tmpdir(), "nmi-preflight-")); // mode 0700
   chmodSync(work, 0o700);
   dataDir = join(work, "pg");
@@ -452,10 +458,10 @@ async function main() {
     OWNER_PW.includes(":") && OWNER_PW.includes("\\"),
   );
 
-  /* ---------- runbook step 2: migrations over the password file ---------- */
+  /* ---------- runbook step 2: all validated journal migrations over the password file ---------- */
   let migrated = true;
-  for (const f of MIGRATIONS) {
-    const r = run(
+  for (const f of migrations) {
+    const result = run(
       bin("psql"),
       [
         "-X",
@@ -468,15 +474,27 @@ async function main() {
       ],
       { env },
     );
-    captured.push(r.stdout ?? "", r.stderr ?? "");
-    if (r.status !== 0) migrated = false;
+    captured.push(result.stdout ?? "", result.stderr ?? "");
+    if (result.error || result.status !== 0) {
+      migrated = false;
+      break; // never apply later migrations after an error
+    }
   }
   check(
     "migrate",
-    "eight committed migrations applied in journal order with psql + PGPASSFILE",
+    "all validated journal migrations applied in order with psql + PGPASSFILE",
     migrated,
+    `count=${migrations.length}`,
   );
-  check("migrate.empty", "no operator before provisioning", snapshot(env).operators === 0);
+  if (!migrated) return; // no operator creation after any incomplete SQL migration
+
+  const hasNudges = one(env, "SELECT to_regclass('public.invoice_nudges') IS NOT NULL") === "t";
+  check("migrate.0008", "migration 0008 invoice_nudges table exists", hasNudges);
+  if (!hasNudges) return;
+
+  const empty = snapshot(env).operators === 0;
+  check("migrate.empty", "no operator before provisioning", empty);
+  if (!empty) return;
 
   /* ---------- 3. actual CLI: create ---------- */
   const r1 = await runCli(cliEnv(pgpass, OP_PW_1), "create");
