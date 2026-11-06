@@ -37,7 +37,7 @@
 - **C1 delivered (PR #27):** read-only Ask Nudgey independently audited PASS, combined synthetic no-provider browser QA 195/195 (29 chat, 26 status, 23 follow-up, 117 save-guard), both required hosted CI checks passed at exact audited C1 head `a3d5c4cb44038efc29a92a81cf4afcab57a01459`; owner approved squash merge to `main` `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`. This is historical completion evidence, not C2 test evidence.
 - **PR #26 review remediation:** FIX1 backported the read-generation guard and four regressions from PR #27; CI passed at `1a8cfadd2`, but an independent re-audit found that an internally-aborted refresh could discard a returned 401. FIX2 handles that 401 before the ordinary aborted-result short circuit and adds a deterministic late-401 regression. FIX2 passed independent re-audit and PR #26 was owner-approved and squash-merged.
 - **Active task:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` (approved for bounded offline/repository implementation only). #41/#42/#43 feature scopes and #44 documentation reconciliation are merged; P7 is not release authorization.
-- **Active handoff:** `NMI-P7-C-02`.
+- **Active handoff:** `NMI-P7-D-01`.
 - **Render hosting opportunity:** Owner-supplied Mrdzyn Billing screenshot verifies **$50** promotional credit expiring **2027-10-01** (no pending charges or past invoices at screenshot time). Coverage of Pro subscription/compute and future charges remains **unverified**. Option B has become more economically feasible and could support Render sponsor consideration **only after actual tool use**; however, the local judge runbook Option A remains valid. Render HTTPS/same-origin/static+API serving, single-operator demo access, `q` request-URL log redaction (Render HTTP request logs may include requested URL), paid-database/Dec-15 lifespan (**superseded for the selected Hobby Free staging**: Free PG expires 30 days after creation, no backups; see P2 packet §1B), provider-disabled public demo, and safe automatic-deploy controls are **NOT VERIFIED**. No Render provision/deploy authorized. See `docs/NMI-DEMO-DEPLOYMENT-DECISION.md`.
 - **Owner decisions:** D1a AG Studio 45-day trial owner-confirmed expiry 2026-12-16; issue/start and hosted judge rights remain unverified; Community fallback remains approved. D1b owner approved a bounded AG Grid **Community** replacement of the real dashboard invoice table for the hackathon; D2 no default browser persistence of unsaved customer data; D3 read-only owner-scoped list delivered in C4; D4 editing saved drafts deferred.
 
@@ -96,11 +96,9 @@
 - **Review gate:** closed. PR #33 was independently reviewed and owner-merged as `dd6d5723eadba5c55afe9d0a6912f1510b2bb9de`.
 
 ## Next action
-1. **P7-A:** Fix and test both open P6 Codex P2 UX defects (already-mounted queue focus; invoice-bound pending-exists reference), without new outbound or provider behavior.
-2. **P7-B:** Explicitly reject `NUDGE_AI_DRAFTING_ENABLED=true` or invalid flag values in the release preflight; preserve the required provider-disabled environment.
-3. **P7-C:** Run a newly versioned disposable PostgreSQL 16 backup/restore drill for migrations `0000`–`0008`, synthetic `invoice_nudges` and restored runtime role permissions. Preserve the original P4 26/26 historical record.
-4. **P7-D:** Reconcile release docs and exact-head tests/CI, verify synthetic web variants and document manual QA gaps. Request independent review in the existing P7 Draft PR, then a separate owner merge decision. No release SHA or hosting action is approved.
-5. **Remaining release gates, unchanged and all owner-controlled:**
+1. **P7 status:** P7-A, P7-B and P7-C are independently accepted (P7-C-AUD-01 closed). **P7-D (integrated verification, release gate ledger, handoff `NMI-P7-D-01`) is implemented and awaits independent exact-head review** on Draft PR #45. Evidence: `design/evidence/NMI-P7/P7-D-VERIFICATION.md`; ledger: `docs/NMI-RENDER-P4-RELEASE-READINESS.md` §14.
+2. **Owner decisions:** the merge decision on PR #45 after review, then the gates below. No release SHA is selected.
+3. **Remaining release gates, unchanged and all owner-controlled:**
    - P4 G1–G8, including G5 (Hobby request-log residual risk) and G7 (vendor Studio package download rights). Both remain **OPEN**.
    - AG Studio licence scope is **owner-attested, not independently legally verified**.
    - $25 budget actuals and checkout, and the teardown/export/retention plan.

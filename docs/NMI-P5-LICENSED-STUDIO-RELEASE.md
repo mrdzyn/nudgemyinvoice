@@ -111,3 +111,9 @@ The order is kept: page heading → **global currency/date/search/status filters
 - **No recall of a delivered licence:** revoking a session only stops future licence requests. A key already delivered to a browser cannot be retracted (§2, SEC-N2).
 - **Vendor style hashes need upkeep:** they are tied to the pinned AG Studio and AG Charts versions and must be recaptured on upgrade (§4, SEC-N1).
 - **No expiry enforcement:** nothing in the code stops the dashboard at the end of the licence entitlement. The owner must take the licensed dashboard down, or rebuild the Community variant, before the entitlement ends.
+
+## 8. P7 reconciliation (2026-11-06)
+
+- **Technical:** the licensed web variant builds and scans clean with a *synthetic* licence value: no licence variable name, secret marker or canary appears in any built file, and Studio code is in lazy chunk(s) only (`design/evidence/NMI-P7/bundle-inspection.json`, 30/30, including a negative control). The Community variant contains no Studio code. These are implementation-agent local checks; the owner's real key was not used.
+- **Licence rights unchanged:** G7 remains **open**. The deployment licence is owner-attested and not independently legally verified, the entitlement end date is owner-held, and nothing in the code enforces expiry.
+- **Manual QA unchanged:** Safari, Firefox, real devices, screen readers and 400% zoom are still not performed. The gate ledger is in `docs/NMI-RENDER-P4-RELEASE-READINESS.md` §14.

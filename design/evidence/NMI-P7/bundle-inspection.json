@@ -1,0 +1,217 @@
+{
+  "at": "2026-11-06T03:03:54.787Z",
+  "total": 30,
+  "failed": 0,
+  "sourceSha": "c4dd0df5dbfce1cbc3806504c44a61dd49fe03ac",
+  "node": "v24.21.0",
+  "note": "synthetic canary only; the owner's real licence value is never used",
+  "variants": {
+    "licensed": {
+      "files": [
+        {
+          "file": "assets/StudioCharts-Cb-RyxQS.js",
+          "bytes": 4458152,
+          "sha256": "af09651323bc35f1323a4fb2c7646252541fc47181c308d4e48519533f5c7aa2"
+        },
+        {
+          "file": "assets/StudioPanel-CR3JicZw.js",
+          "bytes": 15186,
+          "sha256": "9b38f931413f2d929e22ae665f54e61c4b5f71bd7af31c067b6039eba55853c6"
+        },
+        {
+          "file": "assets/StudioPanel-DVM0Lyd2.css",
+          "bytes": 3788,
+          "sha256": "c3c7fa2f4184ca3a3fd89e78d457d6509eeedd7647865b9ab6bc0400e6136f09"
+        },
+        {
+          "file": "assets/index-CaM2ceWg.css",
+          "bytes": 310806,
+          "sha256": "e3bfae40fe108bf6670692becfe8c216feeace0a15bff6df88c83e8203846f0e"
+        },
+        {
+          "file": "assets/index-bCgDomyM.js",
+          "bytes": 1380128,
+          "sha256": "8f11c79ef9af9e857b4f0a541bf5c51a1ffc78645a0115637eb3faf4b6d2374f"
+        },
+        {
+          "file": "index.html",
+          "bytes": 766,
+          "sha256": "f8bb238f076daa6140c6ba3e4a4edd23390da275365dae5587f992f3d60b0422"
+        }
+      ],
+      "scanOutput": "Bundle secret scan clean (6 files, licensed variant: Studio in 1 lazy chunk(s)); local AG Studio licence value absent from every file."
+    },
+    "community": {
+      "files": [
+        {
+          "file": "assets/index-CaM2ceWg.css",
+          "bytes": 310806,
+          "sha256": "e3bfae40fe108bf6670692becfe8c216feeace0a15bff6df88c83e8203846f0e"
+        },
+        {
+          "file": "assets/index-DbwjhwZY.js",
+          "bytes": 1206902,
+          "sha256": "01f1f0626d0f63f1259b39417ac346c5a6ff7f15eb53f24759b3f5b3bf5e35e4"
+        },
+        {
+          "file": "index.html",
+          "bytes": 766,
+          "sha256": "533605d649644f771c10ef92801da4d96ad505324acbe1a9f287e28bc9eb400d"
+        }
+      ],
+      "scanOutput": "Bundle secret scan clean (3 files, Community variant: no Studio code); local AG Studio licence value absent from every file."
+    }
+  },
+  "results": [
+    {
+      "name": "licensed: web build succeeded with a synthetic licence value in the environment",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: scripts/check-bundle-secrets.mjs passes (licensed mode)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: the scanner confirmed the licence value was checked and absent",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: the synthetic licence value appears in no built file (independent grep)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains AG_STUDIO_LICENSE_KEY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains studio-licence",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains __nmi_dev",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains x-nmi-dev-studio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains OPENAI_API_KEY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains PAYPAL_CLIENT_SECRET",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains SESSION_SECRET",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: no built file contains BEGIN [A-Z ]*PRIVATE KEY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "licensed: Studio code is present only in lazy chunk(s), never the entry file",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: web build succeeded with a synthetic licence value in the environment",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: scripts/check-bundle-secrets.mjs passes (Community mode)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: the scanner confirmed the licence value was checked and absent",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: the synthetic licence value appears in no built file (independent grep)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains AG_STUDIO_LICENSE_KEY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains studio-licence",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains __nmi_dev",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains x-nmi-dev-studio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains OPENAI_API_KEY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains PAYPAL_CLIENT_SECRET",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains SESSION_SECRET",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no built file contains BEGIN [A-Z ]*PRIVATE KEY",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no Studio marker ag-studio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no Studio marker AgStudio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "community: no Studio marker ag-charts-enterprise",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL: a licence value injected into a built file makes the scanner FAIL",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "the injected file was restored and the Community build scans clean again",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

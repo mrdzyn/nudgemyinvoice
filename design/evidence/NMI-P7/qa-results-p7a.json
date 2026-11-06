@@ -1,0 +1,316 @@
+{
+  "task": "NMI-P7-A",
+  "generatedBy": "design/evidence/NMI-P7/run-p7a-journey.mjs",
+  "info": {
+    "startedAt": "2026-11-06T03:02:48.959Z",
+    "synthetic": true,
+    "model": "DETERMINISTIC FAKE (not OpenAI)",
+    "sourceSha": "4c81a43ba46ed73db2b42adf3abdf4e2ab0d3e8f",
+    "sourceTreeDirtyAtRun": [],
+    "browser": "headless Chrome (CDP), emulated desktop 1280x900 and phone 390x844",
+    "migrations": [
+      "0000_young_mister_fear",
+      "0001_complete_spot",
+      "0002_light_proteus",
+      "0003_audit_log_immutable",
+      "0004_zippy_namorita",
+      "0005_glorious_giant_girl",
+      "0006_known_colleen_wing",
+      "0007_perfect_doomsday",
+      "0008_mushy_zarek"
+    ],
+    "finishedAt": "2026-11-06T03:03:04.281Z",
+    "screenshots": [
+      "p7a-01-draft-ready-on-queue-history-desktop-light.png",
+      "p7a-02-queue-retargeted-desktop-light.png",
+      "p7a-03-A-pending-exists-desktop-light.png",
+      "p7a-04-B-confirm-desktop-light.png",
+      "p7a-05-B-drafted-desktop-light.png",
+      "p7a-06-mobile-A-pending-exists-mobile-light.png",
+      "p7a-07-mobile-B-confirm-mobile-light.png"
+    ]
+  },
+  "summary": {
+    "total": 46,
+    "passed": 46,
+    "failed": 0
+  },
+  "results": [
+    {
+      "group": "seed",
+      "name": "4 synthetic invoices (USD/EUR/JPY/GBP/AUD/CAD) saved through the real route",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "the operator is on the queue's History tab before the request",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "Nudgey (opened while the queue is mounted) asks for confirmation first: no model call yet",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "confirming made exactly one POST and one model call",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "the ALREADY-MOUNTED queue switched from History to Pending review",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "it selected the NEW draft (Zorblax Industries), not the first row",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "the pending count reads 3 (the new draft was read from the server)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "the operator moves to Approved by hand",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "a SECOND request re-targets the still-mounted queue again (Approved -> Pending, Zorblax Logistics)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "with no new request, the operator's manual History tab is NOT overwritten",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "queue-focus",
+      "name": "no draft was approved, rejected or edited by navigation (only 4 pending drafts, none sent)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "setup: B (Zorblax Logistics) has no pending draft; A (Zorblax Industries) keeps its pending draft",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "two matching invoices: nothing preselected, Draft disabled",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "A: the existing-pending warning appears with Replace and Open existing",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "A: the pending-exists answer cost no model call (one POST, zero generations)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: A pending-exists: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: A pending-exists: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: A pending-exists: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: A pending-exists: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "A -> B: B is selected",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "A -> B: A's warning, Replace and Open existing are GONE",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "A -> B: the normal explicit confirmation is back and nothing was requested by switching",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: B normal confirm: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: B normal confirm: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: B normal confirm: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "Nudgey: B normal confirm: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "A -> B -> A: A's old warning is NOT resurrected; A asks for confirmation again",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "B drafted normally: exactly one more POST and one model call",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "B has one new pending draft; A's pending draft is byte-for-byte untouched (same id:version) and nothing was superseded",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "Replace for A: exactly one POST and one model call",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "pending-switch",
+      "name": "Replace used A's OWN pending reference: A's old draft is superseded once, a new pending draft exists, B's pending draft is untouched (same id:version, nothing superseded)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: A pending-exists: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: A pending-exists: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: A pending-exists: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: A pending-exists: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: A pending-exists: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile",
+      "name": "on a phone, switching to B also clears A's warning",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: B normal confirm: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: B normal confirm: every interactive P6 target is at least 44px tall on a phone (owner refinement 3)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: B normal confirm: the tone select shows \"Professional\" in full (owner refinement 2)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: B normal confirm: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile Nudgey: B normal confirm: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no request to any foreign host",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser used only existing read/draft routes: no send, schedule, dispatch, approve or reject call was made by the UI under test",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "every model input was customer-free",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no uncaught exceptions or console errors",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}
