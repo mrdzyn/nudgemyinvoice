@@ -2247,4 +2247,17 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Open item (recorded, not fixed here):** the Codex review of PR #45 reports that the P7-C recovery runner's cleanup treats any nonzero `pg_ctl status` as confirmed shutdown. The pattern is present in the code, and a small follow-up should reuse `shutdownAndRemove`.
 - **Next:** independent documentation review; then the owner decides on the PR and works through packet §11.
 
+## Handoff: NMI-G1-PACKET-02
+
+- **Task / branch:** `tasks/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`; `docs/nmi-g1-render-cost-teardown`, Draft PR #46, started from `f8822fe`. **From / to:** implementation agent → **focused re-audit of DOC-01 and DOC-02** (review comment 6679083297). Corrects `NMI-G1-PACKET-01`, which is not rewritten.
+- **DOC-01 (billing evidence):** the packet now records the owner-supplied 2026-11-06 Billing screenshots, described only and not committed: Hobby plan; $50.00 credit expiring 2027-10-01; October 2026 invoice Paid at $0.00; included usage 0 MB of 5 GB bandwidth and 0 of 500 pipeline minutes; no services or custom domains shown. They are labelled owner-supplied, not independently checked. **Credit applicability, November unbilled charges, checkout prices, tax and overage rates stay UNVERIFIED.** The E1 to E7 matrix has states: E1 evidenced; E2 and E5 partial; E3, E4, E6 and E7 not yet evidenced or pending. G1 stays OPEN.
+- **DOC-02 (backup and teardown safety):**
+  - §7a is now a source-specific procedure for a real Render `.dir.tar.gz` export: checksum, integrity and path-safety checks, safe extraction, `pg_restore --format=directory --list`, and an isolated disposable PostgreSQL 16 restore into an empty database.
+  - It documents roles and grants (create `nmi_runtime` first, or re-apply `runtime-role.sql` explicitly after `--no-privileges`), and verification of data, constraints, `invoice_nudges` (migration `0008`), and authorized and denied operations. `42501` is kept separate from `23505`, `23514`, `23503` and the trigger error.
+  - It states that the P7-C runner is synthetic and custom-format and is not a real-export verifier.
+  - It records, from Render's tutorial (fetched 2026-11-06), that deleting a database deletes its backups and snapshots and its point-in-time recovery, and treats export files as gone too. A verified, off-Render private export is mandatory before deletion, which still needs separate explicit owner approval.
+- **D4 and D5:** D4 now requires a genuine fallback (named delegate with written scoped authority, or a no-delegate contingency with suspension and a latest-by deletion date, or G1 cannot close). A reminder alone is not a fallback. D5 (private encrypted destination, retention deadline, destruction) stays **pending owner confirmation**. No owner decision was recorded as answered.
+- **Unchanged:** the forecast figures and every release restriction (G1, G4, G5, G6, G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED). No application code was touched, and the separate P7-C runner cleanup finding was not addressed here.
+- **Next:** focused re-audit. No merge, Render provisioning, spend, deployment, release SHA or provider activation.
+
 <!-- HANDOFF_ENTRIES_END -->
