@@ -28,10 +28,13 @@ function fixture() {
   mkdirSync(join(migrations, "meta"), { recursive: true });
   const entries = current.entries.map((e) => ({ ...e }));
   const writeJournal = () =>
-    writeFileSync(join(migrations, "meta/_journal.json"), JSON.stringify({
-      dialect: "postgresql",
-      entries,
-    }));
+    writeFileSync(
+      join(migrations, "meta/_journal.json"),
+      JSON.stringify({
+        dialect: "postgresql",
+        entries,
+      }),
+    );
   for (const { tag } of entries) {
     writeFileSync(join(migrations, `${tag}.sql`), "-- isolated fixture\nSELECT 1;\n");
   }
