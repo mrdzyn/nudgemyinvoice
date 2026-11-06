@@ -186,3 +186,5 @@ Safari, Firefox, real devices and touch; screen readers (VoiceOver, NVDA); 400% 
 4. After P7 is merged: choose the full release SHA and authorize the controlled release branch (G4). Then run `release-preflight source` and `env` against the real inputs.
 5. Decide which manual QA gaps matter before any judge sees a URL, and plan that testing.
 6. Keep Gate A off. If live nudge drafting is ever wanted, authorize it in a separate bounded request.
+
+**Update 2026-11-06 (post-P7 merge):** P7 is merged as PR #45 (`main@0e10e8d1f6d521bba9b0c503f4ce0fdf188ded19`); the ledger above is unchanged by the merge. The G1 owner decision packet is `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`. **G1 remains OPEN** until the owner supplies actual Billing evidence; G4, G5, G6 and G7 remain OPEN and G8 continues. No release SHA is selected. An automated post-merge review reports that the P7-C recovery runner's own cleanup has the same status-code gap fixed in the journey helper (see `docs/STATUS.md`); it is recorded as open.

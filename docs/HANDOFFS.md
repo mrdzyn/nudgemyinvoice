@@ -2230,4 +2230,21 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** unchanged from `NMI-P7-D-01`.
 - **Next:** focused re-audit. No merge, deploy, Render action, provider call or release SHA.
 
+## Handoff: NMI-G1-PACKET-01
+
+- **Task / branch:** `tasks/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md`; `docs/nmi-g1-render-cost-teardown`, documentation-only Draft PR to `main` (link in the PR), based on `main@0e10e8d1f6d521bba9b0c503f4ce0fdf188ded19` (P7 PR #45 merged; tree identical to accepted head `3b5278c`). **From / to:** implementation agent → **independent documentation review**, then the owner's merge decision and the approvals in the packet.
+- **Delivered (docs only):** `docs/NMI-G1-RENDER-COST-TEARDOWN-PACKET.md` and its task file; STATUS reconciled post-P7 (primary `main`, P7 complete, active task and handoff, next action); a status line in the P7 task; an update note in the P4 release doc. Earlier handoffs and audit evidence are untouched.
+- **Packet content:**
+  - Verified versus unverified facts.
+  - The proposed Hobby, Starter, PostgreSQL 16 Basic 256 MB, 1 GB, autoscaling-OFF configuration.
+  - A forecast with fixed charges, run-on, tax and unknowns kept separate: planned **$16.26**, 5-day slip **$18.35**, and about **$20.00** with an illustrative 9% tax before bandwidth and build overages.
+  - Zero-overage, zero-tax breakeven against the $25 ceiling: about 5 Jan 2027, and about 24 Dec for the $20 warning.
+  - Credit assumptions; evidence E1 to E7 and decisions D1 to D5.
+  - Backup export, private retention, restore verification and teardown procedures.
+  - The exact G5 options and G7 questions; the G4, G6 and G8 requirements; and the approvals in order.
+- **Not verified:** Render's current list prices (the pricing page returned no figures; P3's 2026-11-04 figures are carried and labelled), bandwidth and build-minute allowances, credit applicability and balance, tax treatment, billing after suspension, and backup handling after deletion. These are labelled, not invented.
+- **Gates:** G1, G4, G5, G6 and G7 OPEN; G8 continuing; Gates A, B and C NOT AUTHORIZED. No release branch or SHA, no Render connector or API call, no resource, no charge, no deletion and no provider enabled.
+- **Open item (recorded, not fixed here):** the Codex review of PR #45 reports that the P7-C recovery runner's cleanup treats any nonzero `pg_ctl status` as confirmed shutdown. The pattern is present in the code, and a small follow-up should reuse `shutdownAndRemove`.
+- **Next:** independent documentation review; then the owner decides on the PR and works through packet §11.
+
 <!-- HANDOFF_ENTRIES_END -->
