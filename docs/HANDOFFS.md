@@ -2466,4 +2466,28 @@ Independent exact-HEAD review of this PR, then the owner's explicit merge decisi
 ### Next action
 Focused independent re-audit of ADOPT-01 and ADOPT-02 at the exact final head, then the owner's merge decision. After a merge, verify on GitHub that the PR is MERGED and its commit is on `main` before relying on the exception.
 
+## Handoff: NMI-MIG-0008-ISSUE49-C1
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49.
+- **From:** implementing assistant (not independent reviewer).
+- **To:** independent focused migration/setup reviewer, then owner for merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight` from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124` (PR #50 owner squash-merged; D4-X effective only for approved Hobby scope).
+- **State:** Bounded local-only runbook/preflight repair. **Not merged and not release authorization.** Final head and hosted CI will be in the Draft PR.
+
+### Completed
+- Created shared read-only `scripts/migration-plan.mjs` that validates the PostgreSQL journal, contiguous indexes, safe names, required `0008_mushy_zarek`, and nonempty SQL files, while accepting future properly ordered entries.
+- Judge runbook refuses missing `DATABASE_URL`, unexpected database name, and nonempty user-schema relations. It runs each validated SQL migration transactionally in a subshell, stops at the first failure, and checks `public.invoice_nudges` before operator provisioning. Interactive bash/zsh is not closed on failures.
+- Operator preflight now uses the validated same journal, stops after the first failed SQL file, and refuses to call the operator provisioning CLI unless `invoice_nudges` exists and no operator has been created.
+- Added isolated CLI unit negative controls for missing `0008`, malformed/out-of-order/unsafe journal entries, missing or empty SQL files, and a future valid migration.
+- Removed duplicated stale eight-migration setup commands from the README, referring operators to the single judge runbook. Published SQL, migrations, journal, privileges and application logic remain unmodified.
+- STATUS records owner-merged PR #50 correctly, with G1 and all remaining release gates still open.
+
+### Validation and limitations
+- Automated unit/format/profile validation and both mandatory hosted CI checks are **PENDING** on the final PR head; report actual results, not estimates.
+- A real disposable PostgreSQL 16 execution of the amended local preflight / runbook, with a deliberate injected migration failure and confirmed no operator creation, is **NOT RUN** via this GitHub-only editing environment. It remains an explicit independent/owner-controlled test before declaring local judge-preflight readiness.
+- No credentials, user data, hosted SQL, existing local database mutation, paid Render action or provider calls were executed. No migration was applied in this implementation task.
+
+### Next action
+Verify the final seven/eight-path diff and targeted tests, obtain both exact-HEAD mandatory CI results, execute or document the missing **disposable PostgreSQL 16 physical preflight and failure injection**, then request independent exact-HEAD review. Keep Issue #49 OPEN until a reviewed owner-approved merge and verified regression evidence; do not create a release SHA/branch or Render resources.
+
 <!-- HANDOFF_ENTRIES_END -->
