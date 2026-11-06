@@ -2,10 +2,10 @@
   "task": "NMI-P7-A",
   "generatedBy": "design/evidence/NMI-P7/run-p7a-journey.mjs",
   "info": {
-    "startedAt": "2026-11-06T03:21:12.709Z",
+    "startedAt": "2026-11-06T06:25:16.233Z",
     "synthetic": true,
     "model": "DETERMINISTIC FAKE (not OpenAI)",
-    "sourceSha": "84349e730e6ea50d68fbad4f129768c9f1cc9cd6",
+    "sourceSha": "e5721fa7842996b680f5a49ddf6d173e0955e971",
     "sourceTreeDirtyAtRun": [],
     "browser": "headless Chrome (CDP), emulated desktop 1280x900 and phone 390x844",
     "migrations": [
@@ -20,9 +20,9 @@
       "0008_mushy_zarek"
     ],
     "cleanup": [
-      "after fast stop, pg_ctl status exit 3"
+      "after fast stop, pg_ctl status: exit 3"
     ],
-    "finishedAt": "2026-11-06T03:21:30.318Z",
+    "finishedAt": "2026-11-06T06:25:34.670Z",
     "screenshots": [
       "p7a-01-draft-ready-on-queue-history-desktop-light.png",
       "p7a-02-queue-retargeted-desktop-light.png",

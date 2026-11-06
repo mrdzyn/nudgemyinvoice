@@ -2215,4 +2215,19 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** unchanged from `NMI-P7-D-01` (headless Chrome emulation only; no Safari, Firefox, real device, screen reader, 400% zoom, real proxy or Render evidence; no live provider).
 - **Next:** focused re-audit. No merge, deploy, Render action, provider call or release SHA.
 
+## Handoff: NMI-P7-D-03
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-D; `phase-7/nmi-release-readiness`, Draft PR #45, started from `97af03e`. **From / to:** implementation agent → **focused re-audit of the remaining P7-D-AUD-01 gap** (audit comment 6678621155; P7-D-DOC-01 stays closed). Corrects `NMI-P7-D-02`, which is not rewritten.
+- **Gap:** `pg-cleanup.mjs` treated every nonzero `pg_ctl status` (including 4, null and launch errors) as confirmed shutdown.
+- **Fix (test helper only):** for an existing data directory, deletion is allowed only when `pg_ctl status` ran without a launch error or signal and exited exactly 3. Exit 0, 4, null, a signal and any other code preserve the directory and fail the run. The nonexistent-directory case and a readable-but-uninitialised directory (no `PG_VERSION` or `postmaster.pid`) stay explicit and are labelled "not pg_ctl verified". An unreadable directory is preserved.
+- **Evidence (implementation-agent, local), regenerated from a clean committed tree at `e5721fa7842996b680f5a49ddf6d173e0955e971`:**
+  - Cleanup failure control **30/30**, up from 11.
+  - Browser journey **47/47**, with a real `pg_ctl status` exit 3 in its cleanup trail and 7 screenshots re-captured under `design/evidence/NMI-P7/screenshots-p7a/`.
+  - Both JSON files record that `sourceSha` and an empty tracked-code dirty list.
+  - Negative control (not committed): against the previous helper, 13 status-error controls fail.
+  - `P7-D-VERIFICATION.md` now states 30/30 and lists the earlier runs as superseded.
+- **Unchanged:** application code, migrations, runtime grants, P4 and P6 evidence, P7-C 116/116 evidence and its runner, the bundle inspection. `pnpm validate` and `pnpm test:db` were not rerun, because no application or test code changed since they passed at `7309fbf` (1408 and 367).
+- **Limits:** unchanged from `NMI-P7-D-01`.
+- **Next:** focused re-audit. No merge, deploy, Render action, provider call or release SHA.
+
 <!-- HANDOFF_ENTRIES_END -->
