@@ -2357,4 +2357,36 @@ Independent exact-HEAD review of Draft PR #48 and required CI, then an explicit 
 Focused **independent** exact-HEAD policy/documentation re-audit of revised PR #48 including the new P3 note and updated task. No merge, G1 closure or Render provisioning. Seek explicit owner decisions after independent acceptance.
 
 
+## Handoff: NMI-G1-HOBBY-EXC-03
+
+- **Task / phase:** `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`.
+- **From:** implementing assistant (not the independent auditor).
+- **To:** independent focused documentation and policy reviewer, then the project owner.
+- **Branch:** `docs/nmi-g1-hobby-owner-only-exception`, Draft PR #48.
+- **Original PR HEAD:** `684d32ed31cf6a05dba86015ac1dab2946fb9720`, unchanged when this work started. New base `main@2c9e7f07eae0d56fe90e3d9574358db57e022f12` (PR #47 owner-approved, squash-merged and closed). **Merge reconciliation commit:** `067821764d1e363595d6e13ae27a2d2821a6af6c`, a normal two-parent merge (parents `684d32e` and `2c9e7f0`); no rebase and no force-push. The final PR HEAD (this handoff commit) is stated in the PR comment.
+- **State:** proposal only, NOT ADOPTED. Reconciled with `main`; awaiting independent exact-HEAD re-audit. `NMI-G1-HOBBY-EXC-01` and `NMI-G1-HOBBY-EXC-02` are retained unchanged.
+
+### Completed
+- **Conflicts resolved:** only `docs/STATUS.md` (three regions) and `docs/HANDOFFS.md` (one region).
+  - STATUS: records the new `main` SHA; PR #47 as owner-approved, squash-merged and closed, with the migration `0008` runbook work complete; PR #48 as the active Draft review; the working branch and active task. The earlier `main` SHAs stay as historical entries.
+  - HANDOFFS: every entry from both histories is kept, with one end marker. Chronological order: `NMI-RENDER-MIG-0008-C1`, `NMI-G1-HOBBY-EXC-01`, `NMI-G1-HOBBY-EXC-02`, then this entry. Each ID occurs exactly once.
+- **Scope against the new `main`:** exactly six files differ: this exception document, the G1 packet (status-only §13), the P3 budget gate (an additive informational addendum with no deleted lines), STATUS, HANDOFFS and this task. No source, migration, grant, dependency, lockfile, security-control or workflow file changed. The merged PR #47 runbook (`docs/NMI-RENDER-P1-RUNBOOK.md`, `tasks/NMI-RENDER-MIG-0008-RUNBOOK.md`) is byte-identical to `main`, and the migration loop still includes `0008_mushy_zarek`.
+
+### Verification of the earlier corrections (read from the final text, not new content)
+- **EXC-01 (quantified exposure):** the exception document keeps about **$0.42/day**; **$16.26** through 15 Dec, **$18.35** through 20 Dec and **$22.97** through 31 Dec; the illustrative **9% tax** rows ($17.72, $20.00, $25.04); the $20 warning around 24 Dec, the pre-tax $25 crossing around 5 Jan 2027 and about 31 Dec with the illustrative tax; accrual that is **not bounded** if the owner is unavailable; and exposure of the Render workspace payment method to charges the credits do not cover. The $25 stays the maximum authorized eligible-credit spend, not a hard Render cap.
+- **EXC-02 (P3 reconciliation):** the P3 addendum is informational and non-operative. The original pre-provisioning fallback condition "remains unmet and binding" until a separately reviewed, owner-approved adoption record changes it. The 2026-11-04 P3 approval text is not rewritten.
+- **EXC-03 (formal adoption):** four steps are required: independent review of the final wording; a new, explicit owner ratification; a separate adoption-record PR updating the P3 fallback applicability, the G1 packet §6 D4, §5 E7 and §11, STATUS and a new handoff; and independent audit, both CI checks and explicit owner merge approval for that record. Merging PR #48 alone does not make the exception operative or close G1.
+
+### Validation (implementation-agent, local, documentation only)
+- Prettier on `docs` and `tasks`: pass. Project-profile validator: pass (24 files). 127 handoff IDs, no duplicates, one end marker. Path and link references: pass.
+- `git diff --check`: it flags **3 trailing-space lines (markdown hard line breaks) in this PR's own task file**. They were already present at `684d32e` and were not introduced by the merge, and I left them unchanged. With trailing-space checking off, the check is clean against the new `main`.
+- No full test suite was run, because nothing but Markdown changed.
+
+### Continuation notes
+- **G1, G4, G5, G6 and G7 stay OPEN; G8 continues; Gates A, B and C stay NOT AUTHORIZED.** No exception adoption, budget increase, resource creation, release branch or SHA, deployment, provider enablement, public URL or deletion.
+- Issue #49 (the local judge runbook and operator preflight still assume eight migrations) is a separate release blocker and is **not** fixed here.
+
+### Next action
+Independent exact-HEAD re-audit of PR #48. The owner's separate decisions on ratification and merge follow only after that review.
+
 <!-- HANDOFF_ENTRIES_END -->
