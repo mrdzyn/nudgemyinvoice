@@ -2389,4 +2389,27 @@ Focused **independent** exact-HEAD policy/documentation re-audit of revised PR #
 ### Next action
 Independent exact-HEAD re-audit of PR #48. The owner's separate decisions on ratification and merge follow only after that review.
 
+## Handoff: NMI-G1-HOBBY-EXC-04
+
+- **Task / phase:** `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`.
+- **From:** implementing assistant (not the independent auditor).
+- **To:** independent focused documentation and policy reviewer, then the project owner.
+- **Branch:** `docs/nmi-g1-hobby-owner-only-exception`, Draft PR #48, started from `b023e5ccfd5f865aab585e098f1197822a8fb15b` (the reconciled head that passed CI at `NMI-G1-HOBBY-EXC-03`). `main` is unchanged at `2c9e7f07eae0d56fe90e3d9574358db57e022f12`. The final PR HEAD is stated in the PR comment.
+- **State:** proposal only, NOT ADOPTED. Corrects one statement in `NMI-G1-HOBBY-EXC-03`, which is not rewritten.
+
+### Completed
+- **Correction:** `NMI-G1-HOBBY-EXC-03` recorded that `git diff --check` flagged three trailing-space lines in this PR's task file and that they were left unchanged. They are now removed. The three lines are 3, 4 and 5 of `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md` (the State, Base and Owner direction labels), and `git diff --check` is clean against `main`.
+- **Rendering kept:** the two trailing spaces were markdown hard line breaks, so a blank line now separates those header lines to keep them on separate lines. The task text is **identical after whitespace is normalized**, and the exception wording is unchanged.
+- Only `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`, `docs/HANDOFFS.md` and `docs/STATUS.md` changed. Nothing in the exception document, the G1 packet, the P3 gate or the merged PR #47 runbook changed.
+
+### Validation (implementation-agent, local, documentation only)
+- `git diff --check` against `origin/main`: clean. Prettier on `docs` and `tasks`: pass. The scope against `main` is still the same six files.
+- Required hosted CI at the final head is recorded in the PR comment.
+
+### Continuation notes
+- **G1, G4, G5, G6 and G7 stay OPEN; G8 continues; Gates A, B and C stay NOT AUTHORIZED.** No exception adoption, budget increase, resource creation, release branch or SHA, deployment, provider enablement, public URL or deletion. Issue #49 stays a separate release blocker and is not fixed here.
+
+### Next action
+Final focused independent re-audit of PR #48. The owner's separate decisions on ratification and merge follow only after that review.
+
 <!-- HANDOFF_ENTRIES_END -->

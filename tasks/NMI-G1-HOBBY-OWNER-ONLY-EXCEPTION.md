@@ -1,8 +1,11 @@
 # NMI-G1-HOBBY-EXCEPTION — Proposed owner-only teardown-control exception
 
-**State:** DRAFT PROPOSAL; **not a granted exception** and **not a deployment authorization**.  
-**Base:** `main@e3b68e83dec899b7aa56afa9be3e8fbf5fd07d62` (G1 packet PR #46 squash-merged).  
-**Owner direction (2026-11-06):** keep Hobby and the existing $25 eligible-credit budget; **approve preparing** a limited owner-only teardown exception, with disclosure of possible charges exceeding $25 if the owner is unavailable. This does **not** close G1, accept G5/G7, grant extra spend, authorize provisioning or approve deletion.  
+**State:** DRAFT PROPOSAL; **not a granted exception** and **not a deployment authorization**.
+
+**Base:** `main@e3b68e83dec899b7aa56afa9be3e8fbf5fd07d62` (G1 packet PR #46 squash-merged).
+
+**Owner direction (2026-11-06):** keep Hobby and the existing $25 eligible-credit budget; **approve preparing** a limited owner-only teardown exception, with disclosure of possible charges exceeding $25 if the owner is unavailable. This does **not** close G1, accept G5/G7, grant extra spend, authorize provisioning or approve deletion.
+
 **UI design gate:** Not applicable (docs only).
 
 ## Objective
