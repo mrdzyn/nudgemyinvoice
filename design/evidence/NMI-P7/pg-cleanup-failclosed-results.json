@@ -1,0 +1,160 @@
+{
+  "at": "2026-11-06T06:25:16.156Z",
+  "sourceSha": "e5721fa7842996b680f5a49ddf6d173e0955e971",
+  "sourceTreeDirtyAtRun": [],
+  "pg": "pg_ctl (PostgreSQL) 16.15 (Homebrew)",
+  "total": 30,
+  "failed": 0,
+  "results": [
+    {
+      "name": "setup: initdb and start a real disposable PostgreSQL 16 cluster",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: with a failing stop and a still-running server, shutdown is NOT confirmed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: the cluster directory is PRESERVED (nothing deleted)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: the server is still running and answering queries",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "with the real pg_ctl, shutdown is confirmed and the directory removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "after removal the server no longer answers",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "setup: initdb only (server never started)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "PARTIAL STARTUP: an initialised-but-never-started directory is confirmed down and removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NOTHING STARTED: a work directory with no data directory is removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: a stop that claims success but leaves the server running does not delete the directory (status is authoritative)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "cleanup of the control cluster itself: confirmed down, then removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 4 (no accessible data directory) -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 1 -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 2 -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 5 -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 127 (shell could not run it) -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 255 -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status null with a launch error (spawn ENOENT) -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status null with a launch error (spawn EACCES) -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status null killed by a signal -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status null with no error and no signal -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status undefined -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 3 BUT with a launch error reported -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status exit 3 BUT killed by a signal -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: status result missing entirely -> shutdown NOT confirmed, the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "STATUS-ERROR CONTROL: running (0) after the fast stop, then status 4 after the immediate stop -> preserved",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "POSITIVE CONTROL: an injected clean `pg_ctl status` exit 3 confirms shutdown and the directory is removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "isConfirmedStopped accepts only exit 3 with no error or signal",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "REAL INACCESSIBLE DIRECTORY: the real `pg_ctl status` does not report 3, shutdown is NOT confirmed and the directory is PRESERVED",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "UNINITIALISED DIRECTORY: a readable, empty data directory (initdb never completed) is removed without a pg_ctl claim",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

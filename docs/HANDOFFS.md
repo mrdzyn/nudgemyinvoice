@@ -2110,4 +2110,124 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **DOC-02:** the P5 release doc §5 records owner acceptance via the #42 merge, and keeps Safari/Firefox/device/screen-reader/zoom QA as not performed. The STATUS NMI-FUP-01 line now gives eight migrations at the time and nine now.
 - **Unchanged:** Markdown only, with no other content changed. No merge, deploy or provider action.
 
+## Handoff: NMI-P7-START-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md`; `phase-7/nmi-release-readiness`, created from owner-merged `main@7c56b078eb997744fd1d9bdb7668114f490171c7`. **From / to:** owner/orchestrator kickoff → bounded P7 implementation agent, then independent exact-HEAD review.
+- **Authorization:** owner asked to *start P7*; safe repository changes and local/synthetic/disposable validation only. No deploy, billing, infrastructure, live OpenAI/PayPal, sending, release SHA, merge or publication.
+- **Four implementation slices:** P7-A close both Codex P2 Nudgey/queue UI findings with regression coverage; P7-B add explicit default-off `NUDGE_AI_DRAFTING_ENABLED` release-preflight guard; P7-C new PG16 recovery proof through migration `0008` and `invoice_nudges` runtime grants (old P4 26/26 remains historical); P7-D evidence, current docs, both exact-HEAD CI workflows and independent audit.
+- **State:** contract and STATUS updated, **no P7 application implementation or recovery drill has yet been run**. Existing P4 G1 and G4–G8 release gates and provider Gates A/B/C remain unapproved.
+- **Next:** implement the four slices on this **same Draft PR** without duplicating branches, then hand off the exact SHA and actual test results. Only owner approval permits eventual squash merge; no deployment is implied.
+
+## Handoff: NMI-P7-A-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-A**; `phase-7/nmi-release-readiness`, Draft PR #45. **From / to:** implementation agent → **independent exact-HEAD review of P7-A** (P7-B/C/D not started).
+- **Implementation SHA:** `2b2c722fc2f164b6c56dd6349641b3dd1c9f8f74` (code and tests; this handoff commit follows it).
+- **Changed:** `apps/web/src/nudges/NudgeQueueScreen.tsx` (a NEW `nudgeFocus` request re-targets a mounted queue: tab, selection and one refresh; manual choices are untouched otherwise); `apps/web/src/nudgey/NudgeDraftFlow.tsx` (pending-exists carries its `invoiceId`; choosing another invoice clears it and any stale failure; a replacement reference is refused unless it belongs to the chosen invoice; in-flight guard). Tests: `NudgeQueue.test.tsx` (+3) and `NudgeDraftFlow.test.tsx` (+5).
+- **Evidence (implementation-agent, local):**
+  - `pnpm validate` passed (1391 tests, +8).
+  - Targeted `src/nudges` and `src/nudgey`: 203 passed.
+  - **Negative control:** 5 of the 8 new tests fail against the unfixed sources.
+  - The existing P6 synthetic browser journey re-ran 150/150 (fake model, disposable PostgreSQL); its committed evidence files were left unchanged.
+  - `pnpm test:db` was not run: no server, schema or migration code changed.
+- **Preserved:** received-401 expiry, explicit confirmation before every costed call, version binding, no-send boundaries.
+- **Limits:** the already-mounted and A→B→A cases are covered by DOM tests, not by new browser QA. The two Codex findings remain reported, not independently verified.
+- **Next:** independent review of P7-A, then P7-B (preflight flag). No merge, deploy or provider action.
+
+## Handoff: NMI-P7-A-02
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-A; `phase-7/nmi-release-readiness`, Draft PR #45. **From / to:** implementation agent → **focused re-audit of P7-A-E1** (audit comment 6663676758). Corrects `NMI-P7-A-01`; that entry is not rewritten.
+- **Correction:** `NMI-P7-A-01` and the PR #45 report said the committed P6 evidence files were left unchanged. That was **wrong for `caa7765`**. Re-running the P6 browser journey rewrites its tracked screenshots, and my handoff commit (`git add -A`) included 32 of the 35 PNGs. I had restored only `qa-results.json`.
+- **Fix:** a normal follow-up commit restores `design/evidence/NMI-P6/` byte-for-byte from implementation commit `2b2c722f` (the same blobs as kickoff `6d9c25a`). All 35 screenshot blobs were verified identical to both. The PNGs captured by the re-run were not adopted, and no visual-equivalence claim is made.
+- **Unchanged:** the P7-A source fixes and tests (`2b2c722`) are untouched.
+- **Evidence:** the earlier local results stand as implementation-agent reports (`pnpm validate` 1391, targeted 203, negative control 5 of 8 new tests, P6 journey 150/150). The 150/150 run was a regression run only, and the new already-mounted and A→B→A flows have DOM evidence, not browser evidence.
+- **Next:** re-audit E1, then P7-B only after that. When the journey is re-run, restore or exclude `design/evidence/NMI-P6/` before committing. No merge, deploy or provider action.
+
+## Handoff: NMI-P7-B-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-B**; `phase-7/nmi-release-readiness`, Draft PR #45, started from `4e08fcc` (P7-A accepted; its implementation is untouched). **Implementation SHA:** `325a188736c0feaecbdc7821df905e3031ed5f93`. **From / to:** implementation agent → **independent exact-HEAD review of P7-B** (P7-C/D not started).
+- **Changed:** `apps/api/src/release-preflight.ts` adds rule `env.NUDGE_AI_DRAFTING_ENABLED`. The variable passes only when absent or exactly `"false"`; `"true"`, empty, `FALSE`/`False`/`TRUE`, padded (leading/trailing space or newline), numeric and malformed values fail. The finding names the variable only and never prints a value. Tests are in `release-preflight.test.ts`; the matrix row is added in `docs/NMI-RENDER-P4-RELEASE-READINESS.md` §4.
+- **Preserved:** the OpenAI/PayPal/test name prohibitions, `PAYPAL_ENV=sandbox`, `PAYPAL_DRAFTS_ENABLED=false`, the sandbox base URL and the licensed AG Studio rules. `config.ts` and the provider clients are unchanged.
+- **Tests (implementation-agent, local):**
+  - Targeted `release-preflight.test.ts`: 79 passed.
+  - **Negative control:** 12 of the new tests fail against the unchanged preflight.
+  - Accepted environments are also accepted by the real `loadConfig`, with `nudgeDrafting` and `openai` both null.
+  - Rejected non-`true` values are also refused by `loadConfig`.
+  - `true` is rejected by name, with and without parser credentials.
+- **Limits:** a pure offline check of names and verdicts. It does not inspect Render's real environment and proves nothing about the hosted service. `true` with the OpenAI names is reported by two rules by design.
+- **Next:** independent P7-B review, then P7-C (migration `0008` recovery proof) on the same PR. No merge, deploy, provider action or release SHA.
+
+## Handoff: NMI-P7-C-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-C**; `phase-7/nmi-release-readiness`, Draft PR #45, started from `d2b8903` (P7-A and P7-B accepted and untouched). **From / to:** implementation agent → **independent exact-HEAD review of P7-C** (P7-D not started).
+- **Implementation SHA:** runner `eca6b6b28eca90541448d4eb3b79d03a252ec58f`; the evidence run was made from that clean tree, so `recovery-results.json` records it as `sourceSha`.
+- **Added (new files only; the P4 runner and its 26/26 result are untouched):** `design/evidence/NMI-P7/run-nudge-recovery-drill.mjs`, `recovery-results.json`, `RECOVERY-RESULTS.md`. Docs updated: the P7 task status line and a P7-C note under row 3 of the P4 release doc §1.
+- **Result (implementation-agent, local):** 99/99 on a private PostgreSQL 16.15 with a non-superuser owner.
+  - Migrations `0000`–`0008` and `runtime-role.sql` apply. Synthetic nudges cover pending, approved, rejected and superseded.
+  - `pg_dump -Fc`, simulated loss and restore as the owner give matching content, schema and runtime-grant fingerprints.
+  - A 31-check denial and constraint battery passes on the source and again on the restored database.
+  - The one-pending index, the sensitivity control, and the truncated and wrong-header archive controls pass.
+  - PostgreSQL shutdown was confirmed before the temp directories were deleted.
+- **Negative control:** a one-off run, not committed, with `DELETE` and `UPDATE(ai_message, facts)` granted to the runtime role failed 14 checks (85/99).
+- **Limits:** local PG16 only, not Render-managed recovery. About 100 rows. The schema allows one operator, so cross-operator isolation is covered by the API tests, not by this drill. `pnpm test:db` was not run, because no schema, migration or app code changed.
+- **Next:** independent P7-C review, then P7-D (integrated verification and docs) only on owner direction. No merge, deploy, Render action, provider call or release SHA. P6 screenshot evidence is untouched.
+
+## Handoff: NMI-P7-C-02
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-C; `phase-7/nmi-release-readiness`, Draft PR #45, started from `297e431`. **From / to:** implementation agent → **focused re-audit of P7-C-AUD-01** (audit comment 6675224703). Corrects `NMI-P7-C-01`, which is not rewritten.
+- **Finding:** the fingerprint sensitivity control did not assert that the probe database, `pg_restore` or the update succeeded, so a failed probe could have produced an `ERR` fingerprint that merely differed from the source and falsely passed.
+- **Fix (runner only):** the control now requires, in order, database created, `pg_restore --exit-on-error` exit 0, a valid pre-mutation fingerprint equal to the 12-row source, an update that changes exactly one row, and a valid, error-free, different post-mutation fingerprint. Negative controls: a real failed probe restore, a real zero-row update, and a 10-case verdict table.
+- **Evidence (implementation-agent, local, regenerated):** runner commit `39e6603470022152021827acf5fef0ee4724112e`; the run was made from that clean tree, so `recovery-results.json` records it as `sourceSha`. Result **116/116**, up from 99, with 17 new checks (4 probe-step checks, 2 real and 11 table-based negative controls, and the existing control re-asserted with its reason). PostgreSQL 16.15. PostgreSQL shutdown was confirmed before cleanup, and no temp directory was left. `RECOVERY-RESULTS.md` and the P4 doc note now state 116/116 and the superseded 99/99 run.
+- **Unchanged:** P4 evidence, P6 screenshots, P7-A and P7-B, migrations, `runtime-role.sql` and the application code.
+- **Limits:** the same as `NMI-P7-C-01` (local PostgreSQL 16 only, about 100 rows, single-operator schema, no `pnpm test:db`).
+- **Next:** re-audit P7-C-AUD-01. P7-D only on owner direction. No merge, deploy, Render action, provider call or release SHA.
+
+## Handoff: NMI-P7-D-01
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice **P7-D**; `phase-7/nmi-release-readiness`, Draft PR #45, started from `6220411` (P7-A, P7-B and P7-C independently accepted; P7-C-AUD-01 closed). **From / to:** implementation agent → **independent exact-HEAD review of P7-D and of the integrated P7 PR**, then the owner's merge decision.
+- **Implementation SHAs:** journey runner `4c81a43ba46ed73db2b42adf3abdf4e2ab0d3e8f`; bundle-inspection runner `c4dd0df5dbfce1cbc3806504c44a61dd49fe03ac`; evidence and documents `15a3ec137c4f641fe2c1c0f234171b90c17d0791`. The final PR head (this handoff commit) is in the PR comment.
+- **Added (no application, migration or grant change; P4 and P6 evidence untouched):** `design/evidence/NMI-P7/run-p7a-journey.mjs`, `qa-results-p7a.json`, `screenshots-p7a/`, `run-bundle-inspection.mjs`, `bundle-inspection.json`, `P7-D-VERIFICATION.md`. Documents reconciled: P4 release doc (new §14 gate ledger), P5 release doc (§8), the P7 task status line, STATUS.
+- **Results (implementation-agent, local):**
+  - `pnpm validate` exit 0, 1408 tests passed.
+  - `pnpm test:db` 367 passed on a disposable PostgreSQL 16.15, shutdown confirmed.
+  - P7-A browser journey **46/46** (fake model, disposable PG16, headless Chrome at 1280 and 390 px). It covers re-targeting of an already-mounted queue, no overwrite of manual tabs, A→B→A after a pending warning, replace only for A, 44px targets, contrast and names, and the no-send boundaries. Negative controls against the pre-P7-A web sources fail.
+  - Bundle inspection **30/30** with a synthetic licence canary only: no licence name, secret marker or canary in either variant, Studio only in lazy chunks, scanner negative control.
+  - P7-C 116/116 is independently accepted and was not rerun.
+- **Gate ledger (P4 doc §14):**
+  - G2 and G3 CLOSED.
+  - G1, G4, G5, G6 and G7 OPEN, and G8 continues. No release SHA is selected.
+  - The AG Studio licence is owner-attested only.
+  - Gates A, B and C are NOT AUTHORIZED.
+- **Not performed:**
+  - Safari, Firefox, real devices and touch, screen readers, 400% zoom.
+  - The real `__Host-` cookie behind a Render proxy and Render request-log evidence.
+  - Render-managed backup and restore, live billing, and any live-provider run.
+  - The P6 journey was not rerun, so its recorded 150/150 stands.
+- **Recommended owner decisions:** see P4 doc §14, in order: the PR #45 merge decision after review, then G1, G5, G7, then choose the release SHA and branch (G4), then the manual QA plan. Keep Gate A off.
+- **Next:** independent review of PR #45 at its final head. No merge, deploy, Render action, payment, provider call, release SHA, judge URL or Devpost publication.
+
+## Handoff: NMI-P7-D-02
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-D; `phase-7/nmi-release-readiness`, Draft PR #45, started from `7309fbf`. **From / to:** implementation agent → **focused re-audit of P7-D-AUD-01 and P7-D-DOC-01** (audit comment 6675943978). Corrects `NMI-P7-D-01`, which is not rewritten.
+- **P7-D-AUD-01:** the P7-A journey runner cleaned up its disposable PostgreSQL without confirming shutdown. New `design/evidence/NMI-P7/pg-cleanup.mjs` stops the cluster and deletes the directory only after an authoritative `pg_ctl status` shows it is down. Otherwise it preserves the directory, reports it and exits non-zero. Partial startup and never-initialised clusters are handled. The cleanup is now a recorded check. Failure control `test-pg-cleanup-failclosed.mjs` is **11/11** on a real disposable cluster: a failing stop and a falsely successful stop both preserve the directory.
+- **P7-D-DOC-01:** the `docs/STATUS.md` primary `main` is now `7c56b078eb997744fd1d9bdb7668114f490171c7` (documentation PR #44). `fbd2d8e` is kept as the historical post-P6 SHA. No release SHA is selected.
+- **Evidence (implementation-agent, local), regenerated from a clean committed tree at `84349e730e6ea50d68fbad4f129768c9f1cc9cd6`:** browser journey **47/47** (up from 46; the added check is the cleanup confirmation; 7 screenshots re-captured under `design/evidence/NMI-P7/screenshots-p7a/`) and the cleanup control **11/11**. Each JSON records that `sourceSha` and a clean tracked-code tree. The superseded 46/46 run (source `4c81a43`) is stated as superseded in `P7-D-VERIFICATION.md`. The P4 doc §14 now reads 47/47.
+- **Unchanged:** the application code, migrations, runtime grants, P4 and P6 evidence, the P7-C 116/116 evidence and its runner, and the bundle inspection. `pnpm validate` and `pnpm test:db` were not rerun, because no application or test code changed since they passed at `7309fbf` (1408 and 367).
+- **Limits:** unchanged from `NMI-P7-D-01` (headless Chrome emulation only; no Safari, Firefox, real device, screen reader, 400% zoom, real proxy or Render evidence; no live provider).
+- **Next:** focused re-audit. No merge, deploy, Render action, provider call or release SHA.
+
+## Handoff: NMI-P7-D-03
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-D; `phase-7/nmi-release-readiness`, Draft PR #45, started from `97af03e`. **From / to:** implementation agent → **focused re-audit of the remaining P7-D-AUD-01 gap** (audit comment 6678621155; P7-D-DOC-01 stays closed). Corrects `NMI-P7-D-02`, which is not rewritten.
+- **Gap:** `pg-cleanup.mjs` treated every nonzero `pg_ctl status` (including 4, null and launch errors) as confirmed shutdown.
+- **Fix (test helper only):** for an existing data directory, deletion is allowed only when `pg_ctl status` ran without a launch error or signal and exited exactly 3. Exit 0, 4, null, a signal and any other code preserve the directory and fail the run. The nonexistent-directory case and a readable-but-uninitialised directory (no `PG_VERSION` or `postmaster.pid`) stay explicit and are labelled "not pg_ctl verified". An unreadable directory is preserved.
+- **Evidence (implementation-agent, local), regenerated from a clean committed tree at `e5721fa7842996b680f5a49ddf6d173e0955e971`:**
+  - Cleanup failure control **30/30**, up from 11.
+  - Browser journey **47/47**, with a real `pg_ctl status` exit 3 in its cleanup trail and 7 screenshots re-captured under `design/evidence/NMI-P7/screenshots-p7a/`.
+  - Both JSON files record that `sourceSha` and an empty tracked-code dirty list.
+  - Negative control (not committed): against the previous helper, 13 status-error controls fail.
+  - `P7-D-VERIFICATION.md` now states 30/30 and lists the earlier runs as superseded.
+- **Unchanged:** application code, migrations, runtime grants, P4 and P6 evidence, P7-C 116/116 evidence and its runner, the bundle inspection. `pnpm validate` and `pnpm test:db` were not rerun, because no application or test code changed since they passed at `7309fbf` (1408 and 367).
+- **Limits:** unchanged from `NMI-P7-D-01`.
+- **Next:** focused re-audit. No merge, deploy, Render action, provider call or release SHA.
+
 <!-- HANDOFF_ENTRIES_END -->

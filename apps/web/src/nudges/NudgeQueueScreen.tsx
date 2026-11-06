@@ -713,6 +713,19 @@ export function NudgeQueue({ controller }: { controller: NudgesController }) {
   const [flash, setFlash] = useState<Flash>(null);
   const panelId = useId();
 
+  // P7-A: a NEW open-nudges request (a new `nudgeFocus` object, e.g. Nudgey's "Open in queue") re-targets an
+  // already-mounted queue. The effect re-runs only when that object changes, so ordinary manual tab/selection
+  // changes are never overwritten, and the first mount is a no-op (state is already seeded from it).
+  const seeded = useRef(focus);
+  useEffect(() => {
+    if (!focus || focus === seeded.current) return;
+    seeded.current = focus;
+    setView(focus.view);
+    setSelected(focus.id);
+    setFlash(null);
+    setTick((t) => t + 1); // the new draft may have been created after this list was read
+  }, [focus]);
+
   useEffect(() => {
     void controller.refresh();
   }, [controller, tick]);

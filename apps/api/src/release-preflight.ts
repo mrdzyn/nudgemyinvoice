@@ -80,6 +80,14 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   eq("TRUST_PROXY", "1");
   eq("PAYPAL_ENV", "sandbox");
   eq("PAYPAL_DRAFTS_ENABLED", "false");
+  // NMI-P7-B: the live AI nudge-drafting opt-in is checked by NAME. Only an absent variable or the exact string
+  // "false" passes ("true", empty, wrong case or padded values all fail). This is IN ADDITION to the OpenAI-name
+  // prohibition below and the config loader's own enum; the value itself is never reported.
+  add(
+    "env.NUDGE_AI_DRAFTING_ENABLED",
+    env["NUDGE_AI_DRAFTING_ENABLED"] === undefined || env["NUDGE_AI_DRAFTING_ENABLED"] === "false",
+    'NUDGE_AI_DRAFTING_ENABLED must be absent or exactly "false" (live AI nudge drafting is not authorized for the hosted demo)',
+  );
   add(
     "env.PAYPAL_API_BASE_URL",
     env["PAYPAL_API_BASE_URL"] === SANDBOX_API,

@@ -183,6 +183,113 @@ describe("NudgeDraftFlow", () => {
     });
   });
 
+  describe("P7-A: pending-exists belongs to the invoice that produced it", () => {
+    const PEND_A = { id: "00000000-0000-4000-8000-0000000000d1", version: 3 };
+    const radios = () => [...host.querySelectorAll('input[type="radio"]')] as HTMLInputElement[];
+    const pick = async (i: number) => {
+      await act(async () => radios()[i]!.click());
+      await flush();
+    };
+    /** A has a pending draft (409 pending_exists with A's ref); B and C draft normally. */
+    function twoInvoices() {
+      const t = setup([inv(1), inv(2), inv(3)]);
+      t.generate.mockImplementation(
+        async (
+          id: string,
+          input: { tone: "friendly" | "professional" | "firm"; replace?: unknown },
+        ) =>
+          id === inv(1).id && !input.replace
+            ? ({ kind: "pending-exists", pending: PEND_A } as GenerateOutcome)
+            : ({ kind: "ok", nudge: created(id, input.tone) } as GenerateOutcome),
+      );
+      return t;
+    }
+
+    it("choosing B after A's warning clears it: normal explicit confirm, no A reference, no call until clicked", async () => {
+      const t = twoInvoices();
+      await t.render("firm");
+      await pick(0);
+      await click("Draft firm nudge");
+      expect(host.textContent).toContain("already has a draft waiting for review");
+      expect(t.generate).toHaveBeenCalledTimes(1);
+
+      await pick(1);
+      expect(host.textContent).not.toContain("already has a draft waiting for review");
+      expect(button(/^Replace with/)).toBeUndefined();
+      expect(button(/^Open existing in queue/)).toBeUndefined();
+      expect(host.textContent).toContain("This makes one AI call.");
+      expect(t.generate).toHaveBeenCalledTimes(1); // switching drafts nothing
+
+      await click("Draft firm nudge");
+      expect(t.generate).toHaveBeenCalledTimes(2);
+      expect(t.generate.mock.calls[1]?.[0]).toBe(inv(2).id);
+      expect(t.generate.mock.calls[1]?.[1]).toEqual({
+        tone: "firm",
+        timeZone: "UTC",
+        replace: null,
+      });
+      expect(t.opened).toEqual([]);
+    });
+
+    it("A -> B -> A: the warning is not resurrected; A asks again and only then offers its own pending ref", async () => {
+      const t = twoInvoices();
+      await t.render("firm");
+      await pick(0);
+      await click("Draft firm nudge");
+      await pick(1);
+      await pick(0);
+      expect(host.textContent).not.toContain("already has a draft waiting for review");
+      expect(t.generate).toHaveBeenCalledTimes(1);
+      await click("Draft firm nudge"); // confirm again, explicitly
+      expect(t.generate).toHaveBeenCalledTimes(2);
+      await click(/^Replace with a new firm draft/);
+      expect(t.generate.mock.calls[2]?.[0]).toBe(inv(1).id);
+      expect(t.generate.mock.calls[2]?.[1]).toEqual({
+        tone: "firm",
+        timeZone: "UTC",
+        replace: PEND_A,
+      });
+    });
+
+    it("Open existing still opens A's own pending draft while A is selected", async () => {
+      const t = twoInvoices();
+      await t.render("firm");
+      await pick(0);
+      await click("Draft firm nudge");
+      await click(/^Open existing in queue/);
+      expect(t.opened).toEqual([PEND_A.id]);
+    });
+
+    it("a stale pending response for A that lands after switching is not shown for B; radios lock while drafting", async () => {
+      const t = setup([inv(1), inv(2)]);
+      let resolveA!: (o: GenerateOutcome) => void;
+      t.generate.mockImplementationOnce(() => new Promise<GenerateOutcome>((r) => (resolveA = r)));
+      await t.render("firm");
+      await pick(0);
+      await click("Draft firm nudge");
+      expect(radios().every((r) => r.disabled)).toBe(true); // cannot switch mid-flight
+      await act(async () => radios()[1]!.click());
+      expect(radios()[0]!.checked).toBe(true);
+      await act(async () => resolveA({ kind: "pending-exists", pending: PEND_A }));
+      await flush();
+      expect(host.textContent).toContain("already has a draft waiting for review");
+      expect(t.generate).toHaveBeenCalledTimes(1);
+      await pick(1);
+      expect(button(/^Replace with/)).toBeUndefined();
+      expect(t.generate).toHaveBeenCalledTimes(1);
+    });
+
+    it("a failure shown for A is cleared when B is chosen (no stale error on the other invoice)", async () => {
+      const t = setup([inv(1), inv(2)], { kind: "unavailable" } as GenerateOutcome);
+      await t.render("firm");
+      await pick(0);
+      await click("Draft firm nudge");
+      expect(host.querySelector('[role="alert"]')).not.toBeNull();
+      await pick(1);
+      expect(host.querySelector('[role="alert"]')).toBeNull();
+    });
+  });
+
   it("no match and too many matches are explained; nothing is drafted", async () => {
     const none = setup([]);
     await none.render();

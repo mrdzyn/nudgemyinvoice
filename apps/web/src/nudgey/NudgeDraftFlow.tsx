@@ -24,7 +24,8 @@ type Phase =
   | { kind: "truncated" }
   | { kind: "choose"; items: ListItem[] }
   | { kind: "drafting"; items: ListItem[] }
-  | { kind: "pending-exists"; items: ListItem[]; pending: PendingRef }
+  // P7-A: the pending reference belongs to the invoice that produced it; it is never reused for another one.
+  | { kind: "pending-exists"; items: ListItem[]; invoiceId: string; pending: PendingRef }
   | {
       kind: "failed";
       items: ListItem[];
@@ -63,6 +64,7 @@ export function NudgeDraftFlow({
   const [phase, setPhase] = useState<Phase>({ kind: "searching" });
   const [tick, setTick] = useState(0);
   const work = useRef<AbortController | null>(null);
+  const inFlight = useRef(false);
   useEffect(() => () => work.current?.abort(), []);
 
   useEffect(() => {
@@ -107,19 +109,39 @@ export function NudgeDraftFlow({
       : [];
   const chosen = items.find((i) => i.id === selected) ?? null;
 
+  // P7-A: choosing another invoice invalidates a pending-exists warning (and a failure) that belonged to the
+  // previous one, so the normal explicit-confirm state returns and A's pending reference can never reach B.
+  const choose = (id: string) => {
+    if (inFlight.current) return;
+    setSelected(id);
+    setPhase((p) =>
+      (p.kind === "pending-exists" && p.invoiceId !== id) || p.kind === "failed"
+        ? { kind: "choose", items: p.items }
+        : p,
+    );
+  };
+
   const draft = async (replace: PendingRef | null) => {
-    if (!nudges || !chosen) return;
+    if (!nudges || !chosen || inFlight.current) return;
+    if (replace !== null && !(phase.kind === "pending-exists" && phase.invoiceId === chosen.id))
+      return; // a replacement reference must belong to the chosen invoice
+    inFlight.current = true;
     work.current?.abort();
     const ac = new AbortController();
     work.current = ac;
     setPhase({ kind: "drafting", items });
-    const r = await nudges.generate(chosen.id, tone, replace, ac.signal);
+    let r: GenerateOutcome;
+    try {
+      r = await nudges.generate(chosen.id, tone, replace, ac.signal);
+    } finally {
+      if (work.current === ac) inFlight.current = false;
+    }
     if (ac.signal.aborted || r.kind === "aborted" || r.kind === "unauthorized") return;
     if (r.kind === "ok") {
       setPhase({ kind: "done", nudge: r.nudge, customer: chosen.customerName });
       announce("Draft ready for review in your Nudge queue. Nothing was sent.");
     } else if (r.kind === "pending-exists") {
-      setPhase({ kind: "pending-exists", items, pending: r.pending });
+      setPhase({ kind: "pending-exists", items, invoiceId: chosen.id, pending: r.pending });
       announce("This invoice already has a draft waiting for review.");
     } else {
       setPhase({ kind: "failed", items, outcome: r });
@@ -201,7 +223,7 @@ export function NudgeDraftFlow({
                 value={item.id}
                 checked={selected === item.id}
                 disabled={drafting}
-                onChange={() => setSelected(item.id)}
+                onChange={() => choose(item.id)}
               />
               <span className="schedule-candidate-option-head">
                 <strong>{item.customerName}</strong>
@@ -230,7 +252,7 @@ export function NudgeDraftFlow({
           ))}
         </select>
       </div>
-      {phase.kind === "pending-exists" ? (
+      {phase.kind === "pending-exists" && phase.invoiceId === chosen?.id ? (
         <>
           <p className="chat-hint" role="status">
             This invoice already has a draft waiting for review. Drafting again replaces it (the old

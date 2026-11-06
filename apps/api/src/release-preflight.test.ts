@@ -124,6 +124,84 @@ describe("release environment matrix", () => {
     expect(JSON.stringify(findings)).not.toContain(SECRET);
   });
 
+  describe("P7-B: NUDGE_AI_DRAFTING_ENABLED is checked by name (default-off drafting)", () => {
+    const ID = "env.NUDGE_AI_DRAFTING_ENABLED";
+    const withFlag = (v: string | undefined) => {
+      const e: Record<string, string | undefined> = { ...good };
+      if (v === undefined) delete e["NUDGE_AI_DRAFTING_ENABLED"];
+      else e["NUDGE_AI_DRAFTING_ENABLED"] = v;
+      return e;
+    };
+
+    it.each([
+      ["absent", undefined],
+      ["the exact string false", "false"],
+    ])("accepts %s, and the real config loader agrees (drafting off, no model client)", (_n, v) => {
+      const e = withFlag(v);
+      expect(failing(e)).toEqual([]);
+      expect(allOk(checkReleaseEnv(e))).toBe(true);
+      const c = loadConfig(e as Record<string, string>);
+      expect(c.nudgeDrafting).toBeNull();
+      expect(c.openai).toBeNull();
+    });
+
+    it.each([
+      ["true", "true"],
+      ["empty", ""],
+      ["uppercase", "FALSE"],
+      ["mixed case", "False"],
+      ["uppercase true", "TRUE"],
+      ["padded with a space", " false"],
+      ["trailing space", "false "],
+      ["newline padded", "false\n"],
+      ["numeric", "0"],
+      ["yes", "yes"],
+      ["malformed", "fals"],
+    ])("fails closed on %s with the stable finding id, and the loader refuses it too", (_n, v) => {
+      const e = withFlag(v);
+      expect(failing(e)).toContain(ID);
+      expect(allOk(checkReleaseEnv(e))).toBe(false);
+      if (v !== "true") expect(() => loadConfig(e as Record<string, string>)).toThrow();
+    });
+
+    it("true is rejected by name even WITH parser credentials, and independently of the OpenAI-name rule", () => {
+      const withCreds = {
+        ...good,
+        NUDGE_AI_DRAFTING_ENABLED: "true",
+        OPENAI_API_KEY: SECRET,
+        OPENAI_MODEL: "m",
+      };
+      expect(failing(withCreds)).toEqual(expect.arrayContaining([ID, "env.forbidden-absent"]));
+      // true without credentials: only the flag rule fires, proving the new check stands on its own.
+      expect(failing(withFlag("true"))).toEqual([ID]);
+    });
+
+    it("parser credentials alone still fail via the forbidden-name rule, not the flag rule", () => {
+      const f = failing({ ...good, OPENAI_API_KEY: SECRET, OPENAI_MODEL: "m" });
+      expect(f).toContain("env.forbidden-absent");
+      expect(f).not.toContain(ID);
+    });
+
+    it("never echoes the flag value or a secret in any finding", () => {
+      for (const v of ["true", "", "FALSE", ` ${SECRET} `]) {
+        const out = JSON.stringify(checkReleaseEnv({ ...withFlag(v), OPENAI_API_KEY: SECRET }));
+        expect(out).not.toContain(SECRET);
+        if (v) expect(out).not.toContain(`"${v}"`);
+      }
+    });
+
+    it("the existing PayPal and Studio rules are unchanged by the new check", () => {
+      expect(failing({ ...good, PAYPAL_DRAFTS_ENABLED: "true" })).toContain(
+        "env.PAYPAL_DRAFTS_ENABLED",
+      );
+      expect(failing({ ...good, PAYPAL_ENV: "live" })).toContain("env.PAYPAL_ENV");
+      expect(failing({ ...good, NMI_WEB_STUDIO: "" })).toContain("env.NMI_WEB_STUDIO");
+      expect(failing({ ...good, AG_STUDIO_LICENSE_KEY: undefined })).toContain(
+        "env.AG_STUDIO_LICENSE_KEY",
+      );
+    });
+  });
+
   it("never echoes any value, even when every check fails", () => {
     const all = checkReleaseEnv({
       ...good,

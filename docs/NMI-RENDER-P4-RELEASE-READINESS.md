@@ -13,6 +13,8 @@ Original P4 base: `main@e314bef381c66b4233576683c7f53dd248f58a86` (PR #38 merged
 | 1 | Production build is Community-only | `pnpm build` + `pnpm check:bundle` (3 files; no `ag-studio`, `AgStudio`, `ag-charts-enterprise`, `__nmi_dev`, `studio-licence`, `AG_STUDIO`, key value). **Negative control:** a production build run with `VITE_NMI_STUDIO_LOCAL=1` and a fake `AG_STUDIO_LICENSE_KEY` produced a byte-identical `index-5T6WW9xw.js` and zero marker hits. The `studioBuildGuard` plugin (fails any build that resolves a Studio package) and `import.meta.env.DEV` dead branch are the two independent mechanisms. | PASS |
 | 2 | Same-origin hosting, HTTPS cookie, CSRF, Origin, CSP, proxy trust, log privacy | `hosting.test.ts` + `hosted-staging.pg.test.ts` (inside `pnpm test:db`, **16 files / 340 tests passed on PostgreSQL 16.15**), and the P1 real-Chrome hosted-shape harness **re-run on current code: 26/26** (`design/evidence/NMI-RENDER-P4/hosted-qa-results.json`). | PASS |
 | 3 | PG16 migrations, least-privilege role, backup and recovery | `design/evidence/NMI-RENDER-P4/run-backup-restore-drill.mjs`: **26/26** (`backup-restore-results.json`). Non-superuser owner applies `0000`–`0007`; `runtime-role.sql`; 25 synthetic invoices; `pg_dump -Fc`; simulated data loss and dropped database; `pg_restore` as the non-superuser owner; content fingerprint (every table, rows + md5) and schema fingerprint identical; runtime role still denied DELETE/TRUNCATE/CREATE/audit UPDATE/credential UPDATE and still able to append audit rows; append-only trigger rejects even the owner; truncated-dump negative control fails closed; cleanup confirmed PostgreSQL shutdown before deleting the data directory. | PASS |
+
+*P7-C update (2026-11-06):* row 3 above is historical (migrations `0000`–`0007`, 26/26). The fresh **P7 drill covers all nine migrations including `0008` `invoice_nudges`**: 116/116 on local PostgreSQL 16.15, source `39e6603` (corrected from an earlier 99/99 run after audit finding P7-C-AUD-01). See `design/evidence/NMI-P7/RECOVERY-RESULTS.md`. It proves local recovery only, not Render-managed backups.
 | 4 | Release-SHA controls, env matrix, build/start | New `pnpm --filter @nmi/api release-preflight env` and `... source --expect <sha>` with 53 deterministic tests (`apps/api/src/release-preflight.test.ts`), including a disposable bare Git remote (pinned release passes; stale tracking ref, absent branch, unreachable remote, HEAD mismatch, dirty tree, missing main ancestry and a tampered root lockfile launched from `apps/api` all fail), and a check that the approved matrix is accepted by the real `loadConfig`. | PASS |
 | 5 | Hobby request-log gap | §6. Rechecked Render's logging page today: HTTP request logs exist only for Pro+ workspaces. | **Residual risk — owner decision required** |
 | 6 | Cost and teardown | §8. | Plan only |
@@ -40,6 +42,8 @@ The P1 harness expected the filtered dashboard to emit only `POST /api/invoice-d
 
 Enforced by `release-preflight env` (prints rule ids and *names*, never values).
 
+*Historical note:* the 53-test count in §1 row 4 was recorded before P5 and P7-B; the P7-B rule adds named-flag tests (see handoff `NMI-P7-B-01`). The P4 evidence otherwise stands unchanged.
+
 | Variable | Required | Notes |
 |---|---|---|
 | `NODE_ENV` | `production` | |
@@ -50,6 +54,7 @@ Enforced by `release-preflight env` (prints rule ids and *names*, never values).
 | `DATABASE_URL` | runtime-role URL, user `nmi_runtime`, with password | internal URL; owner credential never on the web service |
 | `SESSION_SECRET` | ≥ 32 chars, real entropy | secret |
 | `PAYPAL_ENV` / `PAYPAL_API_BASE_URL` / `PAYPAL_DRAFTS_ENABLED` | `sandbox` / `https://api-m.sandbox.paypal.com` / `false` | |
+| `NUDGE_AI_DRAFTING_ENABLED` (**P7-B**) | absent or exactly `false` | live AI nudge drafting stays off and unauthorized (Gate A). Rule `env.NUDGE_AI_DRAFTING_ENABLED` rejects `true`, empty, wrong case and padded values; the config loader's own enum agrees. This is in addition to forbidding the OpenAI names below. |
 | `NMI_WEB_STUDIO` (**P5**) | `licensed` | selects the licensed AG Studio web build; shared by Render's build and runtime |
 | `AG_STUDIO_LICENSE_KEY` (**P5**) | owner's deployment licence, secret store only | released at runtime only to the signed-in operator; never in a build, log or document |
 | **Must be absent** | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_MAX_OUTPUT_TOKENS`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `WEB_DIST_DIR`, `TEST_DATABASE_URL`, `REQUIRE_DB_TESTS`, `PGPASSFILE`, `PGPASSWORD`, anything else starting `AG_STUDIO`, `VITE_`, `NMI_` (P5: only the two names above are allowed) | other Studio settings, Vite-exposed values, simulated switches |
@@ -135,3 +140,49 @@ This P4 record describes the Community-only release as it was audited. P5 change
 - **Environment matrix (§4):** `NMI_WEB_STUDIO=licensed` and a well-formed `AG_STUDIO_LICENSE_KEY` are **required**; every other `AG_STUDIO*`, `VITE_*` and `NMI_*` name stays forbidden. `release-preflight env` enforces this.
 - **CSP (§5):** unchanged, except the HTML shell's `style-src` now also allows a fresh per-response nonce and the exact SHA-256 hashes of four static vendor stylesheets, for runtime-injected `<style>` elements. Scripts stay `'self'`, there is no `'unsafe-inline'`, and the shell is `no-store`.
 - Gates G1–G6 and G8 are unchanged. G7 is recorded above as owner-attested; it is not independently verified.
+
+## 14. P7 release gate ledger (2026-11-06; technical readiness only, no release authorized)
+
+This ledger separates **technical checks that were run** from **owner-controlled gates that remain open**. It does not select a release SHA, and no gate below was closed by P7. Evidence: `design/evidence/NMI-P7/P7-D-VERIFICATION.md`.
+
+### Technical checks completed (code and evidence)
+
+| Check | Result | Attribution |
+|---|---|---|
+| P7-A: already-mounted queue re-targeting; invoice-bound pending warning (both Codex P2 findings) | DOM tests (+8) and browser journey 47/47; both findings addressed | Independent review PASS (P7-A); journey is implementation-agent local |
+| P7-B: `NUDGE_AI_DRAFTING_ENABLED` enforced by name in the provider-disabled preflight (absent or exactly `false`) | 17 new tests; negative control | Independent review PASS (P7-B) |
+| P7-C: PostgreSQL 16 backup/restore for migrations `0000`–`0008` incl. `invoice_nudges` and runtime grants | **116/116** local; supersedes the 99/99 run after P7-C-AUD-01 | Independent review PASS; P7-C-AUD-01 closed (PR #45 comment 6675591988) |
+| Full validation | `pnpm validate` 1408 passed; `pnpm test:db` 367 passed (disposable PG 16.15) | Implementation-agent local |
+| Bundle inspection, synthetic licence only | 30/30; Community has no Studio code; licensed has Studio in lazy chunks only; no licence or secret marker in either | Implementation-agent local |
+| Hosted Project Baseline CI and Stack CI | Recorded for the final exact head in PR #45 | Independently verifiable on GitHub |
+
+These are local and offline checks. They prove nothing about Render, a hosted service, a real provider or real-size data.
+
+### Owner-controlled gates
+
+| Gate | State | What is needed |
+|---|---|---|
+| G1 | **OPEN** | Live Billing check: Hobby, credit applicability, forecast of at most $25 (C0), plus a teardown/export/retention plan. P3 is a budget ceiling only. |
+| G2 | **CLOSED** | P4 PR #40 independently audited and owner-merged (`8cc2f4d`). |
+| G3 | **CLOSED** | P3 budget PR #39 audited and owner-merged (`5160dff`). A budget ceiling only. |
+| G4 | **OPEN** | The owner picks a full 40-character release SHA on `main` after P7 is merged, and creates `release/nmi-render-judges-2026`. **No release SHA is selected.** The source preflight requires that exact branch and SHA. |
+| G5 | **OPEN** | Written acceptance of the Render Hobby request-log residual risk (§6), with alternative-evidence checks (§6 A2). |
+| G6 | **OPEN** | Separate approval for resource creation and the first build, for sharing a URL, and for the judge-access method. |
+| G7 | **OPEN** | Vendor AG Studio package download and use rights. The licence scope is **owner-attested, not independently legally verified**. The exact entitlement end date and document are owner-held, and nothing in the code enforces expiry. |
+| G8 | **CONTINUING** | Provider-disabled configuration. The release preflight enforces it: no OpenAI, PayPal-credential, test or simulated variables; `NUDGE_AI_DRAFTING_ENABLED` absent or `false`; `PAYPAL_DRAFTS_ENABLED=false`; `PAYPAL_ENV=sandbox`; licensed Studio variables. It runs against the *service's* environment, which P7 did not do. |
+| Gate A | **NOT AUTHORIZED** | Live OpenAI, including live nudge drafting. Run `R1-A-20261030-01` is consumed. |
+| Gate B | **NOT AUTHORIZED** | A new PayPal Sandbox create. |
+| Gate C | **NOT AUTHORIZED** | Any further live-provider test. |
+
+### Remaining unperformed checks
+
+Safari, Firefox, real devices and touch; screen readers (VoiceOver, NVDA); 400% zoom; HTTPS `__Host-` cookie behind the real Render proxy; Render request-log evidence (G5); Render-managed backup/restore and real-size restore time; live billing and charges; Devpost and video publication. The new journeys use headless Chrome emulation only. P7 does not claim these were run.
+
+### Recommended owner decisions (in order)
+
+1. Review and decide on P7 PR #45 after independent exact-head review. Only the owner may approve a squash merge.
+2. G1: check live Billing and credits, and approve a teardown/export/retention plan.
+3. G5 and G7: decide, in writing, on the request-log residual risk and on the vendor download and use rights.
+4. After P7 is merged: choose the full release SHA and authorize the controlled release branch (G4). Then run `release-preflight source` and `env` against the real inputs.
+5. Decide which manual QA gaps matter before any judge sees a URL, and plan that testing.
+6. Keep Gate A off. If live nudge drafting is ever wanted, authorize it in a separate bounded request.
