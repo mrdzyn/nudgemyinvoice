@@ -228,11 +228,59 @@ try {
   check("restored one-pending-per-invoice index exists and is partial/unique", /CREATE UNIQUE INDEX invoice_nudges_one_pending_uq .*WHERE \(?status = 'pending_review'/.test(one(OWNER, "nmi_p7_restored", "select indexdef from pg_indexes where indexname='invoice_nudges_one_pending_uq'")));
   check("restored ownership scoping: every nudge's operator_id and its invoice's created_by are the one operator", one(OWNER, "nmi_p7_restored", `select count(*) from invoice_nudges n join invoices i on i.id=n.invoice_id where n.operator_id=${OPA} and i.created_by=n.operator_id`) === "12");
 
-  // Sensitivity control: the fingerprint must notice a one-row change (so equality above is meaningful).
-  sql(SUPER, "postgres", `CREATE DATABASE nmi_p7_probe OWNER ${OWNER}`);
-  run("pg_restore", [...conn(OWNER, "nmi_p7_probe"), "--no-owner", "--exit-on-error", dump]);
-  sql("p7super", "nmi_p7_probe", "update invoice_nudges set message = message || '.' where id = " + U(103));
-  check("SENSITIVITY CONTROL: changing one nudge message in a second restore changes the nudge fingerprint", nudgeFp("nmi_p7_probe") !== nudgeSrc);
+  // Sensitivity control (P7-C-AUD-01, fail-closed): the fingerprint must notice a one-row change, so equality above is
+  // meaningful. The control PASSES only if every step really happened: the probe database was created, the restore
+  // exited 0, the pre-mutation fingerprint is valid and equals the source, EXACTLY one row was updated, and the
+  // post-mutation fingerprint is valid, error-free and different. Any failed step makes the verdict false.
+  const FP = /^12:[0-9a-f]{32}$/;
+  const sensitivityVerdict = ({ createOk, restoreOk, before, updated, after, source }) => {
+    if (!createOk) return { ok: false, reason: "probe database was not created" };
+    if (!restoreOk) return { ok: false, reason: "probe pg_restore did not succeed" };
+    if (!FP.test(before) || before !== source) return { ok: false, reason: "pre-mutation fingerprint is invalid or differs from the source" };
+    if (updated !== "1") return { ok: false, reason: `update changed ${updated} rows, expected exactly 1` };
+    if (!FP.test(after)) return { ok: false, reason: "post-mutation fingerprint is invalid or an error" };
+    if (after === source) return { ok: false, reason: "post-mutation fingerprint did not change" };
+    return { ok: true, reason: "" };
+  };
+  const probe = (db, archive, targetId) => {
+    const createOk = sql(SUPER, "postgres", `CREATE DATABASE ${db} OWNER ${OWNER}`).status === 0;
+    const restoreOk = createOk && run("pg_restore", [...conn(OWNER, db), "--no-owner", "--exit-on-error", archive]).status === 0;
+    const before = restoreOk ? nudgeFp(db) : "ERR:no restore";
+    const updated = restoreOk
+      ? one(OWNER, db, `with u as (update invoice_nudges set message = message || '.' where id = ${targetId} returning 1) select count(*) from u`)
+      : "ERR:no restore";
+    const after = restoreOk ? nudgeFp(db) : "ERR:no restore";
+    return { createOk, restoreOk, before, updated, after, ...sensitivityVerdict({ createOk, restoreOk, before, updated, after, source: nudgeSrc }) };
+  };
+  const pr = probe("nmi_p7_probe", dump, U(103));
+  check("sensitivity probe: database created and pg_restore --exit-on-error exited 0", pr.createOk && pr.restoreOk);
+  check("sensitivity probe: the pre-mutation fingerprint is valid and equals the 12-row source", FP.test(pr.before) && pr.before === nudgeSrc, pr.before);
+  check("sensitivity probe: the update changed exactly one nudge", pr.updated === "1", pr.updated);
+  check("sensitivity probe: the post-mutation fingerprint is valid, error-free and differs from the source", FP.test(pr.after) && pr.after !== nudgeSrc, pr.after);
+  check("SENSITIVITY CONTROL: changing one nudge message in a second restore changes the nudge fingerprint (all steps verified)", pr.ok, pr.reason);
+
+  // Negative controls for the control itself: a failed restore or update must NEVER yield a sensitivity PASS.
+  const truncProbe = join(work, "truncated-probe.dump");
+  writeFileSync(truncProbe, readFileSync(dump).subarray(0, Math.floor(statSync(dump).size / 2)));
+  const nc1 = probe("nmi_p7_probe_badrestore", truncProbe, U(103));
+  check("NEGATIVE CONTROL (sensitivity): a REAL failed probe restore (truncated archive) cannot pass the sensitivity verdict", nc1.ok === false && nc1.restoreOk === false && /restore/.test(nc1.reason), JSON.stringify(nc1));
+  const nc2 = probe("nmi_p7_probe_noupdate", dump, "gen_random_uuid()");
+  check("NEGATIVE CONTROL (sensitivity): a REAL update that matches 0 rows cannot pass the sensitivity verdict", nc2.ok === false && nc2.updated === "0" && /0 rows/.test(nc2.reason), JSON.stringify(nc2));
+  const base = { createOk: true, restoreOk: true, before: nudgeSrc, updated: "1", after: "12:" + "f".repeat(32), source: nudgeSrc };
+  check("sensitivity verdict self-test: the good inputs pass", sensitivityVerdict(base).ok === true);
+  for (const [label, patch] of [
+    ["probe database not created", { createOk: false }],
+    ["probe restore failed", { restoreOk: false }],
+    ["pre-mutation fingerprint is an ERR", { before: "ERR:boom" }],
+    ["pre-mutation fingerprint differs from the source", { before: "12:" + "e".repeat(32) }],
+    ["update changed 0 rows", { updated: "0" }],
+    ["update changed 2 rows", { updated: "2" }],
+    ["update errored", { updated: "ERR:boom" }],
+    ["post-mutation fingerprint is an ERR (the original false-PASS case)", { after: "ERR:relation does not exist" }],
+    ["post-mutation fingerprint is empty", { after: "" }],
+    ["post-mutation fingerprint did not change", { after: nudgeSrc }],
+  ])
+    check(`NEGATIVE CONTROL (sensitivity verdict): ${label} -> not a PASS`, sensitivityVerdict({ ...base, ...patch }).ok === false);
 
   // ---- Runtime role on the RESTORED database ----
   denials("nmi_p7_restored", "restored");
