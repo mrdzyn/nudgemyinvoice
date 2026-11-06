@@ -60,7 +60,7 @@ The owner role's credential (migrations, provisioning) is used only from the ope
 
 ## 5. PostgreSQL: migration and least-privilege plan (owner-run, manual)
 
-No migration runs on app start. Migrations are forward-only plain SQL in journal order (`packages/db/migrations/meta/_journal.json`: `0000`–`0007`).
+No migration runs on app start. Migrations are forward-only plain SQL in journal order (`packages/db/migrations/meta/_journal.json`: **`0000`–`0008`**). Confirm the journal and listed files still agree before any owner-executed migration; stop if there is drift.
 
 1. Create the Render PostgreSQL instance (region = web service region; paid plan covering 2026-12-15; confirm backup/retention). Record plan/price privately.
 2. **Owner session setup (once per sitting, bash on the operator's machine).** The owner credential never appears in a command argument, a URL, shell history, a repository file or a log. Use only non-secret connection parameters (copy host, port, database and user from the Render dashboard's *external* connection details; they are not the password) and a temporary protected password file that `psql` and the Node `pg` driver both read through `PGPASSFILE`. Add the operator's IP to the allow list only for the duration.
@@ -78,11 +78,12 @@ No migration runs on app start. Migrations are forward-only plain SQL in journal
    Apply the migrations (take a backup/snapshot **before** this step):
    ```sh
    for f in 0000_young_mister_fear 0001_complete_spot 0002_light_proteus 0003_audit_log_immutable \
-            0004_zippy_namorita 0005_glorious_giant_girl 0006_known_colleen_wing 0007_perfect_doomsday; do
-     psql -v ON_ERROR_STOP=1 -1 -f "packages/db/migrations/$f.sql" || break
+            0004_zippy_namorita 0005_glorious_giant_girl 0006_known_colleen_wing 0007_perfect_doomsday \
+           0008_mushy_zarek; do
+     psql -v ON_ERROR_STOP=1 -1 -f "packages/db/migrations/$f.sql" || { echo >&2 'Migration failed; STOP and inspect; never rerun an applied file.'; exit 1; }
    done
    ```
-   (`-1` = one transaction per file; stop on the first error. If one fails midway the earlier files remain applied — fix and continue from that file; never re-run an applied file. Drizzle files contain `--> statement-breakpoint` comments; `psql` ignores them as comments.)
+   (`-1` = one transaction per file; **fail closed on the first error**. If a migration fails, investigate before any further step; previously committed files remain applied and **must not be rerun**. Drizzle's `--> statement-breakpoint` comments are ignored by `psql`.) After successful application, **verify** `to_regclass('public.invoice_nudges')` returns `invoice_nudges` as evidence that migration `0008` was applied before creating/granting the runtime role. These are *owner-only* instructions for a newly created, separately authorized database; nothing in this runbook authorizes executing them.
 3. Create the runtime role. The runtime password is **never** written in a command line, SQL file, shell history, `psql -c` argument or process list:
    ```sh
    psql -v ON_ERROR_STOP=1 -c \
