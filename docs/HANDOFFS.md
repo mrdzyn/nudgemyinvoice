@@ -2171,4 +2171,14 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Limits:** local PG16 only, not Render-managed recovery. About 100 rows. The schema allows one operator, so cross-operator isolation is covered by the API tests, not by this drill. `pnpm test:db` was not run, because no schema, migration or app code changed.
 - **Next:** independent P7-C review, then P7-D (integrated verification and docs) only on owner direction. No merge, deploy, Render action, provider call or release SHA. P6 screenshot evidence is untouched.
 
+## Handoff: NMI-P7-C-02
+
+- **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md` slice P7-C; `phase-7/nmi-release-readiness`, Draft PR #45, started from `297e431`. **From / to:** implementation agent → **focused re-audit of P7-C-AUD-01** (audit comment 6675224703). Corrects `NMI-P7-C-01`, which is not rewritten.
+- **Finding:** the fingerprint sensitivity control did not assert that the probe database, `pg_restore` or the update succeeded, so a failed probe could have produced an `ERR` fingerprint that merely differed from the source and falsely passed.
+- **Fix (runner only):** the control now requires, in order, database created, `pg_restore --exit-on-error` exit 0, a valid pre-mutation fingerprint equal to the 12-row source, an update that changes exactly one row, and a valid, error-free, different post-mutation fingerprint. Negative controls: a real failed probe restore, a real zero-row update, and a 10-case verdict table.
+- **Evidence (implementation-agent, local, regenerated):** runner commit `39e6603470022152021827acf5fef0ee4724112e`; the run was made from that clean tree, so `recovery-results.json` records it as `sourceSha`. Result **116/116**, up from 99, with 17 new checks (4 probe-step checks, 2 real and 11 table-based negative controls, and the existing control re-asserted with its reason). PostgreSQL 16.15. PostgreSQL shutdown was confirmed before cleanup, and no temp directory was left. `RECOVERY-RESULTS.md` and the P4 doc note now state 116/116 and the superseded 99/99 run.
+- **Unchanged:** P4 evidence, P6 screenshots, P7-A and P7-B, migrations, `runtime-role.sql` and the application code.
+- **Limits:** the same as `NMI-P7-C-01` (local PostgreSQL 16 only, about 100 rows, single-operator schema, no `pnpm test:db`).
+- **Next:** re-audit P7-C-AUD-01. P7-D only on owner direction. No merge, deploy, Render action, provider call or release SHA.
+
 <!-- HANDOFF_ENTRIES_END -->

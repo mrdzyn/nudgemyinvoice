@@ -1,9 +1,9 @@
 {
-  "at": "2026-11-06T02:15:22.565Z",
+  "at": "2026-11-06T02:49:13.527Z",
   "scope": "local PostgreSQL 16 only; not Render-managed recovery",
-  "total": 99,
+  "total": 116,
   "failed": 0,
-  "sourceSha": "eca6b6b28eca90541448d4eb3b79d03a252ec58f",
+  "sourceSha": "39e6603470022152021827acf5fef0ee4724112e",
   "sourceTreeDirtyAtRun": false,
   "migrations": {
     "0000_young_mister_fear.sql": "ca385d8ba725a7ed5c63289519f214223cdcffc1d651ec2dbdae5d767cd61a04",
@@ -303,7 +303,92 @@
       "detail": ""
     },
     {
-      "name": "SENSITIVITY CONTROL: changing one nudge message in a second restore changes the nudge fingerprint",
+      "name": "sensitivity probe: database created and pg_restore --exit-on-error exited 0",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "sensitivity probe: the pre-mutation fingerprint is valid and equals the 12-row source",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "sensitivity probe: the update changed exactly one nudge",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "sensitivity probe: the post-mutation fingerprint is valid, error-free and differs from the source",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "SENSITIVITY CONTROL: changing one nudge message in a second restore changes the nudge fingerprint (all steps verified)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity): a REAL failed probe restore (truncated archive) cannot pass the sensitivity verdict",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity): a REAL update that matches 0 rows cannot pass the sensitivity verdict",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "sensitivity verdict self-test: the good inputs pass",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): probe database not created -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): probe restore failed -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): pre-mutation fingerprint is an ERR -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): pre-mutation fingerprint differs from the source -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): update changed 0 rows -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): update changed 2 rows -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): update errored -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): post-mutation fingerprint is an ERR (the original false-PASS case) -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): post-mutation fingerprint is empty -> not a PASS",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NEGATIVE CONTROL (sensitivity verdict): post-mutation fingerprint did not change -> not a PASS",
       "result": "PASS",
       "detail": ""
     },

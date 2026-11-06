@@ -1,6 +1,6 @@
 # NMI-P7 — Integrated release-readiness refresh (no deployment)
 
-**Status:** STARTED; P7-A and P7-B independently audited PASS; **P7-C implemented (recovery evidence 99/99, awaiting independent review)**; P7-D not started. Implementation authorized for safe local and repository-only work. Draft PR on `phase-7/nmi-release-readiness`, based on verified `main@7c56b078eb997744fd1d9bdb7668114f490171c7` (PR #44 merged). **No release SHA chosen; no hosting or live provider authorization.**
+**Status:** STARTED; P7-A and P7-B independently audited PASS; **P7-C implemented (recovery evidence 116/116 after audit fix P7-C-AUD-01, awaiting re-audit)**; P7-D not started. Implementation authorized for safe local and repository-only work. Draft PR on `phase-7/nmi-release-readiness`, based on verified `main@7c56b078eb997744fd1d9bdb7668114f490171c7` (PR #44 merged). **No release SHA chosen; no hosting or live provider authorization.**
 **Owner direction:** "start p7" (2026-11-06). This authorizes implementation, disposable/offline testing, documentation, a Draft PR, and independent review for the bounded items below. It does **not** authorize merge, release, hosting spend, resources, provider calls, public judge access, or publication.
 **UI design gate:** low-risk corrections within the already-approved P6 D1–D7 review/confirmation screens; no new UI layout or product behavior. Preserve screen-reader semantics, 390 px behavior and ≥44 px touch targets.
 
