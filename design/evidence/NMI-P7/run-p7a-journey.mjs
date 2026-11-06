@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, wri
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { makePgCtl, shutdownAndRemove } from "./pg-cleanup.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../..");
@@ -47,10 +48,18 @@ if (!existsSync(join(dist, "index.html"))) throw new Error("Run `pnpm build` (de
 /* ------------------------------------------------ disposable PostgreSQL 16: owner + least-privilege runtime role */
 const work = mkdtempSync(join(tmpdir(), "nmi-p7a-"));
 const children = [];
+// P7-D-AUD-01: fail-closed. Child processes are stopped first; the disposable cluster directory is deleted ONLY after
+// `pg_ctl status` confirms PostgreSQL is down. If it cannot be confirmed the directory is PRESERVED and the run fails.
+let cleanedUp = null;
 const cleanup = () => {
+  if (cleanedUp) return cleanedUp;
   for (const c of children) try { process.kill(-c.pid, "SIGTERM"); } catch { try { c.kill("SIGTERM"); } catch {} }
-  spawnSync(join(PG_BIN, "pg_ctl"), ["-D", join(work, "pg"), "-m", "immediate", "stop"], { stdio: "ignore", env: env0 });
-  rmSync(work, { recursive: true, force: true });
+  cleanedUp = shutdownAndRemove({ dataDir: join(work, "pg"), removePaths: [work], pgCtl: makePgCtl(PG_BIN, env0) });
+  if (!cleanedUp.confirmed) {
+    console.error("PostgreSQL shutdown NOT confirmed; the disposable cluster was preserved at:", work);
+    process.exitCode = 1;
+  }
+  return cleanedUp;
 };
 process.on("exit", cleanup);
 const run = (cmd, args, opts = {}) => {
@@ -421,6 +430,10 @@ try {
   try { await shot("zz-failure"); } catch {}
 }
 
+// Stop Chrome and the API, then shut PostgreSQL down and delete its directory only if shutdown is confirmed.
+const cleanedUpResult = cleanup();
+check("cleanup", "PostgreSQL shutdown confirmed (pg_ctl status) before the disposable cluster directory was deleted", cleanedUpResult.confirmed && cleanedUpResult.removed, JSON.stringify(cleanedUpResult));
+info.cleanup = cleanedUpResult.trail;
 info.finishedAt = new Date().toISOString();
 info.screenshots = shots;
 const fails = results.filter((r) => r.result === "FAIL").length;
