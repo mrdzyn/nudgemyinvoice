@@ -149,7 +149,7 @@ This ledger separates **technical checks that were run** from **owner-controlled
 
 | Check | Result | Attribution |
 |---|---|---|
-| P7-A: already-mounted queue re-targeting; invoice-bound pending warning (both Codex P2 findings) | DOM tests (+8) and browser journey 46/46; both findings addressed | Independent review PASS (P7-A); journey is implementation-agent local |
+| P7-A: already-mounted queue re-targeting; invoice-bound pending warning (both Codex P2 findings) | DOM tests (+8) and browser journey 47/47; both findings addressed | Independent review PASS (P7-A); journey is implementation-agent local |
 | P7-B: `NUDGE_AI_DRAFTING_ENABLED` enforced by name in the provider-disabled preflight (absent or exactly `false`) | 17 new tests; negative control | Independent review PASS (P7-B) |
 | P7-C: PostgreSQL 16 backup/restore for migrations `0000`–`0008` incl. `invoice_nudges` and runtime grants | **116/116** local; supersedes the 99/99 run after P7-C-AUD-01 | Independent review PASS; P7-C-AUD-01 closed (PR #45 comment 6675591988) |
 | Full validation | `pnpm validate` 1408 passed; `pnpm test:db` 367 passed (disposable PG 16.15) | Implementation-agent local |

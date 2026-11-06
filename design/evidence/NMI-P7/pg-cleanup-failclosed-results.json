@@ -1,0 +1,65 @@
+{
+  "at": "2026-11-06T03:21:33.050Z",
+  "sourceSha": "84349e730e6ea50d68fbad4f129768c9f1cc9cd6",
+  "sourceTreeDirtyAtRun": [],
+  "pg": "pg_ctl (PostgreSQL) 16.15 (Homebrew)",
+  "total": 11,
+  "failed": 0,
+  "results": [
+    {
+      "name": "setup: initdb and start a real disposable PostgreSQL 16 cluster",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: with a failing stop and a still-running server, shutdown is NOT confirmed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: the cluster directory is PRESERVED (nothing deleted)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: the server is still running and answering queries",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "with the real pg_ctl, shutdown is confirmed and the directory removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "after removal the server no longer answers",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "setup: initdb only (server never started)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "PARTIAL STARTUP: an initialised-but-never-started directory is confirmed down and removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "NOTHING STARTED: a work directory with no data directory is removed",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "FAILURE CONTROL: a stop that claims success but leaves the server running does not delete the directory (status is authoritative)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "cleanup of the control cluster itself: confirmed down, then removed",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

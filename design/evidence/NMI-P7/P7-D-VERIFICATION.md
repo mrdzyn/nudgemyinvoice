@@ -12,9 +12,14 @@ All results below are **implementation-agent local runs** unless marked "indepen
 | Database tests (disposable PostgreSQL 16.15) | `TEST_DATABASE_URL=… pnpm test:db` (private cluster on port 54503, torn down and shutdown confirmed) | **367 passed**, 19 files |
 | P7-B preflight | `vitest run apps/api/src/release-preflight.test.ts` (inside `validate`) | 79 passed (accepted at P7-B) |
 | P7-A UI regressions | `vitest run src/nudges src/nudgey` (inside `validate`) | 203 passed (accepted at P7-A) |
-| P7-A browser journey | `node design/evidence/NMI-P7/run-p7a-journey.mjs` from a clean tree at `4c81a43` | **46/46**, 7 screenshots (`screenshots-p7a/`, `qa-results-p7a.json`) |
+| P7-A browser journey | `node design/evidence/NMI-P7/run-p7a-journey.mjs` from a clean tree at `84349e7` | **47/47** (1 seed, 10 queue-focus, 12 pending-switch, 18 page checks, 1 phone flow, 4 boundaries, 1 fail-closed cleanup), 7 screenshots (`screenshots-p7a/`, `qa-results-p7a.json`); regenerated after P7-D-AUD-01 (the earlier 46/46 run, source `4c81a43`, is superseded) |
+| PostgreSQL cleanup failure control | `node design/evidence/NMI-P7/test-pg-cleanup-failclosed.mjs` from a clean tree at `84349e7` | **11/11** on a real disposable PG 16 cluster (`pg-cleanup-failclosed-results.json`) |
 | Bundle inspection, synthetic only | `node design/evidence/NMI-P7/run-bundle-inspection.mjs` | **30/30** (`bundle-inspection.json`) |
 | Migration `0008` recovery (P7-C) | `node design/evidence/NMI-P7/run-nudge-recovery-drill.mjs` | **116/116**, independently accepted (PR #45 comment 6675591988); not rerun in P7-D |
+
+## Fail-closed cleanup (P7-D-AUD-01)
+
+The journey runner no longer deletes its disposable cluster on a best-effort basis. `pg-cleanup.mjs` stops PostgreSQL (fast, then immediate if needed), then reads an authoritative `pg_ctl status`. The directory is removed **only** if the server is confirmed down. Otherwise the directory is preserved, the run prints a clear message, and the exit code is non-zero. A missing data directory (nothing started) and an initialised-but-never-started directory are handled. The journey now records the cleanup as a check (`cleanup: PostgreSQL shutdown confirmed…`), with its `pg_ctl status` trail in `info.cleanup`. The failure control (`test-pg-cleanup-failclosed.mjs`, 11/11) exercises the real failure paths on a real cluster: a failing `stop`, and a `stop` that claims success while the server keeps running. Both preserve the directory and leave the server answering. The control then shuts that cluster down for real. It also covers confirmed shutdown, partial startup and a never-initialised directory.
 
 ## Browser journey (P7-A fixes in a real browser)
 
