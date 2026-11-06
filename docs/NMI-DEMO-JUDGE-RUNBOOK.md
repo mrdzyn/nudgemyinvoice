@@ -54,27 +54,34 @@ export DATABASE_URL=postgres://nmi@127.0.0.1:54370/nmi_judge
 
 ## 4. Apply the migrations
 
-There is no `db:migrate` script. Apply the eight committed migrations in journal order (they are plain SQL):
+There is no `db:migrate` script. **Only on the empty, throw-away `nmi_judge` database created in §3**, apply the validated ordered journal migrations. The read-only plan helper checks every tag, ordered index and SQL file, and requires `0008_mushy_zarek` (currently nine migrations). Future valid entries are picked up automatically. **Never run this block on an existing, partially migrated, hosted or user-data database.** For an existing database, stop and obtain a separately reviewed backup and migration plan.
 
 ```bash
 (
-  tags="$(node -e 'console.log(JSON.parse(require("fs").readFileSync("packages/db/migrations/meta/_journal.json","utf8")).entries.map(e=>e.tag).join("\n"))')" || exit 1
-  [ "$(printf '%s\n' "$tags" | wc -l)" -eq 8 ] || { echo "expected 8 migrations in the journal" >&2; exit 1; }
+  [ -n "${DATABASE_URL:-}" ] || { echo "DATABASE_URL is required" >&2; exit 1; }
+  tags="$(node scripts/migration-plan.mjs)" || exit 1
+  [ -n "$tags" ] || { echo "empty migration plan" >&2; exit 1; }
+  dbname="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT current_database()")" || exit 1
+  [ "$dbname" = "nmi_judge" ] || { echo "REFUSED: database must be disposable nmi_judge" >&2; exit 1; }
+  objects="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%' AND n.nspname NOT LIKE 'pg_temp_%' AND c.relkind IN ('r','p','v','m','f','S')")" || exit 1
+  [ "$objects" = "0" ] || { echo "REFUSED: nmi_judge already has schema objects; do not rerun migrations" >&2; exit 1; }
   while IFS= read -r t; do
-    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t: stopping" >&2; exit 1; }
+    [ -n "$t" ] || continue
+    psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t: stopping" >&2; exit 1; }
     echo "applied $t"
   done <<< "$tags"
+  has_nudges="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT to_regclass('public.invoice_nudges') IS NOT NULL")" || exit 1
+  [ "$has_nudges" = "t" ] || { echo "REFUSED: migration 0008 invoice_nudges missing" >&2; exit 1; }
+  echo "all $(printf '%s\n' "$tags" | wc -l | tr -d '[:space:]') journal migrations applied; invoice_nudges verified"
 )
 rc=$?
-if [ "$rc" -eq 0 ]; then
-  echo "all 8 migrations applied"
-else
-  echo "SETUP INCOMPLETE: drop and recreate the database, fix the error, then start again" >&2
+if [ "$rc" -ne 0 ]; then
+  echo "SETUP INCOMPLETE: recreate the disposable database after resolving the failure; do not provision an operator" >&2
 fi
 (exit "$rc")
 ```
 
-Works in bash and zsh (no `#` comments inside the block, so it also pastes cleanly into an interactive zsh). The snippet's exit status is the migration result (0 only if all eight applied; nonzero otherwise): the final `(exit "$rc")` sets `$?` without closing an interactive shell. **Do not continue to step 5 unless it printed `all 8 migrations applied`.** Each `psql` call is checked explicitly (`ON_ERROR_STOP` plus `|| exit 1` inside a subshell, so your terminal is not closed), so the loop stops at the **first** failing migration and a later one never runs on a half-applied schema; if it fails, drop and recreate the database and start again. Migrations run in journal order. Expected: `applied 0000_…` through `applied 0006_…`, then `all 8 migrations applied`, and 8 tables in the `public` schema (`psql "$DATABASE_URL" -Atc "select count(*) from information_schema.tables where table_schema='public'"`).
+This block works in bash and zsh without closing an interactive shell: `exit 1` appears **only in the subshell** and `(exit "$rc")` preserves a nonzero exit status. The journal and database prechecks are read-only; if either fails, **no migration runs**. Each SQL file runs in its own transaction (`-1`) with `ON_ERROR_STOP=1`; the **first failed file stops later files**, and you must recreate the disposable database rather than rerun a partial sequence. Do not continue to §5 unless the success message includes `invoice_nudges verified`. A fixed public-table count is intentionally not used, because table counts may change with later ordered migrations.
 
 ## 5. Provision the single operator
 
