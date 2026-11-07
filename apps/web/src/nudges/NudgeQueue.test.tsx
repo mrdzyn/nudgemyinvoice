@@ -431,6 +431,36 @@ describe("Dashboard summary card", () => {
     await click("Open queue");
     expect(dispatched.at(-1)).toEqual({ type: "open-nudges", view: "pending", id: null });
   });
+
+  it("features the first pending draft as a review-only Spotlight (no approve/copy/send)", async () => {
+    const f = fakeApi([item(1), item(2, { tone: "firm" })]);
+    await mount(
+      <NudgeSummaryCard controller={controller(f.api)} />,
+      state({ screen: "dashboard" }),
+    );
+    const spot = host.querySelector('[data-testid="nudge-spotlight"]');
+    expect(spot?.getAttribute("aria-label")).toBe("AI Nudge Spotlight");
+    expect(spot?.textContent).toContain("Customer 1");
+    expect(spot?.textContent).toContain("USD 1,200.00");
+    expect(spot?.textContent).toContain("Professional");
+    expect(spot?.textContent).toContain("Hi Customer 1,");
+    expect(spot?.textContent).not.toMatch(/Final Notice/i);
+    // Review-only: the single action routes into the queue; approval/copy stay there.
+    expect(spot?.querySelector("button")?.textContent).toMatch(/Review in queue/);
+    expect(spot?.textContent).not.toMatch(/Approve|Copy/);
+    await click(/^Review in queue/);
+    expect(dispatched.at(-1)).toEqual({ type: "open-nudges", view: "pending", id: NID(1) });
+  });
+
+  it("shows no Spotlight when nothing is pending review", async () => {
+    const f = fakeApi([]);
+    await mount(
+      <NudgeSummaryCard controller={controller(f.api)} />,
+      state({ screen: "dashboard" }),
+    );
+    expect(host.querySelector('[data-testid="nudge-spotlight"]')).toBeNull();
+    expect(host.textContent).toContain("No drafts waiting for review.");
+  });
 });
 
 describe("Saved-invoice drafting card", () => {

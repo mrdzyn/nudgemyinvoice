@@ -144,6 +144,12 @@ export function RealDashboardView({
 }) {
   const f = state.filters;
   const filtered = hasFilters(f) || searchText.trim() !== "";
+  // P1 action-led header: the real full-population total for the current filters (currencies are
+  // never summed as money; counts add). Null until the server analytics answer arrives.
+  const matchTotal =
+    state.analyticsStatus === "loaded" && state.analytics
+      ? state.analytics.currencies.reduce((n, c) => n + c.invoiceCount, 0)
+      : null;
   const disabled = Boolean(state.rangeError);
   const filters = (
     <div className="filters">
@@ -441,6 +447,12 @@ export function RealDashboardView({
         <div>
           <h1 className="screen-title" id="dash-title" tabIndex={-1} ref={headingRef}>
             Invoice drafts
+            {matchTotal !== null ? (
+              <span className="nq-count" data-testid="dash-match-total">
+                {matchTotal}
+                <span className="sr-only"> matching invoice{matchTotal === 1 ? "" : "s"}</span>
+              </span>
+            ) : null}
           </h1>
           <p className="subtitle">Saved invoices and their PayPal Sandbox draft status</p>
         </div>

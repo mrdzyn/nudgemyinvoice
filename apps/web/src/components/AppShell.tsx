@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type ReactNode } from "react";
+import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useApp } from "../demo/AppContext.js";
 import { Notice } from "./Notice.js";
 import { Nudgey } from "./Nudgey.js";
@@ -56,6 +56,53 @@ function NavButton({
   );
 }
 
+/**
+ * Sandbox Safe Mode status (P1 action-led header). The pill names the mode at a glance; opening
+ * it shows the exact safeguards inline (same copy as the banner, condensed). Safe mode itself
+ * cannot be turned off from the UI: Sandbox-only, draft-only, no send, no money movement.
+ */
+export function SandboxStatusButton({
+  open,
+  detailId,
+  onToggle,
+}: {
+  open: boolean;
+  detailId: string;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="sandbox-pill"
+      aria-expanded={open}
+      aria-controls={detailId}
+      onClick={onToggle}
+    >
+      PayPal Sandbox · Safe Mode
+      <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+      <span className="sr-only"> (show safeguards)</span>
+    </button>
+  );
+}
+
+export function SandboxStatusDetail({ id }: { id: string }) {
+  return (
+    <div className="sandbox-detail" id={id} role="region" aria-label="Sandbox safeguards">
+      <p>
+        <strong>Safe mode is always on.</strong> Nothing here moves real money.
+      </p>
+      <ul>
+        <li>PayPal Sandbox only: drafts are never sent and the customer is never emailed.</li>
+        <li>
+          A PayPal draft is created only when you confirm it on a saved invoice, and only if the
+          server has drafting enabled.
+        </li>
+        <li>No payment is collected, refunded or captured from this workspace.</li>
+      </ul>
+    </div>
+  );
+}
+
 /** Persistent PayPal Sandbox identity, header, navigation and the main landmark. */
 export function AppShell({ children }: { children: ReactNode }) {
   const { state, dispatch, session } = useApp();
@@ -66,6 +113,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const onNudges = state.screen === "nudges";
   const nudges = session?.nudges;
   const pending = usePendingCount(nudges);
+  const [safeOpen, setSafeOpen] = useState(false);
+  const safeId = useId();
   return (
     <>
       <div className="sandbox-banner" role="note" aria-label="PayPal Sandbox notice">
@@ -105,7 +154,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div className="header-controls">
-          <span className="sandbox-pill">PayPal Sandbox</span>
+          <SandboxStatusButton
+            open={safeOpen}
+            detailId={safeId}
+            onToggle={() => setSafeOpen((o) => !o)}
+          />
           {shell ? (
             <span className="cell-sub">
               {session ? `Signed in as ${session.username}` : "Signed in as operator (demo)"}
@@ -118,6 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ) : null}
         </div>
       </header>
+      {safeOpen ? <SandboxStatusDetail id={safeId} /> : null}
       {shell ? (
         <nav className="app-nav" aria-label="Main">
           <NavButton target="dashboard" label="Invoice drafts" current={onDashboard} />

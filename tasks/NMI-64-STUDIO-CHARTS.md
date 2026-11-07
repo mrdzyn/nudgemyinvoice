@@ -12,7 +12,21 @@ Branch: `feat/nmi-64-studio-charts` from `origin/main@766dde37…`. PR #63 untou
 
 ## Stage 1 — P0 fix (only if Stage 0 proves an in-repo defect)
 
-Preserve: accessible daily/status tables, exact figures, Retry recovery, CSP posture (no global unsafe-inline, no page-wide patch), licence never in build/logs/URLs/screenshots. Tests: mechanism regression + 390px + light/dark + forced 401/404/chunk-failure fallback.
+Stage 0 proved an environment-shaped failure (no effective runtime licence), not an in-repo
+defect: NO application patch. Mechanism coverage already exists both sides
+(`studio-licence.pg.test.ts` 404, `StudioFallback.test.tsx` null-key fallback).
+
+## Stage 1b — P1 action-led header/filter/FAB + review-routed Spotlight (IMPLEMENTED 2026-11-08, PR #65)
+
+Done: Safe Mode disclosure button + inline safeguards (`AppShell.tsx`); real
+matching-invoice total in the dashboard head (`RealDashboard.tsx`); review-only Spotlight of
+the first pending draft (`NudgeSummaryCard.tsx`, tones type-locked, no approve/copy/send
+surface); desktop single-row ~48px toolbar with contained pill scroll + mobile FAB clearance
+(`app.css`). Verified: keyless 14/14 (fallback + layout + dark + 390px clearance + zero
+CSP/exceptions) and keyed 15/15 (licence 200 no-store, real canvases, badge) on the disposable
+licensed stack; screenshots in `design/evidence/NMI-64/`. Local positive control VERIFIED;
+Live runtime check still PENDING owner-gated deploy. Nav-level invoice counts need
+filter-independent totals (deferred — dashboard head count is filter-aware and labeled).
 
 ## Stage 2 — P1 action-led dashboard (bounded stages, verified Issue #64 brief as visual reference; guide wins over mockup on conflicts)
 

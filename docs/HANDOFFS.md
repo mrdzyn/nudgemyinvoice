@@ -3005,4 +3005,11 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** full exact-HEAD manual CI on the commit containing this handoff (Node 22, disposable PG16, both builds, scans, audit, diff check) — results posted on PR #65; hosted CI NOT RUN; zero provider calls. Evidence-only diff (docs + task); app code byte-identical to audited `b3403f7`.
 - **Next action:** focused re-audit of this remediation; then P1 bounded implementation from the verified brief after owner authorization. P1 needs no AG Studio licence/CSP change absent a proven defect.
 
+## Handoff: NMI-64-STUDIO-03
+
+- **Task:** `tasks/NMI-64-STUDIO-CHARTS.md`; same Draft PR #65 on `feat/nmi-64-studio-charts`. P1 Stage 1 implementation from the verified Issue #64 brief (comment 6711414196); Stages 2 (worklist pipeline) and 3+ remain scoped follow-ups. PR #63 untouched. No merge, deploy, env, credential, provider, or branch change.
+- **Implemented:** Safe Mode disclosure button + inline safeguards; real matching-invoice dashboard head total; review-only Spotlight (first pending draft, message preview, `Review in queue`, tones type-locked, no approve/copy/send surface); desktop single-row toolbar + mobile FAB clearance (all existing tokens).
+- **Verification:** focused suites green (AppShell 3 new, Spotlight 2 new, head-total 1 new, regressions untouched); keyless 14/14 and keyed 15/15 on the disposable licensed stack (key in memory only, redacted, leak-guarded) with desktop/390px/dark screenshots in `design/evidence/NMI-64/`; local positive control VERIFIED (Live runtime check still PENDING owner deploy). Full exact-HEAD manual CI on the commit containing this handoff; hosted CI NOT RUN; zero live provider calls.
+- **Next action:** independent audit of Stage 1, then owner decision; P1 worklist pipeline next (needs per-invoice nudge-state data-source decision).
+
 <!-- HANDOFF_ENTRIES_END -->
