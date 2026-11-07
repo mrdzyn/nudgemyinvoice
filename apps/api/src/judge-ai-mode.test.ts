@@ -3,6 +3,7 @@ import {
   JUDGE_AI_CONCURRENCY,
   JUDGE_AI_REQUESTS_PER_WINDOW,
   JUDGE_AI_WINDOW_MS,
+  isJudgeAiMode,
   loadConfig,
   parserMaxRetries,
 } from "./config.js";
@@ -116,6 +117,79 @@ describe("limited judge AI mode fails closed without a provider call", () => {
     expect(dev.judgeAiMode).toBe("off");
     expect(dev.openai?.model).toBe("gpt-6-luna");
     expect(dev.nudgeDrafting).toBeNull();
+  });
+
+  it("combined mode accepts the full OpenAI + PayPal Sandbox matrix", () => {
+    const config = loadConfig({
+      ...base,
+      NMI_JUDGE_AI_MODE: "combined",
+      OPENAI_API_KEY: "sk-test-only-combined-synthetic-not-a-real-secret",
+      OPENAI_MODEL: "gpt-6-luna",
+      OPENAI_MAX_OUTPUT_TOKENS: "4096",
+      NUDGE_AI_DRAFTING_ENABLED: "true",
+      PAYPAL_DRAFTS_ENABLED: "true",
+      PAYPAL_CLIENT_ID: "synthetic-combined-client-id",
+      PAYPAL_CLIENT_SECRET: "synthetic-combined-client-secret",
+    });
+    expect(config.judgeAiMode).toBe("combined");
+    expect(config.openai?.model).toBe("gpt-6-luna");
+    expect(config.nudgeDrafting?.model).toBe("gpt-6-luna");
+    expect(config.paypalDraftsEnabled).toBe(true);
+    expect(config.paypalCredentials).toEqual({
+      clientId: "synthetic-combined-client-id",
+      clientSecret: "synthetic-combined-client-secret",
+    });
+    expect(config.paypalBaseUrl).toBe("https://api-m.sandbox.paypal.com");
+    expect(parserMaxRetries("combined")).toBe(0);
+    expect(isJudgeAiMode("combined")).toBe(true);
+    expect(isJudgeAiMode("limited")).toBe(true);
+    expect(isJudgeAiMode("off")).toBe(false);
+  });
+
+  it("emergency shutdown env restores the provider-disabled shape", () => {
+    // Documented kill-switch end-state: mode absent (defaults off), every provider key/flag removed.
+    const shutdown = loadConfig({
+      ...base,
+      OPENAI_API_KEY: undefined,
+      OPENAI_MODEL: undefined,
+      OPENAI_MAX_OUTPUT_TOKENS: undefined,
+      NUDGE_AI_DRAFTING_ENABLED: "false",
+      PAYPAL_DRAFTS_ENABLED: "false",
+      PAYPAL_CLIENT_ID: undefined,
+      PAYPAL_CLIENT_SECRET: undefined,
+    });
+    expect(shutdown.judgeAiMode).toBe("off");
+    expect(shutdown.openai).toBeNull();
+    expect(shutdown.nudgeDrafting).toBeNull();
+    expect(shutdown.paypalDraftsEnabled).toBe(false);
+    expect(shutdown.paypalCredentials).toBeNull();
+    expect(parserMaxRetries(shutdown.judgeAiMode)).toBe(1);
+  });
+
+  it("combined mode fails closed on each missing piece and on live PayPal", () => {
+    const full = {
+      NMI_JUDGE_AI_MODE: "combined",
+      OPENAI_API_KEY: "sk-test-only-combined-synthetic-not-a-real-secret",
+      OPENAI_MODEL: "gpt-6-luna",
+      OPENAI_MAX_OUTPUT_TOKENS: "4096",
+      NUDGE_AI_DRAFTING_ENABLED: "true",
+      PAYPAL_DRAFTS_ENABLED: "true",
+      PAYPAL_CLIENT_ID: "synthetic-combined-client-id",
+      PAYPAL_CLIENT_SECRET: "synthetic-combined-client-secret",
+    };
+    const cases: Array<[string, Record<string, string | undefined>]> = [
+      ["missing OpenAI key", { OPENAI_API_KEY: undefined }],
+      ["wrong model", { OPENAI_MODEL: "other-model" }],
+      ["wrong token cap", { OPENAI_MAX_OUTPUT_TOKENS: "1024" }],
+      ["nudge opt-in off", { NUDGE_AI_DRAFTING_ENABLED: "false" }],
+      ["drafts disabled", { PAYPAL_DRAFTS_ENABLED: "false" }],
+      ["missing client secret", { PAYPAL_CLIENT_SECRET: undefined }],
+      ["live PayPal env", { PAYPAL_ENV: "live" }],
+      ["live PayPal host", { PAYPAL_API_BASE_URL: "https://api-m.paypal.com" }],
+    ];
+    for (const [name, patch] of cases) {
+      expect(() => loadConfig({ ...base, ...full, ...patch }), name).toThrow();
+    }
   });
 
   it("does not let an explicit off release keep a provider key", () => {

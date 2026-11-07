@@ -43,7 +43,9 @@ const envSchema = z.object({
   // enable it. Default OFF; "true" is valid only together with OPENAI_API_KEY + OPENAI_MODEL.
   NUDGE_AI_DRAFTING_ENABLED: z.enum(["true", "false"]).default("false"),
   // A separate, explicitly reviewed opt-in for the live AI judge demo; normal releases stay off.
-  NMI_JUDGE_AI_MODE: z.enum(["off", "limited"]).default("off"),
+  // "limited" enables OpenAI parsing + AI nudge drafting only; "combined" additionally enables
+  // PayPal Sandbox draft creation so the full judge loop can be demonstrated together.
+  NMI_JUDGE_AI_MODE: z.enum(["off", "limited", "combined"]).default("off"),
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   // P5: the owner's AG Studio deployment licence, delivered at runtime only to an authenticated operator by
@@ -61,7 +63,7 @@ const envSchema = z.object({
 
 export interface AppConfig {
   nodeEnv: "development" | "test" | "production";
-  judgeAiMode: "off" | "limited";
+  judgeAiMode: "off" | "limited" | "combined";
   port: number;
   /** Interface the server binds. 127.0.0.1 unless explicitly configured (wildcard needs production). */
   host: string;
@@ -101,8 +103,13 @@ export const JUDGE_AI_REQUESTS_PER_WINDOW = 3;
 export const JUDGE_AI_WINDOW_MS = 10 * 60 * 1000;
 export const JUDGE_AI_CONCURRENCY = 1;
 
-export function parserMaxRetries(mode: "off" | "limited"): 0 | 1 {
-  return mode === "limited" ? 0 : 1;
+/** Judge modes share the tightened provider budgets and zero SDK retries. */
+export function isJudgeAiMode(mode: AppConfig["judgeAiMode"]): mode is "limited" | "combined" {
+  return mode === "limited" || mode === "combined";
+}
+
+export function parserMaxRetries(mode: "off" | "limited" | "combined"): 0 | 1 {
+  return isJudgeAiMode(mode) ? 0 : 1;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -130,6 +137,27 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     }
     if (draftsEnabled || e.PAYPAL_CLIENT_ID || e.PAYPAL_CLIENT_SECRET) {
       throw new Error("NMI_JUDGE_AI_MODE=limited forbids PayPal credentials and draft creation");
+    }
+  }
+  // Combined judge mode enables the full demo loop — OpenAI parsing, AI nudge drafting AND
+  // PayPal Sandbox draft creation — or fails closed. Same AI requirements as limited, plus
+  // explicit sandbox draft creation with credentials. Live PayPal hosts are refused by
+  // assertSandboxConfig above; sending, capture, refunds and other money-moving calls do not
+  // exist in the adapter and are never enabled by any mode.
+  if (e.NMI_JUDGE_AI_MODE === "combined") {
+    if (!e.OPENAI_API_KEY || e.OPENAI_MODEL !== "gpt-6-luna") {
+      throw new Error("NMI_JUDGE_AI_MODE=combined requires an OpenAI key and approved model");
+    }
+    if (e.OPENAI_MAX_OUTPUT_TOKENS !== 4096 || !nudgeDraftingEnabled) {
+      throw new Error(
+        "NMI_JUDGE_AI_MODE=combined requires 4096 output tokens and explicit nudge opt-in",
+      );
+    }
+    if (!draftsEnabled) {
+      // Missing credentials with drafts enabled already fail closed above.
+      throw new Error(
+        "NMI_JUDGE_AI_MODE=combined requires PAYPAL_DRAFTS_ENABLED=true with sandbox credentials",
+      );
     }
   }
   // SEC-01: production default-off is a hard boundary. The parsed mode is "off" both when

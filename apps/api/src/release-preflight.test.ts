@@ -295,6 +295,69 @@ describe("NMI-JUDGE-LIVE-OPENAI-01: limited real OpenAI release option (pure, of
   });
 });
 
+describe("combined judge mode env matrix (OpenAI + PayPal Sandbox)", () => {
+  const combined = {
+    ...good,
+    NMI_JUDGE_AI_MODE: "combined",
+    OPENAI_API_KEY: "sk-test-only-combined-synthetic-not-a-real-secret",
+    OPENAI_MODEL: "gpt-6-luna",
+    OPENAI_MAX_OUTPUT_TOKENS: "4096",
+    NUDGE_AI_DRAFTING_ENABLED: "true",
+    PAYPAL_DRAFTS_ENABLED: "true",
+    PAYPAL_CLIENT_ID: "synthetic-combined-client-id",
+    PAYPAL_CLIENT_SECRET: "synthetic-combined-client-secret",
+  };
+
+  it("accepts the full combined matrix and agrees with the real config loader", () => {
+    expect(failing(combined)).toEqual([]);
+    expect(allOk(checkReleaseEnv(combined))).toBe(true);
+    const c = loadConfig(combined);
+    expect(c.judgeAiMode).toBe("combined");
+    expect(c.openai?.model).toBe("gpt-6-luna");
+    expect(c.nudgeDrafting?.model).toBe("gpt-6-luna");
+    expect(c.paypalDraftsEnabled).toBe(true);
+    expect(c.paypalCredentials).not.toBeNull();
+    expect(JSON.stringify(checkReleaseEnv(combined))).not.toContain(combined.PAYPAL_CLIENT_SECRET);
+  });
+
+  it.each([
+    ["drafts off", { PAYPAL_DRAFTS_ENABLED: "false" }, "env.PAYPAL_DRAFTS_ENABLED"],
+    ["missing client id", { PAYPAL_CLIENT_ID: undefined }, "env.PAYPAL_credentials_present"],
+    [
+      "missing client secret",
+      { PAYPAL_CLIENT_SECRET: undefined },
+      "env.PAYPAL_credentials_present",
+    ],
+    [
+      "missing nudge opt-in",
+      { NUDGE_AI_DRAFTING_ENABLED: "false" },
+      "env.NUDGE_AI_DRAFTING_ENABLED",
+    ],
+    ["wrong model", { OPENAI_MODEL: "other-model" }, "env.OPENAI_MODEL"],
+  ] as const)("rejects %s without a provider call", (_n, patch, id) => {
+    expect(failing({ ...combined, ...patch })).toContain(id);
+    expect(() => loadConfig({ ...combined, ...patch } as Record<string, string>)).toThrow();
+  });
+
+  it("refuses live PayPal even with the combined flag", () => {
+    expect(() => loadConfig({ ...combined, PAYPAL_ENV: "live" } as Record<string, string>)).toThrow(
+      /sandbox/,
+    );
+    expect(() =>
+      loadConfig({
+        ...combined,
+        PAYPAL_API_BASE_URL: "https://api-m.paypal.com",
+      } as Record<string, string>),
+    ).toThrow(/sandbox/);
+  });
+
+  it("OpenAI-only mode still forbids any PayPal credential", () => {
+    expect(
+      failing({ ...good, NMI_JUDGE_AI_MODE: "limited", PAYPAL_CLIENT_ID: "synthetic" }),
+    ).toContain("env.forbidden-absent");
+  });
+});
+
 const sha = "a".repeat(40);
 const okSrc: SourceInput = {
   releaseBranch: RELEASE_BRANCH,

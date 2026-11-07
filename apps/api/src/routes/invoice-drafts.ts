@@ -21,6 +21,7 @@ import {
   JUDGE_AI_CONCURRENCY,
   JUDGE_AI_REQUESTS_PER_WINDOW,
   JUDGE_AI_WINDOW_MS,
+  isJudgeAiMode,
   type AppConfig,
 } from "../config.js";
 import { BoundedWorkGate } from "../auth/work-gate.js";
@@ -102,11 +103,11 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
   // Cost bound for the paid provider call: a per-operator budget plus a tiny in-flight cap.
   const budget = new WindowBudget(
     deps.seams?.parseBudgetMax ??
-      (config.judgeAiMode === "limited" ? JUDGE_AI_REQUESTS_PER_WINDOW : 20),
+      (isJudgeAiMode(config.judgeAiMode) ? JUDGE_AI_REQUESTS_PER_WINDOW : 20),
     JUDGE_AI_WINDOW_MS,
   );
   const gate = new BoundedWorkGate(
-    deps.seams?.parseConcurrency ?? (config.judgeAiMode === "limited" ? JUDGE_AI_CONCURRENCY : 2),
+    deps.seams?.parseConcurrency ?? (isJudgeAiMode(config.judgeAiMode) ? JUDGE_AI_CONCURRENCY : 2),
     0,
   );
 
