@@ -1,9 +1,9 @@
 # NMI-MIG-0008-ISSUE49 — Local judge and operator preflight migration alignment
 
-**State:** IMPLEMENTATION / DRAFT REVIEW; not a release or hosting authorization.  
-**Base:** `main@e795fbc8514d29555ff365f219033206ecc851d4` (reconciled via non-history-rewriting merge with owner-merged PR #52 `NMI-P6-FIX2`; originally branched from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124`, PR #50).  
-**Issue:** https://github.com/mrdzyn/nudgemyinvoice/issues/49  
-**UI design gate:** Not applicable; CLI/script and instructional docs only.
+- **State:** IMPLEMENTATION / DRAFT REVIEW; not a release or hosting authorization.
+- **Base:** `main@e795fbc8514d29555ff365f219033206ecc851d4` (reconciled via non-history-rewriting merge with owner-merged PR #52 `NMI-P6-FIX2`; originally branched from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124`, PR #50).
+- **Issue:** https://github.com/mrdzyn/nudgemyinvoice/issues/49
+- **UI design gate:** Not applicable; CLI/script and instructional docs only.
 
 ## Objective
 
