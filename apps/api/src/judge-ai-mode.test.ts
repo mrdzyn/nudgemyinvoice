@@ -85,9 +85,9 @@ describe("limited judge AI mode fails closed without a provider call", () => {
         OPENAI_MODEL: "gpt-6-luna",
       }),
     ).toThrow(/forbids OpenAI credentials/);
-    expect(() =>
-      loadConfig({ ...base, OPENAI_MODEL: "gpt-6-luna" }),
-    ).toThrow(/forbids OpenAI credentials/);
+    expect(() => loadConfig({ ...base, OPENAI_MODEL: "gpt-6-luna" })).toThrow(
+      /forbids OpenAI credentials/,
+    );
     expect(() =>
       loadConfig({
         ...base,
