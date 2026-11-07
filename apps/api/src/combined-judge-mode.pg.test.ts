@@ -236,11 +236,13 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
     const remoteId = (created.json() as { paypalInvoiceId: string }).paypalInvoiceId;
     expect(remoteId).toMatch(/^INV2-FAKE-/);
     expect(fake.log.create).toHaveLength(1);
-    expect(fake.log.create[0].body).toMatchObject({
+    const outbound = fake.log.create[0];
+    expect(outbound).toBeDefined();
+    expect(outbound?.body).toMatchObject({
       detail: { currency_code: "USD" },
     });
-    expect(fake.log.create[0].body.items).toHaveLength(1);
-    expect(fake.log.create[0].body.items[0]).toMatchObject({
+    expect(outbound?.body.items).toHaveLength(1);
+    expect(outbound?.body.items?.[0]).toMatchObject({
       name: "Logo concepts",
       quantity: "2",
     });
