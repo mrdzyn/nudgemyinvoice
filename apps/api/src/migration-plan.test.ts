@@ -1,21 +1,15 @@
 import { spawnSync } from "node:child_process";
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, expect, test } from "vitest";
 
 // All fixtures are disposable files. No PostgreSQL connection is made.
 const cli = resolve("scripts/migration-plan.mjs");
-const current = JSON.parse(
-  readFileSync("packages/db/migrations/meta/_journal.json", "utf8"),
-) as { dialect: string; entries: Array<{ idx: number; tag: string }> };
+const current = JSON.parse(readFileSync("packages/db/migrations/meta/_journal.json", "utf8")) as {
+  dialect: string;
+  entries: Array<{ idx: number; tag: string }>;
+};
 const scratch: string[] = [];
 
 const run = (cwd: string) =>
@@ -38,10 +32,7 @@ function fixture() {
     );
   };
   for (const { tag } of entries) {
-    writeFileSync(
-      join(migrations, `${tag}.sql`),
-      "-- isolated fixture\nSELECT 1;\n",
-    );
+    writeFileSync(join(migrations, `${tag}.sql`), "-- isolated fixture\nSELECT 1;\n");
   }
   writeJournal();
   return { root, migrations, entries, writeJournal };
