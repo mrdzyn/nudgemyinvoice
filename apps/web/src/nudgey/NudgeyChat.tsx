@@ -349,6 +349,7 @@ export function ChatView({
   onRetrySchedule,
   onDraftChange,
   onOpenQueue,
+  onOpenComposer,
   initialText = "",
 }: {
   messages: ChatMessage[];
@@ -365,6 +366,12 @@ export function ChatView({
   onDraftChange: () => void;
   /** NMI-P6: open the Nudge queue (optionally on one draft). Absent => nudge drafting is not offered. */
   onOpenQueue?: (id: string | null) => void;
+  /**
+   * Chat-to-composer handoff: called with the message's in-memory prefill when the operator clicks
+   * "Review in Invoice Composer". Absent => no composer button is rendered. The handler (not this
+   * view) closes the panel and navigates; nothing is posted or saved from here.
+   */
+  onOpenComposer?: (text: string) => void;
   /** NMI-P6: an editable prefill (e.g. from "Draft a nudge"). Never submitted automatically. */
   initialText?: string;
 }) {
@@ -444,6 +451,18 @@ export function ChatView({
               <span className="sr-only">Nudgey: </span>
               {m.pending ? <p className="chat-hint">Looking that up…</p> : null}
               {m.text ? <p>{m.text}</p> : null}
+              {m.composerPrefill && onOpenComposer ? (
+                <div className="followup-buttons">
+                  <button
+                    type="button"
+                    className="followup-btn followup-btn-primary"
+                    onClick={() => onOpenComposer(m.composerPrefill ?? "")}
+                    aria-label="Review in Invoice Composer"
+                  >
+                    Review in Invoice Composer
+                  </button>
+                </div>
+              ) : null}
               {m.result ? (
                 <ResultView
                   result={m.result}

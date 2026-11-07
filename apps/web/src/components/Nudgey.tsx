@@ -494,6 +494,18 @@ export function Nudgey() {
                 busy={chat.busy}
                 at={now}
                 onAsk={(t) => void chat.ask(t)}
+                onOpenComposer={(text) => {
+                  setOpen(false);
+                  // Existing guarded navigation: the RealApp leave/unsaved-work confirm still
+                  // applies, and the composer starts blank except for this in-memory prefill.
+                  // Nothing is parsed, saved or sent until the operator clicks Parse.
+                  dispatch({
+                    type: "navigate",
+                    screen: "composer",
+                    resetComposer: true,
+                    composerText: text,
+                  });
+                }}
                 onBack={() => {
                   chat.clear();
                   setView({ kind: "home" });

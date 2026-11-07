@@ -2990,4 +2990,14 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** targeted preflight tests green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
 - **Next action:** independent exact-HEAD audit, then STOP at the owner merge gate. After merge: owner creates + protects the combined branch at the exact new `main` SHA, then candidate preflight, new exact-SHA manual CI + acceptance, evidence audit, deploy action. No second Render service.
 
+## Handoff: NMI-CHAT-TO-COMPOSER-01
+
+- **Task:** `tasks/NMI-NDG-02-chat-to-composer.md`; issue #58 comment 6710568948 P0; branch `feat/nmi-chat-to-composer` from `origin/main@766dde37…` (Live combined SHA; unmodified). No merge, deploy, env change, credential, provider call, branch move, or URL share. Historical handoffs untouched.
+- **Root cause (deployed source):** `intent.ts` mapped every `create` to `help`; the composer and guarded `navigate:composer` already existed. Combined-provider deployment does not alter the local chat router.
+- **Implemented:** pure `parseCreateIntent` (create/conflict/not-create); `ChatSession.ask` routes creation before the help fallback (conflicts refused, ambiguous falls through); `ChatMessage.composerPrefill` (in-memory only); `ChatView` “Review in Invoice Composer” button (existing `followup-btn` classes, native button, aria-label) gated on prefill + handler; `Nudgey` closes the panel and dispatches guarded `navigate:composer + resetComposer + composerText`; `appState` applies `composerText` only with reset on the composer screen (clamped to 2000 chars, `parse: idle`). Nothing is parsed, saved, sent, or drafted from the chat.
+- **Preserved:** auth/session/CSRF/ownership, read-only lookup and nudge-draft workflows (suites re-run green), `nudgeyAction("create")`, `off`/`limited`/`combined` provider boundaries, $5 limit / no-cap decisions, live Render state. Chips/header clipping not reproducible from source (chips wrap; heading sticky with solid background); no layout change.
+- **Tests:** new `createIntent.test.ts` (5); `chatSession.test.ts` +4 (zero-network proof via ungated mock); `NudgeyChat.test.tsx` +4 (label gating, shared responsive classes, refusal has no action, click hands verbatim text); `appState.test.ts` +2 (prefill idle-parse + seedKey bump; ignore/clamp rules).
+- **Verification:** focused suites green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
+- **Next action:** independent exact-HEAD audit, then STOP at owner review.
+
 <!-- HANDOFF_ENTRIES_END -->

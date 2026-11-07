@@ -1,4 +1,4 @@
-import { formFromDraft, type FormState } from "../domain/invoiceForm.js";
+import { formFromDraft, MAX_PARSE_CHARS, type FormState } from "../domain/invoiceForm.js";
 import { paypalRefusal } from "../domain/money.js";
 import type { InvoiceDraft, PayPalViewState, SavedInvoice, Totals } from "../domain/types.js";
 import type { NudgeView } from "../nudges/api.js";
@@ -123,7 +123,17 @@ export function initialState(theme: Theme): AppState {
 }
 
 export type Action =
-  | { type: "navigate"; screen: Screen; resetComposer?: boolean }
+  | {
+      type: "navigate";
+      screen: Screen;
+      resetComposer?: boolean;
+      /**
+       * In-memory composer prefill (chat-to-composer handoff). Applied only together with
+       * `resetComposer` on the composer screen; never read from the URL or browser storage, and
+       * never posted or saved by this navigation. The composer still requires an explicit Parse.
+       */
+      composerText?: string;
+    }
   | { type: "open-detail"; id: string }
   | { type: "set-theme"; theme: Theme }
   | { type: "set-offline"; offline: boolean }
@@ -325,6 +335,10 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "navigate": {
       const resetComposer = action.resetComposer === true;
+      const prefill =
+        resetComposer && action.screen === "composer" && action.composerText !== undefined
+          ? action.composerText.slice(0, MAX_PARSE_CHARS)
+          : null;
       return {
         ...state,
         screen: action.screen,
@@ -332,7 +346,12 @@ export function reducer(state: AppState, action: Action): AppState {
         navigated: true,
         nudgeFocus: action.screen === "nudges" ? null : state.nudgeFocus,
         detailNotice: action.screen === "dashboard" ? null : state.detailNotice,
-        composer: resetComposer ? idleComposer() : state.composer,
+        composer:
+          prefill !== null
+            ? { ...idleComposer(), text: prefill }
+            : resetComposer
+              ? idleComposer()
+              : state.composer,
         seedKey:
           resetComposer || (action.screen === "review" && !state.review)
             ? state.seedKey + 1
