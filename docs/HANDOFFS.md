@@ -3009,4 +3009,11 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** focused suites green (64/64 across the five touched files); full exact-HEAD manual CI (Node v22.23.4, pnpm 10.28.0, disposable PG16 cluster created/stopped/removed) run on the commit containing this handoff: `pnpm validate` EXIT=0 (lint 0 errors, Prettier clean, typecheck clean, **1495 passed / 76 files**, licensed + community builds, both bundle scans clean), `pnpm test:db` **374 passed / 20 files**, `db:generate` no schema changes, prod audit clean, `git diff --check` clean; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #63.
 - **Next action:** focused independent re-audit of UX-01 + DOC-01, then STOP at owner review.
 
+## Handoff: NMI-CHAT-TO-COMPOSER-03
+
+- **Task:** `tasks/NMI-NDG-02-chat-to-composer.md`; same Draft PR #63 on `feat/nmi-chat-to-composer`. Docs-only follow-up to audit `6710947532` (UX-01 PASS at `80fc765`; DOC-01 two stale sentences). No code, test, migration, lockfile, merge, deploy, env, credential, provider, or branch action.
+- **Fixed:** STATUS Hosting-controls `Current:` now states three protected release branches with combined `release/nmi-combined-judges-2026@766dde37…` Live (per PR #63 audit) and `abfbbfc…` only as rollback baseline; STATUS Primary-branch `Nothing new is deployed` replaced with `No new deployment from this PR; the existing combined release remains Live`. Live provider QA and candidate-specific release acceptance stay PENDING. Historical entries untouched.
+- **Verification:** executable code and lockfile byte-identical to audited `80fc765` (`git diff` names docs only, hashes match); Prettier + `git diff --check` clean on edited docs. Full 1495+374 suite not rerun for prose edits (auditor-authorized). Hosted CI NOT RUN; zero provider calls.
+- **Next action:** final docs-only focused re-audit, then owner squash-merge decision.
+
 <!-- HANDOFF_ENTRIES_END -->
