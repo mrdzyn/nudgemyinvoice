@@ -2862,4 +2862,28 @@ Independent re-audit of SEC-N1 at the new exact HEAD, then the owner merge decis
 
 Review docs-only status changes and independently verify no release/policy gates were silently closed. Continue final clean-clone judge rehearsal, demo-video and Devpost readiness. Do not merge this Draft PR without the owner's separate approval.
 
+## Handoff: NMI-RENDER-RC-MANUAL-01
+
+- **Task:** `tasks/NMI-RENDER-RC-MANUAL-CI-EXCEPTION.md` — one-time release validation policy proposal for the fixed NudgeMyInvoice Render judge candidate.
+- **Owner direction:** 2026-11-07: "switch it" from GitHub-hosted Actions to a reviewed manual release route; not a deployment or policy-PR merge authorization.
+- **Source/base:** `main@abfbbfc3153cb3b4238ebf201daca830fed2e8f9`; release branch `release/nmi-render-judges-2026` at the same SHA, with active deletion/non-fast-forward restrictions.
+- **Policy branch:** `docs/nmi-rc-manual-release-exception`, documentation only; request independent exact-HEAD audit and separate owner merge decision.
+- **State:** PROPOSED / NOT OPERATIVE. GitHub-hosted CI NOT RUN, complete exact-candidate manual release suite NOT RUN, Render resources NOT CREATED, URL NOT SHARED, paid actions NONE.
+
+### Delivered in policy proposal
+
+- A bounded one-time release exception task and manual equivalence checklist covering the existing `Project Baseline CI` and `Stack CI` commands on the exact pinned SHA, plus isolated PostgreSQL 16, nine migrations, least-privilege and recovery, security and bundle checks, source/env preflights, platform-difference disclosure, independently audited evidence and distinct owner go/no-go.
+- `docs/TESTING.md` and `docs/RELEASE.md`: default hosted release requirement retained for all other cases; the one-time manual route is conditional on policy PR independent PASS, verified merge, full equivalent manual suite, independent release audit, and separate owner acceptance of the missing Ubuntu hosted evidence.
+- P4 and G1 packet contain current-state pointers while preserving the historical hosted rules and D4-X scope, $25 spending ceiling, G1/G5/G6/G7/G8 requirements and no-provider posture.
+- Source preflight 7/7 PASS reported by the owner, not independently executed here. GitHub ref and branch ruleset independently verified in the preceding release preparation.
+
+### Required evidence and stops
+
+- Validate only authorized docs changed, source policy consistency, project-profile validator and diff hygiene; do not misattribute locally unrun checks. Independent reviewer cannot be the implementer.
+- Any real required check failure, changed candidate/release branch, missing PG16 safety, unreviewed backup runner cleanup, absent owner acceptance or missing G1/G5/G6/G7/G8 checks blocks resource creation/deploy.
+- The policy PR merge itself never creates resources, calls providers, bypasses other gates, or shares a judge URL. Actual Render create/build/deploy requires separate explicit owner authorization after the evidence.
+
+### Next action
+
+Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's separate squash-merge decision. If merged, run complete exact-SHA manual release validation and independent review before a separate risk-acceptance/deploy decision.
 <!-- HANDOFF_ENTRIES_END -->
