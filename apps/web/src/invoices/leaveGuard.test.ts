@@ -12,8 +12,10 @@ const leaving: Action[] = [
   { type: "navigate", screen: "composer" },
   { type: "navigate", screen: "composer", resetComposer: true },
   { type: "discard-review" },
-  // Choosing another saved invoice (Nudgey status selector / follow-up list / dashboard) leaves Review too.
+  // Choosing another saved invoice (Nudgey status selector / follow-up list / dashboard) or opening the nudge queue leaves Review too.
   { type: "open-saved", id: "0b0e7a52-8f73-4b1c-9c64-3a1d2f5a8e11", notice: "opened" },
+  { type: "open-nudges", view: "pending", id: "00000000-0000-4000-8000-0000000000a1" },
+  { type: "open-nudges", view: "pending", id: null },
 ];
 const free: Action[] = [
   { type: "open-saved", id: "0b0e7a52-8f73-4b1c-9c64-3a1d2f5a8e11", notice: "created" },

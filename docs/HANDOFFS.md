@@ -25,6 +25,7 @@ Do not duplicate the task contract, STATUS, architecture, or durable decisions i
 Create a handoff when responsibility for meaningful work passes to another agent, tool, conversation, or reviewer and continuation state would otherwise have to be reconstructed.
 
 Typical cases:
+
 - implementation is complete and an independent reviewer takes over;
 - an agent reaches a bounded checkpoint and another agent continues implementation;
 - work moves to a new conversation because context is getting large;
@@ -56,6 +57,7 @@ Recommended convention:
 ```
 
 Examples:
+
 - `P7.0-C1`
 - `MKT-MCP2-C1`
 - `SEC-005-C2`
@@ -102,18 +104,22 @@ If a field is not applicable, write `N/A` rather than inventing content.
 - **State:** [READY FOR REVIEW / READY TO CONTINUE / BLOCKED / FIXES REQUIRED]
 
 ### Completed
+
 - [CONCISE OUTCOME]
 - [CONCISE OUTCOME]
 
 ### Validation
+
 - `[COMMAND OR CHECK]` — [PASS / FAIL / NOT RUN]
 - Required CI: [STATE]
 
 ### Continuation notes
+
 - [ONLY WHAT THE NEXT AGENT NEEDS]
 - [RISK / FINDING / CONSTRAINT OR "None"]
 
 ### Next action
+
 [ONE EXACT NEXT ACTION]
 ```
 
@@ -130,6 +136,7 @@ If a field is not applicable, write `N/A` rather than inventing content.
 ## Content boundaries
 
 Do not put the following in handoffs:
+
 - secrets, tokens, private keys, credentials, or signing material;
 - sensitive production/customer data;
 - large build/test logs;
@@ -150,6 +157,7 @@ Remove the block delimited by `MASTER_TEMPLATE_HANDOFFS_START` / `MASTER_TEMPLAT
 ## Brownfield adoption
 
 If an existing repository already has a handoff/continuation mechanism:
+
 - reconcile it using the KEEP / MERGE / ADD / RETIRE process in `docs/REPOSITORY-SETUP.md`;
 - choose one canonical mechanism;
 - do not maintain two competing active handoff logs;
@@ -172,6 +180,7 @@ If an existing repository already has a handoff/continuation mechanism:
 - **State:** Five architecture/documentation findings addressed in the plan and task; awaiting final validation, CI, and exact-head re-audit.
 
 ### Review scope addressed
+
 - Added Nov 7 stop/go and conditional owner-authorized Nov 8 resource/first-deploy and Nov 9 migration, HTTPS, backup-restore, rollback, and judge-access acceptance gates. No action is authorized by this plan.
 - Defined one isolated synthetic environment with one full-privilege operator and sequential owner-guided judge sessions, rotation/reset between sessions, or local fallback.
 - Required a distinct server-side full-population analytics aggregate, exact per-currency minor units/exponents, UTC half-open range and IANA local-bucket semantics, with multi-page and DST/exponent tests.
@@ -179,6 +188,7 @@ If an existing repository already has a handoff/continuation mechanism:
 - Bounded Workflow retries to zero, task timeout to 60 seconds, provider timeout to 30 seconds, global concurrency to one, daily/lifetime runs, token/output sizes, and proposed AI/Render cost ceilings. These are not provider or spend authorization.
 
 ### Continuation notes
+
 - Keep the PR documentation-only and Draft. Preserve Nov 11 freeze, separate owner approvals, exhausted PayPal one-create budget, consumed OpenAI Gate A, sandbox-only payment boundary, and local-only follow-up notifications.
 - Verify the final pushed SHA and both required hosted workflows against that SHA before issuing a verdict. Do not provision Render, run migrations, call providers, merge, or deploy.
 
@@ -193,18 +203,22 @@ If an existing repository already has a handoff/continuation mechanism:
 - **State:** Docs-only architecture plan ready for independent review; keep Draft.
 
 ### Completed
+
 - Defined AG Studio, PayPal defect investigation, Render Workflow/Blueprint, 10-day workplan, acceptance gates and cut-line fallback in `docs/NMI-PROTOTYPE-10D-PLAN.md`.
 - Reconciled current STATUS against GitHub; PR #30 merged at current main SHA. No runtime changes or provider/resource operations.
 
 ### Validation
+
 - Official AG Studio, PayPal Toolkit and Render docs checked 2026-11-02 — PASS; account license/pricing checks remain unverified.
 - Markdown format and `git diff --check` — PASS. Project Baseline and Stack CI passed at prior PR head `9450c8e69ca901b61aa8009a352673892196242a`; recheck required on the final pushed handoff head before audit.
 
 ### Continuation notes
+
 - Existing Render Free plan selection expires before Dec 15; proposed paid PostgreSQL/Blueprint direction needs independent review and explicit owner approval. No charges or resources authorized.
 - AG Studio commercial trial/license is not activated. PayPal real one-create budget remains exhausted. No providers or MCP were called.
 
 ### Next action
+
 Independently review the exact live PR head, then wait for explicit owner approval before implementation.
 
 ## Handoff: NMI-P0-C1
@@ -218,18 +232,22 @@ Independently review the exact live PR head, then wait for explicit owner approv
 - **State:** READY FOR REVIEW
 
 ### Completed
+
 - AI provider plan migrated from Anthropic to OpenAI (Responses API, `OPENAI_API_KEY`/`OPENAI_MODEL`); no Anthropic references remain except the one memory-rationale mention.
 
 ### Validation
+
 - `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice` — PASS (24 files)
 - `git diff --check` — PASS
 - Hosted `Project baseline / Common validation` — success on `658b948` (prior head); must be re-confirmed on the final head. `gh pr checks` is unusable in this environment (GraphQL blocked); REST/MCP check-runs were used instead.
 
 ### Continuation notes
+
 - Handoff-only commit follows the implementation head above.
 - PR #1 stays Draft; do not merge. Phase 1 is stacked on this branch (`phase-1/nmi-app-foundation`).
 
 ### Next action
+
 Audit the exact PR #1 head against `tasks/NMI-P0-bootstrap.md` and `docs/REPOSITORY-SETUP.md`.
 
 ## Handoff: NMI-P1-C1
@@ -243,18 +261,22 @@ Audit the exact PR #1 head against `tasks/NMI-P0-bootstrap.md` and `docs/REPOSIT
 - **State:** READY FOR REVIEW
 
 ### Completed
+
 - Workspace, health API, placeholder web, exact-money contracts, OpenAI parser, approval gate, tool allowlist, PayPal interfaces, Postgres schema + migration, stack CI, draft screen designs.
 
 ### Validation
+
 - `pnpm lint`, `format:check`, `typecheck`, `test` (52 pass), `build`, `check:bundle`, `pnpm audit --prod` — PASS locally.
 - Hosted Stack CI / Project baseline on final head — see PR; not claimed here.
 - Real OpenAI and PayPal sandbox calls — NOT RUN (no keys).
 
 ### Continuation notes
+
 - Owner decisions pending: design approval (`design/nmi-p1/SCREENS.md`), local Postgres vs SQLite (`docs/ARCHITECTURE.md`), AG Studio licence/trial terms.
 - `createOpenAIInvoiceClient` is typechecked but unexercised against the live API; first real smoke test should confirm `responses.parse` + `zodTextFormat` behavior and a supported `OPENAI_MODEL`.
 
 ### Next action
+
 Audit the exact head; then obtain owner design approval before any UI shell work.
 
 ## Handoff: NMI-P1-C2
@@ -268,20 +290,24 @@ Audit the exact head; then obtain owner design approval before any UI shell work
 - **State:** READY FOR RE-AUDIT (prior verdict PARTIAL; not self-certified)
 
 ### Completed
+
 - Finding 1: trusted-actor/approver binding and `consumeIfMatches` contract (`packages/domain`).
 - Finding 2: 13 new CHECK constraints, migration `0001`, real-PostgreSQL tests (`packages/db`).
 - Finding 3: expanded negative tests (tool dispatch, approval, concurrency, mutation).
 - Finding 4: reference-date calendar validation (`packages/ai`, `packages/shared`).
 
 ### Validation
+
 - Unit tests (in-memory store): see PR; PostgreSQL 16 local disposable run: constraint suite 22/22 pass; negative controls (weakened store, removed constraint) fail as expected.
 - Hosted Stack CI (with `postgres:16` service) and baseline: see PR checks for the exact head.
 
 ### Continuation notes
+
 - Approval atomicity on a real database remains UNPROVEN until a PostgreSQL adapter passes the store contract. No auth exists; `TrustedActor` is test-constructed.
 - Owner decisions still pending: design approval, Postgres-only, AG Studio licence.
 
 ### Next action
+
 Re-audit the exact PR #2 head against the four findings; do not merge.
 
 ## Handoff: NMI-P1-C3
@@ -295,11 +321,14 @@ Re-audit the exact PR #2 head against the four findings; do not merge.
 - **State:** READY FOR RE-VERIFICATION (prior PASS applies only to `d481449`)
 
 ### Completed
+
 - `main` = `13ad78a` (PR #1 squash). Squash tree equals original Phase 0 head `a711673` tree.
 - Phase 1 rebuilt on `main` by cherry-picking `97a4ab5`, `393052a`, `bfadda5`, `d481449` (merge commit `90091fb` intentionally not replayed); no conflicts. Tree `6f58e0066ba860d090d0e3596b179e577d853db2` is identical to audited `d481449`. Recovery: branch `backup/phase-1-d481449`, tag `recovery/nmi-p1-d481449`.
 
 ### Validation
+
 Manual, at `65699fc`, pnpm 10.28.0, `--frozen-lockfile`, PostgreSQL 16.15 disposable `nmi_test`:
+
 - profile validator PASS (24 files); lint PASS; format:check PASS; typecheck PASS
 - `pnpm test` 7 files / 113 tests PASS (includes 22 DB tests; 91 pass + 22 skipped without a DB URL)
 - `pnpm test:db` 22/22 PASS; build PASS; bundle secret scan clean (2 files)
@@ -308,10 +337,12 @@ Manual, at `65699fc`, pnpm 10.28.0, `--frozen-lockfile`, PostgreSQL 16.15 dispos
 - Hosted CI for the new SHAs: see PR checks; if not executed it is NOT PASS (owner-reported Actions limitation until Nov 2026).
 
 ### Continuation notes
+
 - Verify: audited functionality preserved; no Phase 0 duplication; migrations `0000`/`0001` intact; financial boundaries unchanged (no send/cancel/refund/capture/mark-paid, no auth, no webhook); PR base `main`; diff vs `main` equals `a711673..d481449`.
 - Still open: DB atomicity of approval consume unproven (needs PostgreSQL adapter); owner decisions on design, Postgres-only, AG Studio licence; Phase 2 not started.
 
 ### Next action
+
 Independently verify the exact PR #2 head against this list; do not merge.
 
 ## Handoff: NMI-P2-I1-C1
@@ -325,19 +356,23 @@ Independently verify the exact PR #2 head against this list; do not merge.
 - **State:** READY FOR IMPLEMENTATION
 
 ### Completed
+
 - Phase 0 and Phase 1 squash merges verified on `main`.
 - Increment 1 scope defined: authenticated single-operator demo sessions, real PostgreSQL atomic approval consumption, and minimal append-only audit trail. PayPal writes remain disabled.
 
 ### Validation
+
 - Documentation task/bootstrap only; app tests and hosted CI **NOT RUN** on this branch.
 - Phase 1 manual CI/independent audits are historical evidence, not Phase 2 validation.
 
 ### Continuation notes
+
 - Read active task before editing; start from current branch tip and only relevant code.
 - Do not silently decide SQLite parity or implement the UI, PayPal sends, webhooks or real OpenAI calls.
 - Hosted Actions unavailable per owner until November; record new manual CI for the exact implementation SHA. PR #2's exception does not carry over.
 
 ### Next action
+
 - Claude implements bounded P2-I1 on this Draft PR, runs targeted and required manual CI, records a new independent audit handoff; Codex audits exact implementation HEAD before any merge.
 
 ## Handoff: NMI-P2-I1-C2
@@ -351,10 +386,13 @@ Independently verify the exact PR #2 head against this list; do not merge.
 - **State:** READY FOR AUDIT (not self-certified; no merge authorized)
 
 ### Completed
+
 - Operator auth, PostgreSQL approval store, audit trail, migrations `0002`/`0003`, tests, docs. No PayPal write, UI, grant issuer, approval route, webhook or deployment.
 
 ### Validation
+
 Manual CI plus hosted CI. Hosted: `Project baseline / Common validation` and `Stack validation` succeeded on `db6ea1c` (runs 40094020506, 40094020500); later docs-only commits need their own result. Manual: pnpm 10.28.0, `--frozen-lockfile` from a clean `node_modules`, PostgreSQL 16.15 disposable `nmi_test`, at `112208d`:
+
 - profile validator PASS (24 files); lint, format:check, typecheck PASS
 - `pnpm test` without DB URL: 10 files run, 125 passed + 74 skipped (3 PG files skipped); with DB URL: 13 files, 199 passed
 - `pnpm test:db` (REQUIRE_DB_TESTS=1): 3 files, 74 passed (30 constraints, 19 approval store, 25 auth); build PASS; bundle scan clean; `pnpm audit --prod --audit-level high` clean
@@ -363,12 +401,14 @@ Manual CI plus hosted CI. Hosted: `Project baseline / Common validation` and `St
 - End-to-end smoke of the real CLI and server against PostgreSQL (migrations, `provision-operator`, `/health`, login, session, 0 password occurrences in the server log).
 
 ### Continuation notes (please verify)
+
 - `consumeIfMatches` is a single conditional UPDATE; expiry uses `clock_timestamp()`; caller `now` is ignored. Concurrency proof: separate connections, row-lock blocking, commit/rollback behavior.
 - Known limits: no grant issuer or approval route; consume and audit are two statements (audit failure after consume fails closed and spends the grant); in-memory throttling; audit immutability holds against ordinary statements, not the table owner (INSERT/SELECT-only app role not configured); `SESSION_SECRET` rotation changes CSRF tokens.
 - The API now requires `DATABASE_URL` (PostgreSQL) and `SESSION_SECRET`; `.env.example` changed accordingly. The SQLite decision is still the owner's.
 - Test credentials are generated per run; no password literal is committed.
 
 ### Next action
+
 Independently audit exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) against the task acceptance list, re-running the manual set with `pnpm test:db` on a disposable PostgreSQL 16. Do not merge. After a PASS and owner approval, NMI-P2-I2 (owner-approved AI smoke, sandbox PayPal draft work) may be scoped.
 
 ## Handoff: NMI-P2-I1-C3
@@ -382,12 +422,15 @@ Independently audit exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) against the
 - **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
 
 ### Completed
+
 - Finding 1 (MEDIUM, rotation vs in-flight login): `credential_version` + `INSERT ... SELECT ... WHERE credential_version = <verified> ... FOR UPDATE` issuance (lock held only for that statement, after scrypt) + one-transaction rotation (lock, new hash, version bump, revoke sessions). Obsolete credential yields no session (`401`, audit reason `credential_changed`).
 - Finding 2 (MEDIUM, throttling bypass): synchronous atomic reservation on per-account and per-address budgets before the first `await`; documented outcome accounting; bounded concurrent hashing; `429` before any lookup/hashing; correct `Retry-After`.
 - Migration `0004` only; `0000`-`0003` byte-identical to the audited head. No PayPal write, UI, grant issuer, approval route, webhook or deployment.
 
 ### Validation
+
 Manual CI at `013945b` (pnpm 10.28.0, frozen install from clean `node_modules`, PostgreSQL 16.15 disposable `nmi_test`): profile validator PASS (24 files); lint, format:check, typecheck, build PASS; bundle scan clean; `pnpm audit --prod --audit-level high` clean; `pnpm db:generate` no changes and migrations dir clean; `git diff --check` clean.
+
 - `pnpm test` without DB URL: 11 files run, 140 passed + 108 skipped; with DB URL: 16 files, 248 passed. `pnpm test:db` (REQUIRE_DB_TESTS=1): 5 files, 108 passed (31 constraints, 19 approval store, 25 auth, 16 auth-store races, 17 login races).
 - Determinism: race ordering uses held row locks plus observed `pg_stat_activity` lock waits and promise barriers (no sleeps deciding order). Store race suite 20 consecutive runs and both race suites 10 more runs: 0 failures.
 - Mutation controls (each broke the tests): issuance ignoring the credential version; issuance without the row lock; rotation without a version bump; rotation without session revocation; limiter that checks but does not reserve at admission; ignored address budget; unstable account key; gate that never refuses; unbounded gate concurrency; capacity refusals still charged (found as a test gap, strengthened, then killed); post-hash errors refunded; ignoring a null session. One equivalent mutant survived by design: removing rotation's explicit `SELECT ... FOR UPDATE`, because `UPDATE operators` takes the same row lock; kept as explicit lock ordering.
@@ -395,12 +438,14 @@ Manual CI at `013945b` (pnpm 10.28.0, frozen install from clean `node_modules`, 
 - Hosted CI: see PR checks for the exact head. Record only what actually ran.
 
 ### Continuation notes (please verify)
+
 - Issuance proof: single statement, row lock only after hashing, fails closed when the version differs or the operator is disabled; rotation is atomic (a forced failure while revoking rolls back both hash and version).
 - Admission: `tryAdmit` is synchronous and reserves in both budgets or neither; verify the route reaches no `await` before it, and that rejected requests never call the lookup or `verifyPassword`.
 - Seams (`authSeams`: limits, gate sizes, `verifyPassword`, `beforeSessionIssue`) are inert unless supplied; `server.ts` supplies none.
 - Known limits, unchanged: throttling in-memory and per process; consume and audit are separate statements; audit immutability does not bind the table owner; no grant issuer or approval route; `SESSION_SECRET` rotation changes CSRF tokens; Postgres-only vs SQLite is still the owner's decision.
 
 ### Next action
+
 Independently re-audit the exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) against findings 1 and 2 and the preserved controls; re-run the manual set including `pnpm test:db` on a disposable PostgreSQL 16 and repeat the two race suites several times. Do not merge.
 
 ## Handoff: NMI-P2-I2-C1
@@ -414,21 +459,25 @@ Independently re-audit the exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) agai
 - **State:** READY FOR IMPLEMENTATION; no app code has been changed.
 
 ### Completed
+
 - Verified PR #3 merged into `main` as `9ebc1912e96b158b906b849cf1dc2b48cbf3c875`; previous security and race fixes preserved.
 - Scoped backend-only flow: authenticated `@nmi/ai` parse → strict schema validation → PostgreSQL local save → **explicit** PayPal sandbox draft create with stable idempotency and verified remote response.
 - Distinct send / customer-notification endpoints and all other privileged PayPal writes remain FORBIDDEN; no invoice UI before owner screen approval.
 
 ### Validation
+
 - Task bootstrap only; Phase 2 I2 code tests and provider smoke **NOT RUN**.
 - Historical PR #3 exact-head hosted and manual CI passed; they do not cover new code.
 
 ### Continuation notes
+
 - Read `AGENTS.md`, `docs/STATUS.md`, profile, active task, this handoff, relevant code/tests. Do not load handoff history.
 - Existing Postgres `invoices`, `invoice_items`, `PayPalInvoicingReadDraft`, OpenAI parser and Fastify session middleware are authoritative starting points.
 - Durable PayPal draft operation state, 1:1 remote ID mapping, exact-money parity, auth/CSRF checks, and network-side no-send proof are critical audit topics.
 - Genuine OpenAI and PayPal sandbox smoke tests require separately configured owner credentials and must be labeled NOT TESTED otherwise. No implied approval for deployment or real customer notifications.
 
 ### Next action
+
 - Claude implements the accepted backend task on this Draft PR, completes targeted + required validation and pushes a C2 exact-head independent Codex audit handoff; Codex audits before any owner merge decision.
 
 ## Handoff: NMI-P2-I2-C2
@@ -442,10 +491,13 @@ Independently re-audit the exact PR #3 head (PASS / PARTIAL / FIX REQUIRED) agai
 - **State:** READY FOR AUDIT (not self-certified; no merge authorized)
 
 ### Completed
+
 - Parse, strict exact save, read, explicit PayPal sandbox draft; durable fenced operation store; allowlisted PayPal sandbox client; migration `0005`; tests; docs. No send/remind/cancel/refund/capture/payment, webhook, UI, deployment.
 
 ### Validation
+
 Manual CI at `33d917bac9b2082ea66d3179e44debd143dcbdc5` (hosted result: see PR checks for the head). pnpm 10.28.0, frozen install from clean `node_modules`, PostgreSQL 16.15 disposable `nmi_test`:
+
 - profile validator PASS (24 files); lint, format:check, typecheck, build PASS; bundle scan clean; `pnpm audit --prod --audit-level high` clean; `pnpm db:generate` no changes; migrations dir clean; `git diff --check` clean; migrations `0000`-`0004` byte-identical to `main`.
 - `pnpm test` without DB URL: 14 files run, 235 passed + 176 skipped; with DB URL: 22 files, 411 passed. `pnpm test:db`: 8 files, 176 passed (37 constraints, 19 approval store, 25 auth, 16 auth-store, 17 login races, 11 draft store, 9 operation store, 42 invoice-draft/PayPal routes).
 - Determinism: barriers are promises/observed lock waits, not sleeps (e.g. double click: 11 rivals refused while the winner is parked inside the external call). Route suite repeated 5x, full suite 3x, no failures.
@@ -454,6 +506,7 @@ Manual CI at `33d917bac9b2082ea66d3179e44debd143dcbdc5` (hosted result: see PR c
 - **NOT TESTED:** real OpenAI parse; real PayPal sandbox OAuth/create/show/search. All PayPal behavior here is from fake clients or a fake HTTP transport and is labeled so.
 
 ### Continuation notes (please verify)
+
 - Exactly-once rests on the operation row + fenced claim + durable `create_attempted_at` before the call + reconcile-before-retry (search by deterministic `invoice_number`, show by stored id) + cool-off + verified total; `PayPal-Request-Id` is sent but NOT relied on (not documented for create-invoice).
 - Fail-closed points: flag default off and creds mandatory when on; the intent is audited before the external write; a client absent => 503; any unclear outcome is `unknown`, never success; `mismatch` is terminal and unlinked.
 - Money: server recomputes totals; strict body (no client totals/status); mappings needing rounding are refused (`422 mapping_refused`); remote total compared exactly after creation.
@@ -462,6 +515,7 @@ Manual CI at `33d917bac9b2082ea66d3179e44debd143dcbdc5` (hosted result: see PR c
 - Owner decisions still pending: design approval, Postgres-only vs SQLite, AG Studio licence, relaxing the rounding refusal after a live smoke.
 
 ### Next action
+
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED), re-run the manual set including `pnpm test:db` on a disposable PostgreSQL 16, and repeat the route and operation suites. Do not merge. After a PASS and owner approval, plan the owner-triggered live sandbox smoke (NMI-P2-I3) before any send capability.
 
 ## Handoff: NMI-P2-I2-C3
@@ -474,6 +528,7 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED), re-run
 - **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
 
 ### Remediated finding (ChatGPT audit of `42c0f4f` — FIX REQUIRED)
+
 - **Issue:** Ambiguous PayPal draft creation outcome risked a duplicate remote create when search returned empty after 300s cool-off (empty search does not prove remote absence due to delayed search indexing); malformed `{}` search response was indistinguishable from empty search; unbound idempotency retention.
 - **Remediation implemented:**
   1. **Fail-closed reconciliation:** In `claim.mode === "reconcile"`, an empty search result NEVER falls through to `createDraftInvoice`. Instead, it records `reconciliation_pending` with exponential/cool-off retry backoff; an empty search response is never treated as proof of absence, protecting against delayed search visibility.
@@ -483,7 +538,9 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED), re-run
   5. **Deterministic regression tests:** Replaced the unsafe 2nd-create test with a test asserting that a timed-out first create followed by empty search beyond 300s cool-off fails closed with `reconciliation_pending` and NEVER creates a second remote draft (`pp.log.create.length === 1`), then successfully reconciles once visibility catches up. Added tests for idempotency retention expiry, payload digest mismatch, and malformed/paginated search responses.
 
 ### Validation
+
 Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+
 - `pnpm validate`: lint, format:check, typecheck, unit tests (235 passed), build, bundle secret scan clean.
 - `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
 - `pnpm audit --prod --audit-level high`: 0 vulnerabilities.
@@ -493,6 +550,7 @@ Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_
 - **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
 
 ### Next action
+
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
 
 ## Handoff: NMI-P2-I2-C4
@@ -505,21 +563,24 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 - **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
 
 ### Remediated findings (ChatGPT audit of `355bf6a` — FIX REQUIRED)
+
 - **C2 blocker confirmed resolved:** Empty search never falls through to create, returning `reconciliation_pending` without duplicate remote creates.
 - **MEDIUM-1 (blocking) — Pagination sentinel becomes a fake invoice ID and poisons recovery:**
-  - *Root cause:* When PayPal search reported `total_pages > 1` but page 1 contained no item matching `invoice_number`, `matchingIds` was empty and `findInvoiceIdsByNumber` returned `["ambiguous_more_remote_pages"]`. The service treated this single element as a real invoice ID, attempted `getInvoice`, failed with `invalid_id`, and persisted `"ambiguous_more_remote_pages"` into `paypal_operations.paypal_invoice_id`, poisoning subsequent reconciliation and requiring manual DB intervention.
-  - *Remediation implemented:* Removed all pseudo-identifiers from `findInvoiceIdsByNumber`. Incomplete or multi-page searches (`total_pages > 1` or `total_items > items.length`) throw a typed `PayPalOutcomeUnknownError("search_incomplete")`. In `searchResponse`, inconsistent counts (`total_pages === 0` with items or `total_items === 0` with pages > 0) fail parsing as `response_unparseable`. Remote IDs in search items are strictly validated against `REMOTE_ID` regex. The service records `unknown` with code `"search_incomplete"` and NO remote ID, leaving `paypal_invoice_id = null` and preserving recoverable state.
-  - *Regression tests:* Added unit tests in `packages/paypal/src/client.test.ts` for incomplete search with no matching item on page 1, multi-page with matching item, `total_pages > 1` without `total_items`, inconsistent counts, and malformed item IDs. Added end-to-end fake HTTP / DB integration regression in `apps/api/src/invoice-drafts.pg.test.ts` proving no synthetic remote ID is saved in PostgreSQL, no second create occurs, and recovery succeeds cleanly once search completes.
+  - _Root cause:_ When PayPal search reported `total_pages > 1` but page 1 contained no item matching `invoice_number`, `matchingIds` was empty and `findInvoiceIdsByNumber` returned `["ambiguous_more_remote_pages"]`. The service treated this single element as a real invoice ID, attempted `getInvoice`, failed with `invalid_id`, and persisted `"ambiguous_more_remote_pages"` into `paypal_operations.paypal_invoice_id`, poisoning subsequent reconciliation and requiring manual DB intervention.
+  - _Remediation implemented:_ Removed all pseudo-identifiers from `findInvoiceIdsByNumber`. Incomplete or multi-page searches (`total_pages > 1` or `total_items > items.length`) throw a typed `PayPalOutcomeUnknownError("search_incomplete")`. In `searchResponse`, inconsistent counts (`total_pages === 0` with items or `total_items === 0` with pages > 0) fail parsing as `response_unparseable`. Remote IDs in search items are strictly validated against `REMOTE_ID` regex. The service records `unknown` with code `"search_incomplete"` and NO remote ID, leaving `paypal_invoice_id = null` and preserving recoverable state.
+  - _Regression tests:_ Added unit tests in `packages/paypal/src/client.test.ts` for incomplete search with no matching item on page 1, multi-page with matching item, `total_pages > 1` without `total_items`, inconsistent counts, and malformed item IDs. Added end-to-end fake HTTP / DB integration regression in `apps/api/src/invoice-drafts.pg.test.ts` proving no synthetic remote ID is saved in PostgreSQL, no second create occurs, and recovery succeeds cleanly once search completes.
 - **MEDIUM-2 (blocking) — Due-date validation prevents reconciliation of an already-created remote draft:**
-  - *Root cause:* `assertExactMapping(saved.draft, today)` was evaluated unconditionally at the beginning of `createPayPalDraft`. If an invoice due date passed midnight while an ambiguous create attempt was in-flight or unknown, every subsequent retry was rejected as `mapping_refused: due_date_past` before reading the existing operation or checking PayPal, making a valid remote sandbox draft permanently unreconcilable precisely when its due date arrived.
-  - *Remediation implemented:* Split mapping validation: `assertExactMapping(saved.draft, today)` applies strictly to new create attempts only (`!existingOp || (existingOp.state !== "unknown" && existingOp.state !== "creating" && existingOp.createAttemptedAt === null)`). Existing in-flight/unknown operations validate against their persisted original intent date (`originalInvoiceDate = existingOp.createdAt`). A double-guard before the external `createDraftInvoice` call ensures that even if an existing operation were claimed, a new create request with a past due date is never sent. Exact-money verification, payload digest binding (`existing.payloadDigest === requestDigest(body)`), and `remote.dueDate === expected.dueDate` checks remain fully enforced.
-  - *Regression test:* Added deterministic PostgreSQL regression in `apps/api/src/invoice-drafts.pg.test.ts` where a draft created at T0 times out, the clock advances past midnight to T1 (`today > dueDate`), asserts that a new draft with past due date is refused (422 `due_date_past`), asserts that retrying the existing draft before visibility returns 409 `reconciliation_pending` without a second create (`pp.log.create.length === 1`), and asserts that once visibility catches up the remote invoice is verified and locally linked with 201 `created` without a second create.
+  - _Root cause:_ `assertExactMapping(saved.draft, today)` was evaluated unconditionally at the beginning of `createPayPalDraft`. If an invoice due date passed midnight while an ambiguous create attempt was in-flight or unknown, every subsequent retry was rejected as `mapping_refused: due_date_past` before reading the existing operation or checking PayPal, making a valid remote sandbox draft permanently unreconcilable precisely when its due date arrived.
+  - _Remediation implemented:_ Split mapping validation: `assertExactMapping(saved.draft, today)` applies strictly to new create attempts only (`!existingOp || (existingOp.state !== "unknown" && existingOp.state !== "creating" && existingOp.createAttemptedAt === null)`). Existing in-flight/unknown operations validate against their persisted original intent date (`originalInvoiceDate = existingOp.createdAt`). A double-guard before the external `createDraftInvoice` call ensures that even if an existing operation were claimed, a new create request with a past due date is never sent. Exact-money verification, payload digest binding (`existing.payloadDigest === requestDigest(body)`), and `remote.dueDate === expected.dueDate` checks remain fully enforced.
+  - _Regression test:_ Added deterministic PostgreSQL regression in `apps/api/src/invoice-drafts.pg.test.ts` where a draft created at T0 times out, the clock advances past midnight to T1 (`today > dueDate`), asserts that a new draft with past due date is refused (422 `due_date_past`), asserts that retrying the existing draft before visibility returns 409 `reconciliation_pending` without a second create (`pp.log.create.length === 1`), and asserts that once visibility catches up the remote invoice is verified and locally linked with 201 `created` without a second create.
 - **MINOR — Documentation consistency:**
   - Updated `tasks/NMI-P2-I2-invoice-draft-flow.md` metadata to specify Antigravity and ChatGPT GPT-6 while preserving historical implementation notes.
   - Updated `apps/api/src/services/paypal-draft-service.ts` comments (lines 57-60) to accurately describe fail-closed reconciliation without automatic re-create and removed unproven claims of unconditional provider guarantees.
 
 ### Validation
+
 Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+
 - `pnpm validate`: lint, format:check, typecheck, unit tests (235 passed), build, bundle secret scan clean.
 - `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
 - `pnpm audit --prod --audit-level high`: 0 vulnerabilities.
@@ -529,6 +590,7 @@ Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_
 - **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
 
 ### Next action
+
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
 
 ## Handoff: NMI-P2-I2-C5
@@ -541,10 +603,11 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 - **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
 
 ### Remediated findings (ChatGPT audit of `7f871c5` — FIX REQUIRED)
+
 - **C3 findings confirmed resolved:** Search pagination pseudo-identifiers closed; main path of due date recovery resolved.
 - **Residual MEDIUM (blocking) — Midnight race corrupts reconstruction of initial invoice date:**
-  - *Root cause:* The initial create request sampled `deps.clock()` and built the request body with `invoice_date` before calling `ops.reserve`. The database row generated `created_at` independently via PostgreSQL `now()`. If a request arrived near UTC midnight, `created_at` could be stamped on D+1 while the outbound request was sent on day D. On subsequent retry/reconciliation, `existingOp.createdAt` yielded D+1, causing `assertExactMapping` to reject the draft as `due_date_past` before search/reconciliation, and mutating the rebuilt request body/digest.
-  - *Remediation implemented:*
+  - _Root cause:_ The initial create request sampled `deps.clock()` and built the request body with `invoice_date` before calling `ops.reserve`. The database row generated `created_at` independently via PostgreSQL `now()`. If a request arrived near UTC midnight, `created_at` could be stamped on D+1 while the outbound request was sent on day D. On subsequent retry/reconciliation, `existingOp.createdAt` yielded D+1, causing `assertExactMapping` to reject the draft as `due_date_past` before search/reconciliation, and mutating the rebuilt request body/digest.
+  - _Remediation implemented:_
     1. **Persist canonical `invoice_date` in database:** Added column `invoice_date` and format check constraint (`invoice_date is null or invoice_date ~ '^\d{4}-\d{2}-\d{2}$'`) to `paypal_draft_operations` via forward migration `0006_known_colleen_wing.sql` (migrations `0000`-`0005` preserved byte-identical).
     2. **Store on reservation:** `ops.reserve` accepts and persists the exact `invoiceDate` used for the initial request.
     3. **Reconstruct from persisted operation:** On retry/reconciliation, `existingOp.invoiceDate` is used directly as the single immutable source of truth, completely decoupled from database `created_at` or future clock sampling.
@@ -558,7 +621,9 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
   - `packages/db/src/paypal-operation-store.pg.test.ts`: Added test asserting `ops.reserve` stores and returns `invoiceDate`.
 
 ### Validation
+
 Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+
 - `pnpm validate`: lint, format:check, typecheck, unit tests (235 passed), build, bundle secret scan clean.
 - `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
 - `pnpm audit --prod --audit-level high`: 0 vulnerabilities.
@@ -568,6 +633,7 @@ Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_
 - **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
 
 ### Next action
+
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
 
 ## Handoff: NMI-P2-I2-C6
@@ -580,10 +646,11 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 - **State:** READY FOR RE-AUDIT (not self-certified; no merge authorized)
 
 ### Remediated findings (ChatGPT audit of `3e28c0c` — FIX REQUIRED)
+
 - **C4 finding confirmed resolved:** Persistence of exact `invoice_date` via migration `0006`, single clock sampling per request, and `docs/SECURITY.md` fail-closed reconciliation confirmed fixed.
 - **C5 MEDIUM (blocking) — Concurrent first-time reservation across UTC midnight sends mismatched `invoice_date`:**
-  - *Root cause:* Two concurrent requests racing on a fresh draft across midnight both sampled `ops.get = null` and pre-built their request bodies with their local sampled dates before `ops.reserve`. When request A won the atomic `reserve`, request B's `reserve` call returned request A's row on conflict. However, request B retained its pre-built body. If request B then won the fenced lease claim, `requestDigest(body)` (which excludes `invoice_date` for replay stability) matched `existing.payloadDigest`, so request B sent its pre-built body (dated D+1) to PayPal while the database row asserted date D.
-  - *Remediation implemented:*
+  - _Root cause:_ Two concurrent requests racing on a fresh draft across midnight both sampled `ops.get = null` and pre-built their request bodies with their local sampled dates before `ops.reserve`. When request A won the atomic `reserve`, request B's `reserve` call returned request A's row on conflict. However, request B retained its pre-built body. If request B then won the fenced lease claim, `requestDigest(body)` (which excludes `invoice_date` for replay stability) matched `existing.payloadDigest`, so request B sent its pre-built body (dated D+1) to PayPal while the database row asserted date D.
+  - _Remediation implemented:_
     1. **Rebuild canonical request body from atomic reservation row:** In `apps/api/src/services/paypal-draft-service.ts`, after `existing = await ops.reserve(...)`, canonical `canonicalInvoiceDate` is derived strictly from `existing.invoiceDate` returned by PostgreSQL. The request body (`body`) and verification expectation (`expected`) are rebuilt from `canonicalInvoiceDate` before lease claiming or dispatching.
     2. **Enforce date identity independently of payload digest:** In addition to `existing.payloadDigest === requestDigest(body)`, explicitly enforce `claim.op.invoiceDate === null || claim.op.invoiceDate === body.detail.invoice_date`, guaranteeing date identity even with a date-excluding digest.
     3. **Preserve fresh create vs reconciliation due date guards:** Fresh create attempts require `dueDate >= today` (even if adopting an earlier pending reservation date); reconciliation of already-attempted drafts validates against `canonicalInvoiceDate` without blocking on expired due dates.
@@ -598,7 +665,9 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
     - Added deterministic test for legacy row with `invoice_date IS NULL`: asserts safe fallback to `created_at` and successful reconciliation without date mismatch.
 
 ### Validation
+
 Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_test`):
+
 - `python3 scripts/validate_project_profile.py`: 24 core/selected capability files verified PASS.
 - `pnpm lint`: clean, no linter errors.
 - `pnpm format:check`: clean, all files formatted.
@@ -612,6 +681,7 @@ Manual CI (pnpm 10.28.0, clean frozen install, PostgreSQL 16.15 disposable `nmi_
 - **NOT TESTED:** Real OpenAI parse; real PayPal sandbox OAuth/create/show/search (requires owner credentials in local `.env`, separately authorized).
 
 ### Next action
+
 Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not merge, deploy, release, or execute PayPal sending/payment operations.
 
 ## Handoff: NMI-P2-I2-ACCEPTANCE
@@ -625,16 +695,19 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 - **State:** NMI-P2-I2 **OWNER ACCEPTED** on 2026-10-26; docs sync awaiting independent audit
 
 ### Completed
+
 - Scoped C6 independent audit and hosted CI PASS at exact implementation HEAD; owner accepted and separately approved native GitHub squash merge.
 - Real single-create PayPal Sandbox smoke (AG provider evidence): OAuth `200`, create `201`, read-only GET `200` (executed with one fictitious USD 5.00 line item, zero tax, zero discount); `INV2-U92W-76NX-3P2E-AGUZ`, `DRAFT` USD 5.00; local operation `created`, attempt `1`, reference/date/number match.
 - No send, reminder, refund, cancellation, payment, deployment or production operation; Sandbox create feature flag restored to `false`; private exhausted test budget preserved.
 
 ### Validation
+
 - AG reports `pnpm validate` PASS (235 unit), `TEST_DATABASE_URL=... pnpm test:db` PASS (187 PostgreSQL); GitHub Project Baseline and Stack CI independently confirmed SUCCESS on PR #4 at `4982201918d0030234fdbabbc297375c02c01e5d`.
 - Genuine OpenAI Responses provider smoke: **NOT TESTED**. Real PayPal remote search/reconciliation/timeout/error-path behavior, alternative recipient/invoicer shapes, and tax/discount mappings are **NOT TESTED** against live PayPal Sandbox (verified with deterministic mock transports and PostgreSQL tests only).
 - PR #5 docs-only changes need their own exact-head checks and independent review; the prior code PR CI does not apply to its new SHA.
 
 ### Continuation notes
+
 - Update canonical docs truthfully; maintain historical C6 handoff unchanged and keep buyer/merchant contact information, secrets and tokens outside GitHub.
 - Operational limitations: in-memory auth throttling is single-process; approval consumption and audit logging are separate statements; database least-privilege role configuration is a deployment concern. See [security boundaries](SECURITY.md).
 - **Open code remediation (known review finding):** Codex review on PR #4 identified that CORS `allowedHeaders` in `apps/api/src/app.ts:61–65` omits `Idempotency-Key` (though invoice save supports that header). It has no effect today because the web app is a placeholder and Vite proxies only `/health`, but it will block cross-origin browser callers sending an idempotency key. This code remediation is deferred from this docs-only PR to a proposed bounded follow-up task before cross-origin browser invoice-save integration:
@@ -647,6 +720,7 @@ Independently audit the exact PR #4 head (PASS / PARTIAL / FIX REQUIRED). Do not
 - No approved UI design or next implementation phase. This is a docs reconciliation handoff, not release clearance.
 
 ### Next action
+
 Independently audit Draft PR #5's exact HEAD, documentation diff and applicable CI; request separate owner approval before merging PR #5.
 
 ## Handoff: NMI-CORS-01-REMEDIATION
@@ -660,6 +734,7 @@ Independently audit Draft PR #5's exact HEAD, documentation diff and applicable 
 - **State:** Implementation and regression tests complete; awaiting independent audit
 
 ### Completed
+
 - In `apps/api/src/app.ts`, updated `@fastify/cors` registration: added `"idempotency-key"` to `allowedHeaders: ["content-type", "x-csrf-token", "idempotency-key"]`.
 - In `apps/api/src/app.test.ts`, added browser-style preflight test suite verifying:
   - `OPTIONS /api/invoice-drafts` requesting `POST` with `content-type`, `x-csrf-token`, and `idempotency-key` returns 204 with all three headers in `access-control-allow-headers`.
@@ -672,6 +747,7 @@ Independently audit Draft PR #5's exact HEAD, documentation diff and applicable 
 - Updated `docs/STATUS.md` confirming PR #5 squash merge (`397c5d0376ef37cfd7f7debb93ac3f8387be5fea`), recording NMI-P2-I2 as complete, and activating NMI-CORS-01.
 
 ### Validation
+
 - `apps/api/src/app.test.ts`: 13/13 tests pass (including new CORS preflight cases).
 - `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
 - `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests, including invoice draft idempotency tests).
@@ -679,11 +755,13 @@ Independently audit Draft PR #5's exact HEAD, documentation diff and applicable 
 - Real PayPal Sandbox and OpenAI providers: zero external requests dispatched; 1/1 Sandbox budget guard remains intact and exhausted.
 
 ### Continuation notes
+
 - UI design gate remains Not applicable for this backend/security fix.
 - No schema, database, migration, or dependency changes.
 - Once independently audited and approved, Draft PR can be marked ready for owner review and squash merge into main.
 
 ### Next action
+
 Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`) against task contract, security boundaries, and hosted CI.
 
 ## Handoff: NMI-CORS-01-C2
@@ -699,6 +777,7 @@ Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`)
 - **State:** Implementation complete; documentation governance GOV-1 resolved; awaiting final independent audit verification
 
 ### Completed
+
 - Restored original `NMI-CORS-01-REMEDIATION` handoff section exactly as published at `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c` to maintain historical integrity.
 - Appended this new unique handoff `NMI-CORS-01-C2` documenting audit findings, documentation closure, test reconciliation, and stability tracking.
 - Code implementation and tests remain byte-identical to audited `eb2b8e3103d04cd7eddbbbdf24d3651f8a7e8a8c`:
@@ -708,6 +787,7 @@ Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`)
 - Updated `docs/STATUS.md` pointing `Active handoff` to `NMI-CORS-01-C2` while preserving historical P2-I2 test counts (235/422).
 
 ### Validation
+
 - `apps/api/src/app.test.ts`: 13/13 unit tests pass.
 - `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
 - `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests, including draft idempotency tests).
@@ -716,16 +796,19 @@ Independently audit Draft PR for NMI-CORS-01 (`fix/nmi-cors-idempotency-header`)
 - Zero calls made to external PayPal or OpenAI providers; 1/1 Sandbox budget guard remains intact and exhausted.
 
 ### Test-stability observation
+
 - Hosted Stack CI attempt 1 at code HEAD `eb2b8e3` had an intermittent 20-second timeout on `apps/api/src/invoice-drafts.pg.test.ts` concurrency test (`"12 simultaneous requests (double click)..."`, 186/187 database tests passed).
 - Attempt 2 passed completely (187/187 database tests) on the exact same commit without code changes.
 - Tracked for separate test-stability investigation; no causal link to this CORS change was established. Concurrency assertions are preserved without weakening.
 
 ### Continuation notes
+
 - UI design gate remains Not applicable for this backend/security fix.
 - No schema, database, migration, or dependency changes.
 - The task does not claim a final independent PASS; awaiting final independent verification.
 
 ### Next action
+
 Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-header`). Await separate product owner merge authorization.
 
 ## Handoff: NMI-UI-01A-DESIGN
@@ -738,6 +821,7 @@ Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-h
 - **State:** Interface design complete; awaiting owner visual approval (design-only increment; no production frontend shell or backend logic changes).
 
 ### Completed
+
 - **Design Specifications (`design/screens/NMI-UI-01A-SCREENS.md`):**
   - Comprehensive screen map, navigation architecture (Desktop top header & sub-nav / Mobile bottom tabs), and user flows.
   - Detailed layout wireframes, component contracts, and responsive behavior for all 5 screens:
@@ -764,6 +848,7 @@ Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-h
   - Documented accessible native HTML5 table fallback for the dashboard grid, establishing the plug-in seam for `ag-studio-react` upon licensing and trial authorization (active through Dec 15).
 
 ### Validation
+
 - `python3 scripts/validate_project_profile.py`: PASS.
 - `pnpm validate`: PASS (lint, format:check, typecheck, 236 unit tests, build, bundle-size scan).
 - `TEST_DATABASE_URL=... pnpm test:db`: PASS (187 PostgreSQL integration tests).
@@ -771,11 +856,13 @@ Final independent audit verification of Draft PR #6 (`fix/nmi-cors-idempotency-h
 - Zero external provider calls to PayPal Sandbox or OpenAI; single-create test guard budget remains exhausted (1/1).
 
 ### Continuation notes
+
 - **UI Design Gate:** Explicit owner visual approval is required before building the production UI shell or wiring backend endpoints.
 - No modifications made to `apps/web/src` or `apps/api/src`.
 - No new runtime dependencies or package installations.
 
 ### Next action
+
 Open Draft PR and request owner visual approval on `design/preview/index.html` and `design/screens/NMI-UI-01A-SCREENS.md`.
 
 ## Handoff: NMI-UI-01A-REMEDIATION-1
@@ -788,6 +875,7 @@ Open Draft PR and request owner visual approval on `design/preview/index.html` a
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Design-only; owner visual approval not given or predeclared. The earlier `NMI-UI-01A-DESIGN` entry above is preserved unchanged as history; where it conflicts with this entry (for example the AG Studio trial wording and the unsupported fields), this entry and the current task/spec govern.
 
 ### Completed
+
 - **MAJOR-1:** preview rewritten with no inline handlers; every state (loading, validation errors, manual entry, clarification, currency change, line add/remove, PayPal disabled and the other PayPal outcomes, confirmation dialog) is reachable and fixture-only.
 - **MAJOR-2:** login now requires username and password (empty password, no remember-me); AI input limit is 2,000 with counter and error state; review form matches the strict schema (required customer email; invoice number, issue date, PO/reference and fixed tax removed and listed as deferred); no Delete, Updated-at, dispatch time or audit timeline; rounding described honestly with a PayPal refusal preview instead of silent correction; only server-computed totals are labelled as such.
 - **MAJOR-3:** fixtures no longer contain the genuine Sandbox smoke invoice id (fabricated `INV2-DEMO-FAKE-...` ids). Fixtures were also corrected so a "PayPal created" invoice is one the real mapping rules would accept; a fourth GBP fixture demonstrates a refused draft. All fixtures are checked against the real `calculateTotals` and `assertExactMapping`.
@@ -796,18 +884,20 @@ Open Draft PR and request owner visual approval on `design/preview/index.html` a
 - Evidence: `design/evidence/NMI-UI-01A/` (QA-RESULTS.md, 59 screenshots, reproducible `run-browser-qa.mjs`) and `design/fixtures/verify-fixtures.mjs`.
 
 ### Validation
+
 - Real headless Chrome run, 93 of 93 automated checks passed: keyboard-only end-to-end flow with real key events, dialog focus trap and restore, contrast across 5 screens and 23 states in both themes, no horizontal scroll at 390px and 320px, mobile 44px and desktop 24px targets, focus outlines, reduced motion, zero http(s) requests and zero console errors.
 - `verify-fixtures.mjs`: all checks passed. `python3 scripts/validate_project_profile.py` and `pnpm validate` passed locally. Hosted CI at the exact new head is recorded on the PR.
 - **NOT covered:** screen reader testing, real touch devices, Safari/Firefox, 400% zoom (320px reflow checked instead).
 - No PayPal or OpenAI call; the preview runs under a CSP that forbids network access. Real OpenAI parsing and PayPal search/reconciliation error paths remain NOT TESTED against the live providers.
 
 ### Continuation notes
+
 - Open owner decisions are listed in section 8 of `design/screens/NMI-UI-01A-SCREENS.md` (AG Studio license, session-expiry draft retention, list endpoint, draft editing).
 - Do not modify `apps/web` or `apps/api`, start NMI-UI-01B, merge or deploy without separate owner direction.
 
 ### Next action
-Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on visual approval.
 
+Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on visual approval.
 
 ## Handoff: NMI-UI-01B-C1
 
@@ -820,23 +910,27 @@ Independently re-audit Draft PR #7 at its exact HEAD; the owner then decides on 
 - **State:** READY FOR INDEPENDENT AUDIT. Not merged; owner approval for merge not given.
 
 ### Completed
+
 - Owner approval of NMI-UI-01A (design HEAD `76549b3`, merged as `b9962a2`) and decisions D1-D4 recorded in the task and STATUS.
 - Implemented the five approved screens in `apps/web` (React 19, TypeScript, existing Vite): `domain/` (pure money and form logic), `demo/` (fixtures, scenarios, in-memory reducer), `components/`, `features/{login,dashboard,composer,review,detail}`, tokens as CSS variables. No new runtime dependency; AG Studio, router, state manager, icon/font/CDN packages not used.
 - Fixture-only: every result is simulated and labelled; fabricated PayPal ids only; no storage, cookies, IndexedDB, query-string data, analytics or logging; production CSP with `connect-src 'none'`.
 - Added `vitest` include for `apps/web` (config only) and 71 web tests, plus a real-Chrome QA harness and evidence under `design/evidence/NMI-UI-01B/`.
 
 ### Validation
+
 - Local: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test` (307 passed, 187 PostgreSQL tests skipped locally because no disposable database was provisioned; hosted Stack CI runs them), `pnpm build`, `pnpm check:bundle`, `scripts/validate_project_profile.py`.
 - Real headless Chrome QA: all checks pass (see `design/evidence/NMI-UI-01B/QA-RESULTS.md`): keyboard journeys, dialog focus, contrast in both themes, no overflow at 320/390/768/1280, targets, focus outlines, reduced motion, zero foreign requests, empty storage, URL free of invoice content.
 - Screenshots compared to the approved PR #7 evidence; one deliberate deviation: the approved mobile detail captures overflowed (436px in a 390px viewport) and the React shell fixes that.
 - **NOT covered:** screen readers, real touch devices, Safari/Firefox, 400% zoom; full WCAG 2.2 AA not claimed. Real OpenAI and PayPal provider behaviour not exercised (and not callable from this shell).
 
 ### Continuation notes
+
 - Do not wire any real API, change server configuration, enable `PAYPAL_DRAFTS_ENABLED`, merge, deploy or start NMI-UI-01C without separate owner authorization.
 - The design-review control bar is kept from the approved preview and labelled "not part of the product UI"; remove or gate it when real APIs are wired.
 - Prior handoffs are preserved unchanged.
 
 ### Next action
+
 Independently audit the Draft PR at its exact head; the owner then decides on merge.
 
 ## Handoff: NMI-UI-01B-R1
@@ -850,18 +944,22 @@ Independently audit the Draft PR at its exact head; the owner then decides on me
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Not merged; no merge authorization.
 
 ### Completed
+
 - **MAJOR-1:** simulated idempotency replay now returns the existing draft (same id and record) with no insert and no saved-count change; new keys still create normally; rapid double-submit protection and the simulated 409 conflict path unchanged. Reducer holds a simulated key table; keys are deterministic per form.
 - Minor: line-description `maxLength` aligned to the backend's 200.
 - Tests: 4 new reducer regression tests (75 web tests; 311 repo tests pass, 187 PostgreSQL tests skipped locally and run in hosted Stack CI); mutation check proves they fail if replay is disabled. Chrome QA extended to prove replay (existing id/record, unchanged dashboard rows and currency cards, later new save gets the first fresh id): 112 of 112 checks pass.
 - Task and STATUS updated. Earlier handoffs untouched. The PR description records the earlier exact-head CI (Project Baseline 40439032672 PASS, Stack 40439032658 PASS at `7677569`).
 
 ### Validation
+
 Local `pnpm validate` and the profile validator pass; hosted CI at the new exact head is recorded on the PR. Not covered: screen readers, real touch, Safari/Firefox, 400% zoom (no full WCAG 2.2 AA claim).
 
 ### Continuation notes
+
 Visuals, D1-D4, fixture-only data, strict CSP and no browser storage are unchanged. No real API wiring, new dependency, provider call, merge, deployment or NMI-UI-01C.
 
 ### Next action
+
 Independently re-audit PR #8 at its exact head.
 
 ## Handoff: NMI-UI-01C1-START
@@ -874,16 +972,19 @@ Independently re-audit PR #8 at its exact head.
 - **State:** Task contract and branch prepared. **No application code changed yet**; C1 real auth integration is NOT IMPLEMENTED. Stop at Draft PR independent audit; separate owner merge approval required.
 
 ### Work boundary and decisions
+
 - Real browser operator login, GET session restore, protected navigation, POST logout, local same-origin `/api` transport, strict CSP and safe memory cleanup only. All invoice features remain synthetic/fixture-only for this slice and visibly labelled.
 - Preserve owner D1–D4, use no real customer data and do not store credentials/CSRF/unsaved invoices in browser storage or URLs. Hard deny unauthenticated navigation/hash/demo-state bypass in real mode.
 - Backend cookie/Origin/CSRF, auditing, rate limits and PostgreSQL auth remain authoritative. No API auth-policy weakening or schema change.
 - Previously authorized PayPal Sandbox one-create budget is exhausted. No PayPal writes, OpenAI inference, deployments, merges, reminders or NMI-UI-01C2 in this slice.
 
 ### Evidence required
+
 - Targeted auth/browser navigation and security regression tests, at least one authenticated local browser → API → disposable PostgreSQL run, CSP/no-storage checks, required hosted CI at exact implementation HEAD, browser screenshots and handoff.
 - Previous task status on `main` was stale after PR #8 squash merge; this branch's STATUS reconciles it.
 
 ### Next action
+
 Claude implements the active contract on this same branch and Draft PR, posts exact SHA and evidence for GPT-6 independent audit. No auto-merge, no deployment.
 
 ## Handoff: NMI-UI-01C1-IMPL
@@ -895,20 +996,24 @@ Claude implements the active contract on this same branch and Draft PR, posts ex
 - **State:** READY FOR INDEPENDENT AUDIT. Real browser login, session restore, protected navigation and honest logout are implemented; invoice features are still synthetic fixtures. Not self-certified, not merged, not deployed.
 
 ### What changed
+
 - New `apps/web/src/auth/*`, `RealApp.tsx`, `features/login/RealLoginScreen.tsx`, `screens.tsx`; `main.tsx` mounts the real app; the synthetic preview is dev-only behind `VITE_NMI_SYNTHETIC_PREVIEW=1` and absent from production bundles; production CSP `connect-src 'self'`; `/api` proxy for dev and preview; docs in `docs/ARCHITECTURE.md` and `docs/SECURITY.md`.
 - Unchanged: `apps/api`, `packages/*`, migrations, auth policy, Origin/CSRF/cookie rules. No OpenAI or PayPal configuration or call exists in any run.
 
 ### Evidence
+
 - Local at `e7ee3e3`: lint, format, typecheck, build, bundle scan, profile validation pass; 364 tests pass, 187 PostgreSQL-only tests skipped locally (unchanged code; run in hosted Stack CI).
 - Real browser -> Vite preview (strict CSP) -> Fastify -> disposable PostgreSQL 16.15: 105/105 checks (`design/evidence/NMI-UI-01C1/QA-RESULTS.md`, re-run with `pnpm --filter @nmi/web build && node design/evidence/NMI-UI-01C1/run-auth-journey.mjs`; needs Chrome and Homebrew PostgreSQL 16; API on port 3101 by default).
 - Hosted CI at `e7ee3e3`: Project baseline / Common validation PASS (run 40458040856); Stack validation PASS (run 40458040859).
 
 ### Audit focus and known limits
+
 - Review the four deliberate behaviours listed in the task's implementation record (generic 403 on login; transient errors on periodic re-check keep the workspace; unconfirmed logout wording; Retry-After shown but button not disabled).
 - Not verified: `__Host-` Secure cookie in a browser (HTTPS), screen readers, real touch, Safari/Firefox, 400% zoom, hosted reverse-proxy deployment. Throttling remains in-memory per process.
 - The 01B browser QA harness is superseded for the production page (it assumed the synthetic shell as the default page).
 
 ### Next action
+
 Audit exact head, then owner decides on merge. C2 needs separate authorization.
 
 ## Handoff: NMI-UI-01C1-R1
@@ -920,20 +1025,24 @@ Audit exact head, then owner decides on merge. C2 needs separate authorization.
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Not self-certified, merged or deployed. Scope was only the pending-logout exposure.
 
 ### What changed
+
 - Sign-out enters a `signing-out` auth state synchronously, so `RealView` unmounts the workspace and all in-memory drafts at the click; a polite "Signing out…" status shows. Revocation continues via the existing CSRF-protected `POST /api/auth/logout`, bounded to 10 s; confirmed only on 204; 401 -> session ended; 403/503/offline/timeout -> "unconfirmed"; duplicate clicks and stale results ignored; the old workspace never returns; re-authentication gets a fresh epoch. Files: `auth/logout.ts` (new), `auth/authState.ts`, `auth/useAuthController.ts`, `RealApp.tsx`, small `AppShell`/`AppContext` cleanup, tests, browser journey.
 - Unchanged: `apps/api`, `packages/*`, migrations, cookie/CSRF/Origin, CSP, fixture-only boundary.
 
 ### Evidence
+
 - Local at `f2f7fd8`: lint, format, typecheck, build, bundle scan, profile validator pass; 390 tests pass (187 PostgreSQL-only skipped locally, unchanged code, run in Stack CI); mutation controls fail the new tests as described in the task.
 - Real browser journey 116/116 (`design/evidence/NMI-UI-01C1/QA-RESULTS.md`; rerun: `pnpm --filter @nmi/web build && node design/evidence/NMI-UI-01C1/run-auth-journey.mjs`, needs Chrome and Homebrew PostgreSQL 16). The pending/failed/timed-out logout cases are SIMULATED by request interception and labelled so; the real 204 logout case is unchanged.
 - Hosted CI at `f2f7fd8`: Project baseline / Common validation PASS (run 40464075823); Stack validation PASS (run 40464075624).
 
 ### Audit focus and limits
+
 - Check that nothing protected renders in `signing-out`, that duplicate/stale/timeout paths cannot re-enter `authenticated`, and that "signed-out" is only ever produced by a 204.
 - Deliberate: the sign-in form is not offered while revocation is pending (at most 10 s). After a timeout the request may still have reached the server; the notice says the server session may remain valid.
 - Not verified: `__Host-` cookie over HTTPS, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. Throttling stays in-memory per process.
 
 ### Next action
+
 Re-audit exact head; owner decides on merge. C2 needs separate authorization.
 
 ## Handoff: NMI-UI-01C2-START
@@ -946,12 +1055,14 @@ Re-audit exact head; owner decides on merge. C2 needs separate authorization.
 - **State:** TASK CONTRACT ONLY; implementation NOT STARTED. Current branch changes only task/STATUS/handoff. No provider call, merge or deployment.
 
 ### Continuation notes
+
 - Use already-implemented `POST /api/invoice-drafts/parse`, backed by Fastify/PostgreSQL operator auth and server-side optional model adapter. Real provider-unconfigured response is `unavailable`; test-only model fakes are simulations, never genuine OpenAI acceptance.
 - Wire only React parse + clarification/manual fallback, typed validated response, in-memory CSRF, cancellation and definitive 401 logout/clear. Keep all other invoice operations synthetic and labelled; preserve C1 immediate sign-out lock and hash/preview isolation.
 - Owner decisions D1–D4 unchanged. PayPal draft smoke authorization exhausted, no new OpenAI/PayPal call authorized; no C3 save/detail wiring.
 - Initial repository handoff is **docs-only**. No validation or CI at the implementation SHA exists yet; Claude must report actual checks once code is added.
 
 ### Next action
+
 Claude implements the active C2 contract on this existing Draft PR #11, validates targeted boundaries and a local real browser/auth/parse path with disposable PostgreSQL and no external provider calls, appends `NMI-UI-01C2-IMPL`, updates STATUS/task/PR and stops for independent exact-head GPT-6 audit.
 
 ## Handoff: NMI-UI-01C2-IMPL
@@ -964,9 +1075,11 @@ Claude implements the active C2 contract on this existing Draft PR #11, validate
 - **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call or C3 work.
 
 ### What changed
+
 Real authenticated composer -> `POST /api/invoice-drafts/parse` with strict response validation, a single-flight cancellable runner, clarification re-parse, failure/manual-fallback notices and 401 session invalidation. Web only; backend, packages and migrations unchanged.
 
 ### Audit focus
+
 1. `parse/api.ts` validation is at least as strict as `invoiceDraftSchema`/`calculateTotals` shapes and fails closed.
 2. No path from a hash, scenario or reducer action reaches a real parse success; the preview never gets `parse`.
 3. Abort, stale and duplicate handling in `parse/runner.ts`; 401 -> `expire(epoch)`; sign-out lock still immediate.
@@ -974,6 +1087,7 @@ Real authenticated composer -> `POST /api/invoice-drafts/parse` with strict resp
 5. Saving, list and PayPal remain visibly synthetic.
 
 ### Not verified
+
 Live OpenAI, PayPal, HTTPS `__Host-` cookie, screen readers, touch, Safari/Firefox, 400% zoom, hosted proxy.
 
 ## Handoff: NMI-UI-01C2-R1
@@ -986,9 +1100,11 @@ Live OpenAI, PayPal, HTTPS `__Host-` cookie, screen readers, touch, Safari/Firef
 - **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call or C3 work.
 
 ### What changed
+
 Parse-response validation now enforces the money domain with the existing BigInt utilities and requires exact canonical totals; the harness health assertion is real. Web validator, tests, evidence harness and docs only.
 
 ### Re-audit focus
+
 1. `parseTotals` rejects every case in the audit (zero quantity, USD three decimals, tax over 100%, inconsistent totals, fractional JPY) and accepts legitimate half-up rounding.
 2. No floating point; the gate does not make browser estimates authoritative.
 3. All four outcomes, 401 expiry, manual fallback and cancellation unchanged.
@@ -1003,9 +1119,11 @@ Parse-response validation now enforces the money domain with the existing BigInt
 - **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call or C3 work.
 
 ### What changed
+
 Test-only fake model and browser journey: the clarification answer must produce a draft with the exact answered due date, and the check is strict. No product code changed.
 
 ### Re-audit focus
+
 1. The fake honours the stated date; the journey asserts `2030-02-01` and still asserts the request body carried the answer.
 2. Negative control observed (87/88 when the fake ignores the answer).
 
@@ -1019,9 +1137,11 @@ Test-only fake model and browser journey: the clarification answer must produce 
 - **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call, C4 or C5 work.
 
 ### What changed
+
 Real Review -> `POST /api/invoice-drafts` (CSPRNG key bound to the exact body, single flight, timeout = uncertain, same-key retry, explicit new key on 409, 401 expiry) and a real saved-invoice page via `GET /api/invoice-drafts/:id` with strict validation and no fixture fallback. Web only; backend, packages and migrations unchanged.
 
 ### Audit focus
+
 1. Key lifecycle: a changed body never inherits a key; an uncertain attempt is only retried with the identical body or abandoned explicitly; 409 needs an explicit new key.
 2. `domain/serverInvoice.ts` + `invoices/api.ts` fail closed (201/200/replayed consistency, exact PayPal object, requested-id match, BigInt totals).
 3. Real mode cannot reach fixtures, simulated saves or simulated PayPal; preview untouched; dashboard samples labelled and unopenable.
@@ -1029,6 +1149,7 @@ Real Review -> `POST /api/invoice-drafts` (CSPRNG key bound to the exact body, s
 5. No customer data in URL/storage/logs; a page reload loses the in-memory record id by design.
 
 ### Not verified
+
 Live OpenAI and PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. The C2 journey was not rerun against this build (its simulated-save wording is superseded).
 
 ## Handoff: NMI-UI-01C3-R1
@@ -1041,9 +1162,11 @@ Live OpenAI and PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safa
 - **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deploy, provider call, C4 or C5 work.
 
 ### What changed
+
 Leaving a pending or uncertain real save now needs an explicit, duplicate-aware decision; real AI Review copy and tab titles no longer claim fixture/simulated behavior; `createdAt` must be a real UTC instant. Web, tests and evidence only.
 
 ### Re-audit focus
+
 1. `RealApp.tsx` Workspace gate + `invoices/leaveGuard.ts`: every leaving path asks; `open-saved` and sign-out are not blocked; dialog wording differs for pending/uncertain.
 2. The key/body are never silently discarded; the same-key retry still replays after dismissed leave attempts.
 3. `isValidInstant` rejects impossible dates and 24:00 for both 201 and GET.
@@ -1059,9 +1182,11 @@ Leaving a pending or uncertain real save now needs an explicit, duplicate-aware 
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Evidence-only change; no production code, merge, deploy, provider call, C4 or C5 work.
 
 ### What changed
+
 One browser-journey assertion made exact (`invCount() === b3`) with a demonstrated negative control; evidence regenerated (116/116).
 
 ### Re-audit focus
+
 1. The assertion cannot pass when an extra invoice row exists (negative control recorded in the task).
 2. `git diff` of the fix touches only `design/evidence/NMI-UI-01C3/`.
 
@@ -1075,9 +1200,11 @@ One browser-journey assertion made exact (`invCount() === b3`) with a demonstrat
 - **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, provider call or C5 work.
 
 ### What changed
+
 New read-only `GET /api/invoice-drafts` (owner-scoped keyset list with filters/search), operator-scoped `GET /api/invoice-drafts/:id`, path-only request logging, a real React dashboard (server-side filters, load-more, page-labelled per-currency cards, honest states, stale protection) and a neutral `opened` saved-invoice state. No migration; payment path untouched; preview unchanged.
 
 ### Audit focus
+
 1. `packages/db/src/invoice-list-store.ts`: owner filter on every query, cursor strictness, keyset predicate, escaping, no N+1; `getOwned` and the route.
 2. `apps/web/src/domain/serverList.ts` and `features/dashboard/*`: fail-closed validation, generation-tagged stale protection, no fixture fallback, per-currency exact sums labelled as page summaries.
 3. Real-mode isolation from the preview; `opened` never claims a save or a replay.
@@ -1085,6 +1212,7 @@ New read-only `GET /api/invoice-drafts` (owner-scoped keyset list with filters/s
 5. Two-operator evidence uses a test-only index drop in disposable databases; the committed schema still allows exactly one operator.
 
 ### Not verified
+
 Live OpenAI/PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. The C2/C3 journeys were not rerun (earlier wording).
 
 ## Handoff: NMI-UI-01C4-R1
@@ -1096,12 +1224,15 @@ Live OpenAI/PayPal, HTTPS `__Host-` cookie, screen readers, real touch, Safari/F
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation and evidence wording only; no production code, merge, deploy, provider call or C5 work.
 
 ### What changed
+
 Privacy wording corrected: the browser navigation URL and browser storage hold no customer data and Fastify logs strip query strings, but the HTTP GET request URL carries the search term in `q`. Deployment prerequisite recorded (proxy/ingress/CDN/access logs must redact the query; untested). The journey's assertion descriptions and the boundary-test title were corrected, one explicit check recording `q` in the request URL was added, and the evidence was regenerated.
 
 ### Owner decision available
+
 Absolute "no customer PII in HTTP request URLs" conflicts with the approved GET contract; a POST-based search would change the API contract and was NOT implemented.
 
 ### Re-audit focus
+
 1. No statement left claims search text is absent from every URL.
 2. The four surfaces are distinguished consistently across task, STATUS, SECURITY.md, ARCHITECTURE.md, PR body and QA.
 3. Existing meaningful checks are unweakened; `git diff` against the audited head shows no change under `apps/*/src` other than a test title.
@@ -1117,15 +1248,18 @@ Absolute "no customer PII in HTTP request URLs" conflicts with the approved GET 
 - **State:** READY FOR INDEPENDENT AUDIT. Security-only; no merge, deploy, provider call or C5-P1 work.
 
 ### What changed
+
 One line of behaviour: `createPayPalDraft` loads the invoice via `drafts.getOwned(invoiceId, operatorId)` before anything else. Plus `apps/api/src/paypal-ownership.pg.test.ts` (13 real-PostgreSQL tests, two test-only operators, fake PayPal) and docs. Provider adapter, mapping, fencing, state machine, reconciliation, idempotency, schema and configuration are untouched.
 
 ### Audit focus
+
 1. The ownership gate is the first data access in `createPayPalDraft`; nothing (operation read, stored PayPal id, reserve/claim, audit, provider) can run for a non-owned invoice.
 2. Route behaviour: identical `404 not_found` for foreign/ownerless/unknown/malformed; `503 paypal_disabled` still precedes everything.
 3. The tests assert unchanged operation rows and counts, zero provider calls, and owner behaviour (replay, reconciliation, 12-way fencing). Negative control: reverting to `drafts.get` fails 7 tests.
 4. `git diff main..HEAD -- apps/api/src/services` is a single-statement change plus a comment.
 
 ### Not verified
+
 Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy. Production allows exactly one operator, so the gate is defense in depth today.
 
 ## Handoff: NMI-UI-01C5-P1-IMPL
@@ -1138,9 +1272,11 @@ Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen re
 - **State:** READY FOR INDEPENDENT AUDIT. No merge, deploy, real provider call or NMI-DEMO work.
 
 ### What changed
+
 `apps/web` only: typed `createPayPalDraft` transport with strict validation, single-flight runner (timeout = uncertain), a pure panel state machine, `PayPalDraftPanel` on the real saved invoice with an explicit confirmation dialog, durable GET read-back and a read-only Check status, plus copy corrections. A detail-validator bug (error codes containing `:`) found by the journey is fixed. Backend, provider adapter, schema, state machine and configuration are untouched.
 
 ### Audit focus
+
 1. A POST is reachable only from the open dialog's confirm; cancel/Escape/mount/reload/navigation never POST; double confirm = one request.
 2. The success validator (exact shape, `201<->replayed:false`, `200<->replayed:true`, `status:"DRAFT"`) and fail-closed handling of unexpected status/body combinations.
 3. Uncertain outcomes: never failure/success, `unverified` blocks create until a read-only re-read, no blind retry for `mismatch`, no re-probing after `paypal_disabled`.
@@ -1149,6 +1285,7 @@ Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen re
 6. The journey's PayPal is a test-only fake (`design/evidence/NMI-UI-01C5-P1/test-api-server.ts`), never imported by production.
 
 ### Not verified
+
 Real PayPal Sandbox and OpenAI (never called; a real call needs separate owner authorization and a strict call budget), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction. No deployment or public demo exists.
 
 ## Handoff: NMI-UI-01C5-P1-R1
@@ -1161,15 +1298,18 @@ Real PayPal Sandbox and OpenAI (never called; a real call needs separate owner a
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Frontend, tests and evidence only; no merge, deploy, real provider call, budget reset or demo phase.
 
 ### What changed
+
 Every PayPal draft POST answer now fails closed until a read-back bound to that confirmation (`seq`) has produced the invoice object being shown; failed, malformed, stale or contradicting reads never unlock creation; `mapping-refused`/`disabled`/`not-found`/`forbidden`/`bad-request` lock creating for the view; eligibility is evaluated against the shown invoice in both the button and the reducer; the post-POST read is always a fresh GET.
 
 ### Re-audit focus
+
 1. `paypalPanel.ts`: `result` always sets `unverified`; `canOfferCreate(invoice, ui)`/`awaitingReadback`; `readback` seq binding and the `created` id cross-check; `open-confirm` re-check.
 2. `PayPalDraftPanel.tsx`/`SavedDetailScreen.tsx`: the read-back captures `seq` at answer time, uses `refresh({fresh:true})`, and returns the exact invoice object.
 3. Tests: one pre-existing reducer test asserted the defect and was replaced by its opposite; everything else was kept or tightened (554 web tests; 22 new regression tests; 4 unit mutation controls and 1 browser-level control killed).
 4. Journey 102/102 including delayed/failed/malformed GET after a valid POST (GET manipulation is simulated; the POSTs are real against the fake provider).
 
 ### Not verified
+
 Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen readers, real touch, Safari/Firefox, 400% zoom, hosted proxy/log redaction.
 
 ## Handoff: NMI-DEMO-R0-IMPL
@@ -1182,9 +1322,11 @@ Real PayPal Sandbox and OpenAI (never called), HTTPS `__Host-` cookie, screen re
 - **State:** READY FOR INDEPENDENT AUDIT. Documentation, evidence and test-only tooling; NO product change, merge, deployment, publication, Devpost submission or real provider call.
 
 ### What changed
+
 README reconciled with the implemented product; judge runbook (clean-clone tested) with SIMULATED and own-credentials modes; deployment decision (recommends local setup); real-provider acceptance plan (NOT executed); video script, Devpost draft, submission checklist and release-blocker register; test-only SIMULATED evaluation launcher and a final end-to-end journey (32/32); a guard test that the fakes cannot reach production; stale-copy assertions in the C2/C3/C4 journeys updated to the approved current behaviour and rerun (88/88, 116/116, 79/79).
 
 ### Audit focus
+
 1. README/STATUS/Devpost wording: implemented vs real-provider-verified vs not implemented; no mock evidence presented as real; no invented metrics, sponsorship or verification.
 2. Runbook commands match the repository (migration loop, provisioning, start commands, origins) and the claim that they were run from a clean clone.
 3. The SIMULATED launcher cannot be reached from production (`no-fake-provider-switch.test.ts`; `server.ts` unchanged) and refuses without opt-in, in production and for non-Sandbox hosts.
@@ -1192,6 +1334,7 @@ README reconciled with the implemented product; judge runbook (clean-clone teste
 5. The Devpost rules page could not be fetched (HTTP 403); requirements come from the owner's brief and must be verified by the owner.
 
 ### Not verified
+
 Real OpenAI and PayPal (never called in R0), Docker path of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
 ## Handoff: NMI-DEMO-R0-R1
@@ -1203,15 +1346,18 @@ Real OpenAI and PayPal (never called in R0), Docker path of the runbook, HTTPS `
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no application, database, provider, security, test-harness or QA-evidence change; no merge, deployment, publication, Devpost submission, provider call or budget reset.
 
 ### What changed
+
 Privacy wording made precise (navigation URL/history and persistent storage: no customer data; search text in the HTTP GET `q` parameter; Fastify strips query strings; proxy/ingress/CDN redaction unverified and a prerequisite) in the Devpost draft, README and checklist; judge runbook scoped honestly (Mode A + local PostgreSQL tested; Mode B and Docker untested), invalid shell placeholders replaced with valid secure instructions, and a fail-fast migration loop that was tested in bash and zsh (a first `set -e` version was found not to stop and was replaced); checklist counts corrected (C2=3, C3=5, C4=2); Devpost rules status updated to the independently verified items only.
 
 ### Re-audit focus
+
 1. No remaining public statement implies no customer data in any URL; the `q` caveat and the proxy-log prerequisite are visible in the Devpost draft, README, checklist and deployment decision.
 2. Runbook code blocks contain no unquoted angle-bracket placeholders or sample secrets; the migration block stops at the first failure, keeps journal order and checks the count of seven.
 3. Rules claims are limited to what was independently verified; nothing else is overstated.
 4. `git diff` against the audited head touches only documentation files.
 
 ### Not verified
+
 Real OpenAI and PayPal (never called), Docker path and Mode B of the runbook, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
 ## Handoff: NMI-DEMO-R0-R2
@@ -1223,15 +1369,18 @@ Real OpenAI and PayPal (never called), Docker path and Mode B of the runbook, HT
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no executable code, SQL migration, provider, test harness or historical QA-evidence change; no merge, deployment, publication, Devpost submission, provider call or budget reset.
 
 ### What changed
+
 The runbook's migration snippet now exits with the migration result (final `(exit "$rc")`), keeping the journal-order loop and the seven-entry count check; the README quick start chains migrations and operator provisioning with `&&` (a failed migration never reaches provisioning), adds the count check, and replaces the literal operator-password placeholder with a generated credential; a trailing `#` comment that broke interactive zsh was removed.
 
 ### Re-audit focus
+
 1. The final statement of the runbook block preserves a nonzero status and does not close an interactive shell; success still exits 0 with the success message only on success.
 2. README: no pasteable placeholder password; provisioning only after all seven migrations; the start commands are a separate block gated by prose.
 3. Verification claims match what was run: blocks extracted from the documents and executed in bash and zsh, script and interactive, for success, unreachable database and conflicting schema; later migrations never ran after a failure.
 4. `git diff` against the audited head touches only documentation files.
 
 ### Not verified
+
 Real OpenAI and PayPal (never called), the Mode B and Docker parts of the runbook, other operating systems/shells, HTTPS `__Host-` cookie, hosted proxy/log redaction, screen readers, real touch, Safari/Firefox, 400% zoom. No hosted deployment exists.
 
 ## Handoff: NMI-AG1-START
@@ -1269,9 +1418,11 @@ Official Devpost rules allow AG Grid sponsor-prize consideration for use of **an
 - **State:** READY FOR INDEPENDENT AUDIT. No merge, deployment, publication, Devpost submission, real OpenAI/PayPal call or provider-budget reset; no change to `apps/api`, `packages/db`, migrations, PayPal/OpenAI code, session/CSRF rules or the draft API contract.
 
 ### What changed
+
 Genuine AG Grid Community 36.2.0 renders the real dashboard's invoice list (new `InvoiceGrid.tsx`, `invoiceGridSort.ts`, `app.css` theme mapping), UUID row ids, exact BigInt currency-first sort, resizable columns, native View buttons, narrow-screen column order and explicit keyboard handling; the strict CSP is unchanged (legacy CSS theme, text-glyph icons). Journeys C4, C5-P1 and R0 were adapted to AG Grid selectors without weakening assertions and a new NMI-AG1 journey was added.
 
 ### Audit focus
+
 1. The diff touches only `apps/web`, `pnpm-lock.yaml`, `design/evidence/` and documentation; the dependency pair is the only runtime addition and is pinned exactly; no Enterprise/Studio/license-key code (see the boundary test).
 2. The CSP in `apps/web/vite.config.ts`/`index.html` is unchanged and the production CSS contains no data-URI font; the journey asserts no CSP violation and no injected `<style>`.
 3. Money: `compareTotal` is BigInt and currency-first; the cards still use `summarize` over loaded rows only; no mixed-currency sum exists.
@@ -1280,6 +1431,7 @@ Genuine AG Grid Community 36.2.0 renders the real dashboard's invoice list (new 
 6. Keyboard design (header walk, one tab stop per View button, capture-phase Tab handler) and its stated limitations.
 
 ### Not verified
+
 Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), real touch devices, Safari/Firefox, a real browser zoom at 400%, HTTPS `__Host-` cookie, hosted proxy/log redaction, production deployment; bundle size grew (JS +709 kB, +203 kB gzip; CSS +279 kB) and is not mitigated.
 
 ## Handoff: NMI-AG1-R1
@@ -1292,12 +1444,14 @@ Real OpenAI and PayPal (never called), screen readers (VoiceOver/NVDA/JAWS), rea
 - **State:** READY FOR INDEPENDENT RE-AUDIT. No merge, deployment, publication, Devpost submission, real OpenAI/PayPal call or budget reset; no server, API-contract, migration, payment or security change.
 
 ### Re-audit focus
+
 1. MAJOR-1: `InvoiceGrid.tsx` has no `suppressCellFocus`, timer or manual focus code; Tab/Shift+Tab leave the grid via `tabToNextHeader`/`tabToNextCell`; arrow navigation, Enter-sort, and Enter/Space on the Actions cell via `onCellKeyDown`; the journey's arrow-key checks and the negative control (14 failures with `suppressCellFocus`).
 2. MINOR-1: `#dash-sort-note` copy and `aria-describedby`.
 3. MINOR-2: `MAX_LOADED_ROWS = 200`, reducer refusal, `#dash-limit` footer, search reaching older invoices, the 600-invoice evidence; confirm the owner accepts the 200-row UX limit and the reasoning for keeping rows un-virtualised.
 4. Diff touches only `apps/web`, `design/evidence/NMI-AG1` and documentation; C4/C5-P1/R0 assertions unchanged.
 
 ### Not verified
+
 Screen readers, real touch, Safari/Firefox, real 400% zoom, keyboard column resizing, hosted HTTPS/proxy, any real provider; bundle size unmitigated.
 
 ## Handoff: NMI-DEMO-R1-START
@@ -1330,6 +1484,7 @@ Official hackathon rules: https://paypalaihackathon.devpost.com/rules (deadline 
 - **State:** READY FOR INDEPENDENT AUDIT. No product/provider code, lockfile, migration, CI or evidence change; no OpenAI/PayPal request; no credential handled; no budget reset; PayPal drafting stays disabled; nothing merged, deployed, uploaded or submitted.
 
 ### Audit focus
+
 1. Diff is documentation only (`docs/`, `tasks/`).
 2. Nothing implies authorization: all three requests read NOT AUTHORIZED; the PayPal 1/1 budget is stated exhausted and not reset; Request B is a separate one-create permit with no retry; Gate C does not create another draft.
 3. Facts: model page and pricing (`gpt-6-luna`, Responses, Structured Outputs, USD 0.10/0.50, medium default reasoning) and the two static findings (`maxRetries: 1`, output cap vs reasoning) match `packages/ai/src/client.ts` and `apps/api/src/config.ts`; PayPal SQL column names match migration 0005/0000; no in-repo create counter is stated honestly.
@@ -1337,6 +1492,7 @@ Official hackathon rules: https://paypalaihackathon.devpost.com/rules (deadline 
 5. Operator commands use silent prompts, keep OpenAI unset for B and PayPal unset for A, and tear down.
 
 ### Not verified
+
 Everything provider-side: model entitlement/pricing on the owner's account, any real response, token usage, PayPal behaviour for the new invoice; commands were reviewed statically (the OpenAI and PayPal steps cannot be dry-run without credentials).
 
 ## Handoff: NMI-DEMO-R1-R1
@@ -1348,6 +1504,7 @@ Everything provider-side: model entitlement/pricing on the owner's account, any 
 - **State:** READY FOR INDEPENDENT RE-AUDIT. Documentation only; no executable code, test, lockfile, migration, CI or evidence change; no OpenAI/PayPal request; no credential; no budget reset; Render not provisioned; nothing merged, deployed, uploaded or submitted. Gates A, B and C remain NOT AUTHORIZED; **Gate B is BLOCKED**.
 
 ### Re-audit focus
+
 1. MAJOR-1: acceptance doc 5.0 and Request B state the confirmed defect (`call()` resends after 401; `createDraftInvoice` does not opt out; `client.test.ts` expects two POSTs), mark Gate B BLOCKED, specify the separate fix (no create resend after 401; read-only refresh kept; fail closed, no recreate; one 401 = one create POST) and the unblock conditions; the fix is **not** implemented here; the earlier "no automatic re-create" statement is corrected.
 2. MINOR-1: three attempts vs up to six wire requests; A-strict needs a separate audited `maxRetries: 0` fix, otherwise explicit up-to-six authorization with spend limit and provider-reported count.
 3. MINOR-2: Gate C sequence no longer reopens the dropped Gate B invoice; default read-only PayPal dashboard view labelled RECORDED EARLIER; preservation plan only as an owner option; no implicit invoice creation.
@@ -1355,6 +1512,7 @@ Everything provider-side: model entitlement/pricing on the owner's account, any 
 5. Wording cannot be read as an authorization; evidence templates carry no pre-filled results.
 
 ### Not verified
+
 Any provider-side behaviour; the PayPal fix itself (not written); the preservation plan (never executed); real-shell behaviour beyond the stubbed bash/zsh runs on macOS.
 
 ## Handoff: NMI-DEMO-R1-FIX-B1-START
@@ -1394,12 +1552,14 @@ No schema/DB store changes, app user interface or API/auth contract, OpenAI retr
 - **State:** READY FOR INDEPENDENT AUDIT. No provider call, credential, budget reset, merge, deployment, Render provisioning, upload or Devpost submission. Gate B **BLOCKED** until audit PASS, owner-authorized squash merge, a documentation step citing the merged commit, and a NEW Request B. Authorization answers unchanged (all NOT AUTHORIZED).
 
 ### Audit focus
+
 1. `packages/paypal/src/client.ts`: required `effect` parameter, resend only for `"read"`, create 401 -> unknown, other classifications unchanged, OAuth preflight unchanged, allow-list untouched.
 2. Service/store untouched; the 401 -> unknown path reaches `markUnknown` and later read-only reconciliation (see the PostgreSQL test), and `rejected` re-claim semantics are unchanged for other statuses.
 3. Tests count wire-level create POSTs through a deterministic fake transport; the negative controls (`negative-control.md`) genuinely fail; foreign-operator isolation incl. zero token requests.
 4. Docs do not change any authorization answer, mark Gate B passed or imply provider evidence.
 
 ### Not verified
+
 Real PayPal behaviour (never called); a genuine PayPal 401 on create; the live wire-count evidence for Gate B (to be defined after merge).
 
 ## Handoff: NMI-DEMO-R1-FIX-B1-R1
@@ -1411,9 +1571,11 @@ Real PayPal behaviour (never called); a genuine PayPal 401 on create; the live w
 - **State:** READY FOR RE-AUDIT. Docs only: no executable code, test, schema or authorization-answer change; no provider call; no merge, deployment, budget reset or Devpost submission. Gate B BLOCKED.
 
 ### What was corrected
+
 Stale current-tense statements ("the client can resend", "code not yet started", "implements the bounded FIX-B1" as the next action) in STATUS, acceptance doc 5.0, the owner-authorization form and checklist blocker 18 now separate (1) the **historical** resend defect on `main` before PR #19, (2) the **corrected implementation on Draft PR #19** (`90aba259ef0f6643f428d3bd9b7bb2e1d16cd230`, not audited, not merged) and (3) the Gate B unblock conditions: audit PASS, owner-authorized merge, a documentation step defining the live wire-count procedure, and a fresh written Request B. STATUS "Next action" now starts with the re-audit.
 
 ### Re-audit focus
+
 No remaining statement presents the defect as the current state of the branch or the fix as unwritten/merged/audited; no authorization answer changed; the diff since `ad6de6c` is documentation only.
 
 ## Handoff: NMI-DEMO-R1-B-WIRE-START
@@ -1428,7 +1590,7 @@ No remaining statement presents the defect as the current state of the branch or
 
 Reconcile all outdated references to PR #19 being unmerged. Specify and offline validate a **secret-safe server-to-PayPal create egress counter**, not a browser-to-Fastify counter or PostgreSQL `attempts=1`. Recommended Node Undici `undici:client:sendHeaders` diagnostic event, exact Sandbox method/path allow-list, aggregate-only output, no logging headers or bodies, no proxy/MITM, outside-repo temporary owner-only preload. **The event occurs before socket write; it proves a local send attempt, NOT confirmed PayPal receipt.** Corroborate with the N→N+1 Sandbox DRAFT result and durable state. Provide offline loopback positive and double-send negative controls without a real PayPal request, and prove observer reaches the actual Fastify process started by pnpm/tsx; otherwise mark as still BLOCKED and propose separate approved implementation. Preserve `PAYPAL_DRAFTS_ENABLED=false` and the historical exhausted 1/1 create budget.
 
-Update acceptance §5.0–5.4, unanswered Request B, evidence Template B, checklist, task, STATUS, handoff and PR body as the real evidence becomes *prepared* (not real-PASS). Do not touch Gate A/C approval answers or execute Gate B. Run applicable doc checks and mandatory hosted CI. Report final HEAD, checks and limitations and request exact-head GPT-6 audit. Do not merge.
+Update acceptance §5.0–5.4, unanswered Request B, evidence Template B, checklist, task, STATUS, handoff and PR body as the real evidence becomes _prepared_ (not real-PASS). Do not touch Gate A/C approval answers or execute Gate B. Run applicable doc checks and mandatory hosted CI. Report final HEAD, checks and limitations and request exact-head GPT-6 audit. Do not merge.
 
 ### Security and scope
 
@@ -1443,6 +1605,7 @@ No code, scripts, tests, dependencies, CI, schema, database, credentials, produc
 - **State:** READY FOR INDEPENDENT AUDIT. Markdown only; no repository code, script, test, dependency, CI or schema change; no PayPal/OpenAI request; no credential; no budget reset; no merge, deployment, Render, upload or Devpost action. Gate B BLOCKED/NOT AUTHORIZED; Gates A/C NOT AUTHORIZED.
 
 ### Audit focus
+
 1. The observer source in `docs/NMI-DEMO-R1-B-WIRE-COUNT.md` section 3: reads only `request.origin/method/path`; classification exactness; one origin literal; no env override; summary fields; signal handling; hash `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` (the code fence hashes to it; Prettier is bypassed for the fences).
 2. Reproduce `docs/NMI-DEMO-R1-B-WIRE-OFFLINE-TESTS.md` (`run-all.sh`) on the auditor's machine, especially T3/T4 (unmodified observer + production client at the wire), T5 negative control and T6 (actual pnpm/tsx server, three shutdown shapes).
 3. Operator blocks are shell-safe (no inline comments; bash/zsh script and interactive were executed from the document) and require: hash check, proxy check, listening-PID match, zero-count snapshot before the single click, Ctrl-C shutdown, per-PID summary reading.
@@ -1450,6 +1613,7 @@ No code, scripts, tests, dependencies, CI, schema, database, credentials, produc
 5. No authorization answer changed; Gate B still blocked; browser/DB/dashboard counts not substituted.
 
 ### Not verified
+
 Anything against the real PayPal Sandbox; Linux/Windows; other Node majors; independent reproduction.
 
 ## Handoff: NMI-DEMO-R1-B-WIRE-R1
@@ -1460,11 +1624,13 @@ Anything against the real PayPal Sandbox; Linux/Windows; other Node majors; inde
 - **State:** READY FOR RE-AUDIT. Only the Markdown-embedded offline runner/tests and records changed; observer source and SHA-256 `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` unchanged; no repository code, script, test or authorization-answer change; no provider call; Gate B BLOCKED/NOT AUTHORIZED.
 
 ### Re-audit focus
+
 1. Extract the files from `docs/NMI-DEMO-R1-B-WIRE-OFFLINE-TESTS.md` and the preload from the WIRE-COUNT document; confirm the hash; run `./run-all.sh` and `./runner-selftest.sh` (expected `ALL DONE (8 ...)` and `11/11`).
 2. Confirm every critical check is a hard failure: T0 hash and fixture, T1 `20/20`, T2 `EPERM`, T3/T3b/T4/T5 JSON assertions with the independent server witness and client outcome, T6 `N/N` and no `FAIL`, assertion-count guard, `set -euo pipefail`, no `${VAR:?}`.
 3. Review the 11 injections for realism (each changes the file it claims to) and try your own.
 
 ### Not verified
+
 Real PayPal behaviour, other platforms, independent reproduction.
 
 ## Handoff: NMI-DEMO-R1-B-WIRE-R2
@@ -1475,6 +1641,7 @@ Real PayPal behaviour, other platforms, independent reproduction.
 - **State:** READY FOR RE-AUDIT. Observer source and SHA-256 `004f3dbf092cb8b94990b0fed2dc8cbe8136021f5da765a27974355ae005f94e` unchanged; only the Markdown-embedded runner/self-test files (T2) and status wording changed; no repository code, script, test, dependency or authorization-answer change; Gate B BLOCKED / NOT AUTHORIZED.
 
 ### Re-audit focus
+
 Runner T2 makes no probe outside the sandbox; S5 is the only unsandboxed run (one connect to non-routable `192.0.2.1`); Request B / acceptance banner no longer say "NOT OFFLINE VALIDATED / DRAFT" and state the true status; re-run `./run-all.sh` (8 assertions) and `./runner-selftest.sh` (11/11) from the extracted files.
 
 ## Handoff: NMI-RENDER-P1-START
@@ -1668,9 +1835,9 @@ No production code, database schema/grant, provider, UI or CI-policy changes wit
 ## Handoff: NMI-NDG-02-C2-IMPL-01
 
 - **From:** GPT-6, owner-approved design kickoff. **To:** C2 implementation agent and independent reviewer. **Draft PR:** #29; current source HEAD `4158bad54c3e435f9768ef267124c13584a8e330` before approval-status docs update; base main `9f23ef40dd8a7b8b99303cdd4ee3659500d86a35`.
-- **Owner approval:** C2 visual/flow approved 2026-10-31; deterministic command → verified invoice and date/time → explicit candidate selection → prefilled *editable* existing scheduler → manual Save only. No automatic writes, payment/send operations, cloud provider calls or deployment.
+- **Owner approval:** C2 visual/flow approved 2026-10-31; deterministic command → verified invoice and date/time → explicit candidate selection → prefilled _editable_ existing scheduler → manual Save only. No automatic writes, payment/send operations, cloud provider calls or deployment.
 - **Implementation next:** Follow `tasks/NMI-NDG-02-C2-natural-language-followup.md`, preserve C1 and PR #26/#28 protections, use existing server-scoped invoice search and manual scheduler; fail closed on ambiguity, unsupported date/time/zone and browser lifecycle changes. Focused tests → no-provider disposable DB browser QA → required hosted CI → independent exact-head audit → owner merge decision.
-- **Separate V1 decision:** Owner also approved *on-device-only* optional voice input, but it is a separate bounded follow-on **after** C2 functional acceptance. Never implement unverified/default browser cloud recognition, OpenAI STT, auto-submission or audio egress.
+- **Separate V1 decision:** Owner also approved _on-device-only_ optional voice input, but it is a separate bounded follow-on **after** C2 functional acceptance. Never implement unverified/default browser cloud recognition, OpenAI STT, auto-submission or audio egress.
 
 ## Handoff: NMI-NDG-02-C2-REVIEW-01
 
@@ -1740,20 +1907,24 @@ Verify both required hosted workflows on the documentation follow-up's live PR #
 - **State:** scoped physical Chrome QA PASS; documentation evidence is prepared for commit/push; required CI must pass at the resulting live PR head before audit. Keep Draft.
 
 ### Completed
+
 - Recorded exact Chrome/macOS versions, direct local `en-US` availability and policy check, permission prompt/denial, Stop/Back/Close/Escape/navigation/sign-out/401 cleanup, and redacted Network observation in `design/evidence/NMI-NDG-02-V1/QA-RESULTS.md`.
 - Preserved the owner's synthetic transcription/editability/no-app-egress report and clearly separated it from independent observations. No speech, transcript, screenshot, credential, or HAR was retained. No providers were called.
 
 ### Validation
+
 - Physical scoped QA — PASS; local-model install and blocked-policy simulation — NOT RUN.
 - Application code unchanged; `git diff --check` — PASS.
 - Required hosted Project Baseline and Stack workflows — run on the pushed evidence/docs SHA before independent acceptance audit.
 
 ### Continuation notes
+
 - Exact app SHA tested: `a90a19b2ba912f4a0a85ef8ddbf389570090b992`. Evidence contains owner-reported and independently observed results with explicit attribution.
 - Restore/reset localhost mic permission to Ask(default) after each check; it was restored. Disposable DB/API/Vite stack and synthetic credentials are shut down/removed before handoff.
 - No merge, deployment, provider call, customer data, or application-code change.
 
 ### Next action
+
 Commit and push the QA evidence/docs to existing Draft PR #30, verify both required hosted checks at the new exact HEAD, then stop for independent acceptance re-audit.
 
 ## Handoff: NMI-PROTOTYPE-10D-A1-IMPLEMENT-01
@@ -1832,7 +2003,6 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** exact Sandbox allowlist unchanged; reconciliation remains read-only; create remains fenced and at most once. `PAYPAL_DRAFTS_ENABLED=false`; one-create authorization exhausted.
 - **Next:** run both required hosted workflows on the final PR SHA, confirm PR #35 remains Draft, and stop for independent exact-HEAD re-audit. No provider, migration, deployment, or merge.
 
-
 ## Handoff: NMI-PROTOTYPE-10D-A4-START
 
 - **Task:** `tasks/NMI-PROTOTYPE-10D-A4-prototype-readiness.md`; evidence: `design/evidence/NMI-PROTOTYPE-10D-A4/QA-RESULTS.md`.
@@ -1872,7 +2042,6 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** A4 harness, test and docs only; no application, schema, dependency, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final PR HEAD, keep Draft, independent re-audit.
 
-
 ## Handoff: NMI-PROTOTYPE-10D-A5-D-START
 
 - **Task:** `tasks/NMI-PROTOTYPE-10D-A5-ag-studio-integration.md`; contract `docs/NMI-PROTOTYPE-10D-A5-AG-STUDIO-PLAN.md`.
@@ -1892,7 +2061,6 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Not verified:** AG Studio rendering/theming/accessibility/watermark/licence behavior (previews are not Studio renders); physical device, Safari/Firefox, assistive technology.
 - **Safety:** no package, dependency, application, schema, licence-key, provider, owner-DB, Render, deploy or merge change. Synthetic data only.
 - **Next:** owner decides Q1-Q6 in the spec and approves or requests changes. Only after approval, a separately scoped A5-I1 local implementation Draft PR. Both hosted workflows on the final head of this PR.
-
 
 ## Handoff: NMI-PROTOTYPE-10D-A5-D-OWNER-APPROVAL-01
 
@@ -1924,7 +2092,6 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **Safety:** no production code, AG Studio package, licence key, provider, owner-DB, Render, deploy or merge change.
 - **Next:** both hosted workflows on the final head, independent re-audit, owner squash-merge decision, then separately scoped A5-I1.
 
-
 ## Handoff: NMI-PROTOTYPE-10D-A5-I1-START
 
 - **From / to:** owner approved A5-D + audit PASS and squash merge → A5-I1 implementation agent (real AG Studio runtime).
@@ -1954,7 +2121,6 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **MINOR-2 fixed:** `StudioPanel.tsx` badge and `data-studio="active"` now derive from actual rendered Studio widgets (ready, module present, chart-safe currency). Over-limit shows the exact daily table and "Chart not drawn" with `data-studio="fallback"` and no badge; switching to a safe currency restores badge and charts.
 - **Tests:** new `StudioFallback.test.tsx` (4, happy-dom, licensed loader and licence fetch stubbed): outer-chunk rejection, healthy control, huge fixture with tab switching, single-currency all-huge. Control: the 4 fail on the pre-fix code (the file also needs the new `StudioSlotWith` export, so MINOR-2 failure there is partly structural). `pnpm validate` passed (1101 tests). The 96-check browser matrix was NOT rerun (changes do not touch its proven behaviours); no browser run of the outer-chunk failure was added.
 - **Unchanged:** design, analytics API, licence bridge, build guard. No provider call, owner DB, Render, deploy or merge.
-
 
 ## Handoff: NMI-RENDER-P3-25-BUDGET-APPROVAL-PREP
 
@@ -1997,7 +2163,7 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 ## Handoff: NMI-RENDER-P4-FIX1-01
 
 - **Task / PR:** `tasks/NMI-RENDER-P4-RELEASE-READINESS.md`; Draft [#40](https://github.com/mrdzyn/nudgemyinvoice/pull/40). **From / to:** implementation → independent focused re-audit. **Starting SHA:** `ddac9155d0210bd93f7cb503b6734e5838f18a5e`.
-- **MAJOR-1 fixed:** `release-preflight source` now reads the CURRENT `main` and `release/nmi-render-judges-2026` tips with `git ls-remote --exit-code` (never local tracking refs); the release branch is mandatory (no `--release-ref`); remote failure/incomplete answer fails closed; ancestry is judged against the fresh main tip (missing object ⇒ fail). 
+- **MAJOR-1 fixed:** `release-preflight source` now reads the CURRENT `main` and `release/nmi-render-judges-2026` tips with `git ls-remote --exit-code` (never local tracking refs); the release branch is mandatory (no `--release-ref`); remote failure/incomplete answer fails closed; ancestry is judged against the fresh main tip (missing object ⇒ fail).
 - **MINOR-1 fixed:** every git call is anchored to `git rev-parse --show-toplevel`, so the lockfile check targets the root `pnpm-lock.yaml` from `apps/api`; a failed `git status` no longer looks clean. P4 browser JSON `generatedBy` corrected.
 - **Tests:** 53 in `release-preflight.test.ts` (11 new CLI/remote cases) against a disposable bare remote: pinned pass (root and apps/api cwd), stale tracking ref fails after the remote moves, stale main ancestry fails until fetched, absent/unknown branch and unreachable remote fail, HEAD mismatch / dirty / off-main each fail, tampered root lockfile fails from apps/api. Full browser/DB drills not rerun (unchanged code paths).
 - **Scope held:** no Render, release branch, deploy, provider call, key handling, budget change or merge during the original P4-FIX1 implementation.
@@ -2106,14 +2272,14 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 ## Handoff: NMI-POSTMERGE-41-43-02
 
 - **Task / branch:** NMI-POSTMERGE-41-43-01 audit fixes; same branch `docs/nmi-postmerge-41-43`, same Draft PR #44. **From / to:** implementation agent → **focused re-audit** of audit comment 6662478420 (PARTIAL at `d41af19`).
-- **DOC-01:** `docs/NMI-RENDER-P4-RELEASE-READINESS.md`. Old procedural text at §header, §2.1 and §13 is labelled *historical*. G2 is marked CLOSED (#40 merged `8cc2f4d`), noting that the P4 evidence does not cover `0008`. P5 supersession now records #42 merged. G1 and G4–G8 stay open, and no release SHA is selected.
+- **DOC-01:** `docs/NMI-RENDER-P4-RELEASE-READINESS.md`. Old procedural text at §header, §2.1 and §13 is labelled _historical_. G2 is marked CLOSED (#40 merged `8cc2f4d`), noting that the P4 evidence does not cover `0008`. P5 supersession now records #42 merged. G1 and G4–G8 stay open, and no release SHA is selected.
 - **DOC-02:** the P5 release doc §5 records owner acceptance via the #42 merge, and keeps Safari/Firefox/device/screen-reader/zoom QA as not performed. The STATUS NMI-FUP-01 line now gives eight migrations at the time and nine now.
 - **Unchanged:** Markdown only, with no other content changed. No merge, deploy or provider action.
 
 ## Handoff: NMI-P7-START-01
 
 - **Task / branch:** `tasks/NMI-P7-RELEASE-READINESS-REFRESH.md`; `phase-7/nmi-release-readiness`, created from owner-merged `main@7c56b078eb997744fd1d9bdb7668114f490171c7`. **From / to:** owner/orchestrator kickoff → bounded P7 implementation agent, then independent exact-HEAD review.
-- **Authorization:** owner asked to *start P7*; safe repository changes and local/synthetic/disposable validation only. No deploy, billing, infrastructure, live OpenAI/PayPal, sending, release SHA, merge or publication.
+- **Authorization:** owner asked to _start P7_; safe repository changes and local/synthetic/disposable validation only. No deploy, billing, infrastructure, live OpenAI/PayPal, sending, release SHA, merge or publication.
 - **Four implementation slices:** P7-A close both Codex P2 Nudgey/queue UI findings with regression coverage; P7-B add explicit default-off `NUDGE_AI_DRAFTING_ENABLED` release-preflight guard; P7-C new PG16 recovery proof through migration `0008` and `invoice_nudges` runtime grants (old P4 26/26 remains historical); P7-D evidence, current docs, both exact-HEAD CI workflows and independent audit.
 - **State:** contract and STATUS updated, **no P7 application implementation or recovery drill has yet been run**. Existing P4 G1 and G4–G8 release gates and provider Gates A/B/C remain unapproved.
 - **Next:** implement the four slices on this **same Draft PR** without duplicating branches, then hand off the exact SHA and actual test results. Only owner approval permits eventual squash merge; no deployment is implied.
@@ -2281,22 +2447,26 @@ Commit and push the QA evidence/docs to existing Draft PR #30, verify both requi
 - **State:** documentation correction submitted for independent review; no release authorization.
 
 ### Completed
+
 - Corrected P1 manual Render PostgreSQL journal/migration range to `0000`–`0008`, including `0008_mushy_zarek` (`invoice_nudges`) before runtime role grants.
 - Made the documented migration loop stop on failure instead of using `|| break`, and required an `invoice_nudges` existence check prior to runtime grants. No database command was executed.
 - Recorded that owner selected Hobby and retained the $25 eligible-credit ceiling, **not** an executable independent teardown fallback or an authorization to waive G1.
 
 ### Validation
+
 - Verified the exact migration tag against `packages/db/migrations/meta/_journal.json` and its tracked SQL file (read-only): PASS.
 - Documentation file updates and Draft PR created; local full test suite NOT RUN.
 - Required hosted CI: PENDING at handoff creation; verify exact final PR head before audit.
 
 ### Continuation notes
+
 - G1/G4/G5/G6/G7 remain OPEN; G8 continues, live provider Gates A/B/C NOT AUTHORIZED.
 - Render Hobby prohibits team members (Render docs). G1's executable non-owner fallback is not met; a future owner-approved and independently audited exception or feasible alternative is required before G1 closure.
 - G5 Hobby platform request-log residual-risk acceptance and G7 AG Studio external package/hosted-use rights are still owner-controlled; no choice was inferred.
 - No provisioning, billable resources, migrations, release SHA/branch, deployment, secrets, judge URL, or deletion.
 
 ### Next action
+
 Independently audit PR #47's docs-only migration correction and exact-head hosted CI; return findings for the owner's explicit merge decision. Do not treat this PR as G1 closure or deployment authority.
 
 ## Handoff: NMI-G1-HOBBY-EXC-01
@@ -2310,21 +2480,25 @@ Independently audit PR #47's docs-only migration correction and exact-head hoste
 - **State:** **PROPOSED, NOT ADOPTED.** Existing G1 D4 independently executable fallback rule still governs; no Render resource may be provisioned by this task.
 
 ### Completed
+
 - Recorded the owner's 2026-11-06 permission to **prepare** a limited owner-only Hobby D4 exception; did not infer final exception ratification, G5/G7 decision, budget increase or deployment authority.
 - Drafted `docs/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md` defining the Hobby one-member limitation, possible involuntary charges past the $25 approved ceiling if the owner is unavailable, non-executable reminders, controls/checkpoints and separate fresh deletion authorization.
 - Added a status-only cross-reference to the accepted G1 packet §13, added the bounded task and reconciled STATUS after owner-squash-merged PR #46. Separate migration-0008 Draft PR #47 remains untouched.
 
 ### Validation
+
 - Read-only GitHub verification of merged `main@e3b68e8`, merged G1 packet, Render Hobby limitation from official public docs, and Draft PR #47 separation: PASS.
 - Required exact-head hosted CI: **PENDING / must check** after this handoff commit.
 - No local code/runtime/DB tests executed; all changes are documentation-only.
 
 ### Continuation notes
+
 - Owner has not chosen D5 private export destination or retention/destruction dates or signed the final D4 exception. E2/E3/E4/E5/E6/E7 remain incomplete. G1/G4/G5/G6/G7 OPEN; G8 continuing; provider Gates A/B/C NOT AUTHORIZED.
-- Proposed **$25 eligible-credit spending ceiling stays unchanged**. A potential involuntary overrun if owner is unavailable is a *risk disclosure, not preapproval for excess charges*; no platform hard cap is claimed.
+- Proposed **$25 eligible-credit spending ceiling stays unchanged**. A potential involuntary overrun if owner is unavailable is a _risk disclosure, not preapproval for excess charges_; no platform hard cap is claimed.
 - No cloud/Render provisioning, payment, release SHA/branch, migration, first build, judge URL, secret, provider call or deletion is authorized by this proposal.
 
 ### Next action
+
 Independent exact-HEAD review of Draft PR #48 and required CI, then an explicit owner decision on whether to **adopt** the exception. Keep G1 OPEN and do not create any Render resource until the separate gates are satisfied.
 
 ## Handoff: NMI-G1-HOBBY-EXC-02
@@ -2338,24 +2512,27 @@ Independent exact-HEAD review of Draft PR #48 and required CI, then an explicit 
 - **State:** independent report PARTIAL on `6c892689b236c47decc3a8da863119df1db3804e`; three documentation issues addressed, awaiting focused re-audit. `NMI-G1-HOBBY-EXC-01` retained unchanged.
 
 ### Completed
+
 - **EXC-01:** Added G1-consistent dated cost/overrun examples (~$0.42/day, $20 warning Dec 24, pre-tax $25 crossing Jan 5, illustrative 9% tax $25 by Dec 31) and explained the Render workspace/payment-method exposure for noncreditable charges. No hard ceiling or reimbursement claimed; $25 remains authorized maximum.
-- **EXC-02:** Added an *informational, non-operative* appendix to `docs/NMI-RENDER-P3-25-BUDGET-GATE.md` recording the proposed narrowly scoped D4 owner-only exception to P3's existing feasible fallback condition. P3's original historic approval/controls remain intact and enforceable until separate adoption.
+- **EXC-02:** Added an _informational, non-operative_ appendix to `docs/NMI-RENDER-P3-25-BUDGET-GATE.md` recording the proposed narrowly scoped D4 owner-only exception to P3's existing feasible fallback condition. P3's original historic approval/controls remain intact and enforceable until separate adoption.
 - **EXC-03:** Defined exact post-review owner ratification and a separate audited/owner-merged **adoption record** explicitly reconciling P3 fallback, G1 packet §6 D4 / §5 E7 / §11 and STATUS. Merely merging proposal is NOT adoption and does NOT close G1; D5 and all remaining gates still require evidence.
 - Expanded bounded task to permit a P3 informational cross-reference, revised proposal and packet §13, updated STATUS. No application, DB, test or deployment change.
 
 ### Validation
+
 - Read-only exact-head GitHub evidence for PR #47 PASS and #48 prior PARTIAL: confirmed; current new-head hosted CI **PENDING**, must be checked independently.
 - Local format/profile and full tests: **NOT RUN** by this tool-based docs update.
 - No Render service/database is created, no first build, provider call, secret, release SHA/branch, merge, URL share or deletion authorized.
 
 ### Continuation notes
-- **G1/G4/G5/G6/G7 remain OPEN; G8 continues; provider Gates A/B/C remain NOT AUTHORIZED.** Owner only approved *preparing* the exception, not ratifying it. $25 authorized credit cap intact and no authorized over-budget charge.
+
+- **G1/G4/G5/G6/G7 remain OPEN; G8 continues; provider Gates A/B/C remain NOT AUTHORIZED.** Owner only approved _preparing_ the exception, not ratifying it. $25 authorized credit cap intact and no authorized over-budget charge.
 - PR #47 independently reported PASS at `586f7a76cdd62fff00ae50bc820561e59aee155d`, Stack CI attempt 1 timeout and attempt 2 PASS. Its **owner merge approval is missing**; PR #47 and #48 have overlapping STATUS and HANDOFFS, confirmed conflicts if both merged. **Do not merge out of order or drop prior handoffs.** If #47 merges first, reconcile this PR onto updated main without force-push and rerun exact-head mandatory CI.
 - Unfixed separate release blocker: `docs/NMI-DEMO-JUDGE-RUNBOOK.md` checks eight migrations and will abort against journal now containing nine; `scripts/preflight-provision-operator.mjs` similarly assumes eight. Scope separate task before any release or local judge demo.
 
 ### Next action
-Focused **independent** exact-HEAD policy/documentation re-audit of revised PR #48 including the new P3 note and updated task. No merge, G1 closure or Render provisioning. Seek explicit owner decisions after independent acceptance.
 
+Focused **independent** exact-HEAD policy/documentation re-audit of revised PR #48 including the new P3 note and updated task. No merge, G1 closure or Render provisioning. Seek explicit owner decisions after independent acceptance.
 
 ## Handoff: NMI-G1-HOBBY-EXC-03
 
@@ -2367,26 +2544,31 @@ Focused **independent** exact-HEAD policy/documentation re-audit of revised PR #
 - **State:** proposal only, NOT ADOPTED. Reconciled with `main`; awaiting independent exact-HEAD re-audit. `NMI-G1-HOBBY-EXC-01` and `NMI-G1-HOBBY-EXC-02` are retained unchanged.
 
 ### Completed
+
 - **Conflicts resolved:** only `docs/STATUS.md` (three regions) and `docs/HANDOFFS.md` (one region).
   - STATUS: records the new `main` SHA; PR #47 as owner-approved, squash-merged and closed, with the migration `0008` runbook work complete; PR #48 as the active Draft review; the working branch and active task. The earlier `main` SHAs stay as historical entries.
   - HANDOFFS: every entry from both histories is kept, with one end marker. Chronological order: `NMI-RENDER-MIG-0008-C1`, `NMI-G1-HOBBY-EXC-01`, `NMI-G1-HOBBY-EXC-02`, then this entry. Each ID occurs exactly once.
 - **Scope against the new `main`:** exactly six files differ: this exception document, the G1 packet (status-only §13), the P3 budget gate (an additive informational addendum with no deleted lines), STATUS, HANDOFFS and this task. No source, migration, grant, dependency, lockfile, security-control or workflow file changed. The merged PR #47 runbook (`docs/NMI-RENDER-P1-RUNBOOK.md`, `tasks/NMI-RENDER-MIG-0008-RUNBOOK.md`) is byte-identical to `main`, and the migration loop still includes `0008_mushy_zarek`.
 
 ### Verification of the earlier corrections (read from the final text, not new content)
+
 - **EXC-01 (quantified exposure):** the exception document keeps about **$0.42/day**; **$16.26** through 15 Dec, **$18.35** through 20 Dec and **$22.97** through 31 Dec; the illustrative **9% tax** rows ($17.72, $20.00, $25.04); the $20 warning around 24 Dec, the pre-tax $25 crossing around 5 Jan 2027 and about 31 Dec with the illustrative tax; accrual that is **not bounded** if the owner is unavailable; and exposure of the Render workspace payment method to charges the credits do not cover. The $25 stays the maximum authorized eligible-credit spend, not a hard Render cap.
 - **EXC-02 (P3 reconciliation):** the P3 addendum is informational and non-operative. The original pre-provisioning fallback condition "remains unmet and binding" until a separately reviewed, owner-approved adoption record changes it. The 2026-11-04 P3 approval text is not rewritten.
 - **EXC-03 (formal adoption):** four steps are required: independent review of the final wording; a new, explicit owner ratification; a separate adoption-record PR updating the P3 fallback applicability, the G1 packet §6 D4, §5 E7 and §11, STATUS and a new handoff; and independent audit, both CI checks and explicit owner merge approval for that record. Merging PR #48 alone does not make the exception operative or close G1.
 
 ### Validation (implementation-agent, local, documentation only)
+
 - Prettier on `docs` and `tasks`: pass. Project-profile validator: pass (24 files). 127 handoff IDs, no duplicates, one end marker. Path and link references: pass.
 - `git diff --check`: it flags **3 trailing-space lines (markdown hard line breaks) in this PR's own task file**. They were already present at `684d32e` and were not introduced by the merge, and I left them unchanged. With trailing-space checking off, the check is clean against the new `main`.
 - No full test suite was run, because nothing but Markdown changed.
 
 ### Continuation notes
+
 - **G1, G4, G5, G6 and G7 stay OPEN; G8 continues; Gates A, B and C stay NOT AUTHORIZED.** No exception adoption, budget increase, resource creation, release branch or SHA, deployment, provider enablement, public URL or deletion.
 - Issue #49 (the local judge runbook and operator preflight still assume eight migrations) is a separate release blocker and is **not** fixed here.
 
 ### Next action
+
 Independent exact-HEAD re-audit of PR #48. The owner's separate decisions on ratification and merge follow only after that review.
 
 ## Handoff: NMI-G1-HOBBY-EXC-04
@@ -2398,18 +2580,22 @@ Independent exact-HEAD re-audit of PR #48. The owner's separate decisions on rat
 - **State:** proposal only, NOT ADOPTED. Corrects one statement in `NMI-G1-HOBBY-EXC-03`, which is not rewritten.
 
 ### Completed
+
 - **Correction:** `NMI-G1-HOBBY-EXC-03` recorded that `git diff --check` flagged three trailing-space lines in this PR's task file and that they were left unchanged. They are now removed. The three lines are 3, 4 and 5 of `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md` (the State, Base and Owner direction labels), and `git diff --check` is clean against `main`.
 - **Rendering kept:** the two trailing spaces were markdown hard line breaks, so a blank line now separates those header lines to keep them on separate lines. The task text is **identical after whitespace is normalized**, and the exception wording is unchanged.
 - Only `tasks/NMI-G1-HOBBY-OWNER-ONLY-EXCEPTION.md`, `docs/HANDOFFS.md` and `docs/STATUS.md` changed. Nothing in the exception document, the G1 packet, the P3 gate or the merged PR #47 runbook changed.
 
 ### Validation (implementation-agent, local, documentation only)
+
 - `git diff --check` against `origin/main`: clean. Prettier on `docs` and `tasks`: pass. The scope against `main` is still the same six files.
 - Required hosted CI at the final head is recorded in the PR comment.
 
 ### Continuation notes
+
 - **G1, G4, G5, G6 and G7 stay OPEN; G8 continues; Gates A, B and C stay NOT AUTHORIZED.** No exception adoption, budget increase, resource creation, release branch or SHA, deployment, provider enablement, public URL or deletion. Issue #49 stays a separate release blocker and is not fixed here.
 
 ### Next action
+
 Final focused independent re-audit of PR #48. The owner's separate decisions on ratification and merge follow only after that review.
 
 ## Handoff: NMI-G1-HOBBY-ADOPT-01
@@ -2421,6 +2607,7 @@ Final focused independent re-audit of PR #48. The owner's separate decisions on 
 - **State:** adoption record prepared. **Not effective until an independent PASS and the owner's explicit merge approval.** G1 stays OPEN.
 
 ### Completed
+
 - **Attribution recorded accurately:** the owner reports ratifying the exception on 2026-11-06 in conversation (ChatGPT) after reviewing the complete risk-acceptance statement, and authorized this PR. The record calls it an **owner-reported decision**, quotes no ratifying words, and does **not** present it as an owner-authored GitHub comment. A signed or owner-authored GitHub acknowledgment, if required, is requested separately and was not invented.
 - **New:** `docs/NMI-G1-HOBBY-EXCEPTION-ADOPTION-RECORD.md` (the owner's accepted exposure; what is and is not satisfied; mandatory conditions; effectiveness checklist) and the task file.
 - **P3:** an additive section reconciles only the "fallback if the owner is unavailable" prerequisite, for this one deployment. The 2026-11-04 approval text and the earlier non-operative addendum are not edited.
@@ -2429,9 +2616,11 @@ Final focused independent re-audit of PR #48. The owner's separate decisions on 
 - **STATUS:** updated, active handoff `NMI-G1-HOBBY-ADOPT-01`.
 
 ### Validation (implementation-agent, local, documentation only)
+
 - Documentation checks are recorded in the PR comment with the final exact-HEAD hosted CI results. Nothing but Markdown changed.
 
 ### Continuation notes
+
 - **G1, G4, G5, G6 and G7 stay OPEN; G8 continues; Gates A, B and C stay NOT AUTHORIZED.** D4 is satisfied by exception **only after merge**. E7 needs D5 (encrypted destination, retention deadline, destruction method and date). E2 to E6 and D1 to D3 are unchanged.
 - The **$25 ceiling is unchanged** and is not a Render-enforced cap. Charges beyond $25 are possible with no guaranteed maximum if the owner is unavailable, and uncovered charges fall on the workspace payment method.
 - **No delegated or automated deletion.** Deletion needs a fresh, explicit owner approval at teardown time.
@@ -2439,6 +2628,7 @@ Final focused independent re-audit of PR #48. The owner's separate decisions on 
 - **The task text I received ended mid-sentence** ("...only after this adoption-record PR completes independent review and"). I read the missing end as "the owner's explicit merge approval", which matches the proposal's adoption sequence §4 step 4. The owner should confirm that reading.
 
 ### Next action
+
 Independent exact-HEAD review of this PR, then the owner's explicit merge decision. Do not treat the Draft PR as an adoption.
 
 ## Handoff: NMI-G1-HOBBY-ADOPT-02
@@ -2450,21 +2640,60 @@ Independent exact-HEAD review of this PR, then the owner's explicit merge decisi
 - **State:** remediation of the two findings in audit comment 6686811489 (PARTIAL). **Not effective.** Corrects statements in `NMI-G1-HOBBY-ADOPT-01`, which is not rewritten.
 
 ### Completed
+
 - **ADOPT-01 (completed merge):** `NMI-G1-HOBBY-ADOPT-01` and the documents said the exception takes effect when the PR passes review and the owner approves the merge, which left a gap: an approved PR that is still open or Draft. The effectiveness rule is now **four conditions**: (1) an independent exact-HEAD review PASS; (2) both required hosted CI workflows PASS at the final head; (3) the owner's new explicit merge approval; and (4) **a verified completed GitHub merge** (the PR is MERGED and its merge commit is on `main`). The record header and §7 (with an explicit list of what does **not** make it effective), the P3 section, the G1 packet (§6 D4 status, D4-X, §11, §13a), the exception document's adoption note, the task and STATUS all say the same.
 - **ADOPT-02 (scope of D4-X):** the packet's E7 line and the D4 eligibility paragraph stated the executable-fallback requirement absolutely. They now say that **D4-X substitutes for it only for the one approved Hobby deployment and timebox** (the Mrdzyn Hobby workspace; one Starter web service and one PostgreSQL 16 Basic 256 MB; synthetic-only and provider-disabled; target teardown by 15 December 2026 23:59 Asia/Manila, subject to the official judge-access end), and only once effective. For **every other case** (another workspace, plan or resource shape, a later date, or a stopped assumption) the ordinary requirement and D4-B stay fully binding. The P3 reconciliation and the record §3 say the same. The §6 heading is updated.
 - **Historical text preserved:** the 2026-11-04 P3 approval and the earlier P3 addendum are not edited (the P3 change is additive), the proposal text in the exception document is unchanged, and `NMI-G1-HOBBY-ADOPT-01` and every earlier handoff are kept.
 - The audit comment gives the intended ending of the truncated task sentence as "and receives the owner's explicit merge approval", which matches the reading recorded in `NMI-G1-HOBBY-ADOPT-01`. It also confirms that the owner's ratification was reported in conversation and is correctly recorded as owner-reported.
 
 ### Validation (implementation-agent, local, documentation only)
+
 - `git diff --check` (unqualified), Prettier on `docs` and `tasks`, the project-profile validator, handoff uniqueness (one end marker) and path and link references: results are in the PR comment with the exact-head hosted CI links.
 
 ### Continuation notes
+
 - **The exception is NOT effective and G1 stays OPEN.** E7 and D5 are pending; E2 to E6 and D1 to D3 are unchanged. **G4, G5, G6 and G7 stay OPEN, G8 continues, and Gates A, B and C stay NOT AUTHORIZED.**
 - The **$25 ceiling is unchanged** and is not a Render-enforced cap. Charges beyond it are possible with no guaranteed maximum if the owner is unavailable. There is no delegated or automated deletion, and teardown needs a fresh, explicit owner approval.
 - No release SHA or branch, Render resource, first build, deployment, provider enablement, public URL or spend beyond $25. Issue #49 is a separate release blocker and is not fixed here.
 
 ### Next action
+
 Focused independent re-audit of ADOPT-01 and ADOPT-02 at the exact final head, then the owner's merge decision. After a merge, verify on GitHub that the PR is MERGED and its commit is on `main` before relying on the exception.
+
+## Handoff: NMI-P6-FIX2-01
+
+- **Task / phase:** `tasks/NMI-P6-FIX2-queue-open-popover-focus.md` (bounded post-merge P6/P7-A UX remediation & P6 status reconciliation).
+- **From:** Antigravity implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD code/UX/documentation reviewer, then project owner for explicit merge approval.
+- **Branch:** `fix/nmi-p6-postmerge-ux`, based on `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124` (PR #50 squash-merged).
+- **Implementation head:** `03f743a569e2e220cbd26f18750b86a2cb0f9d7a` (before this evidence/docs/handoff commit; verify exact final PR HEAD and hosted CI).
+- **State:** Draft PR ready for independent exact-HEAD review. No merge, deployment, Render provisioning or live provider call is authorized.
+
+### Completed
+
+- **Popover close on same-screen `open-nudges` (`apps/web/src/components/Nudgey.tsx`):** `onOpenQueue` now calls `openQueue` (`setOpen(false)` before `dispatch({ type: "open-nudges", view: "pending", id })`, matching `openInvoiceById` and `openDashboard`), and `Nudgey`'s close effect watches `[state.screen, state.seedKey]` so any same-screen re-target closes `.nudgey-panel`, clears transient chat messages, and aborts active on-device speech recognition.
+- **Heading focus & `null` reset on already-mounted queue (`apps/web/src/nudges/NudgeQueueScreen.tsx`):** when a new `nudgeFocus` object re-targets an already-mounted queue, `headingRef.current?.focus()` moves keyboard/assistive focus to `<h1 id="nq-title">`; when `focus` becomes `null` (ordinary `navigate`), `seeded.current` resets to `null` without overwriting manual tab/selection choices.
+- **Regressions & browser QA:** added deterministic Vitest DOM tests in `apps/web/src/nudges/NudgeQueue.test.tsx` (verified via negative control to fail 3/3 against `main@0b65234` and pass 28/28 with the fix) plus `open-nudges` leave-guard coverage in `apps/web/src/invoices/leaveGuard.test.ts`; captured 41/41 headless Chrome QA (`design/evidence/NMI-P6-FIX2/QA-RESULTS.md`, 5 screenshots across 1280x900 and 390x844 in light + dark, deterministic fake model, synthetic data, disposable PostgreSQL 16 confirmed `pg_ctl status` exit `3`).
+- **Status reconciliation:** updated `docs/STATUS.md` and `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md` to record P7-A's merged closure (`0e10e8d`, PR #45) of the two PR #43 Codex review 5787025325 findings, this `NMI-P6-FIX2` residual popover/focus fix, and merged `main@0b65234` (PR #50). Historical `design/evidence/NMI-P6/` and `design/evidence/NMI-P7/` files and Issue #49 files were not touched.
+
+### Validation (implementation-agent, local)
+
+- `pnpm validate`: PASS (`eslint`, `prettier --check`, 8-package `typecheck`, `vitest run` 72 files / 1411 passed, licensed + community web builds and bundle secret scans clean).
+- `pnpm test:db` (disposable PostgreSQL 16, `pg_ctl status` exit `3` verified before temp dir removal): PASS (19 files / 367 passed).
+- `node design/evidence/NMI-P6-FIX2/run-p6-fix2-journey.mjs` at `03f743a569e2e220cbd26f18750b86a2cb0f9d7a`: PASS (41/41, 5 screenshots).
+- `pnpm audit --prod --audit-level high`: PASS (0 vulnerabilities).
+- `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice`: PASS (24 files verified).
+- `git diff --check`: clean. Required hosted CI workflows (`Project Baseline CI`, `Stack CI`) must pass on the final PR HEAD.
+
+### Continuation notes
+
+- **All release and provider gates stay unchanged:** G1, G4, G5, G6 and G7 remain OPEN (PR #50 satisfies D4-X only for the single approved Hobby deployment/timebox); G8 continues; provider Gates A (`NUDGE_AI_DRAFTING_ENABLED=false`), B (`PAYPAL_DRAFTS_ENABLED=false`) and C remain NOT AUTHORIZED.
+- Separate open items unchanged: Issue #49 (local judge runbook / operator preflight eight-migration check, tracked separately) and PR #45 Codex review 5796632507 (`design/evidence/NMI-P7/run-nudge-recovery-drill.mjs` exit-code check).
+- Manual Safari/Firefox, real touch devices, VoiceOver/NVDA, 400% zoom, and real HTTPS `__Host-` proxy QA remain pending.
+
+### Next action
+
+Independent exact-HEAD review of this Draft PR and verification of both required hosted CI workflows at the final PR HEAD, followed by the owner's explicit merge decision.
 
 ## Handoff: NMI-MIG-0008-ISSUE49-C1
 
@@ -2475,6 +2704,7 @@ Focused independent re-audit of ADOPT-01 and ADOPT-02 at the exact final head, t
 - **State:** Bounded local-only runbook/preflight repair. **Not merged and not release authorization.** Final head and hosted CI will be in the Draft PR.
 
 ### Completed
+
 - Created shared read-only `scripts/migration-plan.mjs` that validates the PostgreSQL journal, contiguous indexes, safe names, required `0008_mushy_zarek`, and nonempty SQL files, while accepting future properly ordered entries.
 - Judge runbook refuses missing `DATABASE_URL`, unexpected database name, and nonempty user-schema relations. It runs each validated SQL migration transactionally in a subshell, stops at the first failure, and checks `public.invoice_nudges` before operator provisioning. Interactive bash/zsh is not closed on failures.
 - Operator preflight now uses the validated same journal, stops after the first failed SQL file, and refuses to call the operator provisioning CLI unless `invoice_nudges` exists and no operator has been created.
@@ -2483,11 +2713,13 @@ Focused independent re-audit of ADOPT-01 and ADOPT-02 at the exact final head, t
 - STATUS records owner-merged PR #50 correctly, with G1 and all remaining release gates still open.
 
 ### Validation and limitations
+
 - Automated unit/format/profile validation and both mandatory hosted CI checks are **PENDING** on the final PR head; report actual results, not estimates.
 - A real disposable PostgreSQL 16 execution of the amended local preflight / runbook, with a deliberate injected migration failure and confirmed no operator creation, is **NOT RUN** via this GitHub-only editing environment. It remains an explicit independent/owner-controlled test before declaring local judge-preflight readiness.
 - No credentials, user data, hosted SQL, existing local database mutation, paid Render action or provider calls were executed. No migration was applied in this implementation task.
 
 ### Next action
+
 Verify the final seven/eight-path diff and targeted tests, obtain both exact-HEAD mandatory CI results, execute or document the missing **disposable PostgreSQL 16 physical preflight and failure injection**, then request independent exact-HEAD review. Keep Issue #49 OPEN until a reviewed owner-approved merge and verified regression evidence; do not create a release SHA/branch or Render resources.
 
 <!-- HANDOFF_ENTRIES_END -->
