@@ -2724,5 +2724,122 @@ Independent exact-HEAD review of this Draft PR and verification of both required
 ### Next action
 Independent exact-HEAD review of `.github/workflows/ci.yml`, `.github/workflows/stack.yml` and the updated documentation against the exact-HEAD manual CI evidence, followed by the owner's explicit merge decision. Do not dispatch hosted CI during routine review unless explicitly requested by the owner.
 
+## Handoff: NMI-MIG-0008-ISSUE49-C1
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49.
+- **From:** implementing assistant (not independent reviewer).
+- **To:** independent focused migration/setup reviewer, then owner for merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight` from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124` (PR #50 owner squash-merged; D4-X effective only for approved Hobby scope).
+- **State:** Bounded local-only runbook/preflight repair. **Not merged and not release authorization.** Final head and hosted CI will be in the Draft PR.
+
+### Completed
+
+- Created shared read-only `scripts/migration-plan.mjs` that validates the PostgreSQL journal, contiguous indexes, safe names, required `0008_mushy_zarek`, and nonempty SQL files, while accepting future properly ordered entries.
+- Judge runbook refuses missing `DATABASE_URL`, unexpected database name, and nonempty user-schema relations. It runs each validated SQL migration transactionally in a subshell, stops at the first failure, and checks `public.invoice_nudges` before operator provisioning. Interactive bash/zsh is not closed on failures.
+- Operator preflight now uses the validated same journal, stops after the first failed SQL file, and refuses to call the operator provisioning CLI unless `invoice_nudges` exists and no operator has been created.
+- Added isolated CLI unit negative controls for missing `0008`, malformed/out-of-order/unsafe journal entries, missing or empty SQL files, and a future valid migration.
+- Removed duplicated stale eight-migration setup commands from the README, referring operators to the single judge runbook. Published SQL, migrations, journal, privileges and application logic remain unmodified.
+- STATUS records owner-merged PR #50 correctly, with G1 and all remaining release gates still open.
+
+### Validation and limitations
+
+- Automated unit/format/profile validation and both mandatory hosted CI checks are **PENDING** on the final PR head; report actual results, not estimates.
+- A real disposable PostgreSQL 16 execution of the amended local preflight / runbook, with a deliberate injected migration failure and confirmed no operator creation, is **NOT RUN** via this GitHub-only editing environment. It remains an explicit independent/owner-controlled test before declaring local judge-preflight readiness.
+- No credentials, user data, hosted SQL, existing local database mutation, paid Render action or provider calls were executed. No migration was applied in this implementation task.
+
+### Next action
+
+Verify the final seven/eight-path diff and targeted tests, obtain both exact-HEAD mandatory CI results, execute or document the missing **disposable PostgreSQL 16 physical preflight and failure injection**, then request independent exact-HEAD review. Keep Issue #49 OPEN until a reviewed owner-approved merge and verified regression evidence; do not create a release SHA/branch or Render resources.
+
+## Handoff: NMI-MIG-0008-ISSUE49-C2
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49 (PR #51 remediation, main reconciliation, physical disposable PG16 acceptance, and exact-HEAD manual CI).
+- **From:** Antigravity implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD migration/setup/security reviewer, then project owner for explicit merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight` (reconciled via regular non-history-rewriting merge with `origin/main@e795fbc8514d29555ff365f219033206ecc851d4`, preserving squash-merged PR #52 `NMI-P6-FIX2` and PR #50 D4-X adoption).
+- **Implementation head:** `6889cf5fe7aefdaf703e88fbcc9103cb7623d5d6` (before this documentation/handoff commit; exact final commit SHA and full exact-HEAD manual CI evidence are reported in the completion packet).
+- **State:** Draft PR #51 stays Draft and Issue #49 stays OPEN. If automatic `pull_request` hosted triggers are still active on `origin/main` (separate CI cost-conservation Draft PR #53 not yet merged), work is retained locally on `fix/nmi-issue49-journal-preflight` without pushing so zero hosted Actions minutes are consumed.
+
+### Completed
+
+- **Prettier & TypeScript strictness fix (`apps/api/src/migration-plan.test.ts`):** fixed the genuine Prettier failure that broke prior Stack CI runs `42243575145` and `42244301787` on `5eadf056c97ef2de5d350e048c9c817f6bd01bb0`, resolved latent `noUncheckedIndexedAccess` (`TS2532`) errors via `entryAt()`, and expanded deterministic unit negative controls to 13 tests (including symlinked SQL/journal/directory, unjournaled `.sql` / dangling symlink in `packages/db/migrations`, whitespace-only/NUL SQL, wrong index-8 tag/dialect, `null` JSON, and extra CLI args).
+- **Symlink & unexpected-file fail-closed hardening (`scripts/migration-plan.mjs`):** replaced `statSync` with `lstatSync` across `packages`, `packages/db`, `packages/db/migrations`, `meta`, `meta/_journal.json`, and every `${tag}.sql` file; rejected whitespace-only or NUL-byte SQL text; scanned `readdirSync(directory)` to fail closed on any unjournaled SQL file, symlink, or unexpected entry.
+- **Operator preflight failure-injection & macOS locale safety (`scripts/preflight-provision-operator.mjs`):** added strict CLI argument parsing (`--report`, `--migrations-root` with `customMigrationsRoot: true` marker in reports for non-repo fixture runs), recorded explicit `migrate.no_provision` (`operators=0` and zero CLI calls) on incomplete migration or missing `invoice_nudges`, and defaulted `LC_ALL=C` when unset to prevent macOS `postmaster became multithreaded during startup` failures (also documented in `docs/NMI-DEMO-JUDGE-RUNBOOK.md` §3 and §12).
+- **Non-history-rewriting conflict reconciliation:** merged `origin/main@e795fbc8514d29555ff365f219033206ecc851d4` (`git merge --no-ff`), preserving all PR #52 code/tests/evidence and reconciling `docs/STATUS.md` and `docs/HANDOFFS.md` append-only (`NMI-P6-FIX2-01` and `NMI-MIG-0008-ISSUE49-C1` both retained intact; branch diff vs `origin/main` stays strictly within the 8 allowed task files).
+- **Physical disposable PostgreSQL 16.15 acceptance (implementation-agent local evidence):**
+  - Judge runbook §3–§5 & §11 on newly created loopback `/tmp/nmi-pg` (`127.0.0.1:54370/nmi_judge`): verified missing/non-loopback/wrong-port/wrong-DB `DATABASE_URL` refusals (shell survives), `zsh` and `bash` happy paths applying `0000`–`0008_mushy_zarek` (`public.invoice_nudges` verified), nonempty-DB refusals (both post-migration and single sentinel table with `public.invoices` remaining absent), `0005` division-by-zero failure injection rolling back `0005` and skipping `0006`–`0008` with `operators=0`, `provision-operator` creating `judge` after clean §4, and `pg_ctl status` exit `3` + TCP `ECONNREFUSED` + `ENOENT` removal.
+  - SCRAM-SHA-256 `pnpm preflight:provision`: **56/56 passed** (`migrate.plan` `count=9`, `migrate` `count=9`, `migrate.0008` `ok=true`, create/rotate/negative controls, secret-leak scans, full teardown), plus 3 `--migrations-root` failure injections (`0005` SQL error, `0008` missing `invoice_nudges`, truncated journal before `pg.start`) each exiting `1` with zero operator provisioning and `cleanup.ok=true`.
+
+### Validation and limitations
+
+- Full exact-HEAD manual CI equivalent (Project Baseline + Stack CI + disposable PostgreSQL 16.15 `pnpm test:db`, licensed/community builds & bundle scans, `pnpm db:generate` drift check, `pnpm audit --prod --audit-level high`) is executed on the final exact commit SHA after this handoff commit and reported in the completion packet.
+- Historical hosted Stack CI runs `42243575145` and `42244301787` at `5eadf056c97ef2de5d350e048c9c817f6bd01bb0` remain **FAILURE** (Prettier); hosted Actions on the new exact HEAD are **NOT RUN** under the owner's development manual-CI policy (mandatory hosted `workflow_dispatch` reserved for final release candidate).
+- Out-of-scope historical references left untouched per the 8-file boundary: `docs/NMI-DEMO-DEPLOYMENT-DECISION.md` (historical deployment memo mentioning eight migrations), `docs/NMI-RENDER-P1-RUNBOOK.md` (summary table line mentioning `0000`–`0007`; executable commands already updated to `0000`–`0008` in PR #47), and P7-C `design/evidence/NMI-P7/run-nudge-recovery-drill.mjs` exit-code follow-up. No browser rehearsal (§9), Docker option, Mode B live providers, Render resource, or existing database was touched.
+- **All release and provider gates stay unchanged:** D4-X effective only for its approved Hobby scope; G1/G4/G5/G6/G7 OPEN; G8 continuing; provider Gates A/B/C NOT AUTHORIZED; $25 credit ceiling unchanged.
+
+### Next action
+
+Merge or apply the owner-approved CI `workflow_dispatch`-only trigger change (Draft PR #53) on `main` (and merge `main` into `fix/nmi-issue49-journal-preflight` if needed so pushing does not trigger automatic `pull_request` hosted runs), push the reconciled branch to Draft PR #51, obtain independent exact-HEAD review, and await explicit owner merge approval before closing Issue #49.
+
+## Handoff: NMI-MIG-0008-ISSUE49-C3
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49 (PR #51 reconciliation with `main@5e110efb5bbdd6fe92639beca0e7dc5a19626230`, workflow trigger verification, physical PG16 acceptance, and exact-HEAD manual CI).
+- **From:** Antigravity implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD migration/setup/security reviewer, then project owner for explicit merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight` (reconciled via regular non-history-rewriting merge with `origin/main@5e110efb5bbdd6fe92639beca0e7dc5a19626230`, incorporating owner-merged PR #53 CI cost-conservation policy, PR #52 `NMI-P6-FIX2`, and PR #50 D4-X adoption).
+- **Final PR HEAD:** recorded in Draft PR #51 and verified post-commit on a clean working tree.
+- **State:** Draft PR #51 ready for independent exact-HEAD review. Issue #49 stays OPEN. Hosted GitHub Actions are **NOT RUN** on this development PR (`workflow_dispatch` only under the merged PR #53 policy; zero hosted minutes consumed). No merge, deployment, Render provisioning, or live provider call is authorized.
+
+### Completed
+
+- **Reconciled with `origin/main@5e110efb5bbdd6fe92639beca0e7dc5a19626230` without rebase or force push:** cleanly merged the approved PR #53 CI cost-conservation policy; verified both `.github/workflows/ci.yml` and `.github/workflows/stack.yml` are `workflow_dispatch` only with `contents: read`, concurrency, and `postgres:16` service intact, and `.github/workflows/common-validation.yml` remains byte-identical to `origin/main`.
+- **Preserved all prior Issue #49 / PR #51 implementations:** shared read-only `scripts/migration-plan.mjs` (fail-closed on non-regular/symlink files, whitespace/empty SQL, unjournaled `.sql` files, out-of-order `idx`, and missing `0008_mushy_zarek`), hardened judge runbook `docs/NMI-DEMO-JUDGE-RUNBOOK.md` §3–§5/§11 (subshell isolation, empty-DB check, `to_regclass` verification of `public.invoice_nudges`, `export LC_ALL="${LC_ALL:-C}"`), SCRAM operator preflight `scripts/preflight-provision-operator.mjs` (56/56 checks, `--report`, `--migrations-root`, `migrate.no_provision` gate), and 13/13 deterministic unit negative controls in `apps/api/src/migration-plan.test.ts`.
+- **Documentation & status reconciliation:** `docs/STATUS.md` and `docs/HANDOFFS.md` reconciled additively, preserving accepted PR #52 and PR #53 records, handoff history, and active handoff `NMI-MIG-0008-ISSUE49-C3`.
+
+### Validation (implementation-agent, exact-HEAD manual CI)
+
+- **Commit SHA:** exact final PR HEAD recorded in the Draft PR description and comment.
+- **Baseline & hygiene checks:** `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice` PASS (24 files); tracked `.env*` secret-file guard PASS (0 tracked env files); handoff uniqueness & single end marker PASS (134 unique IDs); `git diff --check origin/main..HEAD` clean.
+- **Code validation:** `pnpm install --frozen-lockfile` PASS; `pnpm validate` PASS (`eslint`, `prettier --check`, 8-package `typecheck`, `vitest run` 73 runnable files / 1,424 tests passed incl. 13/13 `migration-plan.test.ts`, licensed web build & bundle secret scan, community web build & bundle scan).
+- **Physical disposable PostgreSQL 16.15 integration & acceptance:**
+  - `TEST_DATABASE_URL=... pnpm test:db` PASS (19 files / 367 tests passed; cluster stopped exit `3`, temp dir deleted).
+  - Judge runbook §3–§5 & §11 manual walkthrough in disposable `nmi_judge` (empty DB, all 9 migrations applied, `invoice_nudges` verified, operator provisioned, clean stop).
+  - Preflight & negative controls: `unset LC_ALL && pnpm preflight:provision` PASS (56/56); failure injection via `--migrations-root` (syntax error, missing `invoice_nudges`, truncated journal) each cleanly halted and refused operator creation (`migrate.no_provision: true`, `operators=0`).
+- **Security & dependency audit:** `pnpm audit --prod --audit-level high` PASS (0 vulnerabilities); `pnpm db:generate` PASS (10 tables, no drift).
+- **Hosted Actions verification:** 0 hosted runs triggered (`workflow_dispatch` only).
+
+### Continuation notes
+
+- **All release and provider gates stay unchanged:** G1, G4, G5, G6, and G7 remain OPEN; G8 continues; provider Gates A (`NUDGE_AI_DRAFTING_ENABLED=false`), B (`PAYPAL_DRAFTS_ENABLED=false`), and C remain NOT AUTHORIZED. Release remains **BLOCKED** until mandatory hosted `workflow_dispatch` runs succeed on the final release candidate and all owner gates close.
+- Issue #49 stays OPEN until PR #51 is independently reviewed and owner-merged.
+
+### Next action
+
+Independent exact-HEAD review of PR #51 at the final commit SHA against this manual CI and disposable PG16 acceptance evidence, followed by the owner merge decision.
+
+## Handoff: NMI-MIG-0008-ISSUE49-C4
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49, audit comment `6703063839` SEC-N1 only.
+- **From:** implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD reviewer, then the project owner for an explicit merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight`.
+- **Base:** `main@5e110efb5bbdd6fe92639beca0e7dc5a19626230`.
+- **Prior audited HEAD:** `e3c6eb541c73223bfada8fb246177cd8164ac34e` (PARTIAL; SEC-N1 open).
+- **State:** Draft PR #51 remains open. Issue #49 stays OPEN. No merge, close, deploy, hosted `workflow_dispatch`, or live provider call.
+
+### Completed
+
+- Replaced the judge runbook's URL-component check, which accepted libpq query overrides such as `?hostaddr=`, with `scripts/migration-plan.mjs --assert-judge-target`.
+- The guard rejects every query parameter and fragment, including percent-encoded `host`, `hostaddr`, and `port`, and refuses non-empty `PGHOSTADDR`, `PGSERVICE`, and `PGSERVICEFILE` plus a non-matching `PGHOST`, `PGPORT`, or `PGDATABASE`. It does not connect.
+- §4 migration SQL and the empty-database checks run only through `--psql`, which repeats the guard and invokes `psql` with pinned `host=127.0.0.1 hostaddr=127.0.0.1 port=54370 dbname=nmi_judge` instead of the original `DATABASE_URL`. §5 calls the same guard before `provision-operator` and does not close an interactive shell.
+- Trust and Docker/SCRAM userinfo forms remain valid. Journal validation, the 56-check operator preflight, cleanup, `workflow_dispatch`-only CI, and historical handoffs are unchanged.
+
+### Validation
+
+- Deterministic no-connection tests are in `apps/api/src/migration-plan.test.ts`. Exact-HEAD manual CI, disposable PostgreSQL 16 acceptance, and failure-injection results are recorded on Draft PR #51 for the commit that contains this handoff. Hosted GitHub Actions remain `NOT RUN`.
+
+### Next action
+
+Independent re-audit of SEC-N1 at the new exact HEAD, then the owner merge decision. Do not close Issue #49 before that.
 
 <!-- HANDOFF_ENTRIES_END -->
