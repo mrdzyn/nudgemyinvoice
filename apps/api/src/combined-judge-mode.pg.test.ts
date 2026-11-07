@@ -300,12 +300,13 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
   });
 
   it("fails closed on disabled providers without touching fakes", async () => {
-    // PayPal drafting builds but no client is wired: explicit human action still cannot create.
+    // Limited mode forbids PayPal entirely: explicit human action cannot create a draft.
     const noPaypal = makeApp({
       modelClient: parseModel(modelOutput()),
       nudgeClient: new FakeNudgeModel(),
       paypal: null,
       env: {
+        NMI_JUDGE_AI_MODE: "limited",
         PAYPAL_DRAFTS_ENABLED: "false",
         PAYPAL_CLIENT_ID: undefined,
         PAYPAL_CLIENT_SECRET: undefined,
