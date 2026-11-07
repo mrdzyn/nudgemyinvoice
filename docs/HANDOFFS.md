@@ -2941,4 +2941,12 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** doc-checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #59.
 - **Next action:** focused independent re-audit of the three remediated items, then separate owner decisions.
 
+## Handoff: NMI-OPENAI-ACTIVATION-01
+
+- **Task:** `tasks/NMI-OPENAI-ACTIVATION-01.md`; issue #58; branch `feat/nmi-openai-activation-01` from `main@82996c4…`. Final policy reconciliation under granted approvals. No merge, deploy, env change, credential access, provider call, branch move, or URL share. Historical handoffs untouched.
+- **Reconciled:** activation packet drops the cumulative call-cap mandate (owner decision) while preserving rate limits, concurrency 1, retries 0, auth, synthetic-only inputs and PayPal-disabled bounds; records owner-evidenced $5 enforced monthly limit + `gpt-6-luna` allowlisting; requires advance sub-$5 alert, monitoring, kill switch, and provider-use sunset end of Dec 15, 2026 unless extended. Task §2 records Render "Deploy a specific commit" from the linked repo without branch change, Auto-Deploy OFF. STATUS/handoff reflect protected candidate `82996c4…`, accepted manual-CI substitution, and Live rollback deployment.
+- **Preserved:** granted approvals as listed in the task file (not re-requested); PR #59 merge record; Gate A consumed PASS; live Render state; release boundaries.
+- **Verification:** doc checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
+- **Next action:** independent exact-HEAD audit, then deploy action / live QA / URL decisions (each separate owner action).
+
 <!-- HANDOFF_ENTRIES_END -->
