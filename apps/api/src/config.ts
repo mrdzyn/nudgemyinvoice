@@ -97,6 +97,14 @@ export interface AppConfig {
 }
 
 /** Fails fast: missing/live PayPal config, missing database or weak session secret refuse to start. */
+export const JUDGE_AI_REQUESTS_PER_WINDOW = 3;
+export const JUDGE_AI_WINDOW_MS = 10 * 60 * 1000;
+export const JUDGE_AI_CONCURRENCY = 1;
+
+export function parserMaxRetries(mode: "off" | "limited"): 0 | 1 {
+  return mode === "limited" ? 0 : 1;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const e = envSchema.parse(env);
   const paypal = assertSandboxConfig(e);
@@ -109,21 +117,26 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     );
   }
   const nudgeDraftingEnabled = e.NUDGE_AI_DRAFTING_ENABLED === "true";
-  // Production judge mode never enables just one of the two visible AI features. The historical
-  // provider smoke harnesses (which omit NMI_JUDGE_AI_MODE) retain their existing behavior.
-  if (e.NODE_ENV === "production" && e.NMI_JUDGE_AI_MODE === "limited") {
+  // Limited mode always enables both visible AI features or fails closed. Historical smoke
+  // harnesses omit NMI_JUDGE_AI_MODE, so they keep their existing behavior.
+  if (e.NMI_JUDGE_AI_MODE === "limited") {
     if (!e.OPENAI_API_KEY || e.OPENAI_MODEL !== "gpt-6-luna") {
       throw new Error("NMI_JUDGE_AI_MODE=limited requires an OpenAI key and approved model");
     }
     if (e.OPENAI_MAX_OUTPUT_TOKENS !== 4096 || !nudgeDraftingEnabled) {
-      throw new Error("NMI_JUDGE_AI_MODE=limited requires 4096 output tokens and explicit nudge opt-in");
+      throw new Error(
+        "NMI_JUDGE_AI_MODE=limited requires 4096 output tokens and explicit nudge opt-in",
+      );
     }
     if (draftsEnabled || e.PAYPAL_CLIENT_ID || e.PAYPAL_CLIENT_SECRET) {
       throw new Error("NMI_JUDGE_AI_MODE=limited forbids PayPal credentials and draft creation");
     }
   }
-  if (e.NODE_ENV === "production" && env["NMI_JUDGE_AI_MODE"] === "off" &&
-      (e.OPENAI_API_KEY || e.OPENAI_MODEL || nudgeDraftingEnabled)) {
+  if (
+    e.NODE_ENV === "production" &&
+    env["NMI_JUDGE_AI_MODE"] === "off" &&
+    (e.OPENAI_API_KEY || e.OPENAI_MODEL || nudgeDraftingEnabled)
+  ) {
     throw new Error("Explicit NMI_JUDGE_AI_MODE=off forbids OpenAI credentials and live drafting");
   }
   if (nudgeDraftingEnabled && !(e.OPENAI_API_KEY && e.OPENAI_MODEL)) {

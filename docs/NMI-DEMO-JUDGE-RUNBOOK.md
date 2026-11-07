@@ -13,6 +13,8 @@ There are two ways to evaluate it. Pick one (or both).
 
 Everything in mode A that involves OpenAI or PayPal is **SIMULATED** and is not evidence of real provider behaviour. The project owner's PayPal credentials, OpenAI key and login password are **never** distributed; you configure your own.
 
+A separate hosted `NMI_JUDGE_AI_MODE=limited` setting exists in the code for a later owner-authorized release. It is **not** part of this public runbook, is not enabled on the current provider-disabled deployment, and does not authorize an OpenAI or PayPal call. Use mode A unless you are using your own credentials in mode B.
+
 ## 1. Prerequisites
 
 > **Pasting into an interactive zsh:** run `setopt interactive_comments` first so lines starting with `#` in the blocks below are treated as comments (bash does this by default).

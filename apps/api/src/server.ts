@@ -3,7 +3,7 @@ import { createDb } from "@nmi/db";
 import { createOpenAIInvoiceClient, createOpenAINudgeClient } from "@nmi/ai";
 import { PayPalSandboxClient } from "@nmi/paypal";
 import { buildApp } from "./app.js";
-import { loadConfig } from "./config.js";
+import { loadConfig, parserMaxRetries } from "./config.js";
 
 const config = loadConfig();
 const pool = new pg.Pool({ connectionString: config.databaseUrl, max: 10 });
@@ -17,7 +17,7 @@ const app = buildApp(config, {
           model: config.openai.model,
           maxOutputTokens: config.openai.maxOutputTokens,
           // In the approved judge mode one application action means at most one OpenAI wire attempt.
-          maxRetries: config.judgeAiMode === "limited" ? 0 : 1,
+          maxRetries: parserMaxRetries(config.judgeAiMode),
         }),
       }
     : {}),

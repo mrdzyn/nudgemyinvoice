@@ -58,7 +58,7 @@ Single operator, server-side sessions (HttpOnly cookie), Origin + CSRF checks on
 Human-approved invoice sending, signature-verified payment webhooks and reconciliation, overdue detection with AI-drafted (never auto-sent) reminders, multi-user accounts, hosted deployment, real-provider acceptance runs.
 
 ## Built with
-React, Vite, TypeScript, Fastify, Drizzle ORM, PostgreSQL, Zod, Vitest, OpenAI Responses API **[integration implemented; not verified live]**, PayPal Invoicing v2 (Sandbox), **AG Grid Community** (MIT) for the saved-invoice grid (sortable and resizable columns, custom cells and a status renderer, themed to light and dark under a strict Content-Security-Policy). *Sponsor tools:* the README lists an APIMatic Context Plugin for PayPal as a coding-time aid **[owner to confirm it was actually used before listing it]**; AG Grid Community **is used** in the app (independently audited and merged in PR #17 on `main` at `2d5a7034`; no Enterprise/Studio); AG Studio and AG Grid Enterprise were **not** used; using AG Grid makes the entry eligible for sponsor consideration under the rules, which is not a claim of selection or a prize; Render was **not** used (no deployment). Do not list a tool the project did not use.
+React, Vite, TypeScript, Fastify, Drizzle ORM, PostgreSQL, Zod, Vitest, OpenAI Responses API **[integration implemented; not verified live]**, PayPal Invoicing v2 (Sandbox), **AG Grid Community** (MIT) for the saved-invoice grid (sortable and resizable columns, custom cells and a status renderer, themed to light and dark under a strict Content-Security-Policy). *Sponsor tools:* the README lists an APIMatic Context Plugin for PayPal as a coding-time aid **[owner to confirm it was actually used before listing it]**; AG Grid Community **is used** in the app (independently audited and merged in PR #17 on `main` at `2d5a7034`; no Enterprise/Studio); AG Studio and AG Grid Enterprise were **not** used; using AG Grid makes the entry eligible for sponsor consideration under the rules, which is not a claim of selection or a prize; Render hosts the current provider-disabled rollback SHA; that deployment is not this draft's public demo URL and is not a live-OpenAI release. Do not list a tool the project did not use.
 
 ## Links
 - GitHub: https://github.com/mrdzyn/nudgemyinvoice (public, MIT license visible in the repository)
@@ -75,7 +75,7 @@ Original work; open-source MIT license; Sandbox only; no real customer data; no 
 
 | Item | Today | After a gate (only if REAL PASS, quote run ID/date) |
 | --- | --- | --- |
-| Real OpenAI parsing | **[not verified]** — Gate A PENDING | "verified once, two synthetic inputs" |
+| Real OpenAI parsing | **Historical only:** Gate A `R1-A-20261030-01` provisional REAL PASS, two synthetic invoices, authorization consumed. Not a current live demo. P6 nudges were fake-model only. Limited judge mode is implemented and **not authorized** for a new call. | Do not describe the historical parse as this submission's live demo |
 | New PayPal Sandbox DRAFT via browser | **[not verified]** — Gate B PENDING and **BLOCKED** pending a PayPal client fix (historical backend USD 5.00 draft **[verified, historical]**) | "one Sandbox DRAFT created and verified through the browser path" |
 | Real-provider end-to-end walkthrough | **[not verified]** — Gate C PENDING | label each video segment LIVE or SIMULATED |
 Do not describe simulated runs, fake providers or fixtures as live. Do not publish a result that is not in a filled, owner-reviewed template.

@@ -17,7 +17,12 @@ import {
 import { parseInvoiceRequest, type InvoiceModelClient } from "@nmi/ai";
 import { CURRENCY_CODES, MoneyError, invoiceDraftSchema, type CurrencyCode } from "@nmi/shared";
 import type { PayPalInvoicingReadDraft } from "@nmi/paypal";
-import type { AppConfig } from "../config.js";
+import {
+  JUDGE_AI_CONCURRENCY,
+  JUDGE_AI_REQUESTS_PER_WINDOW,
+  JUDGE_AI_WINDOW_MS,
+  type AppConfig,
+} from "../config.js";
 import { BoundedWorkGate } from "../auth/work-gate.js";
 import { WindowBudget } from "../auth/window-budget.js";
 import { createPayPalDraft, type PayPalDraftDeps } from "../services/paypal-draft-service.js";
@@ -96,11 +101,12 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
     typeof deps.seams?.ops === "function" ? deps.seams.ops(req) : (deps.seams?.ops ?? defaultOps);
   // Cost bound for the paid provider call: a per-operator budget plus a tiny in-flight cap.
   const budget = new WindowBudget(
-    deps.seams?.parseBudgetMax ?? (config.judgeAiMode === "limited" ? 3 : 20),
-    10 * 60 * 1000,
+    deps.seams?.parseBudgetMax ??
+      (config.judgeAiMode === "limited" ? JUDGE_AI_REQUESTS_PER_WINDOW : 20),
+    JUDGE_AI_WINDOW_MS,
   );
   const gate = new BoundedWorkGate(
-    deps.seams?.parseConcurrency ?? (config.judgeAiMode === "limited" ? 1 : 2),
+    deps.seams?.parseConcurrency ?? (config.judgeAiMode === "limited" ? JUDGE_AI_CONCURRENCY : 2),
     0,
   );
 

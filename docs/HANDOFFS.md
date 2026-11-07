@@ -2897,4 +2897,12 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Gates:** independent code/security/policy audit, full Mac manual CI on this new HEAD, explicit model/key/call/spend authorization, new pinned release candidate and separate owner merge/deploy/URL approvals are required. The historical Gate A cap may not be reused.
 - **Next action:** exact-HEAD local manual validation, focused review (especially guard/test matrix and rate-limit reset), independent audit, then owner merge decision.
 
+## Handoff: NMI-JUDGE-LIVE-OPENAI-02
+
+- **Task:** `tasks/NMI-JUDGE-LIVE-OPENAI-01.md`; issue #56; Draft PR #57. No merge, deploy, provider call, PayPal call, or URL share.
+- **Decisions:** limited mode fails closed in every environment; absent mode remains the default and does not enable either AI feature. Parser SDK retries are 0 only in limited mode. Nudge SDK retries stay 0. Both endpoints use 3 requests per 10 minutes and concurrency 1 in limited mode. Those budgets reset on restart and are not a spend cap. Nudge prompts still send tone and enumerated facts only.
+- **Preserved:** Gate A `R1-A-20261030-01` consumed provisional PASS; P6 fake-model evidence; provider-disabled deployment of `abfbbfc3153cb3b4238ebf201daca830fed2e8f9`. This branch is not that deployment.
+- **Verification:** focused mocked tests passed before this handoff. Exact-HEAD manual CI counts are posted on Draft PR #57 for the commit that contains this handoff. Hosted GitHub Actions remain NOT RUN.
+- **Next action:** independent exact-HEAD security/code audit, then a separate owner decision on merge. A live OpenAI call still needs its own model, cap, budget, expiry, and synthetic-input authorization.
+
 <!-- HANDOFF_ENTRIES_END -->

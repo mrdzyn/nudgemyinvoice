@@ -18,6 +18,7 @@ import {
   type NudgeFailure,
   type NudgeWithInvoice,
 } from "@nmi/db";
+import { JUDGE_AI_WINDOW_MS } from "../config.js";
 import { WindowBudget } from "../auth/window-budget.js";
 import { BoundedWorkGate } from "../auth/work-gate.js";
 
@@ -117,7 +118,7 @@ export interface NudgeRouteDeps {
 export function nudgeRoutes(app: FastifyInstance, deps: NudgeRouteDeps): void {
   const store = new PostgresNudgeStore(deps.db);
   const clock = (req?: FastifyRequest) => (deps.clock ? deps.clock(req) : new Date());
-  const budget = new WindowBudget(deps.seams?.generateBudgetMax ?? 20, 10 * 60 * 1000);
+  const budget = new WindowBudget(deps.seams?.generateBudgetMax ?? 20, JUDGE_AI_WINDOW_MS);
   const gate = new BoundedWorkGate(deps.seams?.generateConcurrency ?? 2, 0);
   const operatorId = (req: FastifyRequest) =>
     (req.session as NonNullable<typeof req.session>).operatorId;

@@ -19,6 +19,8 @@ export interface OpenAIConfig {
   timeoutMs?: number;
   /** The judge demo disables SDK retries to bound provider requests; historical default is 1. */
   maxRetries?: 0 | 1;
+  /** Test seam only. Production passes nothing and uses the SDK fetch. */
+  fetch?: typeof fetch;
 }
 
 export function createOpenAIInvoiceClient(config: OpenAIConfig): InvoiceModelClient {
@@ -26,6 +28,7 @@ export function createOpenAIInvoiceClient(config: OpenAIConfig): InvoiceModelCli
     apiKey: config.apiKey,
     timeout: config.timeoutMs ?? 20_000,
     maxRetries: config.maxRetries ?? 1,
+    ...(config.fetch ? { fetch: config.fetch } : {}),
   });
   return {
     async generate({ instructions, input }) {
