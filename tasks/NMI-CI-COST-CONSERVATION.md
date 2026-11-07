@@ -3,7 +3,7 @@
 - **Status:** Ready for independent exact-HEAD review
 - **Owner/orchestrator:** Project owner (`mrdzyn`, approved 2026-11-07)
 - **Implementation agent:** Antigravity
-- **Target branch:** `main` (`0b652348dfc546b4e9bc5bbf2e5a21fef142c124`)
+- **Target branch:** `main` (`e795fbc8514d29555ff365f219033206ecc851d4`)
 - **Working branch:** `chore/nmi-ci-cost-conservation`
 
 ## Objective

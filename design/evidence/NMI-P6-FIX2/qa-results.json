@@ -1,0 +1,285 @@
+{
+  "task": "NMI-P6-FIX2",
+  "generatedBy": "design/evidence/NMI-P6-FIX2/run-p6-fix2-journey.mjs",
+  "info": {
+    "startedAt": "2026-11-07T03:31:47.344Z",
+    "synthetic": true,
+    "model": "DETERMINISTIC FAKE (not OpenAI)",
+    "sourceSha": "03f743a569e2e220cbd26f18750b86a2cb0f9d7a",
+    "sourceTreeDirtyAtRun": [],
+    "browser": "headless Chrome (CDP), emulated desktop 1280x900 and phone 390x844, light + dark",
+    "migrations": [
+      "0000_young_mister_fear",
+      "0001_complete_spot",
+      "0002_light_proteus",
+      "0003_audit_log_immutable",
+      "0004_zippy_namorita",
+      "0005_glorious_giant_girl",
+      "0006_known_colleen_wing",
+      "0007_perfect_doomsday",
+      "0008_mushy_zarek"
+    ],
+    "cleanup": ["after fast stop, pg_ctl status: exit 3"],
+    "finishedAt": "2026-11-07T03:31:59.588Z",
+    "screenshots": [
+      "fix2-01-after-open-in-queue-desktop-light.png",
+      "fix2-02-after-open-existing-desktop-light.png",
+      "fix2-03-queue-desktop-dark.png",
+      "fix2-04-after-open-in-queue-mobile-light.png",
+      "fix2-05-queue-mobile-dark.png"
+    ]
+  },
+  "summary": {
+    "total": 41,
+    "passed": 41,
+    "failed": 0
+  },
+  "results": [
+    {
+      "group": "seed",
+      "name": "4 synthetic invoices saved through the real route",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-in-queue",
+      "name": "operator starts on the mounted queue's History tab",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-in-queue",
+      "name": "'Draft a nudge' on the queue opens Nudgey chat with the editable prefill",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-in-queue",
+      "name": "clicking 'Open in queue' CLOSED the Nudgey popover (.nudgey-panel is absent)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-in-queue",
+      "name": "keyboard focus moved to the queue heading (#nq-title)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-in-queue",
+      "name": "the mounted queue switched from History to Pending review and selected Zorblax Industries",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-in-queue",
+      "name": "Approve, Save edits, Regenerate and Reject buttons are completely unoccluded",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "desktop light queue after Open in queue: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "desktop light queue after Open in queue: the tone select shows \"Professional\" in full",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "desktop light queue after Open in queue: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-light",
+      "name": "desktop light queue after Open in queue: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-existing",
+      "name": "operator switches to Approved manually without reloading the page",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-existing",
+      "name": "reopening Nudgey on the same mounted screen starts a clean chat (previous messages cleared on close)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-existing",
+      "name": "clicking 'Open existing in queue' CLOSED the Nudgey popover (.nudgey-panel is absent)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-existing",
+      "name": "keyboard focus moved to #nq-title again",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-existing",
+      "name": "the mounted queue switched from Approved to Pending review and selected Northwind Studio",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-open-existing",
+      "name": "review action buttons remain unoccluded",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "desktop dark queue: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "desktop dark queue: the tone select shows \"Professional\" in full",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "desktop dark queue: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "desktop-dark",
+      "name": "desktop dark queue: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-open-in-queue",
+      "name": "mobile operator starts on the mounted queue's History tab",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-open-in-queue",
+      "name": "on 390px mobile, 'Open in queue' CLOSED .nudgey-panel so the queue is visible",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-open-in-queue",
+      "name": "on 390px mobile, keyboard focus moved to #nq-title",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-open-in-queue",
+      "name": "on 390px mobile, review action buttons are unoccluded",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile light queue after Open in queue: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile light queue after Open in queue: every interactive P6 target is at least 44px tall on a phone",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile light queue after Open in queue: the tone select shows \"Professional\" in full",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile light queue after Open in queue: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-light",
+      "name": "mobile light queue after Open in queue: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "mobile dark queue: no horizontal page overflow",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "mobile dark queue: every interactive P6 target is at least 44px tall on a phone",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "mobile dark queue: the tone select shows \"Professional\" in full",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "mobile dark queue: text in the P6 surfaces meets WCAG AA contrast (computed)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "mobile-dark",
+      "name": "mobile dark queue: every control in the P6 surfaces has an accessible name",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no request to any foreign host",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "the browser used only read/draft routes: no send, schedule, dispatch, approve, reject or copy call was made",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no draft was approved, rejected or edited by navigation (all 4 seeded/drafted rows stay pending_review)",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "every model input was customer-free",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "boundaries",
+      "name": "no uncaught exceptions or console errors",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "cleanup",
+      "name": "PostgreSQL shutdown confirmed (pg_ctl status exit 3) before the disposable cluster directory was deleted",
+      "result": "PASS",
+      "detail": ""
+    }
+  ]
+}

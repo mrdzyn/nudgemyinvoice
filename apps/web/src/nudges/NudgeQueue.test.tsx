@@ -1,9 +1,13 @@
 // @vitest-environment happy-dom
-import { act } from "react";
+import { act, useReducer } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AppShell } from "../components/AppShell.js";
 import { AppProvider } from "../demo/AppContext.js";
-import { initialState, type Action, type AppState } from "../demo/appState.js";
+import { initialState, reducer, type Action, type AppState } from "../demo/appState.js";
+import type { ListItem } from "../domain/serverList.js";
+import type { ListQuery, ListResult } from "../invoices/api.js";
+import { CurrentScreen } from "../screens.js";
 import type {
   GenerateOutcome,
   NudgeApi,
@@ -589,5 +593,235 @@ describe("P7-A: an open-nudges request re-targets an ALREADY-MOUNTED queue", () 
     );
     expect(f.calls.some((x) => x.op === "generate")).toBe(false);
     expect(f.calls.some((x) => ["approve", "reject", "edit"].includes(x.op))).toBe(false);
+  });
+
+  it("moves focus to #nq-title on a new open-nudges request and resets seeded focus when cleared to null", async () => {
+    const f = fakeApi(rows());
+    const c = controller(f.api);
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "approved", id: NID(1) } }),
+    );
+    // Simulate top-nav navigate to "nudges" clearing nudgeFocus to null, then a fresh open-nudges request.
+    await mount(<NudgeQueue controller={c} />, state({ nudgeFocus: null }));
+    tab("history").focus();
+    expect(document.activeElement?.id).toBe("nq-tab-history");
+
+    await mount(
+      <NudgeQueue controller={c} />,
+      state({ nudgeFocus: { view: "pending", id: NID(3) } }),
+    );
+    expect(tab("pending").getAttribute("aria-selected")).toBe("true");
+    expect(selectedRow()).toContain("Customer 3");
+    expect(document.activeElement?.id).toBe("nq-title");
+  });
+});
+
+describe("P6-FIX2: integrated AppShell + Nudgey on an already-mounted queue", () => {
+  const invoiceItem = (n: number, customerName = `Zorblax ${n}`): ListItem => ({
+    id: INV(n),
+    customerName,
+    customerEmail: `z${n}@example.test`,
+    currency: "USD",
+    dueDate: "2026-10-30",
+    total: "1200.00",
+    createdAt: "2026-10-01T00:00:00.000Z",
+    paypalState: "none",
+  });
+  const selectedRow = () =>
+    host.querySelector('.nq-list [aria-current="true"]')?.closest("li")?.textContent ?? "";
+  const tab = (v: string) => host.querySelector(`#nq-tab-${v}`) as HTMLElement;
+
+  const setInput = async (el: HTMLInputElement, value: string) => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => {
+      setter.call(el, value);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  };
+
+  function mountShell(c: NudgesController, invoices: ListItem[]) {
+    let externalDispatch!: (a: Action) => void;
+    const listInvoices = vi.fn(async (q: ListQuery): Promise<ListResult> => {
+      const term = (q.q ?? "").trim().toLowerCase();
+      const matched = term
+        ? invoices.filter((i) => i.customerName.toLowerCase().includes(term))
+        : invoices;
+      return { kind: "ok", page: { items: matched, nextCursor: null } } as ListResult;
+    });
+    function Harness() {
+      const [s, d] = useReducer(reducer, undefined, () => ({
+        ...initialState("light"),
+        authed: true,
+        screen: "nudges" as const,
+      }));
+      externalDispatch = d;
+      return (
+        <AppProvider
+          state={s}
+          dispatch={d}
+          session={{ username: "op", signOut: () => undefined, listInvoices, nudges: c }}
+        >
+          <AppShell>
+            <CurrentScreen screen={s.screen === "login" ? "dashboard" : s.screen} />
+          </AppShell>
+        </AppProvider>
+      );
+    }
+    return {
+      render: async () => {
+        await act(async () => root.render(<Harness />));
+        await flush();
+      },
+      dispatch: (a: Action) => externalDispatch(a),
+      listInvoices,
+    };
+  }
+
+  it("closes .nudgey-panel, switches tab/selection and focuses #nq-title on both 'Open in queue' and 'Open existing in queue'", async () => {
+    const f = fakeApi([
+      item(1, { status: "approved", approvedAt: "2026-11-04T04:00:00.000Z" }),
+      item(2, {
+        invoice: {
+          customerName: "Zorblax 2",
+          currency: "USD",
+          total: "1200.00",
+          dueDate: "2026-10-30",
+        },
+      }),
+      item(3, {
+        invoice: {
+          customerName: "Zorblax 3",
+          currency: "USD",
+          total: "1200.00",
+          dueDate: "2026-10-30",
+        },
+      }),
+      item(4, {
+        status: "rejected",
+        invoice: {
+          customerName: "Zorblax 4",
+          currency: "USD",
+          total: "1200.00",
+          dueDate: "2026-10-30",
+        },
+      }),
+    ]);
+    const c = controller(f.api);
+    const shell = mountShell(c, [invoiceItem(2), invoiceItem(3), invoiceItem(4)]);
+    await shell.render();
+
+    // 1. Move to History manually, then open Nudgey via the queue header's "Draft a nudge" button.
+    await act(async () => tab("history").click());
+    await flush();
+    expect(tab("history").getAttribute("aria-selected")).toBe("true");
+
+    await click("Draft a nudge");
+    expect(host.querySelector(".nudgey-panel")).not.toBeNull();
+    const askInput = host.querySelector(".chat-form input") as HTMLInputElement;
+    expect(askInput.value).toBe("draft a professional nudge for ");
+
+    // 2. Draft a new nudge for Zorblax 4 (no pending draft) and click "Open in queue".
+    await setInput(askInput, "draft a friendly nudge for zorblax 4");
+    await act(async () => {
+      (host.querySelector(".chat-form button[type='submit']") as HTMLButtonElement).click();
+    });
+    await flush();
+    await click("Draft friendly nudge");
+    expect(host.textContent).toContain("Draft ready for review");
+
+    await click("Open in queue");
+    expect(host.querySelector(".nudgey-panel")).toBeNull();
+    expect(tab("pending").getAttribute("aria-selected")).toBe("true");
+    expect(selectedRow()).toContain("Zorblax 4");
+    expect(document.activeElement?.id).toBe("nq-title");
+
+    // 3. Without reloading, move to Approved, click "Draft a nudge" again, hit pending-exists for Zorblax 2,
+    //    and click "Open existing in queue".
+    await act(async () => tab("approved").click());
+    await flush();
+    expect(tab("approved").getAttribute("aria-selected")).toBe("true");
+
+    await click("Draft a nudge");
+    expect(host.querySelector(".nudgey-panel")).not.toBeNull();
+    // Prior chat history was cleared when Nudgey closed.
+    expect(host.textContent).not.toContain("Draft ready for review");
+
+    const askInput2 = host.querySelector(".chat-form input") as HTMLInputElement;
+    await setInput(askInput2, "draft a firm nudge for zorblax 2");
+    await act(async () => {
+      (host.querySelector(".chat-form button[type='submit']") as HTMLButtonElement).click();
+    });
+    await flush();
+    await click("Draft firm nudge");
+    expect(host.textContent).toContain("already has a draft waiting for review");
+
+    await click("Open existing in queue");
+    expect(host.querySelector(".nudgey-panel")).toBeNull();
+    expect(tab("pending").getAttribute("aria-selected")).toBe("true");
+    expect(selectedRow()).toContain("Zorblax 2");
+    expect(document.activeElement?.id).toBe("nq-title");
+    expect(f.calls.some((x) => ["approve", "reject", "edit"].includes(x.op))).toBe(false);
+  });
+
+  it("closes an open Nudgey popover and aborts active local speech when open-nudges fires on the same screen", async () => {
+    class FakeSpeech {
+      static instances: FakeSpeech[] = [];
+      static async available() {
+        return "available" as const;
+      }
+      static async install() {
+        return true;
+      }
+      processLocally = false;
+      lang = "";
+      continuous = true;
+      interimResults = true;
+      maxAlternatives = 0;
+      onresult: ((e: unknown) => void) | null = null;
+      onerror: ((e: unknown) => void) | null = null;
+      onend: (() => void) | null = null;
+      starts = 0;
+      aborts = 0;
+      constructor() {
+        FakeSpeech.instances.push(this);
+      }
+      start() {
+        this.starts++;
+      }
+      abort() {
+        this.aborts++;
+      }
+    }
+    const prevSpeech = (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
+    Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: FakeSpeech });
+    try {
+      const f = fakeApi([
+        item(1, { status: "approved", approvedAt: "2026-11-04T04:00:00.000Z" }),
+        item(2),
+      ]);
+      const c = controller(f.api);
+      const shell = mountShell(c, [invoiceItem(2)]);
+      await shell.render();
+
+      await click("Draft a nudge");
+      await flush();
+      expect(host.querySelector(".nudgey-panel")).not.toBeNull();
+      await click(/Speak on device/);
+      const activeSpeech = FakeSpeech.instances.find((i) => i.starts > 0);
+      expect(activeSpeech).toBeDefined();
+      expect(activeSpeech!.aborts).toBe(0);
+
+      // External same-screen open-nudges (seedKey increments while screen stays "nudges"):
+      await act(async () => shell.dispatch({ type: "open-nudges", view: "approved", id: NID(1) }));
+      await flush();
+
+      expect(host.querySelector(".nudgey-panel")).toBeNull();
+      expect(tab("approved").getAttribute("aria-selected")).toBe("true");
+      expect(document.activeElement?.id).toBe("nq-title");
+      expect(activeSpeech!.aborts).toBeGreaterThan(0);
+    } finally {
+      Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: prevSpeech });
+    }
   });
 });
