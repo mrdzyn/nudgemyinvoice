@@ -8,7 +8,7 @@
 // is always removed) and never printed, passed as arguments or written to the repository.
 // Output is a sanitized JSON report on stdout. Exit 0 only if every check passed.
 //
-//   node scripts/preflight-provision-operator.mjs [--report <path>]
+//   node scripts/preflight-provision-operator.mjs [--report <path>] [--migrations-root <path>]
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import {
@@ -23,7 +23,7 @@ import {
 } from "node:fs";
 import net from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { clearInterval, setInterval } from "node:timers";
 import { migrationTags } from "./migration-plan.mjs";
 
@@ -33,6 +33,25 @@ const DB = "nmi_preflight";
 const OWNER = "nmi_owner";
 const HOST = "127.0.0.1";
 // The plan is validated from the committed journal before starting any disposable PostgreSQL.
+
+function parseArgs(argv) {
+  let reportPath = null;
+  let migrationsRoot = ROOT;
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    const next = argv[i + 1];
+    if (arg === "--report" && next && !next.startsWith("--")) {
+      reportPath = next;
+      i++;
+    } else if (arg === "--migrations-root" && next && !next.startsWith("--")) {
+      migrationsRoot = resolve(next);
+      i++;
+    } else {
+      throw new Error(`unexpected or incomplete CLI argument: ${arg}`);
+    }
+  }
+  return { reportPath, migrationsRoot };
+}
 
 const rnd = (n) => randomBytes(n).toString("hex");
 // Both special characters the runbook must escape (':' and '\') are guaranteed present.
@@ -317,7 +336,7 @@ async function main() {
   // Fail closed before starting any database or attempting operator provisioning.
   let migrations;
   try {
-    migrations = migrationTags(ROOT);
+    migrations = migrationTags(cliArgs.migrationsRoot);
     check(
       "migrate.plan",
       "committed PostgreSQL journal is ordered, has 0008 and has all SQL files",
@@ -460,6 +479,8 @@ async function main() {
 
   /* ---------- runbook step 2: all validated journal migrations over the password file ---------- */
   let migrated = true;
+  let appliedCount = 0;
+  let failedTag = null;
   for (const f of migrations) {
     const result = run(
       bin("psql"),
@@ -470,27 +491,59 @@ async function main() {
         "ON_ERROR_STOP=1",
         "-1",
         "-f",
-        join(ROOT, "packages/db/migrations", `${f}.sql`),
+        join(cliArgs.migrationsRoot, "packages/db/migrations", `${f}.sql`),
       ],
       { env },
     );
     captured.push(result.stdout ?? "", result.stderr ?? "");
     if (result.error || result.status !== 0) {
       migrated = false;
+      failedTag = f;
       break; // never apply later migrations after an error
     }
+    appliedCount++;
   }
   check(
     "migrate",
     "all validated journal migrations applied in order with psql + PGPASSFILE",
     migrated,
-    `count=${migrations.length}`,
+    failedTag
+      ? `applied=${appliedCount}/${migrations.length};failed=${failedTag}`
+      : `count=${migrations.length}`,
   );
-  if (!migrated) return; // no operator creation after any incomplete SQL migration
+  if (!migrated) {
+    const opsAfterFail = Number(
+      one(
+        env,
+        "SELECT CASE WHEN to_regclass('public.operators') IS NULL THEN 0 ELSE (SELECT count(*) FROM operators) END",
+      ),
+    );
+    check(
+      "migrate.no_provision",
+      "operator provisioning skipped and zero operator rows exist after migration failure",
+      opsAfterFail === 0,
+      `operators=${opsAfterFail}`,
+    );
+    return; // no operator creation after any incomplete SQL migration
+  }
 
   const hasNudges = one(env, "SELECT to_regclass('public.invoice_nudges') IS NOT NULL") === "t";
   check("migrate.0008", "migration 0008 invoice_nudges table exists", hasNudges);
-  if (!hasNudges) return;
+  if (!hasNudges) {
+    const opsAfterMissing0008 = Number(
+      one(
+        env,
+        "SELECT CASE WHEN to_regclass('public.operators') IS NULL THEN 0 ELSE (SELECT count(*) FROM operators) END",
+      ),
+    );
+    check(
+      "migrate.no_provision",
+      "operator provisioning skipped and zero operator rows exist when invoice_nudges is absent",
+      opsAfterMissing0008 === 0,
+      `operators=${opsAfterMissing0008}`,
+    );
+    return;
+  }
 
   const empty = snapshot(env).operators === 0;
   check("migrate.empty", "no operator before provisioning", empty);
@@ -679,7 +732,9 @@ const versions = () => {
 };
 
 let fatal = null;
+let cliArgs = { reportPath: null, migrationsRoot: ROOT };
 try {
+  cliArgs = parseArgs(process.argv.slice(2));
   await main();
 } catch (e) {
   fatal = e instanceof Error ? e.message.replaceAll(/\S*(Pw:)\S*/g, "[redacted]") : "error";
@@ -715,6 +770,7 @@ try {
   const failed = checks.filter((c) => !c.ok).length;
   const report = {
     task: "NMI-RENDER-P1-PREFLIGHT",
+    ...(cliArgs.migrationsRoot !== ROOT ? { customMigrationsRoot: true } : {}),
     versions: versions(),
     fatal,
     passed: checks.length - failed,
@@ -727,7 +783,6 @@ try {
     console.error("REFUSING to print report: it contains a secret");
     process.exit(3);
   }
-  const i = process.argv.indexOf("--report");
-  if (i > 0) writeFileSync(process.argv[i + 1], json + "\n");
+  if (cliArgs.reportPath) writeFileSync(cliArgs.reportPath, json + "\n");
   console.log(json);
 }
