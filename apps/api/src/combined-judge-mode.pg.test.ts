@@ -189,39 +189,61 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
     await scratch?.drop();
   });
 
-  it("AI parse → human review → explicit PayPal draft → AI nudge, with exactly one remote create", async () => {
+  it("AI parse → human review+edit → explicit PayPal draft → AI nudge, with exactly one remote create", async () => {
     const parse = parseModel(modelOutput());
     const nudge = new FakeNudgeModel();
     const fake = fakePayPal();
     const app = makeApp({ modelClient: parse, nudgeClient: nudge, paypal: fake.client });
     const s = await session(app, USER_A, PASSWORD_A);
 
+    // API/PG integration scope: fake providers, real HTTP + real PostgreSQL, no browser.
     // 1. AI parses the operator's text (proposal only; nothing saved, no PayPal touched).
     const parsed = await s.post("/api/invoice-drafts/parse", {
       text: "Acme 2 logos 250 each, due Nov 30",
     });
     expect(parsed.statusCode, parsed.body).toBe(200);
-    expect(parsed.json()).toMatchObject({
-      status: "draft",
-      draft: { customerName: "Acme Design" },
-    });
+    const proposal = (parsed.json() as { status: string; draft: InvoiceDraft }).draft;
+    expect(parsed.json()).toMatchObject({ status: "draft" });
+    expect(proposal.customerName).toBe("Acme Design");
     expect(parse.calls).toHaveLength(1);
 
-    // 2. Human review: the operator reads the proposal, then explicitly saves it.
-    const id = await saveDraft(s);
+    // 2. Human review: the operator reads the proposal, EDITS one field, then explicitly saves
+    // the reviewed result (not a separate hardcoded invoice).
+    const reviewed: InvoiceDraft = { ...proposal, customerName: "Acme Design Pty Ltd" };
+    const saved = await s.post("/api/invoice-drafts", reviewed, { "idempotency-key": key() });
+    expect(saved.statusCode, saved.body).toBe(201);
+    const id = (saved.json() as { id: string }).id;
     const read = await s.get(`/api/invoice-drafts/${id}`);
     expect(read.statusCode).toBe(200);
-    expect(read.json()).toMatchObject({ draft: { customerName: "Acme Design" } });
+    // The persisted invoice matches the reviewed data, including the edited field.
+    expect(read.json()).toMatchObject({
+      draft: {
+        customerName: "Acme Design Pty Ltd",
+        customerEmail: "billing@acme.example",
+        currency: "USD",
+        dueDate: "2026-11-30",
+        lineItems: [{ description: "Logo concepts", quantity: "2", unitPrice: "250.00" }],
+      },
+    });
     // Saving alone creates no PayPal operation and no provider traffic.
     expect(read.json().paypal).toMatchObject({ state: "none", paypalInvoiceId: null });
     expect(fake.log.create).toHaveLength(0);
 
     // 3. Explicit human approval: the operator posts the draft action themselves.
+    // The outbound fake PayPal payload reflects the SAVED invoice, not the raw model output.
     const created = await s.post(`/api/invoice-drafts/${id}/paypal-draft`, {});
     expect(created.statusCode, created.body).toBe(201);
     const remoteId = (created.json() as { paypalInvoiceId: string }).paypalInvoiceId;
     expect(remoteId).toMatch(/^INV2-FAKE-/);
     expect(fake.log.create).toHaveLength(1);
+    expect(fake.log.create[0].body).toMatchObject({
+      detail: { currency_code: "USD" },
+    });
+    expect(fake.log.create[0].body.items).toHaveLength(1);
+    expect(fake.log.create[0].body.items[0]).toMatchObject({
+      name: "Logo concepts",
+      quantity: "2",
+    });
     // The verify step re-read the remote draft; no second create happened.
     expect(fake.log.get.length).toBeGreaterThanOrEqual(1);
 
@@ -231,7 +253,7 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
     expect(replay.json()).toMatchObject({ paypalInvoiceId: remoteId, replayed: true });
     expect(fake.log.create).toHaveLength(1);
 
-    // 5. AI nudge drafting on the reviewed, draft-created invoice.
+    // 5. AI nudge drafting from the reviewed invoice: facts follow the edited save.
     const gen = await s.post(`/api/invoice-drafts/${id}/nudges`, {
       tone: "professional",
       timeZone: "Asia/Manila",
@@ -239,7 +261,7 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
     expect(gen.statusCode, gen.body).toBe(201);
     const nd = gen.json() as { id: string; message: string; status: string; version: number };
     expect(nd.status).toBe("pending_review");
-    expect(nd.message).toContain("Hi Acme Design,");
+    expect(nd.message).toContain("Hi Acme Design Pty Ltd,");
     expect(nd.message).toContain(`invoice ${id.slice(0, 8)}`);
     expect(nudge.calls).toHaveLength(1);
     // The model saw enumerated facts only, never customer PII.
@@ -266,7 +288,8 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
   it("refuses anonymous, cross-operator and forged requests before any provider call", async () => {
     const parse = parseModel(modelOutput());
     const fake = fakePayPal();
-    const app = makeApp({ modelClient: parse, paypal: fake.client });
+    const nudge = new FakeNudgeModel();
+    const app = makeApp({ modelClient: parse, nudgeClient: nudge, paypal: fake.client });
     const sA = await session(app, USER_A, PASSWORD_A);
     const sB = await session(app, USER_B, PASSWORD_B);
     const id = await saveDraft(sA);
@@ -295,7 +318,56 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
         })
       ).statusCode,
     ).toBe(404);
+
+    // QA-02: forged Origin and invalid/missing CSRF with a VALID authenticated session are
+    // refused by the global hooks before either provider can be called.
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      headers: { origin: ORIGIN },
+      payload: { username: USER_A, password: PASSWORD_A },
+    });
+    const cookie = login.cookies.find((c) => c.name === "nmi_session")?.value as string;
+    const csrf = (login.json() as { csrfToken: string }).csrfToken;
+    const authed = (extra: Record<string, string>) => ({
+      cookie: `nmi_session=${cookie}`,
+      origin: ORIGIN,
+      "x-csrf-token": csrf,
+      ...extra,
+    });
+    for (const [name, u, headers] of [
+      [
+        "forged origin on parse",
+        "/api/invoice-drafts/parse",
+        authed({ origin: "https://evil.example" }),
+      ],
+      [
+        "missing csrf on parse",
+        "/api/invoice-drafts/parse",
+        { cookie: `nmi_session=${cookie}`, origin: ORIGIN },
+      ],
+      ["invalid csrf on parse", "/api/invoice-drafts/parse", authed({ "x-csrf-token": "wrong" })],
+      [
+        "forged origin on draft",
+        `/api/invoice-drafts/${id}/paypal-draft`,
+        authed({ origin: "https://evil.example" }),
+      ],
+      [
+        "missing csrf on draft",
+        `/api/invoice-drafts/${id}/paypal-draft`,
+        { cookie: `nmi_session=${cookie}`, origin: ORIGIN },
+      ],
+    ] as const) {
+      const r = await app.inject({
+        method: "POST",
+        url: u,
+        headers,
+        payload: { text: "x" },
+      });
+      expect(r.statusCode, name).toBe(403);
+    }
     expect(parse.calls).toHaveLength(0);
+    expect(nudge.calls).toHaveLength(0);
     expect(fake.log.create).toHaveLength(0);
   });
 
@@ -329,6 +401,40 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
     expect(g.statusCode).toBe(503);
     expect(g.json()).toEqual({ error: "ai_unavailable" });
     expect((await s2.get(`/api/nudges?view=pending&invoiceId=${id2}`)).json().items).toEqual([]);
+  });
+
+  it("emergency shutdown end-state: both providers answer 503 with zero outbound traffic", async () => {
+    // Documented kill-switch end-state: mode absent (defaults off), every provider key/flag
+    // removed. The app still serves ordinary (provider-free) work; provider routes refuse.
+    const fake = fakePayPal();
+    const off = makeApp({
+      modelClient: parseModel(modelOutput()),
+      nudgeClient: null,
+      paypal: fake.client,
+      env: {
+        NMI_JUDGE_AI_MODE: undefined,
+        OPENAI_API_KEY: undefined,
+        OPENAI_MODEL: undefined,
+        OPENAI_MAX_OUTPUT_TOKENS: undefined,
+        NUDGE_AI_DRAFTING_ENABLED: "false",
+        PAYPAL_DRAFTS_ENABLED: "false",
+        PAYPAL_CLIENT_ID: undefined,
+        PAYPAL_CLIENT_SECRET: undefined,
+      },
+    });
+    const s = await session(off, USER_A, PASSWORD_A);
+    const id = await saveDraft(s);
+    const draft = await s.post(`/api/invoice-drafts/${id}/paypal-draft`, {});
+    expect(draft.statusCode).toBe(503);
+    expect(draft.json()).toEqual({ error: "paypal_disabled" });
+    const nudge = await s.post(`/api/invoice-drafts/${id}/nudges`, {
+      tone: "professional",
+      timeZone: "Asia/Manila",
+    });
+    expect(nudge.statusCode).toBe(503);
+    expect(nudge.json()).toEqual({ error: "ai_unavailable" });
+    expect(fake.log.create).toHaveLength(0);
+    expect(fake.log.get).toHaveLength(0);
   });
 
   it("reports provider failure without ever claiming a draft exists", async () => {

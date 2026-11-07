@@ -32,6 +32,10 @@ $5 enforced monthly OpenAI limit (financial control; in-memory budgets are not a
 
 `release/nmi-openai-judges-2026@82996c4…` is OpenAI-only code and is **unsuitable for the complete judge demonstration** (no PayPal path). It is not modified or moved by this task; a new combined candidate SHA/branch decision comes later through the established gates.
 
+## GATE-01 — new combined candidate release gate (explicit, separate owner step)
+
+The current release source preflight allowlists exactly two protected branches (`release/nmi-render-judges-2026`, `release/nmi-openai-judges-2026`); a new combined protected release branch **cannot pass source preflight** until a separately reviewed allowlist/ruleset update for an owner-chosen branch name is merged. Neither existing protected ref may be moved. Selecting, protecting and validating the new combined candidate additionally requires: new exact-SHA manual-release evidence and owner substitution acceptance for that SHA (the OpenAI-only candidate's acceptance is nontransferable).
+
 ## Execution order
 
 1. Config/preflight/wiring + unit tests (this branch).

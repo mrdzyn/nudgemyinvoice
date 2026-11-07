@@ -2970,4 +2970,15 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** focused suites green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
 - **Next action:** independent exact-HEAD audit, then a new combined candidate SHA/branch decision (each separate owner action).
 
+## Handoff: NMI-COMBINED-JUDGE-02
+
+- **Task:** `tasks/NMI-COMBINED-JUDGE-01.md`; issue #58 P0; Draft PR #61 on `feat/nmi-combined-judge-mode`. Narrow remediation of audit `6709143888` (PARTIAL at `7a83927`): SEC-01, QA-01, QA-02, GATE-01, DOC-01. No merge, deploy, env change, credential, provider call, branch move, or URL share. Historical handoffs untouched.
+- **SEC-01 (fixed):** activation packet §2(6) now disables BOTH providers (PayPal flag off + both credentials removed), verifies `aiConfigured:false` AND `503 paypal_disabled` with zero outbound creates, and keeps provider-disabled preflight env as an additional check. Packet §2(3) PayPal-disabled claim scoped to `limited`/disabled modes with Gate B note for `combined`. Added offline kill-switch regressions: config shutdown-shape test + e2e shutdown end-state test (both providers 503, zero fake traffic). `off` compatibility preserved.
+- **QA-01 (fixed):** journey test now uses the real parsed draft, simulates human review with an edited field, saves the reviewed result, and asserts persisted match, fake PayPal payload/remote reflecting the saved invoice, and nudge facts following the edit. One-create + replay + approve-for-manual-use + no-send preserved. Labeled API/PG integration.
+- **QA-02 (fixed):** forged-Origin and invalid/missing-CSRF controls with a valid authenticated session added; all refused 403/401 before any provider call (parse/nudge/fake-create call counts zero).
+- **GATE-01 (recorded):** task §GATE-01 states the two-branch allowlist limit, the required separately reviewed update for an owner-chosen combined branch, no moves of existing refs, and nontransferable acceptance. New combined candidate SHA/branch decision remains a separate owner step.
+- **DOC-01 (fixed):** PR diff is 11 files (verified `git diff origin/main...HEAD`); packet §1 matrix stays labeled limited-mode with §1a as the combined addition.
+- **Verification:** focused suites green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #61.
+- **Next action:** focused independent re-audit of the five items, then the GATE-01 combined-candidate step (separate owner action).
+
 <!-- HANDOFF_ENTRIES_END -->

@@ -146,6 +146,26 @@ describe("limited judge AI mode fails closed without a provider call", () => {
     expect(isJudgeAiMode("off")).toBe(false);
   });
 
+  it("emergency shutdown env restores the provider-disabled shape", () => {
+    // Documented kill-switch end-state: mode absent (defaults off), every provider key/flag removed.
+    const shutdown = loadConfig({
+      ...base,
+      OPENAI_API_KEY: undefined,
+      OPENAI_MODEL: undefined,
+      OPENAI_MAX_OUTPUT_TOKENS: undefined,
+      NUDGE_AI_DRAFTING_ENABLED: "false",
+      PAYPAL_DRAFTS_ENABLED: "false",
+      PAYPAL_CLIENT_ID: undefined,
+      PAYPAL_CLIENT_SECRET: undefined,
+    });
+    expect(shutdown.judgeAiMode).toBe("off");
+    expect(shutdown.openai).toBeNull();
+    expect(shutdown.nudgeDrafting).toBeNull();
+    expect(shutdown.paypalDraftsEnabled).toBe(false);
+    expect(shutdown.paypalCredentials).toBeNull();
+    expect(parserMaxRetries(shutdown.judgeAiMode)).toBe(1);
+  });
+
   it("combined mode fails closed on each missing piece and on live PayPal", () => {
     const full = {
       NMI_JUDGE_AI_MODE: "combined",
