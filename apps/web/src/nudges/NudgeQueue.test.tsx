@@ -425,7 +425,14 @@ describe("Dashboard summary card", () => {
     expect(host.textContent).toContain("AI Nudge Queue");
     expect(host.textContent).toContain("Nothing is ever sent");
     expect(host.querySelector('[data-testid="count-pending"]')?.textContent).toBe("4");
-    expect(host.querySelectorAll(".nq-mini li")).toHaveLength(3);
+    // The Spotlight features the first item; the mini list shows the rest (no duplication).
+    expect(host.querySelector('[data-testid="nudge-spotlight"]')?.textContent).toContain(
+      "Customer 1",
+    );
+    const rows = host.querySelectorAll(".nq-mini li");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toContain("Customer 2");
+    expect(rows[0]?.textContent).not.toContain("Customer 1");
     await click(/^Review/);
     expect(dispatched.at(-1)).toEqual({ type: "open-nudges", view: "pending", id: NID(1) });
     await click("Open queue");
@@ -450,6 +457,19 @@ describe("Dashboard summary card", () => {
     expect(spot?.textContent).not.toMatch(/Approve|Copy/);
     await click(/^Review in queue/);
     expect(dispatched.at(-1)).toEqual({ type: "open-nudges", view: "pending", id: NID(1) });
+  });
+
+  it("with one pending draft, features it once and skips the mini list", async () => {
+    const f = fakeApi([item(1)]);
+    await mount(
+      <NudgeSummaryCard controller={controller(f.api)} />,
+      state({ screen: "dashboard" }),
+    );
+    expect(host.querySelector('[data-testid="nudge-spotlight"]')?.textContent).toContain(
+      "Customer 1",
+    );
+    expect(host.querySelectorAll(".nq-mini li")).toHaveLength(0);
+    expect(host.textContent).toContain("Only one draft pending — featured above.");
   });
 
   it("shows no Spotlight when nothing is pending review", async () => {

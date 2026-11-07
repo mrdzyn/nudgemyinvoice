@@ -18,6 +18,13 @@ defect: NO application patch. Mechanism coverage already exists both sides
 
 ## Stage 1b — P1 action-led header/filter/FAB + review-routed Spotlight (IMPLEMENTED 2026-11-08, PR #65)
 
+UX-01 remediation (audit 6711702334): removed the top full-width Sandbox banner and the
+verbose signed-in PostgreSQL Notice from the AppShell shell — the Safe Mode disclosure is now
+the single Safe Mode identity (safeguards inline on demand; precise confirmations at each
+point of action unchanged). Spotlight no longer duplicates its item in the mini list (rest
+only; single-draft case shows a "featured above" note). Pill labeled `Sandbox Safe Mode` so
+the no-send-or-pay-controls guard keeps passing unmodified.
+
 Done: Safe Mode disclosure button + inline safeguards (`AppShell.tsx`); real
 matching-invoice total in the dashboard head (`RealDashboard.tsx`); review-only Spotlight of
 the first pending draft (`NudgeSummaryCard.tsx`, tones type-locked, no approve/copy/send

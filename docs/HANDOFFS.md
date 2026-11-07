@@ -3012,4 +3012,12 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** focused suites green (AppShell 3 new, Spotlight 2 new, head-total 1 new, regressions untouched); keyless 14/14 and keyed 15/15 on the disposable licensed stack (key in memory only, redacted, leak-guarded) with desktop/390px/dark screenshots in `design/evidence/NMI-64/`; local positive control VERIFIED (Live runtime check still PENDING owner deploy). Full exact-HEAD manual CI on the commit containing this handoff; hosted CI NOT RUN; zero live provider calls.
 - **Next action:** independent audit of Stage 1, then owner decision; P1 worklist pipeline next (needs per-invoice nudge-state data-source decision).
 
+## Handoff: NMI-64-STUDIO-04
+
+- **Task:** `tasks/NMI-64-STUDIO-CHARTS.md`; same Draft PR #65 on `feat/nmi-64-studio-charts`. Focused remediation for audit `6711702334` (Stage 0 + P1 core PASS; UX-01 + DOC-01 only). No security/API/server/migration/lockfile change; PR #63 untouched. No merge, deploy, credential, provider, or branch action.
+- **UX-01:** removed the redundant top Sandbox banner and verbose signed-in PostgreSQL Notice from AppShell (offline/functional notices untouched); Safe Mode disclosure is the single identity with safeguards inline; point-of-action confirmations unchanged. Spotlight item no longer duplicated in the mini list (rest-only; single-draft "featured above" note). Pill label avoids the `^pay` guard trip, guard unmodified. Updated `App.render.test.tsx` global identity assertion + `NudgeQueue.test.tsx` mini-list expectations; new single-draft test.
+- **DOC-01:** STATUS current phase/primary/working-branch/task/hosting lines reconciled to Stage 1-on-PR-#65, `main@766dde37`, three protected branches, combined Live (Render tracks `main`, Auto Deploy OFF), `abfbbfc` rollback-only, PR #63 PASS unmerged, verified brief as reference, local positive control verified / Live check pending.
+- **Verification:** focused suites green; fresh keyless/keyed CDP browser QA (desktop/390px/dark, overflow/FAB/CSP/exception checks); full exact-HEAD manual CI on the commit containing this handoff; hosted CI NOT RUN; zero live provider calls. Screenshots refreshed for the consolidated shell.
+- **Next action:** independent focused re-audit, then owner merge decision; P1 worklist pipeline (Stage 2) needs the per-invoice nudge-state projection decision.
+
 <!-- HANDOFF_ENTRIES_END -->

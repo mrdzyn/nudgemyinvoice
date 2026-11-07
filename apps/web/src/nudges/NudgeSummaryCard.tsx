@@ -116,9 +116,13 @@ export function NudgeSummaryView({
             No drafts waiting for review. Open a saved invoice and choose <em>AI payment nudge</em>,
             or ask Nudgey.
           </p>
+        ) : recent.items.length === 1 ? (
+          // The single pending draft is featured in the Spotlight above; no mini-list needed.
+          <p className="hint nq-tight">Only one draft pending — featured above.</p>
         ) : (
-          <ul className="nq-mini" aria-label="Pending review">
-            {recent.items.map((n) => (
+          // P1 UX-01: the Spotlight already features items[0]; the mini list shows the rest.
+          <ul className="nq-mini" aria-label="More pending review">
+            {recent.items.slice(1).map((n) => (
               <li key={n.id}>
                 <div className="nq-mini-main">
                   <strong>{n.invoice?.customerName ?? n.facts.invoiceRef}</strong>
