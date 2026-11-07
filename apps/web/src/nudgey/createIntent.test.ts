@@ -10,7 +10,7 @@ describe("create-invoice intent (chat-to-composer, never an action)", () => {
     expect(r).toEqual({ kind: "create", text: CREATE });
   });
 
-  it("recognizes create-verb variants paired with the invoice noun", () => {
+  it("recognizes affirmative creation with the invoice as the verb's direct object", () => {
     for (const q of [
       "Make me an invoice for Acme for $75 due Friday",
       "Draft an invoice for Northwind for design work",
@@ -18,6 +18,12 @@ describe("create-invoice intent (chat-to-composer, never an action)", () => {
       "Add a new invoice for Acme",
       "Prepare an invoice for Acme for $100",
       "I need a new invoice for Acme",
+      "I want an invoice for Acme",
+      "I'd like a new invoice for Acme",
+      "Please create an invoice for Acme",
+      "Can you create an invoice for Acme for $75?",
+      "Could you please draft an invoice for Acme?",
+      "Hey Nudgey, create an invoice for Acme",
     ])
       expect(parseCreateIntent(q).kind, q).toBe("create");
   });
@@ -37,14 +43,26 @@ describe("create-invoice intent (chat-to-composer, never an action)", () => {
     }
   });
 
-  it("leaves non-creation input to the existing read-only router", () => {
+  it("does not hijack read-only lookups that mention creation participles or new invoices", () => {
     for (const q of [
+      "Show my invoices created today",
+      "Find invoices generated for Acme",
+      "Show new invoices",
+      "Show me invoices drafted last week",
+      "I created an invoice yesterday",
       "What are my pending invoices?",
       "Show my USD invoices",
       "Find invoices for Acme",
-      "create", // bare verb without the invoice noun is ambiguous
-      "create a reminder", // no invoice noun: not a composer request
-      "Send an invoice to Acme", // no create phrasing: existing router still says help
+    ])
+      expect(parseCreateIntent(q).kind, q).toBe("not-create");
+  });
+
+  it("does not redirect creation of something else about an invoice", () => {
+    for (const q of [
+      "Create a follow-up for invoice 123",
+      "create a reminder",
+      "create",
+      "Send an invoice to Acme",
       "",
       "   ",
     ])

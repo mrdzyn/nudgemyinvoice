@@ -9,9 +9,9 @@
 ## Implementation
 
 1. **New pure parser `apps/web/src/nudgey/createIntent.ts`** — `parseCreateIntent(raw)` returns:
-   - `{ kind: "create", text }` when a creation verb (create/make/draft/generate/add/write/prepare/new …) is paired with the invoice noun; `text` is the verbatim trimmed request (≤ `MAX_PROMPT_CHARS`, so always within the composer's 2000-char limit);
-   - `{ kind: "conflict", action }` when creation phrasing also contains `send|pay|capture|refund` (plus email/mail/mark-paid variants);
-   - `{ kind: "not-create" }` for everything else (including over-long and control-character input, which stay on the existing rejection path).
+   - `{ kind: "create", text }` only for an affirmative creation opening: after an optional opener (`hey nudgey`, `can/could/would you`, `please`), a base-form creation verb (create/make/draft/generate/add/write/prepare) governing the invoice as its direct object (`create an invoice …`, `make me an invoice …`), or an explicit need/want (`i need a new invoice …`); `text` is the verbatim trimmed request (≤ `MAX_PROMPT_CHARS`, so always within the composer's 2000-char limit);
+   - `{ kind: "conflict", action }` when a creation opening also contains `send|pay|capture|refund` (plus email/mail/mark-paid variants) alongside the invoice noun;
+   - `{ kind: "not-create" }` for everything else: lookup participles (`invoices created today`, `invoices generated for Acme`), bare `new invoices` lists, past-tense reports, creation of something else about an invoice (`create a follow-up …`), and over-long/control-character input (existing rejection path).
 2. **`ChatSession.ask` routes creation BEFORE the generic read-only/help fallback** (after nudge/schedule parsing, before `parseIntent`):
    - create → in-memory reply `COMPOSER_READY_TEXT` (“I can prepare your invoice in the composer for review …”) with `composerPrefill` set to the verbatim text; no network, no persistence, no provider call;
    - conflict → `COMPOSER_CONFLICT_TEXT` refusal, no prefill, no navigation;
@@ -25,7 +25,7 @@
 
 ## Tests (all in-repo, fake/no-provider)
 
-- `createIntent.test.ts` (new): recognition incl. the reported P0 sentence, conflict matrix, ambiguous passthrough, over-long/control passthrough.
+- `createIntent.test.ts` (new): reported P0 sentence, affirmative-object matrix (incl. openers and need/want variants), conflict matrix, participle/`new invoices` collision passthrough, follow-up-creation passthrough, over-long/control passthrough.
 - `chatSession.test.ts` (+4): zero-network create reply with verbatim prefill, conflict refusal without prefill, ambiguous passthrough to help, replacement-cancels-lookup.
 - `NudgeyChat.test.tsx` (+4): labelled button only with prefill+handler, shared responsive classes / no fixed layout, refusal carries no action, click hands verbatim text to the handler (native keyboard-focusable button).
 - `appState.test.ts` (+2): prefill sets text with `parse: idle` + `seedKey` bump and no review; ignored without reset / off-screen; over-long clamped.

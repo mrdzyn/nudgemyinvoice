@@ -304,6 +304,39 @@ describe("chat-to-composer handoff (P0: create recognized before the help fallba
     });
   });
 
+  it("does not hijack read-only lookups that mention creation participles (UX-01)", async () => {
+    const listInvoices = vi.fn(async () => ok([item(1)]));
+    const { s } = make({ listInvoices });
+    // "generated" is descriptive: the legacy router treats this as a customer search listing.
+    await s.ask("Find invoices generated for Acme");
+    const search = s.getSnapshot().at(-1)!;
+    expect(search.composerPrefill).toBeUndefined();
+    expect(search.result).toMatchObject({ kind: "invoices" });
+    expect(listInvoices).toHaveBeenCalledTimes(1);
+    // "created today" stays the legacy read-only list path, never the composer.
+    await s.ask("Show my invoices created today");
+    const prior = s.getSnapshot().at(-1)!;
+    expect(prior.composerPrefill).toBeUndefined();
+    expect(prior.result).toMatchObject({ kind: "invoices" });
+    expect(listInvoices).toHaveBeenCalledTimes(2);
+    // A bare "new invoices" list stays a list.
+    await s.ask("Show new invoices");
+    const list = s.getSnapshot().at(-1)!;
+    expect(list.composerPrefill).toBeUndefined();
+    expect(list.result).toMatchObject({ kind: "invoices" });
+    expect(listInvoices).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not redirect follow-up creation about an invoice to invoice creation (UX-01)", async () => {
+    const listInvoices = vi.fn(async () => ok([]));
+    const { s, announced } = make({ listInvoices });
+    await s.ask("Create a follow-up for invoice 123");
+    const reply = s.getSnapshot().at(-1)!;
+    expect(reply.composerPrefill).toBeUndefined();
+    expect(reply.text ?? "").not.toContain("prepare your invoice in the composer");
+    expect(announced.join(" ")).not.toContain("Invoice Composer");
+  });
+
   it("a creation request replaces a lookup in flight and the late answer is never rendered", async () => {
     const { s, gates } = make();
     const first = s.ask("Show my invoices");
