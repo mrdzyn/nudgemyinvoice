@@ -301,14 +301,16 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
 
   it("fails closed on disabled providers without touching fakes", async () => {
     // PayPal drafting builds but no client is wired: explicit human action still cannot create.
-    const noPaypal = makeApp(
-      { modelClient: parseModel(modelOutput()), nudgeClient: new FakeNudgeModel(), paypal: null },
-      {
+    const noPaypal = makeApp({
+      modelClient: parseModel(modelOutput()),
+      nudgeClient: new FakeNudgeModel(),
+      paypal: null,
+      env: {
         PAYPAL_DRAFTS_ENABLED: "false",
         PAYPAL_CLIENT_ID: undefined,
         PAYPAL_CLIENT_SECRET: undefined,
       },
-    );
+    });
     const s = await session(noPaypal, USER_A, PASSWORD_A);
     const id = await saveDraft(s);
     const r = await s.post(`/api/invoice-drafts/${id}/paypal-draft`, {});
