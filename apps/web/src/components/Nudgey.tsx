@@ -254,8 +254,8 @@ export function Nudgey() {
     [canDraftNudges],
   );
 
-  // The popover never survives navigation to another protected screen.
-  useEffect(() => setOpen(false), [state.screen]);
+  // The popover never survives navigation or an explicit same-screen re-target.
+  useEffect(() => setOpen(false), [state.screen, state.seedKey]);
   useEffect(() => {
     if (!open) {
       work.current?.abort();
@@ -395,6 +395,10 @@ export function Nudgey() {
     setOpen(false);
     dispatch({ type: "navigate", screen: "dashboard" });
   };
+  const openQueue = (id: string | null) => {
+    setOpen(false);
+    dispatch({ type: "open-nudges", view: "pending", id });
+  };
   const due = snap.counts.due;
   return (
     <div className="nudgey" ref={root}>
@@ -485,12 +489,7 @@ export function Nudgey() {
               <ChatView
                 key={view.prefill ?? ""}
                 {...(view.prefill ? { initialText: view.prefill } : {})}
-                {...(canDraftNudges
-                  ? {
-                      onOpenQueue: (id: string | null) =>
-                        dispatch({ type: "open-nudges", view: "pending", id }),
-                    }
-                  : {})}
+                {...(canDraftNudges ? { onOpenQueue: openQueue } : {})}
                 messages={chat.messages}
                 busy={chat.busy}
                 at={now}
