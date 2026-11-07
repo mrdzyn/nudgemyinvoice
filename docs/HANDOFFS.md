@@ -2931,4 +2931,14 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** targeted preflight tests green (100 tests incl. new allowlist + CLI cases); full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN; macOS↔Ubuntu gap recorded in the exception doc. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
 - **Next action:** independent code/security/policy review of the exact HEAD, then separate owner decisions (candidate SHA, branch creation, manual-CI acceptance, activation, deploy, URL).
 
+## Handoff: NMI-OPENAI-RENDER-RC-02
+
+- **Task:** `tasks/NMI-OPENAI-RENDER-RC-01.md`; issue #58; Draft PR #59 on `feat/nmi-openai-render-rc-01`. Narrow remediation of audit `6707139153` (PARTIAL at `7d42f15`): POLICY-01, DOC-02, DOC-03 only. No app changes, no new infrastructure, no merge/deploy/env/provider/branch/URL action. Historical handoffs untouched.
+- **POLICY-01 (fixed):** activation packet §2 item 2 now requires the provider-side **"Enforce a hard limit"** toggle ON (a limit alone only monitors), with dated evidence of the toggle, alert thresholds below the cap, owner shutdown threshold, and an explicit no-perfect-guarantee note for enforcement delay. No limit verified or approved.
+- **DOC-02 (fixed):** exception statuses line now reads NO NEW resources by this task with the existing Live provider-disabled deployment unchanged; STATUS hosting bullet now states the Live deployment as current and marks new provision/deploy as not authorized by this task.
+- **DOC-03 (fixed):** exception condition 2 now requires two separate clean detached checkouts/worktrees (one per exact SHA) and records which preflight executable runs in each.
+- **Preserved:** preflight allowlist + tests, release boundaries, PR #57 merge record, Gate A evidence, live Render state, PR #55 non-inheritance.
+- **Verification:** doc-checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #59.
+- **Next action:** focused independent re-audit of the three remediated items, then separate owner decisions.
+
 <!-- HANDOFF_ENTRIES_END -->
