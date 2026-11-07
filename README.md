@@ -45,7 +45,7 @@ React + Vite + TypeScript (native accessible UI); the saved-invoice list in the 
 
 ## Getting started
 
-Full judge instructions: **[docs/NMI-DEMO-JUDGE-RUNBOOK.md](docs/NMI-DEMO-JUDGE-RUNBOOK.md)** (historical Mode A QA is recorded there; the revised nine-migration setup still requires new physical PostgreSQL 16 verification). Summary:
+Full judge instructions: **[docs/NMI-DEMO-JUDGE-RUNBOOK.md](docs/NMI-DEMO-JUDGE-RUNBOOK.md)** (historical Mode A browser QA and 2026-11-07 implementation-agent disposable PostgreSQL 16.15 verification of the nine-migration §3–§5/§11 setup are recorded there; independent review pending). Summary:
 
 Prerequisites: Node ≥ 22, pnpm 10, PostgreSQL 16, a random `SESSION_SECRET` (≥ 32 characters) and `DATABASE_URL`. No provider credentials are needed to run or evaluate the app: without them parsing falls back to manual entry, PayPal drafting is off, and a clearly labelled **SIMULATED evaluation mode** (test-only launcher, no provider requests) runs the whole workflow.
 

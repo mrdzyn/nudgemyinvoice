@@ -1,7 +1,7 @@
 # NMI-MIG-0008-ISSUE49 — Local judge and operator preflight migration alignment
 
 **State:** IMPLEMENTATION / DRAFT REVIEW; not a release or hosting authorization.  
-**Base:** `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124` (owner-merged G1 D4-X adoption PR #50).  
+**Base:** `main@e795fbc8514d29555ff365f219033206ecc851d4` (reconciled via non-history-rewriting merge with owner-merged PR #52 `NMI-P6-FIX2`; originally branched from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124`, PR #50).  
 **Issue:** https://github.com/mrdzyn/nudgemyinvoice/issues/49  
 **UI design gate:** Not applicable; CLI/script and instructional docs only.
 
@@ -26,7 +26,7 @@ Published SQL/migration journal changes, application feature/domain/auth changes
 
 ## Acceptance and fail-closed evidence
 
-1. Parse and validate the journal, contiguous ordered IDs, safe unique tags, required `0008_mushy_zarek` at index 8 and existing nonempty SQL files, allowing later correctly ordered migrations without stale hardcoded totals.
+1. Parse and validate the journal, contiguous ordered IDs, safe unique tags, required `0008_mushy_zarek` at index 8, real non-symlink regular directories/files, nonempty non-whitespace SQL files, and absence of unexpected/unjournaled entries in `packages/db/migrations`, allowing later correctly ordered migrations without stale hardcoded totals.
 2. Judge instructions run **only** on a verified empty disposable `nmi_judge` database. A failure closes the loop inside a subshell, does not close the interactive terminal and does not proceed to operator provisioning. Verify `public.invoice_nudges` after migration. Do not assert an obsolete fixed public-table count.
 3. The independent SCRAM PostgreSQL 16 operator preflight uses the same validated journal, stops at the first failed migration and refuses to run the operator CLI unless all migrations and the `invoice_nudges` check pass; preserve existing secret handling and teardown guarantees.
 4. Deterministic tests prove valid current journal, missing 0008, wrong ordering/index, missing SQL, empty/corrupt journal, dangerous tag and later valid migration behavior; optional real disposable PostgreSQL 16 owner/CI preflight must be reported separately from unit tests.
