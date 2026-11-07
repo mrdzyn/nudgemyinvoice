@@ -3,7 +3,12 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import type { Writable } from "node:stream";
 import { PostgresAuthStore, createAuditSink, type AuditSink, type Db } from "@nmi/db";
-import { JUDGE_AI_CONCURRENCY, JUDGE_AI_REQUESTS_PER_WINDOW, type AppConfig } from "./config.js";
+import {
+  JUDGE_AI_CONCURRENCY,
+  JUDGE_AI_REQUESTS_PER_WINDOW,
+  isJudgeAiMode,
+  type AppConfig,
+} from "./config.js";
 import type { ScryptParams } from "./auth/password.js";
 import { registerAuth } from "./plugins/auth.js";
 import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
@@ -169,7 +174,7 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     // One judge operator; bound live nudge attempts independently of the ordinary app budget.
     seams:
       deps.nudgeSeams ??
-      (config.judgeAiMode === "limited"
+      (isJudgeAiMode(config.judgeAiMode)
         ? {
             generateBudgetMax: JUDGE_AI_REQUESTS_PER_WINDOW,
             generateConcurrency: JUDGE_AI_CONCURRENCY,

@@ -2960,4 +2960,14 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** doc checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #60.
 - **Next action:** focused independent re-audit of the four items, then deploy action / live QA / URL decisions (each separate owner action).
 
+## Handoff: NMI-COMBINED-JUDGE-01
+
+- **Task:** `tasks/NMI-COMBINED-JUDGE-01.md`; issue #58 P0; branch `feat/nmi-combined-judge-mode` from `main@68bf77a…` (PR #60 squash-merged). No merge, deploy, env change, credential, provider call, branch move, or URL share. Historical handoffs untouched.
+- **Implemented:** explicit `NMI_JUDGE_AI_MODE=combined` (OpenAI parsing + AI nudge drafting + PayPal Sandbox draft creation, or fail closed on any missing piece/live host); shared judge safeguards via `isJudgeAiMode` (3 requests/10 min/endpoint, concurrency 1, retries 0) in `limited` and `combined`; preflight combined env matrix (PayPal creds allowed only in combined, drafts flag required, live hosts refused); no new send/capture/refund path in any mode.
+- **Tests:** combined config matrix + fail-closed cases; preflight combined accept/reject cases; new `combined-judge-mode.pg.test.ts` e2e (parse → review/save → explicit draft → nudge + approve-for-manual-use, duplicate replay, authz refusals, disabled-provider 503s, provider-failure 502s, per-provider budgets, startup refusal cases) — all with fake providers on disposable PG16, synthetic data only.
+- **Preserved:** `off` default + SEC-01 boundary; `limited` semantics (PayPal still forbidden); $5 enforced limit as financial control; no cumulative call cap; sandbox-only PayPal; human-approval-only triggers; idempotency, CSRF/Origin, auth, audit; Gate A consumed PASS; live rollback deployment.
+- **Superseded:** `release/nmi-openai-judges-2026@82996c4…` is OpenAI-only and unsuitable for the complete demonstration; unmodified. A new combined candidate SHA/branch decision is pending through the established gates.
+- **Verification:** focused suites green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
+- **Next action:** independent exact-HEAD audit, then a new combined candidate SHA/branch decision (each separate owner action).
+
 <!-- HANDOFF_ENTRIES_END -->

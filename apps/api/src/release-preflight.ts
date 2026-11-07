@@ -45,12 +45,16 @@ const ALLOWED_IN_FAMILIES = new Set([
   "NMI_JUDGE_AI_MODE",
 ]);
 const JUDGE_OPENAI_NAMES = new Set(["OPENAI_API_KEY", "OPENAI_MODEL", "OPENAI_MAX_OUTPUT_TOKENS"]);
+/** PayPal sandbox credentials are allowed ONLY in the explicitly approved combined judge mode. */
+const JUDGE_PAYPAL_NAMES = new Set(["PAYPAL_CLIENT_ID", "PAYPAL_CLIENT_SECRET"]);
 /** Same shape the API config accepts (config.ts); the value itself is never reported. */
 const LICENCE_SHAPE = /^[\x20-\x7e]{16,8192}$/;
 
-const isForbidden = (name: string) =>
+const isForbidden = (name: string, liveJudgeAi = false, liveCombined = false) =>
   !ALLOWED_IN_FAMILIES.has(name) &&
-  (FORBIDDEN_NAMES.has(name) || FORBIDDEN_PREFIXES.some((p) => name.startsWith(p)));
+  (FORBIDDEN_NAMES.has(name) || FORBIDDEN_PREFIXES.some((p) => name.startsWith(p))) &&
+  !(liveJudgeAi && JUDGE_OPENAI_NAMES.has(name)) &&
+  !(liveCombined && JUDGE_PAYPAL_NAMES.has(name));
 
 function parseUrl(v: string | undefined): URL | null {
   if (!v) return null;
@@ -84,14 +88,24 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   eq("HOST", "0.0.0.0");
   eq("TRUST_PROXY", "1");
   eq("PAYPAL_ENV", "sandbox");
-  eq("PAYPAL_DRAFTS_ENABLED", "false");
   const judgeMode = env["NMI_JUDGE_AI_MODE"] ?? "off";
-  const liveJudgeAi = judgeMode === "limited";
+  const liveJudgeAi = judgeMode === "limited" || judgeMode === "combined";
+  const liveCombined = judgeMode === "combined";
   add(
     "env.NMI_JUDGE_AI_MODE",
     judgeMode === "off" || liveJudgeAi,
-    "NMI_JUDGE_AI_MODE must be absent/off (no providers) or limited (separately approved live OpenAI judge release)",
+    "NMI_JUDGE_AI_MODE must be absent/off (no providers), limited (OpenAI-only judge release) or combined (OpenAI + PayPal Sandbox judge release), each separately approved",
   );
+  if (liveCombined) {
+    eq("PAYPAL_DRAFTS_ENABLED", "true");
+    add(
+      "env.PAYPAL_credentials_present",
+      Boolean(env["PAYPAL_CLIENT_ID"]) && Boolean(env["PAYPAL_CLIENT_SECRET"]),
+      "PayPal Sandbox credentials must be present in the combined judge mode (server-side only, never logged)",
+    );
+  } else {
+    eq("PAYPAL_DRAFTS_ENABLED", "false");
+  }
   if (liveJudgeAi) {
     const key = env["OPENAI_API_KEY"] ?? "";
     add(
@@ -101,11 +115,13 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
     );
     eq("OPENAI_MODEL", "gpt-6-luna");
     eq("OPENAI_MAX_OUTPUT_TOKENS", "4096");
-    add(
-      "env.PAYPAL_credentials_absent",
-      !env["PAYPAL_CLIENT_ID"] && !env["PAYPAL_CLIENT_SECRET"],
-      "PayPal credentials must be absent while judge AI is enabled",
-    );
+    if (!liveCombined) {
+      add(
+        "env.PAYPAL_credentials_absent",
+        !env["PAYPAL_CLIENT_ID"] && !env["PAYPAL_CLIENT_SECRET"],
+        "PayPal credentials must be absent in the OpenAI-only judge mode",
+      );
+    }
   }
   // NMI-P7-B: the live AI nudge-drafting opt-in is checked by NAME. Only an absent variable or the exact string
   // "false" passes ("true", empty, wrong case or padded values all fail). This is IN ADDITION to the OpenAI-name
@@ -117,7 +133,7 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
       : env["NUDGE_AI_DRAFTING_ENABLED"] === undefined ||
           env["NUDGE_AI_DRAFTING_ENABLED"] === "false",
     liveJudgeAi
-      ? 'NUDGE_AI_DRAFTING_ENABLED must be exactly "true" in the separately approved limited judge mode'
+      ? 'NUDGE_AI_DRAFTING_ENABLED must be exactly "true" in a separately approved judge mode (limited or combined)'
       : 'NUDGE_AI_DRAFTING_ENABLED must be absent or exactly "false" in provider-disabled mode',
   );
   add(
@@ -167,9 +183,7 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   );
 
   const present = Object.keys(env)
-    .filter(
-      (n) => env[n] !== undefined && isForbidden(n) && !(liveJudgeAi && JUDGE_OPENAI_NAMES.has(n)),
-    )
+    .filter((n) => env[n] !== undefined && isForbidden(n, liveJudgeAi, liveCombined))
     .sort();
   add(
     "env.forbidden-absent",

@@ -19,6 +19,10 @@ Set only in the Render secret store / dashboard by the owner (never in Git, issu
 
 `PAYPAL_ENV=sandbox` and `PAYPAL_API_BASE_URL=https://api-m.sandbox.paypal.com` stay unchanged.
 
+## 1a. Combined judge mode (explicit opt-in for the unified demo)
+
+`NMI_JUDGE_AI_MODE=combined` keeps the full OpenAI matrix above and additionally requires `PAYPAL_DRAFTS_ENABLED=true` with sandbox `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` (server-side only). PayPal stays Sandbox-only (live hosts refused); the adapter has no send, capture, refund, payout or webhook-mutation path in any mode. Operator controls are unchanged: AI parses, the human reviews/saves, the human explicitly triggers the draft create, the human reviews/approves the nudge for manual use. The $5 enforced project limit remains the financial control; no cumulative call cap is required (owner decision); per-endpoint 3 requests/10 min, concurrency 1 and zero SDK retries apply equally.
+
 ## 2. Required verifications (all before any live call)
 
 1. **Model entitlement (owner-evidenced):** `gpt-6-luna` is allowlisted on the dedicated project per owner-supplied evidence. Record date. Do not probe from the app.
