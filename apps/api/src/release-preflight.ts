@@ -198,19 +198,28 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
 /** The original protected release branch (provider-disabled judges deployment + rollback baseline). */
 export const RELEASE_BRANCH = "release/nmi-render-judges-2026";
 /**
- * Proposed second protected release branch for the separately approved OpenAI judge candidate.
- * Nothing may create, move or protect it until the owner approves the final candidate SHA.
+ * Second protected release branch for the separately approved OpenAI judge candidate.
+ * Obsolete for the complete judge demonstration (no PayPal path); retained for independent verification.
  */
 export const OPENAI_RELEASE_BRANCH = "release/nmi-openai-judges-2026";
 /**
- * Strict allowlist: exactly these two branches may be release-checked. Any other name — including
- * ref paths, typos, `main` or an empty value — fails closed. Both branches stay independently
- * verifiable; neither is a mutable tip alias.
+ * Proposed third protected release branch for the unified combined (OpenAI + PayPal Sandbox) candidate.
+ * Nothing may create, move or protect it until the owner approves the final candidate SHA.
  */
-export const RELEASE_BRANCHES = [RELEASE_BRANCH, OPENAI_RELEASE_BRANCH] as const;
+export const COMBINED_RELEASE_BRANCH = "release/nmi-combined-judges-2026";
+/**
+ * Strict allowlist: exactly these three branches may be release-checked. Any other name — including
+ * ref paths, typos, `main` or an empty value — fails closed. All branches stay independently
+ * verifiable; none is a mutable tip alias.
+ */
+export const RELEASE_BRANCHES = [
+  RELEASE_BRANCH,
+  OPENAI_RELEASE_BRANCH,
+  COMBINED_RELEASE_BRANCH,
+] as const;
 export type ReleaseBranch = (typeof RELEASE_BRANCHES)[number];
 export function isReleaseBranch(v: string | undefined): v is ReleaseBranch {
-  return v === RELEASE_BRANCH || v === OPENAI_RELEASE_BRANCH;
+  return v === RELEASE_BRANCH || v === OPENAI_RELEASE_BRANCH || v === COMBINED_RELEASE_BRANCH;
 }
 
 export interface SourceInput {
@@ -245,7 +254,7 @@ export function checkReleaseSource(i: SourceInput): Finding[] {
   add(
     "src.release-branch-allowlisted",
     isReleaseBranch(i.releaseBranch),
-    `The release branch must be exactly one of the two reviewed branches: ${RELEASE_BRANCHES.join(", ")} (never a tip alias, arbitrary name or empty value)`,
+    `The release branch must be exactly one of the three reviewed branches: ${RELEASE_BRANCHES.join(", ")} (never a tip alias, arbitrary name or empty value)`,
   );
   add(
     "src.expected-is-full-sha",

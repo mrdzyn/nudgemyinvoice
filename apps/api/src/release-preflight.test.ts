@@ -9,6 +9,7 @@ import {
   allOk,
   checkReleaseEnv,
   checkReleaseSource,
+  COMBINED_RELEASE_BRANCH,
   isPublicHttpsOrigin,
   isReleaseBranch,
   OPENAI_RELEASE_BRANCH,
@@ -422,13 +423,16 @@ describe("release source controls (pure)", () => {
     expect(allOk(checkReleaseSource(rest as unknown as SourceInput))).toBe(false);
   });
 
-  it("allowlist holds exactly the original and the proposed OpenAI candidate branch", () => {
+  it("allowlist holds exactly the three reviewed branches, nothing else", () => {
     expect(RELEASE_BRANCHES).toEqual([
       "release/nmi-render-judges-2026",
       "release/nmi-openai-judges-2026",
+      "release/nmi-combined-judges-2026",
     ]);
     expect(isReleaseBranch(RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch(OPENAI_RELEASE_BRANCH)).toBe(true);
+    expect(isReleaseBranch(COMBINED_RELEASE_BRANCH)).toBe(true);
+    expect(isReleaseBranch("release/nmi-combined-judges")).toBe(false);
     expect(isReleaseBranch("release/nmi-render-judges")).toBe(false);
   });
 
@@ -447,6 +451,21 @@ describe("release source controls (pure)", () => {
     expect(moved).toEqual(["src.release-branch-tip-equals-expected"]);
   });
 
+  it("verifies the proposed combined branch independently of the other two", () => {
+    expect(allOk(checkReleaseSource({ ...okSrc, releaseBranch: COMBINED_RELEASE_BRANCH }))).toBe(
+      true,
+    );
+    // Exact SHA match is required per branch: a moved tip on the combined branch fails.
+    const moved = checkReleaseSource({
+      ...okSrc,
+      releaseBranch: COMBINED_RELEASE_BRANCH,
+      remoteReleaseTip: "c".repeat(40),
+    })
+      .filter((f) => !f.ok)
+      .map((f) => f.id);
+    expect(moved).toEqual(["src.release-branch-tip-equals-expected"]);
+  });
+
   it.each([
     ["arbitrary branch", "release/evil-judges"],
     ["main is not a release branch", "main"],
@@ -454,6 +473,8 @@ describe("release source controls (pure)", () => {
     ["ref path instead of branch name", "refs/heads/release/nmi-render-judges-2026"],
     ["prefix typo of the original", "release/nmi-render-judges"],
     ["prefix typo of the candidate", "release/nmi-openai-judges"],
+    ["prefix typo of the combined", "release/nmi-combined-judges"],
+    ["combined ref path", "refs/heads/release/nmi-combined-judges-2026"],
   ] as const)("fails closed: unallowlisted %s", (_n, releaseBranch) => {
     const bad = checkReleaseSource({ ...okSrc, releaseBranch })
       .filter((f) => !f.ok)
@@ -620,6 +641,38 @@ describe("release-preflight CLI against a disposable Git remote", () => {
       expect(r.stdout).toContain("RESULT: PASS");
       expect(r.status).toBe(0);
       // The default still checks the original branch: both paths stay independently verifiable.
+      expect(run(f.clone, ["source", "--expect", f.one]).stdout).toContain("RESULT: PASS");
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("checks the proposed combined branch independently via --release-branch", () => {
+    const f = fixture();
+    try {
+      // Not yet on the remote: asking for it fails the tip check, not the allowlist check.
+      const missing = run(f.clone, [
+        "source",
+        "--expect",
+        f.one,
+        "--release-branch",
+        COMBINED_RELEASE_BRANCH,
+      ]);
+      expect(missing.status).toBe(1);
+      expect(ids(missing.stdout, "FAIL")).toContain("src.release-branch-tip-equals-expected");
+      expect(ids(missing.stdout, "FAIL")).not.toContain("src.release-branch-allowlisted");
+      // After the owner creates the candidate at the same audited SHA, it verifies independently.
+      git(f.other, "push", "-q", "origin", `HEAD:refs/heads/${COMBINED_RELEASE_BRANCH}`);
+      const r = run(f.clone, [
+        "source",
+        "--expect",
+        f.one,
+        "--release-branch",
+        COMBINED_RELEASE_BRANCH,
+      ]);
+      expect(r.stdout).toContain("RESULT: PASS");
+      expect(r.status).toBe(0);
+      // The default still checks the original branch: each path stays independently verifiable.
       expect(run(f.clone, ["source", "--expect", f.one]).stdout).toContain("RESULT: PASS");
     } finally {
       f.cleanup();

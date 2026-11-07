@@ -2981,4 +2981,13 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** focused suites green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #61.
 - **Next action:** focused independent re-audit of the five items, then the GATE-01 combined-candidate step (separate owner action).
 
+## Handoff: NMI-GATE-01-COMBINED-BRANCH
+
+- **Task:** `tasks/NMI-GATE-01-COMBINED-BRANCH.md`; issue #58 P0 FAST-TRACK; branch `feat/nmi-gate01-combined-branch` from `main@ceaa967…` (PR #61 squash-merged; combined mode merged and audited PASS — not rebuilt, descoped, or changed here). No merge, deploy, env change, credential, provider call, branch move, or URL share. Historical handoffs untouched.
+- **Implemented (GATE-01 allowlist step only):** `COMBINED_RELEASE_BRANCH = "release/nmi-combined-judges-2026"` added; `RELEASE_BRANCHES` is now exactly the three reviewed branches; `isReleaseBranch` covers all three; allowlisted-branch finding names all three. No provider-behavior change; no app feature, migration, or lockfile change.
+- **Tests:** allowlist exact-triple assertion; combined-branch independent verification (pure: exact-SHA pass, moved-tip fail); two new negative cases (prefix typo, ref path); CLI test proving a missing combined branch fails the tip check (not the allowlist), an owner-created branch at the audited SHA passes, and the default path still passes. All other suites unchanged.
+- **Preserved:** both existing protected branches byte-identical in policy; obsolete OpenAI-only candidate marked unsuitable but unmodified; rollback baseline untouched; $5 limit / no-cap decisions not re-requested; Gate A consumed PASS; live Render state.
+- **Verification:** targeted preflight tests green; full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
+- **Next action:** independent exact-HEAD audit, then STOP at the owner merge gate. After merge: owner creates + protects the combined branch at the exact new `main` SHA, then candidate preflight, new exact-SHA manual CI + acceptance, evidence audit, deploy action. No second Render service.
+
 <!-- HANDOFF_ENTRIES_END -->
