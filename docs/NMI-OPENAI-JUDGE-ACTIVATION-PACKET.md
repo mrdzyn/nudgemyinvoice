@@ -1,6 +1,6 @@
 # NMI OpenAI Judge Activation Packet (OWNER-APPROVED SCOPE — REMAINING GATES STILL REQUIRED)
 
-**State:** The owner has approved: OpenAI-enabled Render deployment (subject to remaining technical and security gates); protected candidate `82996c4a3c582ef14c7a54051eb3fbdbf107c79d`; the independently audited one-time manual release-CI substitution including the macOS/Ubuntu gap; no additional cumulative API-call cap; retaining the enforced $5 project spending limit. These approvals are recorded here, not requested again. Still required before any live call: deploy action, post-deploy verification, live QA, judge URL sharing, and the monitoring/kill-switch/sunset commitments below. No live OpenAI request, credential, environment change, deploy, or URL share is authorized by this document alone. Gate A run `R1-A-20261030-01` permission is consumed and does not transfer.
+**State:** The owner has approved: OpenAI-enabled Render deployment (subject to remaining technical and security gates); protected candidate `82996c4a3c582ef14c7a54051eb3fbdbf107c79d`; the independently audited one-time manual release-CI substitution including the macOS/Ubuntu gap; no additional cumulative API-call cap; retaining the enforced $5 project spending limit. These approvals are recorded here, not requested again. Still required, in order: deploy action, post-deploy verification, **private synthetic live smoke → security verification**, and only then a **separate** judge URL sharing approval — URL sharing is neither a prerequisite for the private smoke nor authorized by the earlier deployment authorization. The monitoring/kill-switch/sunset commitments below apply from the first live call. No live OpenAI request, credential, environment change, deploy, or URL share is authorized by this document alone. Gate A run `R1-A-20261030-01` permission is consumed and does not transfer.
 
 ## 1. Exact environment matrix (limited judge mode)
 
@@ -45,8 +45,9 @@ Already approved by owner (recorded, not requested again):
 - [x] No additional cumulative API-call cap
 - [x] Enforced $5 monthly project spending limit + `gpt-6-luna` allowlisting (screenshot-evidenced)
 
-Still required (separate owner actions):
+Still required (separate owner actions, in this order):
 
 - [ ] Advance spending alert, monitoring cadence, kill-switch holder, and Dec-15-2026 sunset commitment recorded
 - [ ] Deploy action approved → post-deploy verification passed
-- [ ] Judge URL sharing approved (after live QA)
+- [ ] Private synthetic live smoke → security verification passed
+- [ ] Judge URL sharing approved (separate decision after the private smoke; not a prerequisite for it)

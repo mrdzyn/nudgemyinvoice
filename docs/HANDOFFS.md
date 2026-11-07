@@ -2949,4 +2949,15 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** doc checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
 - **Next action:** independent exact-HEAD audit, then deploy action / live QA / URL decisions (each separate owner action).
 
+## Handoff: NMI-OPENAI-ACTIVATION-02
+
+- **Task:** `tasks/NMI-OPENAI-ACTIVATION-01.md`; issue #58; Draft PR #60 on `feat/nmi-openai-activation-01`. Narrow remediation of audit `6708129726` (PARTIAL at `460e84d`): POLICY-01, DOC-02, DOC-03, DOC-04 only. No app changes, no branch/deploy/env/provider/URL action. Historical handoffs untouched.
+- **POLICY-01 (fixed):** `tasks/NMI-OPENAI-RENDER-RC-01.md` §3 summary now records no cumulative call cap (owner decision) with $5 enforced limit, alerts, monitoring, sunset; header no longer claims DRAFT/NOT AUTHORIZED for the packet. Activation task contract narrowly expanded to permit §3 consistency.
+- **DOC-02 (fixed):** STATUS primary branch now `main@82996c4…` (PR #59); hosting bullet states both branches pinned, Live provider-disabled service deployed and unchanged, no new resource/action under this task.
+- **DOC-03 (fixed):** RC-01 §2 deploy path reworded as Render-documented with dashboard feasibility check before submission; fail closed on rejection; no `trigger_deploy` assumption, branch switch, or second service.
+- **DOC-04 (fixed):** packet states ordered gates — deploy → post-deploy verification → private synthetic smoke + security verification → separate URL approval; URL sharing neither prerequisite for the smoke nor authorized by deployment approval.
+- **Preserved:** granted approvals (candidate, substitution, no-call-cap, $5 limit) not re-requested; release boundaries; Gate A consumed PASS; live Render state.
+- **Verification:** doc checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #60.
+- **Next action:** focused independent re-audit of the four items, then deploy action / live QA / URL decisions (each separate owner action).
+
 <!-- HANDOFF_ENTRIES_END -->

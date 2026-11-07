@@ -14,7 +14,7 @@
 
 ## Bounded change contract
 
-**Permitted:** this task file; `docs/NMI-OPENAI-JUDGE-ACTIVATION-PACKET.md` (reconciliation only); `tasks/NMI-OPENAI-RENDER-RC-01.md` §2 (specific-commit deploy note); `docs/STATUS.md` current-state lines; append-only `docs/HANDOFFS.md`.
+**Permitted:** this task file; `docs/NMI-OPENAI-JUDGE-ACTIVATION-PACKET.md` (reconciliation only); `tasks/NMI-OPENAI-RENDER-RC-01.md` §2 (specific-commit deploy note) and §3 (call-cap consistency with the revised packet); `docs/STATUS.md` current-state lines; append-only `docs/HANDOFFS.md`.
 
 **Forbidden:** app code, schema/journal/migrations, `pnpm-lock.yaml`, workflows, testing scripts, security mechanisms, branch force-push/deletion, creating/moving/protecting any `release/*` branch, Render create/deploy/billing, env changes, secret collection or storage in Git, public URL, PayPal/OpenAI calls, provider enabling, license publication, Devpost publication, claiming hosted CI ran, merging, or closing any gate by declaration.
 
