@@ -3020,4 +3020,36 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** focused suites green; fresh keyless/keyed CDP browser QA (desktop/390px/dark, overflow/FAB/CSP/exception checks); full exact-HEAD manual CI on the commit containing this handoff; hosted CI NOT RUN; zero live provider calls. Screenshots refreshed for the consolidated shell.
 - **Next action:** independent focused re-audit, then owner merge decision; P1 worklist pipeline (Stage 2) needs the per-invoice nudge-state projection decision.
 
+## Handoff: NMI-64-STUDIO-05
+
+- **Task / phase:** `tasks/NMI-64-STUDIO-CHARTS.md` — post-merge reconciliation; Stage 2 planning is separate and not authorized to start implementation.
+- **From:** owner-authorized merge / repository coordination
+- **To:** independent documentation reviewer, then product owner
+- **Branch:** `docs/nmi-64-postmerge-handoff` (documentation-only transition)
+- **Implementation head:** `3331a961cb081c2bb557c827a58c649ab5ff454d` on `main`; audited PR #65 head `eae37728c04d5efd34e58c8b996808f9109ce306`, tree-identical.
+- **PR:** [#65, owner squash-merged](https://github.com/mrdzyn/nudgemyinvoice/pull/65). Post-merge documentation review is separate.
+- **State:** PR #65 merged; documentation reconciliation pending review; no new feature/deployment authorization.
+
+### Completed
+
+- GitHub reported PR #65 merged into `main@3331a961cb081c2bb557c827a58c649ab5ff454d`. The resulting commit tree matches the audited PR head `eae37728c04d5efd34e58c8b996808f9109ce306` exactly.
+- Independent focused PR #65 audit PASS ([review comment 6711817905](https://github.com/mrdzyn/nudgemyinvoice/pull/65#issuecomment-6711817905)). Stage 0 demonstrated absent *effective* AG Studio licence in the Live serving process; Stage 1 delivered consolidated Sandbox Safe Mode, real matching-invoice count, Nudge Spotlight dedupe, and responsive toolbar/FAB clearance.
+- PR #63 at `bd6c6983c6d8a5963bf8cf41bb93c4734249949b` remains Draft, open, unmerged and untouched. Protected release branches not moved.
+
+### Validation
+
+- GitHub merge result, `main` ref and audited-vs-squash Git tree hashes: **PASS**.
+- At audited PR #65 head, implementation-agent manual CI: `pnpm validate` **1,484 passing**, `pnpm test:db` **374/374** disposable PG16, licensed/community builds and security checks PASS (agent-reported; not rerun for this documentation transition). Browser keyless 14/14 and keyed 15/15 agent-reported.
+- Hosted CI: **NOT RUN** under development policy; Live endpoint/chart/provider QA: **PENDING**. Documentation-only transition requires its own applicable validation and independent review.
+
+### Continuation notes
+
+- Render Live remains combined `766dde37bd5857692a2f238e7c3ac72d3b9ee105`; Render tracks `main` with Auto Deploy OFF. Local Studio positive control was VERIFIED; Live runtime chart recovery is **not** verified. No deploy, environment changes, credentials, provider calls, protected-ref movement, or judge URL sharing authorized.
+- Audit minor note fixed in task: valid-key positive control is locally VERIFIED, not pending; Live check remains pending.
+- Stage 2 source direction (not an implementation authorization): read-only, operator-scoped, bounded per-visible-invoice Nudge projection from `invoice_nudges`/`PostgresNudgeStore`. Avoid global 100-item list, due-date heuristics, fabricated statuses, auto-send or payments. Create a separate bounded task/PR and obtain approvals.
+
+### Next action
+
+Independently review the documentation-only post-merge reconciliation and obtain an explicit owner decision on that documentation PR; do not start Stage 2 or deploy from this handoff.
+
 <!-- HANDOFF_ENTRIES_END -->
