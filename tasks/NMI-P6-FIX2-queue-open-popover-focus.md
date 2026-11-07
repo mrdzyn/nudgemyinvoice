@@ -1,11 +1,11 @@
 # NMI-P6-FIX2 — Close Nudgey popover and focus heading on already-mounted queue open; reconcile P6 status
 
-**Status:** In progress on `fix/nmi-p6-postmerge-ux` from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124`.
+**Status:** Ready for independent exact-HEAD review on `fix/nmi-p6-postmerge-ux` (branched from `main@0b652348dfc546b4e9bc5bbf2e5a21fef142c124`; implementation SHA `03f743a569e2e220cbd26f18750b86a2cb0f9d7a`).
 **UI design gate:** Low-risk defect remediation within the owner-approved P6 D1–D7 screens (PR #43 comment 6652365002); no visual layout, design-token, component, API, schema, or product-behavior changes. Preserves screen-reader heading focus (`#nq-title`), 390 px layout, ≥44 px touch targets, and light/dark themes.
 
 ## Context & Defect
 
-1. **Stale P6 post-merge status:** `docs/STATUS.md` and `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md` still list the two PR #43 Codex review `5787025325` UX findings as *"not fixed, not independently verified"*, even though PR #45 (`0e10e8d1f6d521bba9b0c503f4ce0fdf188ded19`, slice P7-A) already merged audited fixes and tests for both on `main`.
+1. **Stale P6 post-merge status:** `docs/STATUS.md` and `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md` still list the two PR #43 Codex review `5787025325` UX findings as _"not fixed, not independently verified"_, even though PR #45 (`0e10e8d1f6d521bba9b0c503f4ce0fdf188ded19`, slice P7-A) already merged audited fixes and tests for both on `main`.
 2. **Residual already-mounted "Open in queue" UX defect:** On `NudgeQueueScreen` (`state.screen === "nudges"`), clicking **Draft a nudge** opens the Nudgey chat popover over the mounted queue. When the operator finishes drafting (or hits `pending-exists`) and clicks **Open in queue** / **Open existing in queue**:
    - `apps/web/src/components/Nudgey.tsx` (`onOpenQueue`) dispatches `{ type: "open-nudges", view: "pending", id }` without calling `setOpen(false)` (unlike `openInvoiceById`, `openDashboard`, `openStatusInvoice`, and `choose`), and its close effect watches `[state.screen]` only. Because `state.screen` stays `"nudges"`, the Nudgey dialog remains open over the review panel (visible in `design/evidence/NMI-P7/screenshots-p7a/p7a-02-queue-retargeted-desktop-light.png`, and covering the viewport on 390 px mobile).
    - `apps/web/src/nudges/NudgeQueueScreen.tsx` re-applies `view` and `selected` on a new `nudgeFocus` object, but does not move keyboard/assistive focus to `#nq-title` (`headingRef.current?.focus()`), leaving focus stranded when the popover unmounts.
@@ -33,3 +33,15 @@
 3. Ordinary manual tab/row selections on `NudgeQueueScreen` are never overwritten when no new `open-nudges` request arrives, and clearing `nudgeFocus` (`navigate` to `"nudges"`) resets `seeded.current` cleanly.
 4. **Test objective:** Deterministic Vitest DOM regressions prove the integrated `AppShell` (`Nudgey` + `NudgeQueueScreen`) closes `.nudgey-panel`, focuses `#nq-title`, selects the requested nudge across consecutive same-screen drafts (`Draft a nudge` → draft → `Open in queue` → `Draft a nudge` → `pending-exists` → `Open existing in queue`), aborts active local speech on close, and respects `mustConfirmLeave`; real headless Chrome QA (1280 px + 390 px, light + dark, fake model, disposable PostgreSQL 16) verifies zero popover overlap, `#nq-title` focus, ≥44 px mobile targets, computed WCAG AA contrast, and zero send/provider calls; full `pnpm validate` and `pnpm test:db` pass.
 5. `docs/STATUS.md` and `tasks/NMI-P6-AI-NUDGE-INTELLIGENCE.md` accurately reflect P7-A's merged closure, this P6-FIX2 follow-up, PR #50's merge on `main@0b65234`, and all unchanged open release gates.
+
+## Validation Summary (Implementation-Agent Local Evidence)
+
+- **Targeted regressions:** `pnpm --filter @nmi/web exec vitest run src/nudges/NudgeQueue.test.tsx src/nudgey/NudgeDraftFlow.test.tsx src/components/Nudgey.test.tsx src/invoices/leaveGuard.test.ts` — 4 files, **55/55 PASS**.
+- **Negative control:** Reverting `Nudgey.tsx` and `NudgeQueueScreen.tsx` to `main@0b65234` fails all 3 new `NudgeQueue.test.tsx` assertions (`#nq-title` focus and `.nudgey-panel === null`), then passes **28/28** once restored.
+- **Browser QA (`03f743a569e2e220cbd26f18750b86a2cb0f9d7a`, clean tree):** `node design/evidence/NMI-P6-FIX2/run-p6-fix2-journey.mjs` — **41/41 PASS**, 5 synthetic screenshots (`design/evidence/NMI-P6-FIX2/QA-RESULTS.md`), disposable PostgreSQL 16 confirmed stopped (`pg_ctl status` exit `3`).
+- **Full repository validation:**
+  - `pnpm validate` (ESLint, Prettier, 8-package `typecheck`, `vitest run` **72 files / 1411 passed**, licensed + community web builds & bundle secret scans): **PASS**.
+  - `pnpm test:db` against disposable PostgreSQL 16: **19 files / 367 passed** (`pg_ctl status` exit `3` cleanup verified).
+  - `pnpm audit --prod --audit-level high`: **0 vulnerabilities** (`No known vulnerabilities found`).
+  - `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice`: **PASS** (24 core/selected capability files verified).
+  - `git diff --check`: **clean**.
