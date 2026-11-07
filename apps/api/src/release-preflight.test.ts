@@ -397,9 +397,7 @@ describe("release source controls (pure)", () => {
       .map((f) => f.id);
     expect(bad).toContain("src.release-branch-allowlisted");
     // The operator value is never echoed in findings.
-    expect(JSON.stringify(checkReleaseSource({ ...okSrc, releaseBranch }))).not.toContain(
-      "evil",
-    );
+    expect(JSON.stringify(checkReleaseSource({ ...okSrc, releaseBranch }))).not.toContain("evil");
   });
 });
 

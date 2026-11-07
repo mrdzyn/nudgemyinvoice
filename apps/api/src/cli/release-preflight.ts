@@ -44,7 +44,10 @@ function report(title: string, findings: Finding[]): void {
 }
 
 /** Exactly one line per requested ref, each a full SHA; anything else is unverifiable. */
-function parseLsRemote(out: string | null, releaseBranch: string): { main: string; release: string } | null {
+function parseLsRemote(
+  out: string | null,
+  releaseBranch: string,
+): { main: string; release: string } | null {
   if (out === null) return null;
   const tips = new Map<string, string[]>();
   for (const line of out.split("\n").filter(Boolean)) {
