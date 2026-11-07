@@ -2923,4 +2923,22 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** focused SEC-01 suites green; full exact-HEAD manual CI (profile, secret guard, frozen install, `pnpm validate`, disposable PG16 `pnpm test:db`, migration sync, prod audit, `git diff --check`) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Full evidence posted on Draft PR #57.
 - **Next action:** independent exact-HEAD security/code re-audit, then a separate owner merge decision. A live OpenAI call still needs its own model, cap, budget, expiry, and synthetic-input authorization.
 
+## Handoff: NMI-OPENAI-RENDER-RC-01
+
+- **Task:** `tasks/NMI-OPENAI-RENDER-RC-01.md`; issue #58; branch `feat/nmi-openai-render-rc-01` from merged `main@b4515f1...` (PR #57 squash; tree identical to audited `78d9a23...`). No merge, deploy, env change, provider call, PayPal call, branch creation, or URL share.
+- **Decisions:** second immutable candidate branch proposed as `release/nmi-openai-judges-2026` (strict two-entry preflight allowlist; both paths independently verifiable; arbitrary names fail closed without echo). Original `release/nmi-render-judges-2026@abfbbfc...` stays pinned as rollback; PR #55's exception never transfers. New manual-CI exception drafted separately (`tasks/NMI-OPENAI-RC-01-MANUAL-CI-EXCEPTION.md`, NOT OPERATIVE). Activation packet drafted separately (`docs/NMI-OPENAI-JUDGE-ACTIVATION-PACKET.md`, NOT AUTHORIZED). Verified no migration delta `abfbbfc...b4515f1`, so the candidate is DB-schema-compatible.
+- **Preserved:** PR #57 merge record/audit, Gate A consumed PASS, P6 fake-model evidence, live provider-disabled deployment `abfbbfc...`. Historical handoffs untouched.
+- **Verification:** targeted preflight tests green (100 tests incl. new allowlist + CLI cases); full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN; macOS↔Ubuntu gap recorded in the exception doc. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft PR.
+- **Next action:** independent code/security/policy review of the exact HEAD, then separate owner decisions (candidate SHA, branch creation, manual-CI acceptance, activation, deploy, URL).
+
+## Handoff: NMI-OPENAI-RENDER-RC-02
+
+- **Task:** `tasks/NMI-OPENAI-RENDER-RC-01.md`; issue #58; Draft PR #59 on `feat/nmi-openai-render-rc-01`. Narrow remediation of audit `6707139153` (PARTIAL at `7d42f15`): POLICY-01, DOC-02, DOC-03 only. No app changes, no new infrastructure, no merge/deploy/env/provider/branch/URL action. Historical handoffs untouched.
+- **POLICY-01 (fixed):** activation packet §2 item 2 now requires the provider-side **"Enforce a hard limit"** toggle ON (a limit alone only monitors), with dated evidence of the toggle, alert thresholds below the cap, owner shutdown threshold, and an explicit no-perfect-guarantee note for enforcement delay. No limit verified or approved.
+- **DOC-02 (fixed):** exception statuses line now reads NO NEW resources by this task with the existing Live provider-disabled deployment unchanged; STATUS hosting bullet now states the Live deployment as current and marks new provision/deploy as not authorized by this task.
+- **DOC-03 (fixed):** exception condition 2 now requires two separate clean detached checkouts/worktrees (one per exact SHA) and records which preflight executable runs in each.
+- **Preserved:** preflight allowlist + tests, release boundaries, PR #57 merge record, Gate A evidence, live Render state, PR #55 non-inheritance.
+- **Verification:** doc-checks + full exact-HEAD manual CI (Node 22, disposable PG16) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on Draft PR #59.
+- **Next action:** focused independent re-audit of the three remediated items, then separate owner decisions.
+
 <!-- HANDOFF_ENTRIES_END -->

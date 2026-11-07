@@ -12,8 +12,11 @@ import {
  * remote to learn the CURRENT branch tips; nothing is sent to Render or any provider; prints rule ids and names,
  * never values):
  *   pnpm --filter @nmi/api release-preflight env
- *   pnpm --filter @nmi/api release-preflight source --expect <40-hex sha> [--remote origin]
- * `source` always requires the release branch; local remote-tracking refs are never trusted.
+ *   pnpm --filter @nmi/api release-preflight source --expect <40-hex sha> [--remote origin] [--release-branch <name>]
+ * `source` always requires an allowlisted release branch (default: the original judges branch;
+ * `--release-branch release/nmi-openai-judges-2026` checks the proposed OpenAI candidate instead);
+ * local remote-tracking refs are never trusted. The candidate branch must already exist on the remote —
+ * this command never creates, moves or protects it.
  */
 const run = (args: string[], cwd?: string): string | null => {
   try {
@@ -41,7 +44,10 @@ function report(title: string, findings: Finding[]): void {
 }
 
 /** Exactly one line per requested ref, each a full SHA; anything else is unverifiable. */
-function parseLsRemote(out: string | null): { main: string; release: string } | null {
+function parseLsRemote(
+  out: string | null,
+  releaseBranch: string,
+): { main: string; release: string } | null {
   if (out === null) return null;
   const tips = new Map<string, string[]>();
   for (const line of out.split("\n").filter(Boolean)) {
@@ -51,7 +57,7 @@ function parseLsRemote(out: string | null): { main: string; release: string } | 
   }
   const one = (ref: string) => (tips.get(ref)?.length === 1 ? tips.get(ref)?.[0] : undefined);
   const main = one("refs/heads/main");
-  const release = one(`refs/heads/${RELEASE_BRANCH}`);
+  const release = one(`refs/heads/${releaseBranch}`);
   if (!main || !release) return null;
   return { main, release };
 }
@@ -62,12 +68,16 @@ if (mode === "env") {
 } else if (mode === "source") {
   const expectedSha = flag("--expect") ?? "";
   const remote = flag("--remote") ?? "origin";
+  // Default keeps the original judges branch; the raw flag value flows into the allowlist check,
+  // so an arbitrary or empty name fails closed with src.release-branch-allowlisted (never trusted).
+  const releaseBranch = flag("--release-branch") ?? RELEASE_BRANCH;
   // Anchor every git call to the REPOSITORY ROOT, whatever directory pnpm --filter started us in.
   const root = run(["rev-parse", "--show-toplevel"]);
   const g = (args: string[]) => (root ? run(args, root) : null);
   const tips = root
     ? parseLsRemote(
-        g(["ls-remote", "--exit-code", remote, "refs/heads/main", `refs/heads/${RELEASE_BRANCH}`]),
+        g(["ls-remote", "--exit-code", remote, "refs/heads/main", `refs/heads/${releaseBranch}`]),
+        releaseBranch,
       )
     : null;
   const validExpected = /^[0-9a-f]{40}$/.test(expectedSha);
@@ -81,6 +91,7 @@ if (mode === "env") {
   report(
     "NMI release source controls",
     checkReleaseSource({
+      releaseBranch,
       expectedSha,
       headSha: g(["rev-parse", "HEAD"]) ?? "",
       // A failed `git status` must not look clean.
@@ -93,6 +104,8 @@ if (mode === "env") {
     }),
   );
 } else {
-  process.stderr.write("usage: release-preflight env | source --expect <sha> [--remote <name>]\n");
+  process.stderr.write(
+    "usage: release-preflight env | source --expect <sha> [--remote <name>] [--release-branch <name>]\n",
+  );
   process.exitCode = 2;
 }

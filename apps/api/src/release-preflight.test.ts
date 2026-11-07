@@ -10,7 +10,10 @@ import {
   checkReleaseEnv,
   checkReleaseSource,
   isPublicHttpsOrigin,
+  isReleaseBranch,
+  OPENAI_RELEASE_BRANCH,
   RELEASE_BRANCH,
+  RELEASE_BRANCHES,
   type SourceInput,
 } from "./release-preflight.js";
 
@@ -294,6 +297,7 @@ describe("NMI-JUDGE-LIVE-OPENAI-01: limited real OpenAI release option (pure, of
 
 const sha = "a".repeat(40);
 const okSrc: SourceInput = {
+  releaseBranch: RELEASE_BRANCH,
   expectedSha: sha,
   headSha: sha,
   porcelain: "",
@@ -353,6 +357,47 @@ describe("release source controls (pure)", () => {
     const { remoteVerified: _drop, ...rest } = okSrc;
     void _drop;
     expect(allOk(checkReleaseSource(rest as unknown as SourceInput))).toBe(false);
+  });
+
+  it("allowlist holds exactly the original and the proposed OpenAI candidate branch", () => {
+    expect(RELEASE_BRANCHES).toEqual([
+      "release/nmi-render-judges-2026",
+      "release/nmi-openai-judges-2026",
+    ]);
+    expect(isReleaseBranch(RELEASE_BRANCH)).toBe(true);
+    expect(isReleaseBranch(OPENAI_RELEASE_BRANCH)).toBe(true);
+    expect(isReleaseBranch("release/nmi-render-judges")).toBe(false);
+  });
+
+  it("verifies the allowlisted OpenAI candidate branch independently of the original", () => {
+    expect(allOk(checkReleaseSource({ ...okSrc, releaseBranch: OPENAI_RELEASE_BRANCH }))).toBe(
+      true,
+    );
+    // A moved tip on the new branch fails the tip check but not the allowlist check.
+    const moved = checkReleaseSource({
+      ...okSrc,
+      releaseBranch: OPENAI_RELEASE_BRANCH,
+      remoteReleaseTip: "c".repeat(40),
+    })
+      .filter((f) => !f.ok)
+      .map((f) => f.id);
+    expect(moved).toEqual(["src.release-branch-tip-equals-expected"]);
+  });
+
+  it.each([
+    ["arbitrary branch", "release/evil-judges"],
+    ["main is not a release branch", "main"],
+    ["empty value", ""],
+    ["ref path instead of branch name", "refs/heads/release/nmi-render-judges-2026"],
+    ["prefix typo of the original", "release/nmi-render-judges"],
+    ["prefix typo of the candidate", "release/nmi-openai-judges"],
+  ] as const)("fails closed: unallowlisted %s", (_n, releaseBranch) => {
+    const bad = checkReleaseSource({ ...okSrc, releaseBranch })
+      .filter((f) => !f.ok)
+      .map((f) => f.id);
+    expect(bad).toContain("src.release-branch-allowlisted");
+    // The operator value is never echoed in findings.
+    expect(JSON.stringify(checkReleaseSource({ ...okSrc, releaseBranch }))).not.toContain("evil");
   });
 });
 
@@ -481,6 +526,51 @@ describe("release-preflight CLI against a disposable Git remote", () => {
           expect.arrayContaining(["src.remote-verified", "src.release-branch-tip-equals-expected"]),
         );
       }
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("checks the allowlisted OpenAI candidate branch only when --release-branch names it", () => {
+    const f = fixture();
+    try {
+      // The candidate branch does not exist yet: asking for it fails the tip check, not silently the old branch.
+      const missing = run(f.clone, [
+        "source",
+        "--expect",
+        f.one,
+        "--release-branch",
+        OPENAI_RELEASE_BRANCH,
+      ]);
+      expect(missing.status).toBe(1);
+      expect(ids(missing.stdout, "FAIL")).toContain("src.release-branch-tip-equals-expected");
+      expect(ids(missing.stdout, "FAIL")).not.toContain("src.release-branch-allowlisted");
+      // After the owner creates the candidate at the same audited SHA, it verifies independently.
+      git(f.other, "push", "-q", "origin", `HEAD:refs/heads/${OPENAI_RELEASE_BRANCH}`);
+      const r = run(f.clone, [
+        "source",
+        "--expect",
+        f.one,
+        "--release-branch",
+        OPENAI_RELEASE_BRANCH,
+      ]);
+      expect(r.stdout).toContain("RESULT: PASS");
+      expect(r.status).toBe(0);
+      // The default still checks the original branch: both paths stay independently verifiable.
+      expect(run(f.clone, ["source", "--expect", f.one]).stdout).toContain("RESULT: PASS");
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("an arbitrary --release-branch fails closed without echoing the value", () => {
+    const f = fixture();
+    try {
+      const r = run(f.clone, ["source", "--expect", f.one, "--release-branch", "release/evil-x"]);
+      expect(r.status).toBe(1);
+      expect(ids(r.stdout, "FAIL")).toContain("src.release-branch-allowlisted");
+      expect(r.stdout).not.toContain("RESULT: PASS");
+      expect(r.stdout).not.toContain("evil");
     } finally {
       f.cleanup();
     }

@@ -181,10 +181,27 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   return out;
 }
 
-/** The one designated release branch. A deployment-ready PASS requires it; there is no optional or alternative ref. */
+/** The original protected release branch (provider-disabled judges deployment + rollback baseline). */
 export const RELEASE_BRANCH = "release/nmi-render-judges-2026";
+/**
+ * Proposed second protected release branch for the separately approved OpenAI judge candidate.
+ * Nothing may create, move or protect it until the owner approves the final candidate SHA.
+ */
+export const OPENAI_RELEASE_BRANCH = "release/nmi-openai-judges-2026";
+/**
+ * Strict allowlist: exactly these two branches may be release-checked. Any other name — including
+ * ref paths, typos, `main` or an empty value — fails closed. Both branches stay independently
+ * verifiable; neither is a mutable tip alias.
+ */
+export const RELEASE_BRANCHES = [RELEASE_BRANCH, OPENAI_RELEASE_BRANCH] as const;
+export type ReleaseBranch = (typeof RELEASE_BRANCHES)[number];
+export function isReleaseBranch(v: string | undefined): v is ReleaseBranch {
+  return v === RELEASE_BRANCH || v === OPENAI_RELEASE_BRANCH;
+}
 
 export interface SourceInput {
+  /** Which allowlisted release branch the remote tip is read from; arbitrary names fail closed. */
+  releaseBranch: string;
   expectedSha: string;
   headSha: string;
   /** `git status --porcelain` output (empty when clean). */
@@ -209,6 +226,13 @@ const SHA = /^[0-9a-f]{40}$/;
 export function checkReleaseSource(i: SourceInput): Finding[] {
   const out: Finding[] = [];
   const add = (id: string, ok: boolean, detail: string) => out.push({ id, ok, detail });
+  // Operator input is never echoed: only an allowlisted name appears in findings.
+  const branchLabel = isReleaseBranch(i.releaseBranch) ? i.releaseBranch : "<unallowlisted>";
+  add(
+    "src.release-branch-allowlisted",
+    isReleaseBranch(i.releaseBranch),
+    `The release branch must be exactly one of the two reviewed branches: ${RELEASE_BRANCHES.join(", ")} (never a tip alias, arbitrary name or empty value)`,
+  );
   add(
     "src.expected-is-full-sha",
     SHA.test(i.expectedSha),
@@ -232,7 +256,7 @@ export function checkReleaseSource(i: SourceInput): Finding[] {
   add(
     "src.remote-verified",
     i.remoteVerified && SHA.test(i.remoteMainTip ?? "") && SHA.test(i.remoteReleaseTip ?? ""),
-    `The authoritative remote (git ls-remote, not local tracking refs) must list refs/heads/main and refs/heads/${RELEASE_BRANCH}; an unreachable, unauthenticated or incomplete answer fails closed`,
+    `The authoritative remote (git ls-remote, not local tracking refs) must list refs/heads/main and refs/heads/${branchLabel}; an unreachable, unauthenticated or incomplete answer fails closed`,
   );
   add(
     "src.on-main",
@@ -242,7 +266,7 @@ export function checkReleaseSource(i: SourceInput): Finding[] {
   add(
     "src.release-branch-tip-equals-expected",
     i.remoteVerified && SHA.test(i.expectedSha) && i.remoteReleaseTip === i.expectedSha,
-    `The CURRENT remote ${RELEASE_BRANCH} tip must equal the approved SHA (a missing branch or a later push must not pass)`,
+    `The CURRENT remote ${branchLabel} tip must equal the approved SHA (a missing branch or a later push must not pass)`,
   );
   return out;
 }
