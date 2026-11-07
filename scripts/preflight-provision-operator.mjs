@@ -39,6 +39,7 @@ function parseArgs(argv) {
   let migrationsRoot = ROOT;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+    if (i === 0 && arg === "--") continue;
     const next = argv[i + 1];
     if (arg === "--report" && next && !next.startsWith("--")) {
       reportPath = next;
@@ -76,7 +77,12 @@ let port = 0;
 let started = false;
 
 const bin = (n) => join(PG_BIN, n);
-const run = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: "utf8", ...opts });
+const run = (cmd, args, opts = {}) =>
+  spawnSync(cmd, args, {
+    encoding: "utf8",
+    ...opts,
+    env: { LC_ALL: "C", ...(opts.env ?? process.env) },
+  });
 
 /** Exact CLI-failure contract for the negative controls (pure, so it can be self-tested). */
 const PERM_WARNING =
