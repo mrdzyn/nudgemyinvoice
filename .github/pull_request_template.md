@@ -36,9 +36,19 @@ Commands/results:
 [PASTE CONCISE RESULTS — SUMMARIZE PASSING OUTPUT; INCLUDE DETAIL FOR FAILURES]
 ```
 
-- [ ] Test objective is demonstrated.
+- [ ] Test objective is demonstrated (targeted checks during implementation).
+- [ ] Full exact-HEAD manual CI passed on the final PR commit (`docs/TESTING.md`).
 - [ ] Applicable manual QA is complete or explicitly pending.
-- [ ] Repository-required CI/status checks are green or still pending.
+- [ ] Unrun hosted checks are recorded as `NOT RUN` (never `PASS`); mandatory hosted `workflow_dispatch` runs remain required on the final release candidate.
+
+Exact-HEAD manual CI evidence (`docs/TESTING.md` — all 6 items required):
+
+- **Commit SHA (clean tree):** `[40-CHAR SHA]`
+- **Commands:** `[EXACT COMMANDS RUN]`
+- **Test & build results:** `[UNIT/DOM COUNTS, PG16 DB COUNTS, LICENSED + COMMUNITY BUILDS, MIGRATION SYNC]`
+- **Environment:** `[OS, NODE, PNPM, POSTGRESQL 16 ISOLATION, FAKE/SIMULATED PROVIDER POSTURE]`
+- **Security & hygiene checks:** `[BUNDLE SCANS, PNPM AUDIT, TRACKED .ENV GUARD, PROFILE VALIDATOR, GIT DIFF --CHECK]`
+- **Outstanding QA & hosted CI:** `[HOSTED ACTIONS: NOT RUN (RESERVED FOR FINAL RELEASE CANDIDATE) + PENDING BROWSER/DEVICE/A11Y/PROVIDER QA]`
 
 Manual QA:
 
@@ -50,7 +60,7 @@ Escalation / broader validation:
 
 Required CI / release gates:
 
-[STATUS / PENDING]
+[EXACT-HEAD MANUAL CI STATUS; HOSTED CI `NOT RUN` ON DEV PR OR `workflow_dispatch` RUN URLS FOR RELEASE CANDIDATE]
 
 ## Acceptance criteria
 

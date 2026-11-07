@@ -278,6 +278,16 @@ If a project adds explicit stack-specific jobs, place their required PR checks i
 
 Do not make a required workflow depend on `paths:`, `paths-ignore:`, or other filters that can skip its required context and leave a PR blocked. Keep required check names stable, and coordinate any rule change independently of trigger optimization.
 
+#### NudgeMyInvoice CI cost-conservation configuration (owner-approved 2026-11-07)
+
+For `mrdzyn/nudgemyinvoice`, the project owner approved reserving GitHub-hosted Actions minutes for the final release candidate (`docs/TESTING.md`):
+
+- `.github/workflows/ci.yml` (`Project Baseline CI`, calling `.github/workflows/common-validation.yml`) and `.github/workflows/stack.yml` (`Stack CI`, with its `postgres:16` service container and full build/test/bundle/migration/audit checks) use `on: workflow_dispatch:` only during development (`pull_request` removed; all jobs, permissions, and steps preserved).
+- Live repository ruleset `25812697` (`Protect Main`, verified read-only on 2026-11-07) enforces pull-request merges, conversation resolution, no branch deletion, and no force-pushes (with PR-only admin bypass), and defines zero required status-check contexts, so manual-only triggers do not deadlock PR merges.
+- Development PRs require full exact-HEAD manual CI (recording commit SHA, commands, test results, environment, security checks, and outstanding QA per `docs/TESTING.md`), independent exact-HEAD review, and explicit owner merge approval; unrun hosted checks must be recorded as `NOT RUN` (never `PASS`).
+- Final release-candidate sign-off requires explicitly dispatching (`workflow_dispatch`) both `Project Baseline CI` and `Stack CI` on GitHub Actions against the exact candidate ref/SHA and verifying both conclude `SUCCESS`; release remains **BLOCKED** if hosted validation cannot execute or fails.
+- Transition behavior: GitHub evaluates `pull_request` triggers from `refs/pull/<N>/merge`. Once `main` carries `workflow_dispatch`-only workflows, PRs branched from `main` trigger zero automatic hosted runs; pre-existing open PR branches created before this merge still carry `pull_request:` until updated from `main` and will consume hosted minutes if pushed prior to updating.
+
 ### Optional self-hosted runner fallback
 
 Self-hosted runners may be used as an optional fallback when hosted-runner quota or availability is the constraint. They are not a default dependency of this template.

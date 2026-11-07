@@ -2695,6 +2695,35 @@ Focused independent re-audit of ADOPT-01 and ADOPT-02 at the exact final head, t
 
 Independent exact-HEAD review of this Draft PR and verification of both required hosted CI workflows at the final PR HEAD, followed by the owner's explicit merge decision.
 
+## Handoff: NMI-CI-COST-01
+
+- **Task / phase:** `tasks/NMI-CI-COST-CONSERVATION.md` (owner-approved CI cost-conservation policy).
+- **From:** Antigravity implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD CI/policy/documentation reviewer, then project owner for explicit merge approval.
+- **Branch:** `chore/nmi-ci-cost-conservation`, based on `main@e795fbc8514d29555ff365f219033206ecc851d4` (PR #52 squash-merged; following PR #50 `0b652348dfc546b4e9bc5bbf2e5a21fef142c124`).
+- **Final PR HEAD:** recorded in the Draft PR description and verified post-commit with a clean working tree (`git status --porcelain` empty).
+- **State:** Draft PR ready for independent exact-HEAD review. Hosted GitHub Actions are **NOT RUN** on this development PR (`workflow_dispatch` only); zero hosted minutes consumed. No merge, deployment, Render provisioning or live provider call is authorized.
+
+### Completed
+- **Workflow triggers switched to `workflow_dispatch` only (`.github/workflows/ci.yml`, `.github/workflows/stack.yml`):** removed `pull_request:` while preserving every job, permission (`contents: read`), concurrency group, PostgreSQL 16 service container (`postgres:16`, `nmi_test`, healthcheck), build/test/bundle/migration/audit step, and keeping `.github/workflows/common-validation.yml` untouched (`workflow_call`) and callable via `jobs.project-baseline.uses`.
+- **Canonical three-stage testing & manual CI evidence policy (`docs/TESTING.md`, `.github/pull_request_template.md`, `AGENTS.md`):** distinguished (1) targeted local checks during implementation, (2) full exact-HEAD manual CI before independent audit/merge with six mandatory evidence items (commit SHA, commands, test/build results, environment, security checks, outstanding QA), and (3) mandatory GitHub-hosted `workflow_dispatch` execution (`Project Baseline CI` + `Stack CI` both `SUCCESS` on the exact 40-char release SHA) on the final release candidate, blocking release if unrun, unavailable, or failing. Filled NudgeMyInvoice test-layer command placeholders in `docs/TESTING.md`.
+- **Release, enforcement, memory & status alignment (`docs/RELEASE.md`, `docs/REPOSITORY-SETUP.md`, `docs/NMI-RENDER-P4-RELEASE-READINESS.md`, `docs/PROJECT-MEMORY.md`, `docs/STATUS.md`):** updated release gates so no CI-unavailability waiver applies to release; documented read-only verification of live ruleset `25812697` (`Protect Main`: PR-only, thread resolution, no deletion/force-push, zero required status-check contexts) and GitHub `refs/pull/<N>/merge` automatic-run mechanics; added durable entry `NMI-M004`.
+
+### Validation (implementation-agent, exact-HEAD manual CI)
+- **Commit SHA:** exact final PR HEAD recorded in the Draft PR body (re-verified post-commit on a clean working tree).
+- **Commands:** Ruby `Psych` YAML + `origin/main` structural parity check across `.github/workflows/{ci,stack,common-validation}.yml`; `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice`; tracked `.env*` secret-file check; `pnpm install --frozen-lockfile`; `pnpm validate` (`eslint`, `prettier --check`, `typecheck`, `vitest run`, `build:web:licensed`, `check:bundle:licensed`, `build`, `check:bundle`); disposable PostgreSQL 16 `TEST_DATABASE_URL=... pnpm test:db`; `pnpm db:generate && test -z "$(git status --porcelain packages/db/migrations)"`; `pnpm audit --prod --audit-level high`; `git diff --check origin/main..HEAD`.
+- **Test & build results:** workflow structural parity PASS (`ci.yml` and `stack.yml` changed `on` to `workflow_dispatch` only; `common-validation.yml` byte-identical); `pnpm test` **72 files passed | 18 skipped (90), 1408 tests passed | 350 skipped (1758)**; `pnpm test:db` **19 files passed (19), 367 tests passed (367)**; licensed web build (6 files) and community web build (3 files) PASS; `pnpm db:generate` PASS (`No schema changes, nothing to migrate`).
+- **Environment:** macOS 27.2 (`arm64`), Node.js `v26.7.0`, `pnpm` `10.28.0`, Homebrew PostgreSQL `16.15` (disposable isolated cluster on `127.0.0.1`, confirmed `pg_ctl status` exit `3` before directory removal), Ruby `Psych` `5.3.1`; deterministic fakes only (zero OpenAI/PayPal/SMTP calls).
+- **Security & hygiene checks:** `pnpm check:bundle:licensed` PASS (clean, licence absent); `pnpm check:bundle` PASS (clean, no Studio code); `pnpm audit --prod --audit-level high` PASS (`No known vulnerabilities found`); tracked `.env*` secret guard PASS; `validate_project_profile.py` PASS (24 files verified); handoff ID uniqueness & single end marker PASS; `git diff --check` clean.
+- **Outstanding QA & hosted CI:** GitHub-hosted `Project Baseline CI` and `Stack CI` are **NOT RUN** (deferred to the final release candidate per this `workflow_dispatch`-only policy; never recorded as `PASS`). Manual Safari/Firefox, real touch device, VoiceOver/NVDA, 400% zoom, and live Render HTTPS `__Host-` proxy QA remain open at project level (`docs/STATUS.md`).
+
+### Continuation notes
+- **Transition note for other open PRs:** opening or updating this PR triggers zero hosted runs because `refs/pull/<N>/merge` evaluates the updated `workflow_dispatch`-only workflows. However, pre-existing open PR branches created before this PR merges to `main` (e.g., Draft PRs #51 and #52) still carry `on: pull_request:` until `main` merges this PR (or those branches update from `main`), so pushing new commits to those branches before merge would consume hosted minutes.
+- **All release and provider gates stay unchanged:** G1, G4, G5, G6 and G7 remain OPEN; G8 continues; provider Gates A (`NUDGE_AI_DRAFTING_ENABLED=false`), B (`PAYPAL_DRAFTS_ENABLED=false`) and C remain NOT AUTHORIZED. Release remains **BLOCKED** until mandatory hosted `workflow_dispatch` runs succeed on the final release candidate and all owner gates close.
+
+### Next action
+Independent exact-HEAD review of `.github/workflows/ci.yml`, `.github/workflows/stack.yml` and the updated documentation against the exact-HEAD manual CI evidence, followed by the owner's explicit merge decision. Do not dispatch hosted CI during routine review unless explicitly requested by the owner.
+
 ## Handoff: NMI-MIG-0008-ISSUE49-C1
 
 - **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49.
@@ -2751,5 +2780,41 @@ Verify the final seven/eight-path diff and targeted tests, obtain both exact-HEA
 ### Next action
 
 Merge or apply the owner-approved CI `workflow_dispatch`-only trigger change (Draft PR #53) on `main` (and merge `main` into `fix/nmi-issue49-journal-preflight` if needed so pushing does not trigger automatic `pull_request` hosted runs), push the reconciled branch to Draft PR #51, obtain independent exact-HEAD review, and await explicit owner merge approval before closing Issue #49.
+
+## Handoff: NMI-MIG-0008-ISSUE49-C3
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49 (PR #51 reconciliation with `main@5e110efb5bbdd6fe92639beca0e7dc5a19626230`, workflow trigger verification, physical PG16 acceptance, and exact-HEAD manual CI).
+- **From:** Antigravity implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD migration/setup/security reviewer, then project owner for explicit merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight` (reconciled via regular non-history-rewriting merge with `origin/main@5e110efb5bbdd6fe92639beca0e7dc5a19626230`, incorporating owner-merged PR #53 CI cost-conservation policy, PR #52 `NMI-P6-FIX2`, and PR #50 D4-X adoption).
+- **Final PR HEAD:** recorded in Draft PR #51 and verified post-commit on a clean working tree.
+- **State:** Draft PR #51 ready for independent exact-HEAD review. Issue #49 stays OPEN. Hosted GitHub Actions are **NOT RUN** on this development PR (`workflow_dispatch` only under the merged PR #53 policy; zero hosted minutes consumed). No merge, deployment, Render provisioning, or live provider call is authorized.
+
+### Completed
+
+- **Reconciled with `origin/main@5e110efb5bbdd6fe92639beca0e7dc5a19626230` without rebase or force push:** cleanly merged the approved PR #53 CI cost-conservation policy; verified both `.github/workflows/ci.yml` and `.github/workflows/stack.yml` are `workflow_dispatch` only with `contents: read`, concurrency, and `postgres:16` service intact, and `.github/workflows/common-validation.yml` remains byte-identical to `origin/main`.
+- **Preserved all prior Issue #49 / PR #51 implementations:** shared read-only `scripts/migration-plan.mjs` (fail-closed on non-regular/symlink files, whitespace/empty SQL, unjournaled `.sql` files, out-of-order `idx`, and missing `0008_mushy_zarek`), hardened judge runbook `docs/NMI-DEMO-JUDGE-RUNBOOK.md` §3–§5/§11 (subshell isolation, empty-DB check, `to_regclass` verification of `public.invoice_nudges`, `export LC_ALL="${LC_ALL:-C}"`), SCRAM operator preflight `scripts/preflight-provision-operator.mjs` (56/56 checks, `--report`, `--migrations-root`, `migrate.no_provision` gate), and 13/13 deterministic unit negative controls in `apps/api/src/migration-plan.test.ts`.
+- **Documentation & status reconciliation:** `docs/STATUS.md` and `docs/HANDOFFS.md` reconciled additively, preserving accepted PR #52 and PR #53 records, handoff history, and active handoff `NMI-MIG-0008-ISSUE49-C3`.
+
+### Validation (implementation-agent, exact-HEAD manual CI)
+
+- **Commit SHA:** exact final PR HEAD recorded in the Draft PR description and comment.
+- **Baseline & hygiene checks:** `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice` PASS (24 files); tracked `.env*` secret-file guard PASS (0 tracked env files); handoff uniqueness & single end marker PASS (134 unique IDs); `git diff --check origin/main..HEAD` clean.
+- **Code validation:** `pnpm install --frozen-lockfile` PASS; `pnpm validate` PASS (`eslint`, `prettier --check`, 8-package `typecheck`, `vitest run` 73 runnable files / 1,424 tests passed incl. 13/13 `migration-plan.test.ts`, licensed web build & bundle secret scan, community web build & bundle scan).
+- **Physical disposable PostgreSQL 16.15 integration & acceptance:**
+  - `TEST_DATABASE_URL=... pnpm test:db` PASS (19 files / 367 tests passed; cluster stopped exit `3`, temp dir deleted).
+  - Judge runbook §3–§5 & §11 manual walkthrough in disposable `nmi_judge` (empty DB, all 9 migrations applied, `invoice_nudges` verified, operator provisioned, clean stop).
+  - Preflight & negative controls: `unset LC_ALL && pnpm preflight:provision` PASS (56/56); failure injection via `--migrations-root` (syntax error, missing `invoice_nudges`, truncated journal) each cleanly halted and refused operator creation (`migrate.no_provision: true`, `operators=0`).
+- **Security & dependency audit:** `pnpm audit --prod --audit-level high` PASS (0 vulnerabilities); `pnpm db:generate` PASS (10 tables, no drift).
+- **Hosted Actions verification:** 0 hosted runs triggered (`workflow_dispatch` only).
+
+### Continuation notes
+
+- **All release and provider gates stay unchanged:** G1, G4, G5, G6, and G7 remain OPEN; G8 continues; provider Gates A (`NUDGE_AI_DRAFTING_ENABLED=false`), B (`PAYPAL_DRAFTS_ENABLED=false`), and C remain NOT AUTHORIZED. Release remains **BLOCKED** until mandatory hosted `workflow_dispatch` runs succeed on the final release candidate and all owner gates close.
+- Issue #49 stays OPEN until PR #51 is independently reviewed and owner-merged.
+
+### Next action
+
+Independent exact-HEAD review of PR #51 at the final commit SHA against this manual CI and disposable PG16 acceptance evidence, followed by the owner merge decision.
 
 <!-- HANDOFF_ENTRIES_END -->

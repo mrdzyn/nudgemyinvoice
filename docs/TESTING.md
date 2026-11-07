@@ -107,8 +107,46 @@ Required CI remains the normal merge gate. When GitHub-hosted CI cannot execute 
 
 `docs/REPOSITORY-SETUP.md` is the canonical source for eligibility, evidence, equivalent validation, independent review, owner/admin approval, PR-only bypass, trigger-economy, and optional self-hosted-runner guidance.
 
-### Project note: manual CI while Actions are unavailable
-The owner reports hosted GitHub Actions may be unavailable until November 2026. Every new commit then needs the full manual validation set listed in `docs/STATUS.md`, with exact commands, counts and SHA recorded in the PR or handoff. Hosted checks that did not run are NOT PASS, and a previous PASS never carries over to new SHAs. A real failure is never excused by this exception.
+### NudgeMyInvoice CI cost-conservation policy (owner-approved 2026-11-07)
+
+To conserve GitHub-hosted Actions minutes during active development while keeping full release-candidate assurance, `.github/workflows/ci.yml` (`Project Baseline CI`, calling `.github/workflows/common-validation.yml`) and `.github/workflows/stack.yml` (`Stack CI`, including its `postgres:16` service container and all build/security steps) trigger on explicit `workflow_dispatch` only (`pull_request` automatic execution removed).
+
+Validation is strictly separated into **three stages**:
+
+1. **Targeted local checks during implementation:**
+   - Run the smallest objective-based local checks (changed-package lint/typecheck plus targeted Vitest unit/DOM/PostgreSQL tests) needed to prove the task's stated test objective, then stop expanding the inner loop unless escalation rules apply.
+2. **Full exact-HEAD manual CI before independent audit and merge (routine PR gate):**
+   - Before requesting independent exact-HEAD review or owner merge approval, run the complete CI-equivalent suite locally against the **exact committed PR HEAD** (with a clean working tree), covering both `common-validation.yml` and `stack.yml`:
+     - `python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice`
+     - Tracked local-env secret guard: `test -z "$(git ls-files | grep -E '(^|/)(\.env|\.env\.(local|development|staging|production))$' || true)"`
+     - Locked dependency state (`pnpm install --frozen-lockfile` or verified clean `pnpm-lock.yaml`)
+     - `pnpm validate` (`pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test`, `pnpm build:web:licensed`, `pnpm check:bundle:licensed`, `pnpm build`, `pnpm check:bundle`)
+     - Disposable PostgreSQL 16 integration suite: `TEST_DATABASE_URL=postgres://.../nmi_test pnpm test:db` (`REQUIRE_DB_TESTS=1 vitest run .pg.test.ts`; confirm `pg_ctl status` exit `3` before deleting any temporary cluster directory)
+     - Schema-migration sync check: `pnpm db:generate && test -z "$(git status --porcelain packages/db/migrations)"`
+     - Production dependency audit: `pnpm audit --prod --audit-level high`
+     - Whitespace/conflict hygiene: `git diff --check`
+   - If the PR HEAD changes afterward, repeat manual CI on the new exact HEAD before audit or merge. A previous SHA's evidence never carries over to a new commit.
+3. **Mandatory GitHub-hosted validation on the final release candidate (blocking release gate):**
+   - Before any production/judge deployment, release-branch activation, or final release sign-off, **both** `Project Baseline CI` (`ci.yml`) and `Stack CI` (`stack.yml`) **must be explicitly dispatched (`workflow_dispatch`) on GitHub Actions** against the exact candidate ref/SHA (for example `release/nmi-render-judges-2026` or `main` at the candidate SHA, verifying each run's `headSha` matches the 40-character release SHA) and **both must finish `SUCCESS`**.
+   - **Release remains BLOCKED if mandatory hosted validation has not run, cannot execute (including quota, runner, or service unavailability), or fails.** The development-time manual-CI policy and the PR CI-unavailable break-glass exception never waive hosted validation for a release.
+
+#### Mandatory manual CI evidence record
+
+Every PR description (and/or active handoff) submitted under manual CI **must** record all six items:
+
+1. **Commit SHA:** exact 40-character `HEAD` SHA validated and clean working-tree confirmation.
+2. **Commands:** exact commands executed for baseline, static checks, unit/DOM tests, PostgreSQL 16 integration tests, builds, migration sync, and security checks.
+3. **Test & build results:** explicit pass/fail/skip counts (`pnpm test` files/tests, `pnpm test:db` files/tests on PostgreSQL 16, licensed and community web builds, migration-sync status).
+4. **Environment:** OS, Node.js version, `pnpm` version, PostgreSQL 16 version and disposable database/cluster isolation, and provider posture (fake/simulated vs authorized live smoke).
+5. **Security & hygiene checks:** outcomes of `pnpm check:bundle:licensed`, `pnpm check:bundle`, `pnpm audit --prod --audit-level high`, tracked `.env*` secret-file check, `validate_project_profile.py`, and `git diff --check`.
+6. **Outstanding QA & unrun checks:** explicit statement that hosted GitHub Actions are `NOT RUN (workflow_dispatch only during development; mandatory on final release candidate)`, plus any remaining manual browser/device/screen-reader/zoom/proxy/provider QA.
+
+#### Non-negotiable policy boundaries
+
+- **Never record an unrun hosted check as `PASS`.** Unexecuted `Project Baseline CI` / `Stack CI` workflows must be reported as `NOT RUN`.
+- **Not an exception for failing checks:** any genuine test, lint, format, typecheck, build, bundle-secret, migration, profile, or `pnpm audit` failure blocks independent audit and merge until fixed.
+- **Governance preserved:** independent exact-HEAD review, explicit human merge approval, `docs/SECURITY.md` boundaries, and separate owner release/deployment/provider gates remain mandatory.
+- **GitHub Actions transition behavior:** GitHub evaluates `on: pull_request` from `refs/pull/<N>/merge`. PRs whose merge commit includes `workflow_dispatch`-only workflows trigger zero automatic hosted runs; pre-existing open PR branches created before this policy merges to `main` still carry `pull_request:` until `main` merges this change (or those branches update from `main`), so pushing to those stale branches before merge would still consume hosted minutes.
 
 ## Risk-proportionate testing ladder
 
@@ -137,25 +175,25 @@ Examples:
 - schema validation.
 
 **Project commands:**  
-`[ADD COMMANDS]`
+`pnpm lint && pnpm format:check && pnpm typecheck && pnpm db:generate && test -z "$(git status --porcelain packages/db/migrations)" && python3 scripts/validate_project_profile.py --repository mrdzyn/nudgemyinvoice && git diff --check`
 
 ### Unit tests
 Validate isolated business logic and edge cases.
 
 **Project commands:**  
-`[ADD COMMANDS]`
+`pnpm test` (or targeted `pnpm --filter <pkg> exec vitest run <path>` during implementation)
 
 ### Integration tests
 Validate boundaries such as database, filesystem, network API, authentication, or platform adapters.
 
 **Project commands:**  
-`[ADD COMMANDS]`
+`TEST_DATABASE_URL=postgres://postgres@127.0.0.1:<port>/nmi_test pnpm test:db` (sets `REQUIRE_DB_TESTS=1` against a disposable PostgreSQL 16 database)
 
 ### End-to-end / acceptance tests
 Validate critical user journeys or release flows.
 
 **Project commands:**  
-`[ADD COMMANDS]`
+`pnpm build && node design/evidence/<phase>/<runner>.mjs` (synthetic data + fake providers + disposable PostgreSQL 16; see phase evidence folders)
 
 ### Security / dependency checks
 Examples:
@@ -165,7 +203,7 @@ Examples:
 - permission tests.
 
 **Project commands:**  
-`[ADD COMMANDS]`
+`pnpm build:web:licensed && pnpm check:bundle:licensed && pnpm build && pnpm check:bundle && pnpm audit --prod --audit-level high && test -z "$(git ls-files | grep -E '(^|/)(\.env|\.env\.(local|development|staging|production))$' || true)"`
 
 ## Design-first UI validation
 
@@ -188,7 +226,7 @@ A PR should not be considered ready for human approval until:
 - for material UI work, the approved design/shell and integrated implementation are traceable to the same requirements;
 - the task's stated test objective is demonstrated;
 - applicable manual QA is completed or explicitly marked pending with reason;
-- required CI/status checks pass, or the repository's documented CI-unavailable exception is satisfied for checks that genuinely could not execute;
+- required CI/status checks pass, or—under NudgeMyInvoice's development-time CI cost-conservation policy above—full exact-HEAD manual CI passes with all six required evidence fields recorded (while hosted CI is truthfully recorded as `NOT RUN`, never `PASS`), or the repository's documented CI-unavailable exception is satisfied for checks that genuinely could not execute;
 - task acceptance criteria are demonstrated;
 - new/changed behavior has appropriate tests;
 - known failures are documented and explicitly accepted;
@@ -257,6 +295,7 @@ At minimum:
 Before release:
 - validate the exact candidate artifact when possible;
 - record version/build and source commit;
+- for NudgeMyInvoice, explicitly dispatch (`workflow_dispatch`) both GitHub-hosted `Project Baseline CI` and `Stack CI` workflows on the exact final release-candidate ref/SHA, verify each run's `headSha` equals the candidate 40-character SHA, and require both to conclude `SUCCESS` (release remains **BLOCKED** if hosted validation has not run, cannot execute, or fails);
 - run the required release smoke/regression checks even when the final code delta was small;
 - confirm migration/rollback readiness;
 - complete platform/store-specific checks;
@@ -279,12 +318,12 @@ Required objective groups before demo:
 - **Genuine provider evidence split (2026-10-26):** real PayPal Sandbox DRAFT OAuth/create/show **PASS** in the one-owner-authorized happy-path `NMI-P2-I2-SANDBOX-SMOKE-01` (exercised with one fictitious USD 5.00 line item, zero tax, and zero discount; AG's sanitized execution and local DB evidence; not an independent PayPal account query). Genuine provider search, reconciliation, timeout, and error paths are **NOT TESTED** against live PayPal Sandbox (verified with deterministic mock transports and PostgreSQL tests). No new create is authorized; the smoke guard's one-create budget is exhausted. **Real OpenAI parse remains NOT TESTED**, requiring separate owner authorization and credentials. All deterministic parser fixtures, fake PayPal transports, remote errors and reconciliation tests remain simulation, not provider acceptance.
 - Hosted shape (NMI-RENDER-P1, offline). `hosting.test.ts` (config fail-closed, static/SPA fallback, traversal/symlink, headers, real server process host/PORT), `hosted-staging.pg.test.ts` (simulated TLS edge request-line capture with a negative control, `__Host-` cookie, CSRF/Origin, one-hop proxy trust with a negative control, provider-disabled zero fetch, 7 migrations, runtime-role privilege denials), POST search in `invoice-list.pg.test.ts`, and `design/evidence/NMI-RENDER-P1/run-hosted-browser-qa.mjs` (real Chrome, 26 checks). Real Render behavior is NOT TESTED.
 - Tool dispatch: every privileged action name, unknown and prototype-like names are refused and no handler runs.
-- PostgreSQL suites (`*.pg.test.ts`: constraints, approval store, authentication): `pnpm test:db` applies the committed migrations into a per-suite scratch schema of a disposable `nmi_test*` database. Constraint tests assert CHECK violations (SQLSTATE 23514); the audit trigger test asserts UPDATE/DELETE/TRUNCATE rejection. Without `TEST_DATABASE_URL` the suite is *skipped*, never reported as passed; hosted Stack CI runs it against a `postgres:16` service container with `REQUIRE_DB_TESTS=1`. Locally: start any disposable Postgres, create a database named `nmi_test`, then `TEST_DATABASE_URL=postgres://user@host:port/nmi_test pnpm test:db`.
+- PostgreSQL suites (`*.pg.test.ts`: constraints, approval store, authentication): `pnpm test:db` applies the committed migrations into a per-suite scratch schema of a disposable `nmi_test*` database. Constraint tests assert CHECK violations (SQLSTATE 23514); the audit trigger test asserts UPDATE/DELETE/TRUNCATE rejection. Without `TEST_DATABASE_URL` the suite is *skipped*, never reported as passed; during development PR manual CI it must be run locally against a disposable PostgreSQL 16 database (`TEST_DATABASE_URL=postgres://user@host:port/nmi_test pnpm test:db`), and on the final release candidate hosted `Stack CI` (`workflow_dispatch`) also runs it against a `postgres:16` service container with `REQUIRE_DB_TESTS=1`.
 - PayPal follow-up (NOT TESTED): any future human-approved send flow, verified paid-status/webhook processing, provider-search recovery and partial/pending payment handling require separate implementation and acceptance; the completed draft-only smoke is not evidence for them.
 - Webhooks: invalid/missing signature, replay window, duplicate event ID, out-of-order events, stored transactional idempotency.
 - UI: loading/empty/error/overdue, keyboard/zoom/responsive, human approval details and declined state, AG Grid sort/filter/currency grouping.
 
-Separate model fixtures, fake PayPal events and live sandbox smoke evidence. Mock/simulator events alone do NOT prove payment processing. An unexecuted hosted CI job remains NOT PASS; any documented runner-credit exception must meet `docs/REPOSITORY-SETUP.md` exact-HEAD human procedure and be explicitly scoped to this repo/PR.
+Separate model fixtures, fake PayPal events and live sandbox smoke evidence. Mock/simulator events alone do NOT prove payment processing. An unexecuted hosted CI job remains `NOT RUN` (never `PASS`); development PRs require the full exact-HEAD manual CI record above, and final release candidates require hosted `workflow_dispatch` `SUCCESS` of both `Project Baseline CI` and `Stack CI` (blocking release if unrun or failing).
 
 Before demo/release: clean clone/run instructions on separate machine, verified sandbox transaction, API secrets not in logs, screen-reader smoke, no disabled review gates, owner-approved Render deploy and <3-minute video.
 
