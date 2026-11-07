@@ -2886,4 +2886,15 @@ Review docs-only status changes and independently verify no release/policy gates
 ### Next action
 
 Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's separate squash-merge decision. If merged, run complete exact-SHA manual release validation and independent review before a separate risk-acceptance/deploy decision.
+## Handoff: NMI-JUDGE-LIVE-OPENAI-01
+
+- **Task:** `tasks/NMI-JUDGE-LIVE-OPENAI-01.md`; issue #56; feature branch `feat/nmi-judge-live-openai` based on `main@04240209add5bcdae67f4b925e9f194abaad8b66`.
+- **Owner direction:** 2026-11-07: explicitly implement OpenAI functionality into a new feature branch urgently because judges need to see AI. This authorizes feature development, **not** additional billable provider calls or live deployment.
+- **Known history:** PR #25 Gate A provisional real-provider PASS on 2 synthetic parses (2026-10-30), authorization consumed. PR #43 implements P6 AI Nudges with fake-model browser evidence. PR #55 owner-accepted one-time manual CI substitution applies **only** to the historical pinned SHA.
+- **Work:** conditional limited judge AI mode, server-side parser/nudge model configuration, no SDK parser retries in limited mode, endpoint budgets, pure release env guards/tests, proposed G8 addendum. PayPal remains sandbox-and-disabled. No credentials committed.
+- **Live infrastructure:** deployed Render service `srv-dbng0oc9v7es73cm6m2g`, PostgreSQL `dpg-dbnetgk9v7es73cjd6g0-a`, protected release candidate `abfbbfc3153cb3b4238ebf201daca830fed2e8f9` left unchanged. No URL sharing authorization.
+- **Verification:** source transformation sanity checks only unless test evidence appears separately on exact PR HEAD. Hosted CI blocked until December. Do NOT classify CI or live API calls as PASS when not run.
+- **Gates:** independent code/security/policy audit, full Mac manual CI on this new HEAD, explicit model/key/call/spend authorization, new pinned release candidate and separate owner merge/deploy/URL approvals are required. The historical Gate A cap may not be reused.
+- **Next action:** exact-HEAD local manual validation, focused review (especially guard/test matrix and rate-limit reset), independent audit, then owner merge decision.
+
 <!-- HANDOFF_ENTRIES_END -->

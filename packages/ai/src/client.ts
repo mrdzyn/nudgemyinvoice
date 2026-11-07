@@ -17,13 +17,15 @@ export interface OpenAIConfig {
   model: string;
   maxOutputTokens?: number;
   timeoutMs?: number;
+  /** The judge demo disables SDK retries to bound provider requests; historical default is 1. */
+  maxRetries?: 0 | 1;
 }
 
 export function createOpenAIInvoiceClient(config: OpenAIConfig): InvoiceModelClient {
   const openai = new OpenAI({
     apiKey: config.apiKey,
     timeout: config.timeoutMs ?? 20_000,
-    maxRetries: 1,
+    maxRetries: config.maxRetries ?? 1,
   });
   return {
     async generate({ instructions, input }) {
