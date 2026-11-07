@@ -98,10 +98,9 @@ class FakeNudgeModel implements NudgeModelClient {
 describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake providers)", () => {
   let scratch: ScratchDatabase;
   const apps: FastifyInstance[] = [];
-  let logs = "";
+  // Discard Fastify logs to keep test output readable.
   const logStream = new Writable({
-    write(chunk, _e, cb) {
-      logs += chunk.toString();
+    write(_chunk, _e, cb) {
       cb();
     },
   });
@@ -184,7 +183,6 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
   });
   afterEach(async () => {
     while (apps.length) await apps.pop()?.close();
-    logs = "";
     await sql("UPDATE sessions SET revoked_at = now() WHERE revoked_at IS NULL");
   });
   afterAll(async () => {
