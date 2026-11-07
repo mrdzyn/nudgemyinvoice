@@ -126,9 +126,9 @@ Validation is strictly separated into **three stages**:
      - Production dependency audit: `pnpm audit --prod --audit-level high`
      - Whitespace/conflict hygiene: `git diff --check`
    - If the PR HEAD changes afterward, repeat manual CI on the new exact HEAD before audit or merge. A previous SHA's evidence never carries over to a new commit.
-3. **Mandatory GitHub-hosted validation on the final release candidate (blocking release gate):**
-   - Before any production/judge deployment, release-branch activation, or final release sign-off, **both** `Project Baseline CI` (`ci.yml`) and `Stack CI` (`stack.yml`) **must be explicitly dispatched (`workflow_dispatch`) on GitHub Actions** against the exact candidate ref/SHA (for example `release/nmi-render-judges-2026` or `main` at the candidate SHA, verifying each run's `headSha` matches the 40-character release SHA) and **both must finish `SUCCESS`**.
-   - **Release remains BLOCKED if mandatory hosted validation has not run, cannot execute (including quota, runner, or service unavailability), or fails.** The development-time manual-CI policy and the PR CI-unavailable break-glass exception never waive hosted validation for a release.
+3. **Release-candidate validation (default hosted gate; one-time owner-selected manual alternative is separately controlled):**
+   - **Default:** before any production/judge deployment or final release sign-off, explicitly dispatch both `Project Baseline CI` (`ci.yml`) and `Stack CI` (`stack.yml`) at the exact candidate ref/SHA, verify matching `headSha` and require both `SUCCESS`. Creating and protecting an inert release branch does not deploy or activate a release.
+   - **Only scoped alternative:** for NudgeMyInvoice's single Render Hobby judges candidate `abfbbfc3153cb3b4238ebf201daca830fed2e8f9` on the protected `release/nmi-render-judges-2026`, the owner-directed manual option in `tasks/NMI-RENDER-RC-MANUAL-CI-EXCEPTION.md` may substitute for the two hosted `SUCCESS` results **only after** that policy PR receives an independent exact-HEAD audit, separate owner merge approval and verified merge; every full exact-candidate local equivalent, independent release-evidence audit, recorded macOS-versus-Ubuntu gap acceptance and a separate owner decision approving use of the one-time exception must also be completed. Until ALL conditions hold, release remains **BLOCKED**. Never report hosted CI as `SUCCESS` when `NOT RUN`. If any actual required check fails, fail closed rather than use this exception. All other gates and owner deployment approvals remain binding. Future candidates retain the hosted requirement.
 
 #### Mandatory manual CI evidence record
 
@@ -139,7 +139,7 @@ Every PR description (and/or active handoff) submitted under manual CI **must** 
 3. **Test & build results:** explicit pass/fail/skip counts (`pnpm test` files/tests, `pnpm test:db` files/tests on PostgreSQL 16, licensed and community web builds, migration-sync status).
 4. **Environment:** OS, Node.js version, `pnpm` version, PostgreSQL 16 version and disposable database/cluster isolation, and provider posture (fake/simulated vs authorized live smoke).
 5. **Security & hygiene checks:** outcomes of `pnpm check:bundle:licensed`, `pnpm check:bundle`, `pnpm audit --prod --audit-level high`, tracked `.env*` secret-file check, `validate_project_profile.py`, and `git diff --check`.
-6. **Outstanding QA & unrun checks:** explicit statement that hosted GitHub Actions are `NOT RUN (workflow_dispatch only during development; mandatory on final release candidate)`, plus any remaining manual browser/device/screen-reader/zoom/proxy/provider QA.
+6. **Outstanding QA & unrun checks:** explicitly mark hosted Actions as `NOT RUN`; hosted validation is mandatory by default on release candidates, except the independently audited, explicitly owner-approved one-time manual substitution for the exact SHA documented in `tasks/NMI-RENDER-RC-MANUAL-CI-EXCEPTION.md` (never an implicit bypass). Record any remaining browser/device/screen-reader/zoom/proxy/provider QA.
 
 #### Non-negotiable policy boundaries
 
@@ -295,7 +295,7 @@ At minimum:
 Before release:
 - validate the exact candidate artifact when possible;
 - record version/build and source commit;
-- for NudgeMyInvoice, explicitly dispatch (`workflow_dispatch`) both GitHub-hosted `Project Baseline CI` and `Stack CI` workflows on the exact final release-candidate ref/SHA, verify each run's `headSha` equals the candidate 40-character SHA, and require both to conclude `SUCCESS` (release remains **BLOCKED** if hosted validation has not run, cannot execute, or fails);
+- for NudgeMyInvoice, require both exact-SHA GitHub-hosted `Project Baseline CI` and `Stack CI` runs to conclude `SUCCESS` **by default**, or satisfy and separately approve every condition of the **one-time, one-SHA manual release substitute** in `tasks/NMI-RENDER-RC-MANUAL-CI-EXCEPTION.md` after its independent review and owner-approved policy merge; otherwise release remains **BLOCKED**. Never call an unrun hosted check `PASS`;
 - run the required release smoke/regression checks even when the final code delta was small;
 - confirm migration/rollback readiness;
 - complete platform/store-specific checks;
