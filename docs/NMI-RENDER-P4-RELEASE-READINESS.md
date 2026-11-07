@@ -63,6 +63,32 @@ Enforced by `release-preflight env` (prints rule ids and *names*, never values).
 
 Gap noted, not changed: `loadConfig` itself does not refuse provider keys in production (the app must stay usable with them for the owner's later gated gates). The preflight is the enforcement point and must be run by the operator against the *service's* environment (dashboard-exported names, or the shell used to dry-run) before go-live.
 
+### NMI-JUDGE-LIVE-OPENAI-01 — proposed limited judge-AI release option (NOT CURRENTLY AUTHORIZED)
+
+Issue #56 and Draft PR on `feat/nmi-judge-live-openai` propose a **new release candidate** for
+interactive real OpenAI invoice parsing **and** AI Nudge Intelligence. The currently deployed,
+protected `abfbbfc3153cb3b4238ebf201daca830fed2e8f9` remains provider-disabled and
+unchanged. The preceding G8 matrix remains the operative policy for that deployed SHA.
+
+The feature code has an optional `NMI_JUDGE_AI_MODE=limited` which makes
+`release-preflight env` require `OPENAI_API_KEY` (server-only), `OPENAI_MODEL=gpt-6-luna`,
+`OPENAI_MAX_OUTPUT_TOKENS=4096`, `NUDGE_AI_DRAFTING_ENABLED=true`, and
+`PAYPAL_DRAFTS_ENABLED=false` with both PayPal credentials absent.
+The API runtime also validates the limited-mode combination. Parser SDK retries are disabled,
+P6 retries are already disabled; each AI endpoint is budgeted at 3 attempts / 10 minutes
+for the one operator and one in-flight generation. **These in-process budgets reset on
+restart and are NOT a monetary hard cap or lifetime request cap.** Set and verify an
+independent provider-project spending cap and usage monitoring before any live request.
+No OpenAI secret belongs in Git, public logs, the browser bundle or a PR.
+
+**Approval boundary:** a new owner provider-usage authorization must state the exact
+project/key, model access, max attempts/wire requests, USD spending ceiling and expiry;
+security/policy review, updated exact-SHA manual CI, independent audit, owner merge/deploy
+approval, post-deploy private QA, and separate judge URL permission are still required.
+The historical 2026-10-30 Gate A permit is consumed and cannot authorize this.
+No PayPal or real customer data, automatic sending, or background AI actions.
+Turning on an env flag on the existing deployed SHA is **not** approved.
+
 ## 5. Security posture carried forward (unchanged)
 
 `__Host-nmi_session` (Secure, HttpOnly, SameSite=Lax, Path=/, no Domain); exact-Origin and CSRF on every mutation; header CSP with `frame-ancestors 'none'`, HSTS, `nosniff`, `Referrer-Policy: no-referrer`; `TRUST_PROXY=1` one-hop (negative control with `true` is evaded); in-memory rate limits, so exactly one instance; single operator; manual-entry fallback with providers off; PayPal create returns `503 paypal_disabled`; AI/background code still cannot send, remind, refund, cancel or mark paid.

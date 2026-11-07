@@ -95,8 +95,14 @@ export function invoiceDraftRoutes(app: FastifyInstance, deps: InvoiceDraftRoute
   const resolveOps = (req: FastifyRequest) =>
     typeof deps.seams?.ops === "function" ? deps.seams.ops(req) : (deps.seams?.ops ?? defaultOps);
   // Cost bound for the paid provider call: a per-operator budget plus a tiny in-flight cap.
-  const budget = new WindowBudget(deps.seams?.parseBudgetMax ?? 20, 10 * 60 * 1000);
-  const gate = new BoundedWorkGate(deps.seams?.parseConcurrency ?? 2, 0);
+  const budget = new WindowBudget(
+    deps.seams?.parseBudgetMax ?? (config.judgeAiMode === "limited" ? 3 : 20),
+    10 * 60 * 1000,
+  );
+  const gate = new BoundedWorkGate(
+    deps.seams?.parseConcurrency ?? (config.judgeAiMode === "limited" ? 1 : 2),
+    0,
+  );
 
   const operatorId = (req: FastifyRequest) =>
     (req.session as NonNullable<typeof req.session>).operatorId;

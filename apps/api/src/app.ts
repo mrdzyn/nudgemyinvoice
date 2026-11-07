@@ -166,7 +166,12 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     audit,
     nudgeClient: deps.nudgeClient,
     clock: deps.clock,
-    seams: deps.nudgeSeams,
+    // One judge operator; bound live nudge attempts independently of the ordinary app budget.
+    seams:
+      deps.nudgeSeams ??
+      (config.judgeAiMode === "limited"
+        ? { generateBudgetMax: 3, generateConcurrency: 1 }
+        : undefined),
   });
   if (config.webDistDir) registerWebStatic(app, config.webDistDir);
   return app;

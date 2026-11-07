@@ -16,6 +16,8 @@ const app = buildApp(config, {
           apiKey: config.openai.apiKey,
           model: config.openai.model,
           maxOutputTokens: config.openai.maxOutputTokens,
+          // In the approved judge mode one application action means at most one OpenAI wire attempt.
+          maxRetries: config.judgeAiMode === "limited" ? 0 : 1,
         }),
       }
     : {}),
