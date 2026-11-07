@@ -84,6 +84,10 @@ Do not add:
 **Decision:** Public MIT repository, approximately 55 hours, verified PayPal invoicing/webhook demo, OpenAI Responses API structured output and tool use (owner chose the existing OpenAI account over Anthropic), AG Grid dashboard and Render deployment. Orders/refunds/automatic reminders remain stretch only.
 **Rationale:** Protect Nov 9 internal delivery target and demonstrate working integration rather than broad unverifiable features.
 
+### NMI-M004 — CI cost-conservation policy (manual PR CI; hosted CI reserved for final release candidate)
+**Decision:** `.github/workflows/ci.yml` (`Project Baseline CI`) and `.github/workflows/stack.yml` (`Stack CI`) trigger on explicit `workflow_dispatch` only during development (`docs/TESTING.md`). Development uses targeted local checks during coding and full exact-HEAD manual CI (with mandatory commit SHA, commands, results, environment, security checks, and outstanding QA) before independent audit and owner merge approval; unrun hosted checks are always recorded as `NOT RUN` (never `PASS`), and explicit GitHub-hosted `workflow_dispatch` `SUCCESS` of both workflows on the exact candidate SHA is mandatory and release-blocking before any final release.
+**Rationale:** Conserve GitHub-hosted Actions minutes during iterative development without weakening validation depth, independent review, security checks, or release-candidate hosted verification.
+
 
 
 ## Maintenance rule
