@@ -32,4 +32,8 @@ Published SQL/migration journal changes, application feature/domain/auth changes
 4. Deterministic tests prove valid current journal, missing 0008, wrong ordering/index, missing SQL, empty/corrupt journal, dangerous tag and later valid migration behavior; optional real disposable PostgreSQL 16 owner/CI preflight must be reported separately from unit tests.
 5. Inventory stale operational eight-migration wording, preserve historical evidence, run targeted tests, lint/format/profile and mandatory exact-HEAD CI; request independent review before any owner merge.
 
+## SEC-N1 remediation
+
+The judge runbook must reject every `DATABASE_URL` query parameter and fragment, and refuse libpq routing environment overrides (`PGHOSTADDR`, `PGSERVICE`, `PGSERVICEFILE`, and a non-matching `PGHOST`, `PGPORT`, or `PGDATABASE`) before any migration SQL or operator provisioning. Migration SQL runs only through the pinned `127.0.0.1:54370/nmi_judge` conninfo. Deterministic tests prove those refusals without contacting a remote database. Journal validation, the operator preflight, cleanup, CI policy, and historical handoffs stay in place.
+
 **Release gates:** G1/G4/G5/G6/G7 remain OPEN, G8 provider-disabled continuing, provider Gates A/B/C unauthorized, D4-X adoption valid only for its approved Hobby scope. The $25 authorized credit ceiling is unchanged. No Render creation/deployment authorized by this work.

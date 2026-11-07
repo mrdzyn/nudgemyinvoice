@@ -44,6 +44,7 @@ initdb -D /tmp/nmi-pg -U nmi --auth=trust -E UTF8
 pg_ctl -D /tmp/nmi-pg -o "-p 54370 -c unix_socket_directories='' -c listen_addresses=127.0.0.1" -l /tmp/nmi-pg.log -w start
 createdb -h 127.0.0.1 -p 54370 -U nmi nmi_judge
 export DATABASE_URL=postgres://nmi@127.0.0.1:54370/nmi_judge
+# Literal authority only: no ?query, no #fragment. Leave PGHOSTADDR, PGSERVICE and PGSERVICEFILE unset.
 
 # Option 2: Docker (UNTESTED in R0; uncomment to use)
 # NMI_DB_PASSWORD="$(openssl rand -hex 16)"
@@ -60,19 +61,19 @@ There is no `db:migrate` script. **Only on the empty, throw-away `nmi_judge` dat
 ```bash
 (
   [ -n "${DATABASE_URL:-}" ] || { echo "DATABASE_URL is required" >&2; exit 1; }
-  node -e 'try { const u = new URL(process.env.DATABASE_URL); if ((u.protocol === "postgres:" || u.protocol === "postgresql:") && u.hostname === "127.0.0.1" && u.port === "54370" && u.pathname === "/nmi_judge") process.exit(0); } catch {} process.exit(1)' || { echo "REFUSED: require loopback 127.0.0.1:54370/nmi_judge, not hosted SQL" >&2; exit 1; }
+  node scripts/migration-plan.mjs --assert-judge-target || { echo "REFUSED: require literal loopback 127.0.0.1:54370/nmi_judge with no query, fragment, or libpq routing override" >&2; exit 1; }
   tags="$(node scripts/migration-plan.mjs)" || exit 1
   [ -n "$tags" ] || { echo "empty migration plan" >&2; exit 1; }
-  dbname="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT current_database()")" || exit 1
+  dbname="$(node scripts/migration-plan.mjs --psql -- -X -At -v ON_ERROR_STOP=1 -c "SELECT current_database()")" || exit 1
   [ "$dbname" = "nmi_judge" ] || { echo "REFUSED: database must be disposable nmi_judge" >&2; exit 1; }
-  objects="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%' AND n.nspname NOT LIKE 'pg_temp_%' AND c.relkind IN ('r','p','v','m','f','S')")" || exit 1
+  objects="$(node scripts/migration-plan.mjs --psql -- -X -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%' AND n.nspname NOT LIKE 'pg_temp_%' AND c.relkind IN ('r','p','v','m','f','S')")" || exit 1
   [ "$objects" = "0" ] || { echo "REFUSED: nmi_judge already has schema objects; do not rerun migrations" >&2; exit 1; }
   while IFS= read -r t; do
     [ -n "$t" ] || continue
-    psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t: stopping" >&2; exit 1; }
+    node scripts/migration-plan.mjs --psql -- -X -v ON_ERROR_STOP=1 -1 -q -f "packages/db/migrations/$t.sql" || { echo "MIGRATION FAILED at $t: stopping" >&2; exit 1; }
     echo "applied $t"
   done <<< "$tags"
-  has_nudges="$(psql "$DATABASE_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT to_regclass('public.invoice_nudges') IS NOT NULL")" || exit 1
+  has_nudges="$(node scripts/migration-plan.mjs --psql -- -X -At -v ON_ERROR_STOP=1 -c "SELECT to_regclass('public.invoice_nudges') IS NOT NULL")" || exit 1
   [ "$has_nudges" = "t" ] || { echo "REFUSED: migration 0008 invoice_nudges missing" >&2; exit 1; }
   echo "all $(printf '%s\n' "$tags" | wc -l | tr -d '[:space:]') journal migrations applied; invoice_nudges verified"
 )
@@ -83,17 +84,21 @@ fi
 (exit "$rc")
 ```
 
-This block works in bash and zsh without closing an interactive shell: `exit 1` appears **only in the subshell** and `(exit "$rc")` preserves a nonzero exit status. The URL/host and journal/database prechecks are read-only; they **require 127.0.0.1:54370/nmi_judge** (the disposable local cluster in §3), and if any fails, **no migration runs**. Each SQL file runs in its own transaction (`-1`) with `ON_ERROR_STOP=1`; the **first failed file stops later files**, and you must recreate the disposable database rather than rerun a partial sequence. Do not continue to §5 unless the success message includes `invoice_nudges verified`. A fixed public-table count is intentionally not used, because table counts may change with later ordered migrations.
+This block works in bash and zsh without closing an interactive shell: `exit 1` appears **only in the subshell** and `(exit "$rc")` preserves a nonzero exit status. The target check is read-only and never starts `psql`. It requires a **literal** `postgres://` or `postgresql://` URL for `127.0.0.1:54370/nmi_judge` (the disposable local cluster in §3), with a local role name and an optional password in the userinfo (the documented trust and Docker/SCRAM forms). It **refuses every query parameter and fragment**, including `host`, `hostaddr`, `port`, and percent-encoded forms, because libpq can use those to override the URL authority. It also refuses a non-empty `PGHOSTADDR`, `PGSERVICE`, or `PGSERVICEFILE`, and a `PGHOST`, `PGPORT`, or `PGDATABASE` that is not exactly the disposable endpoint. If any check fails, **no migration runs**. Each later SQL call goes through `node scripts/migration-plan.mjs --psql`, which repeats the check and invokes `psql` with a pinned `host=127.0.0.1 hostaddr=127.0.0.1 port=54370 dbname=nmi_judge` conninfo instead of the original `DATABASE_URL`. Each SQL file runs in its own transaction (`-1`) with `ON_ERROR_STOP=1`; the **first failed file stops later files**, and you must recreate the disposable database rather than rerun a partial sequence. Do not continue to §5 unless the success message includes `invoice_nudges verified`. A fixed public-table count is intentionally not used, because table counts may change with later ordered migrations.
 
 ## 5. Provision the single operator
 
 The app has exactly one operator account (no self-registration, no shared default password). Choose your own password; it is read from the environment and never printed:
 
 ```bash
-export NMI_OPERATOR_USERNAME=judge
-export NMI_OPERATOR_PASSWORD="$(openssl rand -base64 18)"   # or choose one; 12+ characters
-echo "Your sign-in password: $NMI_OPERATOR_PASSWORD"          # keep it for step 8
-pnpm --filter @nmi/api provision-operator                      # prints: Operator created.
+if ! node scripts/migration-plan.mjs --assert-judge-target; then
+  echo "REFUSED: operator provisioning requires verified disposable 127.0.0.1:54370/nmi_judge with no query, fragment, or libpq routing override; no operator was created" >&2
+else
+  export NMI_OPERATOR_USERNAME=judge
+  export NMI_OPERATOR_PASSWORD="$(openssl rand -base64 18)"   # or choose one; 12+ characters
+  echo "Your sign-in password: $NMI_OPERATOR_PASSWORD"          # keep it for step 8
+  pnpm --filter @nmi/api provision-operator                      # prints: Operator created.
+fi
 ```
 
 ## 6. Start the API
@@ -205,6 +210,6 @@ If you used your own PayPal Sandbox app, drafts created in it remain in your San
 - **Login fails with 403:** the browser origin must equal `WEB_ORIGIN` exactly (`http://localhost:5173`, not `127.0.0.1`).
 - **API refuses to start:** `SESSION_SECRET` must be ≥ 32 characters; `DATABASE_URL` must be `postgres://…`; with `PAYPAL_DRAFTS_ENABLED=true` both PayPal credentials are mandatory.
 - **"AI parsing is unavailable":** expected without a provider. Use *Enter manually* or mode A.
-- **"Follow-ups could not be loaded" in Nudgey:** a database/API problem, **not** an email or SMTP setting (no mail feature exists). Check `psql "$DATABASE_URL" -Atc "select to_regclass('public.invoice_follow_ups')"` (empty = missing) and read the API log for the failing `/api/follow-ups` request. The owner's local `nudgemyinvoice` database's missing table was diagnosed on 2026-10-31; after a verified backup, the owner reports migration `0007` was successfully applied there. **Do not rerun it on that database.** For another database, verify its schema and recovery path with the owner before any migration. See `tasks/NMI-NDG-03-invoice-status-selector.md`.
+- **"Follow-ups could not be loaded" in Nudgey:** a database/API problem, **not** an email or SMTP setting (no mail feature exists). Check `psql "$DATABASE_URL" -Atc "select to_regclass('public.invoice_follow_ups')"` (empty = missing) and read the API log for the failing `/api/follow-ups` request. That diagnostic is historical and is **not** the §4 migration path; do not use it to apply migrations. The owner's local `nudgemyinvoice` database's missing table was diagnosed on 2026-10-31; after a verified backup, the owner reports migration `0007` was successfully applied there. **Do not rerun it on that database.** For another database, verify its schema and recovery path with the owner before any migration. See `tasks/NMI-NDG-03-invoice-status-selector.md`.
 - **`pg_ctl: could not start server` (`postmaster became multithreaded during startup`) on macOS:** set `export LC_ALL=C` (or another valid locale such as `en_US.UTF-8`) before `initdb` and `pg_ctl start`.
 - **Too many sign-in attempts (429):** throttling is in-memory per process; restart the API to clear it.

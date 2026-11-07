@@ -2817,4 +2817,29 @@ Merge or apply the owner-approved CI `workflow_dispatch`-only trigger change (Dr
 
 Independent exact-HEAD review of PR #51 at the final commit SHA against this manual CI and disposable PG16 acceptance evidence, followed by the owner merge decision.
 
+## Handoff: NMI-MIG-0008-ISSUE49-C4
+
+- **Task / phase:** `tasks/NMI-MIG-0008-ISSUE49.md`, GitHub Issue #49, audit comment `6703063839` SEC-N1 only.
+- **From:** implementation agent (not the independent reviewer).
+- **To:** independent exact-HEAD reviewer, then the project owner for an explicit merge decision.
+- **Branch:** `fix/nmi-issue49-journal-preflight`.
+- **Base:** `main@5e110efb5bbdd6fe92639beca0e7dc5a19626230`.
+- **Prior audited HEAD:** `e3c6eb541c73223bfada8fb246177cd8164ac34e` (PARTIAL; SEC-N1 open).
+- **State:** Draft PR #51 remains open. Issue #49 stays OPEN. No merge, close, deploy, hosted `workflow_dispatch`, or live provider call.
+
+### Completed
+
+- Replaced the judge runbook's URL-component check, which accepted libpq query overrides such as `?hostaddr=`, with `scripts/migration-plan.mjs --assert-judge-target`.
+- The guard rejects every query parameter and fragment, including percent-encoded `host`, `hostaddr`, and `port`, and refuses non-empty `PGHOSTADDR`, `PGSERVICE`, and `PGSERVICEFILE` plus a non-matching `PGHOST`, `PGPORT`, or `PGDATABASE`. It does not connect.
+- §4 migration SQL and the empty-database checks run only through `--psql`, which repeats the guard and invokes `psql` with pinned `host=127.0.0.1 hostaddr=127.0.0.1 port=54370 dbname=nmi_judge` instead of the original `DATABASE_URL`. §5 calls the same guard before `provision-operator` and does not close an interactive shell.
+- Trust and Docker/SCRAM userinfo forms remain valid. Journal validation, the 56-check operator preflight, cleanup, `workflow_dispatch`-only CI, and historical handoffs are unchanged.
+
+### Validation
+
+- Deterministic no-connection tests are in `apps/api/src/migration-plan.test.ts`. Exact-HEAD manual CI, disposable PostgreSQL 16 acceptance, and failure-injection results are recorded on Draft PR #51 for the commit that contains this handoff. Hosted GitHub Actions remain `NOT RUN`.
+
+### Next action
+
+Independent re-audit of SEC-N1 at the new exact HEAD, then the owner merge decision. Do not close Issue #49 before that.
+
 <!-- HANDOFF_ENTRIES_END -->
