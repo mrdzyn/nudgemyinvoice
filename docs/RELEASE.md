@@ -161,7 +161,7 @@ The only permitted environment for the submitted application is a **PayPal sandb
 
 Before deploying to Render: confirm `PAYPAL_ENV=sandbox` startup guard, redact logs, set HTTPS and secure session flags, restrict dashboard to demo credentials, configure valid registered sandbox webhook URL/ID, database migrations, health endpoint, and privacy-appropriate reset of synthetic data.
 
-Owner release gate: exact SHA + required checks or approved documented CI-unavailability exception; independent audit, manual sandbox PayPal smoke, working runbook, accessible responsive QA, approval bypass regression and rollback plan. Owner must explicitly approve deploy; do not auto-publish via CI by default.
+Owner release gate: exact 40-character candidate SHA + explicit GitHub-hosted `workflow_dispatch` execution and `SUCCESS` of **both** `Project Baseline CI` (`.github/workflows/ci.yml`) and `Stack CI` (`.github/workflows/stack.yml`) verified at that exact `headSha` (development PRs use exact-HEAD manual CI per `docs/TESTING.md`, while **release remains BLOCKED if mandatory hosted validation has not run, cannot execute, or fails** — no CI-unavailability waiver applies to release); independent audit, manual sandbox PayPal smoke, working runbook, accessible responsive QA, approval bypass regression and rollback plan. Owner must explicitly approve deploy; do not auto-publish via CI by default.
 
 Devpost deliverables: public repo + MIT LICENSE, demonstrated working sandbox app or verified setup commands, honest tools-used list, <3-minute original unencumbered video, submission answers. Schedule deployment/verification by Nov 9 Manila, ahead of Nov 12 12 PM PST deadline.
 
