@@ -12,6 +12,31 @@ export const SUMMARY_PREVIEW = 3;
 type Recent = { status: "loading" } | { status: "ok"; items: NudgeItem[] } | { status: "error" };
 
 /** Pure view (fixtures in tests; the container below supplies real server data). */
+/**
+ * P1 action-led hero: the single most recent pending draft, featured with its real tone,
+ * amount and text. Review-only from here: approval and copy stay explicit in the queue
+ * (`onReview` opens the queue on this draft). Tones are type-locked to
+ * friendly/professional/firm — there is no Final Notice.
+ */
+export function Spotlight({ n, onReview }: { n: NudgeItem; onReview: (id: string) => void }) {
+  return (
+    <div className="nq-spotlight" aria-label="AI Nudge Spotlight" data-testid="nudge-spotlight">
+      <p className="nq-spotlight-kicker">AI Nudge Spotlight</p>
+      <div className="nq-mini-main">
+        <strong>{n.invoice?.customerName ?? n.facts.invoiceRef}</strong>
+        <span className="num">{n.facts.amount}</span>
+        <Badge kind={dueDateBadge(n.facts.daysPastDue)}>{dueDateText(n.facts.daysPastDue)}</Badge>
+        <ToneBadge tone={n.tone} />
+      </div>
+      <p className="nq-spotlight-text">{n.message}</p>
+      <button type="button" className="btn btn-primary btn-sm" onClick={() => onReview(n.id)}>
+        Review in queue
+        <span className="sr-only"> the draft for {n.invoice?.customerName ?? "this invoice"}</span>
+      </button>
+    </div>
+  );
+}
+
 export function NudgeSummaryView({
   counts,
   countsStatus,
@@ -77,6 +102,9 @@ export function NudgeSummaryView({
           approved and copied.
         </p>
       ) : null}
+      {recent.status === "ok" && recent.items.length > 0 ? (
+        <Spotlight n={recent.items[0]!} onReview={onReview} />
+      ) : null}
       {recent.status === "loading" && !failed ? (
         <div aria-busy="true" aria-label="Loading pending drafts">
           <div className="skeleton sk-h14 sk-w70" />
@@ -88,9 +116,13 @@ export function NudgeSummaryView({
             No drafts waiting for review. Open a saved invoice and choose <em>AI payment nudge</em>,
             or ask Nudgey.
           </p>
+        ) : recent.items.length === 1 ? (
+          // The single pending draft is featured in the Spotlight above; no mini-list needed.
+          <p className="hint nq-tight">Only one draft pending — featured above.</p>
         ) : (
-          <ul className="nq-mini" aria-label="Pending review">
-            {recent.items.map((n) => (
+          // P1 UX-01: the Spotlight already features items[0]; the mini list shows the rest.
+          <ul className="nq-mini" aria-label="More pending review">
+            {recent.items.slice(1).map((n) => (
               <li key={n.id}>
                 <div className="nq-mini-main">
                   <strong>{n.invoice?.customerName ?? n.facts.invoiceRef}</strong>

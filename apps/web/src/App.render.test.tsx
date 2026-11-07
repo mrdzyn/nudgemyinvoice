@@ -126,11 +126,15 @@ describe("approved screens", () => {
 });
 
 describe("global boundaries", () => {
-  it("every screen and state shows the persistent PayPal Sandbox identity and stays free of real provider ids", () => {
+  it("every screen and state shows the Safe Mode identity and stays free of real provider ids", () => {
     for (const id of ALL_SCENARIOS) {
       const html = render(`#state=${id}`);
-      expect(html).toContain("PayPal Sandbox only.");
-      expect(html).toContain("does not email");
+      // P1 UX-01: the large banner is consolidated into the always-visible Safe Mode
+      // disclosure (safeguards inline on demand); the safeguards copy itself is covered in
+      // AppShell.test.tsx, including "does not email".
+      expect(html).toContain("Sandbox Safe Mode");
+      expect(html).toContain('aria-expanded="false"');
+      expect(html).toContain('aria-controls="');
       expect(html).not.toContain(REAL_SMOKE_ID);
     }
   });

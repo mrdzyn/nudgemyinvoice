@@ -93,6 +93,22 @@ describe("authenticated dashboard states", () => {
     fixtureLeak(h);
   });
 
+  it("shows the real matching-invoice total in the head once analytics load, nothing before", () => {
+    const loaded = view({
+      status: "loaded",
+      items: [item(1), item(2)],
+      analyticsStatus: "loaded",
+      analytics: summary,
+    });
+    expect(loaded).toContain('data-testid="dash-match-total"');
+    expect(loaded).toContain("2");
+    expect(loaded).toContain("matching invoice");
+    expect(loaded).not.toMatch(/Grand total|All currencies total/i);
+    const loading = view({ status: "loading", ready: true });
+    expect(loading).not.toContain("dash-match-total");
+    fixtureLeak(loaded);
+  });
+
   it("does not substitute loaded-row estimates when full analytics fail", () => {
     const h = view({
       status: "loaded",

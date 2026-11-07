@@ -192,6 +192,28 @@ input[type="date"]:focus-within {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+/* P1: the Safe Mode pill is a disclosure button (same visuals, native button behavior). */
+button.sandbox-pill {
+  font: inherit;
+  cursor: pointer;
+}
+/* P1: inline Safe Mode safeguards, full width under the header. No new colors. */
+.sandbox-detail {
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  font-size: 13px;
+  color: var(--text);
+}
+.sandbox-detail p {
+  margin: 0 0 4px;
+}
+.sandbox-detail ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 2px;
+}
 .app-nav {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -876,7 +898,9 @@ dialog .actions {
 @media (max-width: 767px) {
   body {
     font-size: 16px;
-    padding-bottom: 68px;
+    /* P1: clears the fixed mobile nav AND the raised Nudgey launcher above it, so bottom
+     * content (e.g. card buttons) can scroll fully into view instead of hiding under the FAB. */
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
   }
   main {
     padding: 16px;
@@ -1189,6 +1213,36 @@ dialog .actions {
   }
 }
 
+/* P1: desktop single-row compact toolbar (~48px). The pill group scrolls inside its own
+ * row so the page itself never scrolls sideways; Tab reaches every pill and the row follows
+ * focus natively. Narrower screens keep the existing wrapped column layout. */
+@media (min-width: 1024px) {
+  .filters {
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: 48px;
+    padding: 6px 16px;
+    gap: 12px;
+  }
+  .filters .pills {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    scrollbar-width: thin;
+  }
+  .filter-controls {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .search-input {
+    min-width: 170px;
+  }
+  .date-range-input {
+    min-width: 132px;
+  }
+}
 @media (min-width: 768px) and (max-width: 1023px) {
   table.data th,
   table.data td {
@@ -1939,6 +1993,30 @@ dialog .actions {
   font-size: 22px;
   font-weight: 700;
   color: var(--text);
+}
+/* P1 Spotlight: the featured pending draft. Pale info surface, existing tokens only. */
+.nq-spotlight {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 12px 0 4px;
+  display: grid;
+  gap: 8px;
+}
+.nq-spotlight-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--info-text);
+}
+.nq-spotlight-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .nq-mini {
   list-style: none;
