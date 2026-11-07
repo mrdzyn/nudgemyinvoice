@@ -3034,7 +3034,7 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 
 - GitHub reported PR #65 merged into `main@3331a961cb081c2bb557c827a58c649ab5ff454d`. The resulting commit tree matches the audited PR head `eae37728c04d5efd34e58c8b996808f9109ce306` exactly.
 - Independent focused PR #65 audit PASS ([review comment 6711817905](https://github.com/mrdzyn/nudgemyinvoice/pull/65#issuecomment-6711817905)). Stage 0 demonstrated absent *effective* AG Studio licence in the Live serving process; Stage 1 delivered consolidated Sandbox Safe Mode, real matching-invoice count, Nudge Spotlight dedupe, and responsive toolbar/FAB clearance.
-- PR #63 at `bd6c6983c6d8a5963bf8cf41bb93c4734249949b` remains Draft, open, unmerged and untouched. Protected release branches not moved.
+- PR #63 at `bd6c6983c6d8a5963bf8cf41bb93c4734249949b` remains Draft, open, unmerged and untouched. Following PR #65's merge, GitHub reports `mergeable_state: dirty` for #63; earlier exact-head audit PASS is not approval for conflict-resolution integration. Protected release branches not moved.
 
 ### Validation
 
@@ -3046,6 +3046,7 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 
 - Render Live remains combined `766dde37bd5857692a2f238e7c3ac72d3b9ee105`; Render tracks `main` with Auto Deploy OFF. Local Studio positive control was VERIFIED; Live runtime chart recovery is **not** verified. No deploy, environment changes, credentials, provider calls, protected-ref movement, or judge URL sharing authorized.
 - Audit minor note fixed in task: valid-key positive control is locally VERIFIED, not pending; Live check remains pending.
+- PR #63 conflict reconciliation requires a separate authorized task and fresh exact-head audit; this documentation handoff does not authorize any edits to PR #63.
 - Stage 2 source direction (not an implementation authorization): read-only, operator-scoped, bounded per-visible-invoice Nudge projection from `invoice_nudges`/`PostgresNudgeStore`. Avoid global 100-item list, due-date heuristics, fabricated statuses, auto-send or payments. Create a separate bounded task/PR and obtain approvals.
 
 ### Next action
