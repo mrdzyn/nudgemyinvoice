@@ -2998,4 +2998,11 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 - **Verification:** evidence-only change (task + evidence + STATUS/HANDOFFS pointers; zero app-code/test/migration/lockfile edits). Prettier + `git diff --check` + profile validator clean; hosted CI NOT RUN; zero provider calls. Full unit/PG suite not rerun (no executable change).
 - **Next action:** owner confirms Render env / licence-endpoint status and grants Drive access; then P0 fix-or-close verdict and P1 staged implementation. Independent audit of this evidence, then owner decisions.
 
+## Handoff: NMI-64-STUDIO-02
+
+- **Task:** `tasks/NMI-64-STUDIO-CHARTS.md`; same Draft PR #65 on `feat/nmi-64-studio-charts`. Bounded DOC/provenance remediation for audit `6711404453` (Stage-0 reproduction PASS, no app patch). No executable, migration, lockfile, merge, deploy, env, credential, provider, or branch change. PR #63 untouched.
+- **Fixed:** STATUS current phase/primary/hosting lines now state `main@766dde37`, three protected release branches, combined `766dde37…` Live (Render tracks `main`, Auto Deploy OFF), `abfbbfc…` rollback-only, PR #63 audited PASS unmerged, live QA/release acceptance PENDING. Licence language corrected: the Live serving process returned 404 for lack of an effective value — not a claim the owner never configured it (both keys previously appeared in the Render Environment page; verify service/environment, saved values, and process reload on next approved deploy). Licensed-chart rendering with a valid key and the next production runtime check marked PENDING/unverified (positive control not run). Task now points at the verified Issue #64 brief (comment 6711414196); Drive 401 declared non-blocking; mocked figures flagged design-only.
+- **Verification:** full exact-HEAD manual CI on the commit containing this handoff (Node 22, disposable PG16, both builds, scans, audit, diff check) — results posted on PR #65; hosted CI NOT RUN; zero provider calls. Evidence-only diff (docs + task); app code byte-identical to audited `b3403f7`.
+- **Next action:** focused re-audit of this remediation; then P1 bounded implementation from the verified brief after owner authorization. P1 needs no AG Studio licence/CSP change absent a proven defect.
+
 <!-- HANDOFF_ENTRIES_END -->
