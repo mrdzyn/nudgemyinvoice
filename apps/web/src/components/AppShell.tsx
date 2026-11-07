@@ -78,7 +78,7 @@ export function SandboxStatusButton({
       aria-controls={detailId}
       onClick={onToggle}
     >
-      PayPal Sandbox · Safe Mode
+      Sandbox Safe Mode
       <span aria-hidden="true">{open ? "▾" : "▸"}</span>
       <span className="sr-only"> (show safeguards)</span>
     </button>

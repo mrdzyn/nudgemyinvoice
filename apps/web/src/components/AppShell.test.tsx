@@ -61,7 +61,7 @@ const pill = () => host.querySelector("button.sandbox-pill") as HTMLButtonElemen
 describe("Safe Mode status disclosure", () => {
   it("names the mode in the header without opening the safeguards", () => {
     const html = shell();
-    expect(html).toContain("PayPal Sandbox · Safe Mode");
+    expect(html).toContain("Sandbox Safe Mode");
     expect(html).toContain('aria-expanded="false"');
     expect(html).not.toContain("sandbox-detail");
     // Header, tabs and sign-out are untouched.
