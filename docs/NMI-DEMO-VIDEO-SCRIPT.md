@@ -11,6 +11,8 @@
 
 Never present a SIMULATED step as real. **This recording remains SIMULATED.** Gate A (`R1-A-20261030-01`, 2026-10-30) was a consumed provisional REAL parse of two synthetic invoices and is not authorization for this video. P6 nudge evidence used a fake model. Limited judge mode is implemented and not authorized for a live call. PayPal Gate B and the combined Gate C remain not authorized. The real interface, authentication, PostgreSQL storage, validation, dashboard and the draft **state machine** are real in both modes.
 
+**OPEN demo gap:** no shot below covers the P6 AI-nudge drafting flow (queue → review → approve-for-manual-use); the shot list demonstrates parse, save, dashboard and PayPal-draft only. Do not imply the video covers nudges until a nudge shot is scripted and separately approved.
+
 ## Shot list (SIMULATED default)
 
 | Time | Visual (actual app) | Narration (short, plain) | Live / simulated |

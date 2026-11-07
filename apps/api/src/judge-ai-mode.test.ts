@@ -76,6 +76,48 @@ describe("limited judge AI mode fails closed without a provider call", () => {
     expect(config.paypalCredentials).toBeNull();
   });
 
+  it("SEC-01: refuses OpenAI credentials when the mode is absent in production", () => {
+    // Absent NMI_JUDGE_AI_MODE defaults to "off": production must fail closed, not build a client.
+    expect(() =>
+      loadConfig({
+        ...base,
+        OPENAI_API_KEY: "[REDACTED]",
+        OPENAI_MODEL: "gpt-6-luna",
+      }),
+    ).toThrow(/forbids OpenAI credentials/);
+    expect(() =>
+      loadConfig({ ...base, OPENAI_MODEL: "gpt-6-luna" }),
+    ).toThrow(/forbids OpenAI credentials/);
+    expect(() =>
+      loadConfig({
+        ...base,
+        OPENAI_API_KEY: "[REDACTED]",
+        OPENAI_MODEL: "gpt-6-luna",
+        NUDGE_AI_DRAFTING_ENABLED: "true",
+      }),
+    ).toThrow(/forbids OpenAI credentials/);
+  });
+
+  it("SEC-01: rejects a malformed judge mode value before any client exists", () => {
+    expect(() => loadConfig({ ...base, NMI_JUDGE_AI_MODE: "LIMITED" })).toThrow();
+    expect(() => loadConfig({ ...base, NMI_JUDGE_AI_MODE: "true" })).toThrow();
+  });
+
+  it("SEC-01: local development harnesses without the mode keep their existing behavior", () => {
+    const dev = loadConfig({
+      NODE_ENV: "development",
+      DATABASE_URL: "postgres://nmi_runtime:synthetic@internal/nmi",
+      SESSION_SECRET: "q7Hs2LmN9xV4bC8dF1gJ5kP0rT3wY6zA-extra",
+      PAYPAL_ENV: "sandbox",
+      PAYPAL_API_BASE_URL: "https://api-m.sandbox.paypal.com",
+      OPENAI_API_KEY: "[REDACTED]",
+      OPENAI_MODEL: "gpt-6-luna",
+    });
+    expect(dev.judgeAiMode).toBe("off");
+    expect(dev.openai?.model).toBe("gpt-6-luna");
+    expect(dev.nudgeDrafting).toBeNull();
+  });
+
   it("does not let an explicit off release keep a provider key", () => {
     expect(() =>
       loadConfig({

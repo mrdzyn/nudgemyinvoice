@@ -132,12 +132,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       throw new Error("NMI_JUDGE_AI_MODE=limited forbids PayPal credentials and draft creation");
     }
   }
+  // SEC-01: production default-off is a hard boundary. The parsed mode is "off" both when
+  // explicitly set and when absent (schema default), and neither may carry OpenAI credentials or
+  // live drafting. Local development/test harnesses that omit the mode keep existing behavior.
   if (
     e.NODE_ENV === "production" &&
-    env["NMI_JUDGE_AI_MODE"] === "off" &&
+    e.NMI_JUDGE_AI_MODE === "off" &&
     (e.OPENAI_API_KEY || e.OPENAI_MODEL || nudgeDraftingEnabled)
   ) {
-    throw new Error("Explicit NMI_JUDGE_AI_MODE=off forbids OpenAI credentials and live drafting");
+    throw new Error(
+      "NMI_JUDGE_AI_MODE=off forbids OpenAI credentials and live drafting in production (absent defaults to off)",
+    );
   }
   if (nudgeDraftingEnabled && !(e.OPENAI_API_KEY && e.OPENAI_MODEL)) {
     // Fail closed: never start claiming AI nudge drafting is enabled without a configured model.
