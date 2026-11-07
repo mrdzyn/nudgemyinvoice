@@ -246,6 +246,27 @@ describe.skipIf(!url)("combined judge mode end-to-end (real PostgreSQL, fake pro
       name: "Logo concepts",
       quantity: "2",
     });
+    // QA-01: the outbound request carries the REVIEWED invoice (edited name, saved email,
+    // due date, items) and references the saved local invoice.
+    expect(outbound?.body.primary_recipients?.[0]?.billing_info).toMatchObject({
+      name: { full_name: "Acme Design Pty Ltd" },
+      email_address: "billing@acme.example",
+    });
+    expect(outbound?.body.detail.payment_term).toMatchObject({ due_date: "2026-11-30" });
+    expect(outbound?.body.items?.[0]).toMatchObject({
+      unit_amount: { currency_code: "USD", value: "250.00" },
+    });
+    expect(outbound?.body.detail.reference).toBe(id);
+    // QA-01: the stored remote invoice mirrors the reviewed invoice.
+    const remote = fake.remotes.get(remoteId);
+    expect(remote).toMatchObject({
+      status: "DRAFT",
+      currency: "USD",
+      total: "500.00",
+      dueDate: "2026-11-30",
+    });
+    expect(remote?.reference).toBe(id);
+    expect(remote?.paypalInvoiceId).toBe(remoteId);
     // The verify step re-read the remote draft; no second create happened.
     expect(fake.log.get.length).toBeGreaterThanOrEqual(1);
 
