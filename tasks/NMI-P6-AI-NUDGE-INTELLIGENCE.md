@@ -1,16 +1,18 @@
 # NMI-P6 — AI Nudge Intelligence
 
 **Status:** **COMPLETE — merged (approved scope).** PR #43 was owner-approved and squash-merged to `main` as `fbd2d8ef41e7ab08a7dbd2793468d5d9033d1d38` on 2026-11-05. The squash tree is identical to the audited head `a68f77b7ebe0c9ce269ec543b4687ae1476fa5bf`.
-  - Audit at `d6f3d68`: PARTIAL (comment 6658712501).
-  - P6-FIX1 re-audit: **PASS** (comment 6660211152).
-  - Hosted Project Baseline CI 42040813151 and Stack CI 42040812743 passed at `a68f77b`.
-  - Local counts are implementation-agent evidence, not independently rerun.
-  - Not deployed. `NUDGE_AI_DRAFTING_ENABLED` stays `false`, and live OpenAI (Gate A) is NOT AUTHORIZED.
-  - Post-merge, the automated Codex review 5787025325 raised two unverified P2 UX findings: queue focus is not re-applied when already mounted, and Nudgey keeps a stale pending-exists state after the invoice changes. Both are tracked in `docs/STATUS.md` for a follow-up task.
-**Base (historical):** stacked on accepted P5 (Draft PR #42 at `7ab0dcd50e35e12f4f579be4929c5a7753221e2a`, itself on PR #41). P5 is preserved exactly.
-**UI design gate:** **CLOSED / APPROVED** by the owner (D1–D7) on PR #43, https://github.com/mrdzyn/nudgemyinvoice/pull/43#issuecomment-6652365002 (2026-11-05), with three mandatory refinements (below), all implemented.
+
+- Audit at `d6f3d68`: PARTIAL (comment 6658712501).
+- P6-FIX1 re-audit: **PASS** (comment 6660211152).
+- Hosted Project Baseline CI 42040813151 and Stack CI 42040812743 passed at `a68f77b`.
+- Local counts are implementation-agent evidence, not independently rerun.
+- Not deployed. `NUDGE_AI_DRAFTING_ENABLED` stays `false`, and live OpenAI (Gate A) is NOT AUTHORIZED.
+- Post-merge, automated Codex review 5787025325 raised two P2 UX findings (re-applying queue tab/selection when already mounted, and clearing stale `pending-exists` state when the chosen invoice changes). Both were fixed, tested, independently audited PASS and squash-merged on `main` in P7-A (PR #45, `0e10e8d1f6d521bba9b0c503f4ce0fdf188ded19`). Follow-up task `tasks/NMI-P6-FIX2-queue-open-popover-focus.md` closes the residual already-mounted "Open in queue" / "Open existing in queue" Nudgey popover-close (`.nudgey-panel`) and `#nq-title` heading-focus gap.
+  **Base (historical):** stacked on accepted P5 (Draft PR #42 at `7ab0dcd50e35e12f4f579be4929c5a7753221e2a`, itself on PR #41). P5 is preserved exactly.
+  **UI design gate:** **CLOSED / APPROVED** by the owner (D1–D7) on PR #43, https://github.com/mrdzyn/nudgemyinvoice/pull/43#issuecomment-6652365002 (2026-11-05), with three mandatory refinements (below), all implemented.
 
 ## Scope
+
 - **Allowed:**
   - nudge persistence (migration `0008`, store, runtime-role grants);
   - validated server-side AI drafting (`packages/ai/src/nudge.ts`) behind a provider seam;
@@ -25,6 +27,7 @@
   - merge, deploy, Render or publication.
 
 ## Acceptance
+
 1. Drafts come only from verified, operator-owned invoice data.
    - The model receives no customer data, amounts, dates or IDs.
    - Output is validated; anything invalid is refused and never stored.
@@ -36,6 +39,7 @@
 6. Evidence: targeted API, database and UI tests, desktop and mobile browser QA with screenshots (synthetic data, fake model), `pnpm validate`, `pnpm test:db`, and both hosted CI workflows at the exact head.
 
 ## Progress
+
 - **Done (backend):**
   - `invoice_nudges` + migration `0008` with constraints;
   - least-privilege grants;
