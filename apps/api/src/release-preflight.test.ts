@@ -233,6 +233,65 @@ describe("release environment matrix", () => {
   });
 });
 
+describe("NMI-JUDGE-LIVE-OPENAI-01: limited real OpenAI release option (pure, offline)", () => {
+  const limited = {
+    ...good,
+    NMI_JUDGE_AI_MODE: "limited",
+    OPENAI_API_KEY: "sk-test-only-synthetic-not-a-real-secret",
+    OPENAI_MODEL: "gpt-6-luna",
+    OPENAI_MAX_OUTPUT_TOKENS: "4096",
+    NUDGE_AI_DRAFTING_ENABLED: "true",
+  };
+
+  it("accepts exactly the reviewed OpenAI parser and nudge opt-in with PayPal absent", () => {
+    expect(failing(limited)).toEqual([]);
+    const c = loadConfig(limited);
+    expect(c.judgeAiMode).toBe("limited");
+    expect(c.openai?.model).toBe("gpt-6-luna");
+    expect(c.nudgeDrafting?.maxOutputTokens).toBe(600);
+    expect(c.paypalCredentials).toBeNull();
+    expect(c.paypalDraftsEnabled).toBe(false);
+  });
+
+  it.each([
+    [{ OPENAI_API_KEY: undefined }, "env.OPENAI_API_KEY"],
+    [{ OPENAI_MODEL: "unknown-model" }, "env.OPENAI_MODEL"],
+    [{ OPENAI_MAX_OUTPUT_TOKENS: "1024" }, "env.OPENAI_MAX_OUTPUT_TOKENS"],
+    [{ NUDGE_AI_DRAFTING_ENABLED: "false" }, "env.NUDGE_AI_DRAFTING_ENABLED"],
+    [{ PAYPAL_DRAFTS_ENABLED: "true" }, "env.PAYPAL_DRAFTS_ENABLED"],
+    [{ PAYPAL_CLIENT_SECRET: "synthetic" }, "env.forbidden-absent"],
+    [{ NMI_JUDGE_AI_MODE: "LIMITED" }, "env.NMI_JUDGE_AI_MODE"],
+    [{ NMI_SIMULATED_EVAL: "1" }, "env.forbidden-absent"],
+  ] as const)(
+    "rejects a broken live judge configuration without a provider call",
+    (patch, finding) => {
+      expect(failing({ ...limited, ...patch })).toContain(finding);
+    },
+  );
+
+  it("fails startup on incomplete limited settings or explicit disabled mode with credentials", () => {
+    for (const patch of [
+      { OPENAI_MODEL: "unknown-model" },
+      { OPENAI_API_KEY: undefined },
+      { OPENAI_MAX_OUTPUT_TOKENS: "1024" },
+      { NUDGE_AI_DRAFTING_ENABLED: "false" },
+      { PAYPAL_CLIENT_SECRET: "synthetic" },
+      { NMI_JUDGE_AI_MODE: "off" },
+    ]) {
+      expect(() => loadConfig({ ...limited, ...patch })).toThrow();
+    }
+  });
+
+  it("retains default provider-disabled release and never echoes live credentials", () => {
+    expect(failing(good)).toEqual([]);
+    expect(failing({ ...good, NMI_JUDGE_AI_MODE: "off" })).toEqual([]);
+    expect(
+      failing({ ...good, OPENAI_API_KEY: "sk-test-only-synthetic-not-a-real-secret" }),
+    ).toContain("env.forbidden-absent");
+    expect(JSON.stringify(checkReleaseEnv(limited))).not.toContain(limited.OPENAI_API_KEY);
+  });
+});
+
 const sha = "a".repeat(40);
 const okSrc: SourceInput = {
   expectedSha: sha,

@@ -42,6 +42,8 @@ const envSchema = z.object({
   // NMI-P6 (P6-AUD-02): live AI nudge drafting needs its OWN explicit opt-in. Parser credentials alone never
   // enable it. Default OFF; "true" is valid only together with OPENAI_API_KEY + OPENAI_MODEL.
   NUDGE_AI_DRAFTING_ENABLED: z.enum(["true", "false"]).default("false"),
+  // A separate, explicitly reviewed opt-in for the live AI judge demo; normal releases stay off.
+  NMI_JUDGE_AI_MODE: z.enum(["off", "limited"]).default("off"),
   PAYPAL_CLIENT_ID: z.string().optional(),
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   // P5: the owner's AG Studio deployment licence, delivered at runtime only to an authenticated operator by
@@ -59,6 +61,7 @@ const envSchema = z.object({
 
 export interface AppConfig {
   nodeEnv: "development" | "test" | "production";
+  judgeAiMode: "off" | "limited";
   port: number;
   /** Interface the server binds. 127.0.0.1 unless explicitly configured (wildcard needs production). */
   host: string;
@@ -94,6 +97,14 @@ export interface AppConfig {
 }
 
 /** Fails fast: missing/live PayPal config, missing database or weak session secret refuse to start. */
+export const JUDGE_AI_REQUESTS_PER_WINDOW = 3;
+export const JUDGE_AI_WINDOW_MS = 10 * 60 * 1000;
+export const JUDGE_AI_CONCURRENCY = 1;
+
+export function parserMaxRetries(mode: "off" | "limited"): 0 | 1 {
+  return mode === "limited" ? 0 : 1;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const e = envSchema.parse(env);
   const paypal = assertSandboxConfig(e);
@@ -106,6 +117,33 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     );
   }
   const nudgeDraftingEnabled = e.NUDGE_AI_DRAFTING_ENABLED === "true";
+  // Limited mode always enables both visible AI features or fails closed. Historical smoke
+  // harnesses omit NMI_JUDGE_AI_MODE, so they keep their existing behavior.
+  if (e.NMI_JUDGE_AI_MODE === "limited") {
+    if (!e.OPENAI_API_KEY || e.OPENAI_MODEL !== "gpt-6-luna") {
+      throw new Error("NMI_JUDGE_AI_MODE=limited requires an OpenAI key and approved model");
+    }
+    if (e.OPENAI_MAX_OUTPUT_TOKENS !== 4096 || !nudgeDraftingEnabled) {
+      throw new Error(
+        "NMI_JUDGE_AI_MODE=limited requires 4096 output tokens and explicit nudge opt-in",
+      );
+    }
+    if (draftsEnabled || e.PAYPAL_CLIENT_ID || e.PAYPAL_CLIENT_SECRET) {
+      throw new Error("NMI_JUDGE_AI_MODE=limited forbids PayPal credentials and draft creation");
+    }
+  }
+  // SEC-01: production default-off is a hard boundary. The parsed mode is "off" both when
+  // explicitly set and when absent (schema default), and neither may carry OpenAI credentials or
+  // live drafting. Local development/test harnesses that omit the mode keep existing behavior.
+  if (
+    e.NODE_ENV === "production" &&
+    e.NMI_JUDGE_AI_MODE === "off" &&
+    (e.OPENAI_API_KEY || e.OPENAI_MODEL || nudgeDraftingEnabled)
+  ) {
+    throw new Error(
+      "NMI_JUDGE_AI_MODE=off forbids OpenAI credentials and live drafting in production (absent defaults to off)",
+    );
+  }
   if (nudgeDraftingEnabled && !(e.OPENAI_API_KEY && e.OPENAI_MODEL)) {
     // Fail closed: never start claiming AI nudge drafting is enabled without a configured model.
     throw new Error("NUDGE_AI_DRAFTING_ENABLED=true requires OPENAI_API_KEY and OPENAI_MODEL");
@@ -126,6 +164,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     e.TRUST_PROXY === "true" ? true : e.TRUST_PROXY === "false" ? false : Number(e.TRUST_PROXY);
   return {
     nodeEnv: e.NODE_ENV,
+    judgeAiMode: e.NMI_JUDGE_AI_MODE,
     port: e.PORT,
     host: e.HOST,
     webDistDir:

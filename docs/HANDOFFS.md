@@ -2886,4 +2886,41 @@ Review docs-only status changes and independently verify no release/policy gates
 ### Next action
 
 Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's separate squash-merge decision. If merged, run complete exact-SHA manual release validation and independent review before a separate risk-acceptance/deploy decision.
+## Handoff: NMI-JUDGE-LIVE-OPENAI-01
+
+- **Task:** `tasks/NMI-JUDGE-LIVE-OPENAI-01.md`; issue #56; feature branch `feat/nmi-judge-live-openai` based on `main@04240209add5bcdae67f4b925e9f194abaad8b66`.
+- **Owner direction:** 2026-11-07: explicitly implement OpenAI functionality into a new feature branch urgently because judges need to see AI. This authorizes feature development, **not** additional billable provider calls or live deployment.
+- **Known history:** PR #25 Gate A provisional real-provider PASS on 2 synthetic parses (2026-10-30), authorization consumed. PR #43 implements P6 AI Nudges with fake-model browser evidence. PR #55 owner-accepted one-time manual CI substitution applies **only** to the historical pinned SHA.
+- **Work:** conditional limited judge AI mode, server-side parser/nudge model configuration, no SDK parser retries in limited mode, endpoint budgets, pure release env guards/tests, proposed G8 addendum. PayPal remains sandbox-and-disabled. No credentials committed.
+- **Live infrastructure:** deployed Render service `srv-dbng0oc9v7es73cm6m2g`, PostgreSQL `dpg-dbnetgk9v7es73cjd6g0-a`, protected release candidate `abfbbfc3153cb3b4238ebf201daca830fed2e8f9` left unchanged. No URL sharing authorization.
+- **Verification:** source transformation sanity checks only unless test evidence appears separately on exact PR HEAD. Hosted CI blocked until December. Do NOT classify CI or live API calls as PASS when not run.
+- **Gates:** independent code/security/policy audit, full Mac manual CI on this new HEAD, explicit model/key/call/spend authorization, new pinned release candidate and separate owner merge/deploy/URL approvals are required. The historical Gate A cap may not be reused.
+- **Next action:** exact-HEAD local manual validation, focused review (especially guard/test matrix and rate-limit reset), independent audit, then owner merge decision.
+
+## Handoff: NMI-JUDGE-LIVE-OPENAI-02
+
+- **Task:** `tasks/NMI-JUDGE-LIVE-OPENAI-01.md`; issue #56; Draft PR #57. No merge, deploy, provider call, PayPal call, or URL share.
+- **Decisions:** limited mode fails closed in every environment; absent mode remains the default and does not enable either AI feature. Parser SDK retries are 0 only in limited mode. Nudge SDK retries stay 0. Both endpoints use 3 requests per 10 minutes and concurrency 1 in limited mode. Those budgets reset on restart and are not a spend cap. Nudge prompts still send tone and enumerated facts only.
+- **Preserved:** Gate A `R1-A-20261030-01` consumed provisional PASS; P6 fake-model evidence; provider-disabled deployment of `abfbbfc3153cb3b4238ebf201daca830fed2e8f9`. This branch is not that deployment.
+- **Verification:** focused mocked tests passed before this handoff. Exact-HEAD manual CI counts are posted on Draft PR #57 for the commit that contains this handoff. Hosted GitHub Actions remain NOT RUN.
+- **Next action:** independent exact-HEAD security/code audit, then a separate owner decision on merge. A live OpenAI call still needs its own model, cap, budget, expiry, and synthetic-input authorization.
+
+## Handoff: NMI-JUDGE-LIVE-OPENAI-03
+
+- **Task:** `tasks/NMI-JUDGE-LIVE-OPENAI-01.md`; issue #56; Draft PR #57 at `8f30024a0a0d148f6476256a43133c170d8c16ce` (`305e875` feature + Prettier-only remediation + this handoff record; pushed normally, no force push). No merge, deploy, provider call, PayPal call, or URL share.
+- **Decisions:** unchanged from -02: limited mode fails closed in every environment; absent mode stays provider-disabled by default. Parser SDK retries are 0 in limited mode; nudge retries stay 0. Both endpoints use 3 requests per 10 minutes and concurrency 1 in limited mode — in-memory budgets that reset on restart, not a hard spend cap. Nudge prompts still send tone and enumerated facts only.
+- **Preserved:** Gate A `R1-A-20261030-01` consumed provisional PASS; P6 fake-model evidence; provider-disabled deployment of `abfbbfc3153cb3b4238ebf201daca830fed2e8f9`. This branch is not that deployment.
+- **Verification:** full exact-HEAD manual CI PASS at `8f30024` (profile, secret guard, frozen install, lint 0 errors/1 pre-existing warning, format, typecheck, `pnpm test` 1449 passed / 75 files, licensed + community builds, both bundle scans clean, `pnpm test:db` 367/367 on a disposable PG16 cluster since dropped, migration sync clean, `pnpm audit` clean, `git diff --check` clean; hosted CI NOT RUN). Zero provider env vars set; no OpenAI/PayPal network calls. Full evidence posted on Draft PR #57; earlier `512e937` evidence in PR comment 6706524047.
+- **Next action:** independent exact-HEAD security/code audit of `512e937` (fail-closed config, retry controls, budget enforcement, test evidence, G8 proposal), then a separate owner merge decision. A live OpenAI call still needs its own model, cap, budget, expiry, and synthetic-input authorization.
+
+## Handoff: NMI-JUDGE-LIVE-OPENAI-04
+
+- **Task:** `tasks/NMI-JUDGE-LIVE-OPENAI-01.md`; issue #56; Draft PR #57 on `feat/nmi-judge-live-openai`. Remediates independent audit `6706638116` (FAIL) at `aad7a80`. No merge, deploy, provider call, PayPal call, or URL share.
+- **SEC-01 (blocking, fixed):** production default-off bypass closed in `apps/api/src/config.ts` — the guard now uses the parsed mode (`e.NMI_JUDGE_AI_MODE === "off"`, which covers explicit `off` and absent/defaulted), so production + OpenAI credentials/drafting with the mode absent throws fail-closed instead of building clients. Non-production harnesses that omit the mode keep existing behavior. Negative tests added in `apps/api/src/judge-ai-mode.test.ts` (absent-mode key/model/drafting refusal, malformed mode, dev preservation); the absent-mode case failed before the fix and passes after. One existing `apps/api/src/app.test.ts` cookie test that relied on the bypass now drops provider credentials from its production probes.
+- **DOC-01 (reconciled):** `docs/STATUS.md` current-phase paragraph now scopes the historical "no resources" sentence and states the current provider-disabled deployment of `abfbbfc...` exists unchanged; active handoff → `-04`. Devpost AI-provider section now records Gate A provisional REAL PASS scope with PENDING fields instead of the blanket "no live request" claim; demo-access line no longer claims no hosted deployment. Video script records the P6-nudge demo gap as OPEN. PR description updated to current HEAD.
+- **RELEASE-01:** Node 22 compatibility proof recorded separately from full manual CI (see PR evidence comment); previous full-CI runs were agent-reported on Node 24 only.
+- **Preserved:** Gate A `R1-A-20261030-01` consumed provisional PASS; P6 fake-model evidence; provider-disabled deployment of `abfbbfc3153cb3b4238ebf201daca830fed2e8f9`. This branch is not that deployment. Historical handoffs untouched.
+- **Verification:** focused SEC-01 suites green; full exact-HEAD manual CI (profile, secret guard, frozen install, `pnpm validate`, disposable PG16 `pnpm test:db`, migration sync, prod audit, `git diff --check`) run on the commit containing this handoff; hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Full evidence posted on Draft PR #57.
+- **Next action:** independent exact-HEAD security/code re-audit, then a separate owner merge decision. A live OpenAI call still needs its own model, cap, budget, expiry, and synthetic-input authorization.
+
 <!-- HANDOFF_ENTRIES_END -->

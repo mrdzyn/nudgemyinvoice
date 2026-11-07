@@ -628,7 +628,15 @@ describe.skipIf(!url)("one-hop proxy trust keeps login throttling honest", () =>
 
   const attempts = async (env: Record<string, string>, forwarded: (i: number) => string) => {
     const app = buildApp(
-      loadConfig({ ...baseEnv, DATABASE_URL: url as string, WEB_DIST_DIR: dist, ...env }),
+      // SEC-01: production default-off forbids provider credentials, so throttling probes drop them.
+      loadConfig({
+        ...baseEnv,
+        OPENAI_API_KEY: "",
+        OPENAI_MODEL: "",
+        DATABASE_URL: url as string,
+        WEB_DIST_DIR: dist,
+        ...env,
+      }),
       {
         db: createDb(scratch.pool),
         passwordParams: weak,
