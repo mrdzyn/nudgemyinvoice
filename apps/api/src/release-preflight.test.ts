@@ -262,9 +262,12 @@ describe("NMI-JUDGE-LIVE-OPENAI-01: limited real OpenAI release option (pure, of
     [{ PAYPAL_CLIENT_SECRET: "synthetic" }, "env.forbidden-absent"],
     [{ NMI_JUDGE_AI_MODE: "LIMITED" }, "env.NMI_JUDGE_AI_MODE"],
     [{ NMI_SIMULATED_EVAL: "1" }, "env.forbidden-absent"],
-  ] as const)("rejects a broken live judge configuration without a provider call", (patch, finding) => {
-    expect(failing({ ...limited, ...patch })).toContain(finding);
-  });
+  ] as const)(
+    "rejects a broken live judge configuration without a provider call",
+    (patch, finding) => {
+      expect(failing({ ...limited, ...patch })).toContain(finding);
+    },
+  );
 
   it("fails startup on incomplete limited settings or explicit disabled mode with credentials", () => {
     for (const patch of [
@@ -282,7 +285,9 @@ describe("NMI-JUDGE-LIVE-OPENAI-01: limited real OpenAI release option (pure, of
   it("retains default provider-disabled release and never echoes live credentials", () => {
     expect(failing(good)).toEqual([]);
     expect(failing({ ...good, NMI_JUDGE_AI_MODE: "off" })).toEqual([]);
-    expect(failing({ ...good, OPENAI_API_KEY: "sk-test-only-synthetic-not-a-real-secret" })).toContain("env.forbidden-absent");
+    expect(
+      failing({ ...good, OPENAI_API_KEY: "sk-test-only-synthetic-not-a-real-secret" }),
+    ).toContain("env.forbidden-absent");
     expect(JSON.stringify(checkReleaseEnv(limited))).not.toContain(limited.OPENAI_API_KEY);
   });
 });

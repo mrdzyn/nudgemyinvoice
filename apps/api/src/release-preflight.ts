@@ -39,7 +39,11 @@ const FORBIDDEN_PREFIXES = ["AG_STUDIO", "VITE_", "NMI_"] as const;
  */
 export const STUDIO_VARIANT_NAME = "NMI_WEB_STUDIO";
 export const STUDIO_LICENCE_NAME = "AG_STUDIO_LICENSE_KEY";
-const ALLOWED_IN_FAMILIES = new Set([STUDIO_VARIANT_NAME, STUDIO_LICENCE_NAME, "NMI_JUDGE_AI_MODE"]);
+const ALLOWED_IN_FAMILIES = new Set([
+  STUDIO_VARIANT_NAME,
+  STUDIO_LICENCE_NAME,
+  "NMI_JUDGE_AI_MODE",
+]);
 const JUDGE_OPENAI_NAMES = new Set(["OPENAI_API_KEY", "OPENAI_MODEL", "OPENAI_MAX_OUTPUT_TOKENS"]);
 /** Same shape the API config accepts (config.ts); the value itself is never reported. */
 const LICENCE_SHAPE = /^[\x20-\x7e]{16,8192}$/;
@@ -90,12 +94,18 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   );
   if (liveJudgeAi) {
     const key = env["OPENAI_API_KEY"] ?? "";
-    add("env.OPENAI_API_KEY", key.startsWith("sk-") && key.length >= 20 && key.trim() === key,
-      "OPENAI_API_KEY must be a real private server-side key, never a placeholder or browser variable");
+    add(
+      "env.OPENAI_API_KEY",
+      key.startsWith("sk-") && key.length >= 20 && key.trim() === key,
+      "OPENAI_API_KEY must be a real private server-side key, never a placeholder or browser variable",
+    );
     eq("OPENAI_MODEL", "gpt-6-luna");
     eq("OPENAI_MAX_OUTPUT_TOKENS", "4096");
-    add("env.PAYPAL_credentials_absent", !env["PAYPAL_CLIENT_ID"] && !env["PAYPAL_CLIENT_SECRET"],
-      "PayPal credentials must be absent while judge AI is enabled");
+    add(
+      "env.PAYPAL_credentials_absent",
+      !env["PAYPAL_CLIENT_ID"] && !env["PAYPAL_CLIENT_SECRET"],
+      "PayPal credentials must be absent while judge AI is enabled",
+    );
   }
   // NMI-P7-B: the live AI nudge-drafting opt-in is checked by NAME. Only an absent variable or the exact string
   // "false" passes ("true", empty, wrong case or padded values all fail). This is IN ADDITION to the OpenAI-name
@@ -104,7 +114,8 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
     "env.NUDGE_AI_DRAFTING_ENABLED",
     liveJudgeAi
       ? env["NUDGE_AI_DRAFTING_ENABLED"] === "true"
-      : env["NUDGE_AI_DRAFTING_ENABLED"] === undefined || env["NUDGE_AI_DRAFTING_ENABLED"] === "false",
+      : env["NUDGE_AI_DRAFTING_ENABLED"] === undefined ||
+          env["NUDGE_AI_DRAFTING_ENABLED"] === "false",
     liveJudgeAi
       ? 'NUDGE_AI_DRAFTING_ENABLED must be exactly "true" in the separately approved limited judge mode'
       : 'NUDGE_AI_DRAFTING_ENABLED must be absent or exactly "false" in provider-disabled mode',
@@ -156,7 +167,9 @@ export function checkReleaseEnv(env: Readonly<Record<string, string | undefined>
   );
 
   const present = Object.keys(env)
-    .filter((n) => env[n] !== undefined && isForbidden(n) && !(liveJudgeAi && JUDGE_OPENAI_NAMES.has(n)))
+    .filter(
+      (n) => env[n] !== undefined && isForbidden(n) && !(liveJudgeAi && JUDGE_OPENAI_NAMES.has(n)),
+    )
     .sort();
   add(
     "env.forbidden-absent",
