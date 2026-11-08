@@ -4,6 +4,8 @@ import {
   guardRequest,
   fetchTransport,
   PAYPAL_INVOICE_SEARCH_QUERY,
+  PAYPAL_SYNC_MAX_PAGE_SIZE,
+  paypalListQuery,
   TransportError,
   type HttpResponse,
   type HttpTransport,
@@ -87,6 +89,25 @@ const STATUSES: ReadonlySet<string> = new Set([
   "UNKNOWN",
 ]);
 
+const listItem = z.object({
+  id: z.string().regex(REMOTE_ID),
+  status: z.string().max(32).optional(),
+  detail: z
+    .object({
+      currency_code: z.string().max(8).optional(),
+      invoice_number: z.string().max(25).optional(),
+      reference: z.string().max(256).optional(),
+      payment_term: z.object({ due_date: z.string().max(10).optional() }).optional(),
+    })
+    .optional(),
+  amount: money.optional(),
+});
+const listResponse = z.object({
+  total_items: z.number().int().nonnegative().max(2_147_483_647),
+  total_pages: z.number().int().nonnegative().max(2_147_483_647).optional(),
+  items: z.array(listItem).max(PAYPAL_SYNC_MAX_PAGE_SIZE),
+});
+
 const searchItem = z.object({
   id: z.string().regex(REMOTE_ID),
   detail: z.object({ invoice_number: z.string().min(1).max(25) }),
@@ -99,9 +120,10 @@ const searchResponse = z.object({
 });
 
 /**
- * PayPal REST SANDBOX client for exactly four operations: OAuth token, create DRAFT invoice, show
- * invoice, search invoices by number. There is no method for send, remind, cancel, payments,
- * refunds, update or delete, and `guardRequest` would refuse those paths even if one were added.
+ * PayPal REST SANDBOX client for exactly five operations: OAuth token, create DRAFT invoice, show
+ * invoice, paginated invoice list (read-only, bounded), search invoices by number. There is no
+ * method for send, remind, cancel, payments, refunds, update or delete, and `guardRequest` would
+ * refuse those paths even if one were added.
  * Credentials and tokens are never logged or included in error messages.
  */
 export class PayPalSandboxClient {
@@ -253,6 +275,75 @@ export class PayPalSandboxClient {
     const remote = toRemote(res.body);
     if (!remote) throw new PayPalOutcomeUnknownError("response_unparseable");
     return remote;
+  }
+
+  /**
+   * Read-only paginated invoice list for draft sync. Returns structurally valid items only;
+   * per-record acceptance (DRAFT status, supported currency, parseable money) happens in the
+   * sync service so one malformed record never fails the whole page. Envelope errors throw
+   * PayPalOutcomeUnknownError. There is deliberately no send/remind/cancel/pay/refund/update
+   * path here or in the transport allowlist.
+   *
+   * Amount coverage: the list query requests the documented `fields=amount`, but a minimally
+   * represented row may still omit it. Such rows are enriched read-only through the already
+   * allowlisted detail endpoint (`getInvoice`) before being dropped: a valid DRAFT is imported
+   * rather than silently skipped. A missing/failed detail degrades to a skip for that row
+   * only; the page always survives.
+   */
+  async listInvoices(input: { page: number; pageSize?: number }): Promise<{
+    invoices: RemoteInvoice[];
+    /** Structurally valid envelope items dropped for missing/unsupported amount or currency. */
+    skippedMalformed: number;
+    /**
+     * Raw structurally valid item count on this page, BEFORE per-record filtering.
+     * Pagination MUST use this (with total_items/total_pages), never `invoices.length`:
+     * malformed rows make the filtered list shorter than the actual returned page.
+     */
+    rawCount: number;
+    totalItems: number;
+    totalPages: number | null;
+  }> {
+    const pageSize = input.pageSize ?? PAYPAL_SYNC_MAX_PAGE_SIZE;
+    const query = paypalListQuery(input.page, pageSize); // range-checked before any I/O
+    let res;
+    try {
+      res = await this.call("GET", `/v2/invoicing/invoices?${query}`, undefined, "read");
+    } catch (e) {
+      throw new PayPalOutcomeUnknownError(e instanceof TransportError ? e.kind : "request_failed");
+    }
+    if (res.status !== 200) throw new PayPalOutcomeUnknownError(`http_${res.status}`);
+    const parsed = listResponse.safeParse(safeJson(res.body));
+    if (!parsed.success) throw new PayPalOutcomeUnknownError("response_unparseable");
+    const invoices: RemoteInvoice[] = [];
+    for (const item of parsed.data.items) {
+      const listed = toRemote(
+        JSON.stringify({
+          id: item.id,
+          status: item.status,
+          detail: item.detail,
+          amount: item.amount,
+        }),
+      );
+      if (listed) {
+        invoices.push(listed);
+        continue;
+      }
+      // Minimal list representation: enrich read-only via detail before dropping the row.
+      // Sequential and bounded (at most one detail call per listed row).
+      try {
+        const detailed = await this.getInvoice(item.id);
+        if (detailed) invoices.push(detailed);
+      } catch {
+        // Detail outage for one row is a skip for that row, never a page failure.
+      }
+    }
+    return {
+      invoices,
+      skippedMalformed: parsed.data.items.length - invoices.length,
+      rawCount: parsed.data.items.length,
+      totalItems: parsed.data.total_items,
+      totalPages: parsed.data.total_pages ?? null,
+    };
   }
 
   /** Ids of invoices whose invoice_number equals `invoiceNumber` (used to reconcile unclear outcomes). */

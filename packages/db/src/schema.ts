@@ -190,6 +190,61 @@ export const paypalDraftOperations = pgTable(
   ],
 );
 
+/**
+ * Owner-scoped mirror of PayPal Sandbox DRAFT invoices imported by the manual sync action.
+ * One row per (PayPal environment, remote invoice id); the sync upserts here and NEVER writes
+ * to `invoices` or `paypal_draft_operations`. `linkedInvoiceId` is a read-only pointer set only
+ * when a local invoice with the same verified remote id AND matching currency + total exists;
+ * it never authorizes a local-body or fencing-state change. Totals are integer minor units with
+ * an explicit ISO currency; there are no floats. Only `sandbox` DRAFT rows are stored.
+ */
+export const paypalImportedDrafts = pgTable(
+  "paypal_imported_drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    operatorId: uuid("operator_id")
+      .notNull()
+      .references(() => operators.id, { onDelete: "cascade" }),
+    paypalEnv: text("paypal_env").notNull().default("sandbox"),
+    remoteInvoiceId: text("remote_invoice_id").notNull(),
+    invoiceNumber: text("invoice_number"),
+    remoteStatus: text("remote_status").notNull().default("DRAFT"),
+    currency: currency(),
+    totalMinor: money("total_minor").notNull(),
+    dueDate: date("due_date", { mode: "string" }),
+    linkedInvoiceId: uuid("linked_invoice_id").references(() => invoices.id, {
+      onDelete: "set null",
+    }),
+    source: text("source").notNull().default("paypal_sandbox"),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("paypal_imported_drafts_env_remote_uq").on(t.paypalEnv, t.remoteInvoiceId),
+    index("paypal_imported_drafts_operator_idx").on(t.operatorId, t.lastSyncedAt),
+    index("paypal_imported_drafts_linked_idx").on(t.linkedInvoiceId),
+    check("paypal_imported_drafts_env_sandbox", sql`${t.paypalEnv} = 'sandbox'`),
+    check(
+      "paypal_imported_drafts_remote_format",
+      sql`${t.remoteInvoiceId} ~ '^[A-Za-z0-9-]{1,64}$'`,
+    ),
+    check("paypal_imported_drafts_status_draft", sql`${t.remoteStatus} = 'DRAFT'`),
+    check("paypal_imported_drafts_source_fixed", sql`${t.source} = 'paypal_sandbox'`),
+    check(
+      "paypal_imported_drafts_currency_supported",
+      sql`${t.currency} in (${quoted(CURRENCY_CODES)})`,
+    ),
+    check("paypal_imported_drafts_total_nonneg", sql`${t.totalMinor} >= 0`),
+    check(
+      "paypal_imported_drafts_number_bounded",
+      sql`${t.invoiceNumber} is null or length(${t.invoiceNumber}) between 1 and 25`,
+    ),
+    // due_date is a native SQL date: validity is enforced by the type itself, and the sync
+    // service only stores YYYY-MM-DD strings it has already shape-checked.
+  ],
+);
+
 /** One-time approvals bound to action + resource + payload digest, with expiry. */
 export const approvals = pgTable(
   "approvals",

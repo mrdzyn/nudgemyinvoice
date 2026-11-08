@@ -142,6 +142,27 @@ export class PostgresInvoiceDraftStore {
     return owned.length ? loadDraft(this.db, id) : null;
   }
 
+  /**
+   * Operator-scoped read-only lookup of a local invoice by its verified PayPal remote id.
+   * Used ONLY by the draft-sync reconciler to set the imported row's pointer. Returns the
+   * currency and total minor units so the caller can require an exact match before linking;
+   * a mismatch leaves the import unlinked and never modifies the local invoice.
+   */
+  async findOwnedByPayPalId(
+    operatorId: string,
+    paypalInvoiceId: string,
+  ): Promise<{ id: string; currency: CurrencyCode; totalMinor: bigint } | null> {
+    if (!/^[A-Za-z0-9-]{1,64}$/.test(paypalInvoiceId)) return null;
+    const rows = await this.db
+      .select({ id: invoices.id, currency: invoices.currency, totalMinor: invoices.totalMinor })
+      .from(invoices)
+      .where(and(eq(invoices.createdBy, operatorId), eq(invoices.paypalInvoiceId, paypalInvoiceId)))
+      .limit(1);
+    const row = rows[0];
+    if (!row) return null;
+    return { id: row.id, currency: row.currency as CurrencyCode, totalMinor: row.totalMinor };
+  }
+
   async get(id: string): Promise<SavedDraft | null> {
     if (!UUID.test(id)) return null;
     const exists = await this.db

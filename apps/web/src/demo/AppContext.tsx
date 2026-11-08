@@ -19,6 +19,7 @@ import type {
   PayPalDraftResult,
   SaveResult,
 } from "../invoices/api.js";
+import type { ImportsListResult, PayPalSyncResult } from "../paypal/importsApi.js";
 import type { InvoiceDraft } from "../domain/types.js";
 import type { ParseResult } from "../parse/api.js";
 import type { FollowUpsController } from "../followups/controller.js";
@@ -41,6 +42,10 @@ export interface SessionInfo {
   analyticsInvoices?: (query: AnalyticsQuery, signal: AbortSignal) => Promise<AnalyticsResult>;
   /** Real PayPal Sandbox DRAFT creation (`POST /api/invoice-drafts/:id/paypal-draft`), CSRF bound in memory. Real mode only. */
   createPayPalDraft?: (id: string, signal: AbortSignal) => Promise<PayPalDraftResult>;
+  /** Real manual PayPal Sandbox DRAFT import (`POST /api/paypal/imports/sync`), CSRF bound in memory. Real mode only. */
+  syncPayPalDrafts?: (signal: AbortSignal) => Promise<PayPalSyncResult>;
+  /** Real read-only imported-drafts read (`GET /api/paypal/imports`). Present only in real mode. */
+  listPayPalImports?: (signal: AbortSignal) => Promise<ImportsListResult>;
   /** Real read-only detail (`GET /api/invoice-drafts/:id`). */
   getInvoice?: (id: string, signal: AbortSignal) => Promise<GetResult>;
   /** Local follow-up reminders (NMI-FUP-01), CSRF bound in memory. Real mode only. */

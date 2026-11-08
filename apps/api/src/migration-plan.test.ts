@@ -60,13 +60,14 @@ afterEach(() => {
   }
 });
 
-test("real journal prints ordered SQL migrations through 0008", () => {
+test("real journal prints ordered SQL migrations through 0009", () => {
   const result = run(process.cwd());
   expect(result.status).toBe(0);
   expect(result.stderr).toBe("");
   const tags = current.entries.map((entry) => entry.tag);
   expect(result.stdout.trim().split("\n")).toEqual(tags);
   expect(tags[8]).toBe("0008_mushy_zarek");
+  expect(tags[9]).toBe("0009_quiet_nightmare");
 });
 
 test("valid isolated journal passes", () => {

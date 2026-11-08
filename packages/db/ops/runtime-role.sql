@@ -37,6 +37,10 @@ GRANT SELECT, INSERT ON "public"."invoice_items" TO nmi_runtime;
 -- Durable PayPal operation fencing (inert while PAYPAL_DRAFTS_ENABLED=false, but the route reads it).
 GRANT SELECT, INSERT, UPDATE ON "public"."paypal_draft_operations" TO nmi_runtime;
 
+-- Owner-scoped PayPal Sandbox DRAFT import mirror (migration 0009). The sync route upserts here and
+-- reads it back for the dashboard section; analytics stores never read it. No DELETE.
+GRANT SELECT, INSERT, UPDATE ("operator_id", "paypal_env", "remote_invoice_id", "invoice_number", "remote_status", "currency", "total_minor", "due_date", "linked_invoice_id", "source", "last_synced_at", "updated_at") ON "public"."paypal_imported_drafts" TO nmi_runtime;
+
 -- Append-only audit trail: INSERT only (a trigger additionally rejects UPDATE/DELETE/TRUNCATE).
 GRANT INSERT ON "public"."audit_log" TO nmi_runtime;
 

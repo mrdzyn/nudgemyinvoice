@@ -32,7 +32,9 @@ const app = buildApp(config, {
         }),
       }
     : {}),
-  // Real PayPal sandbox calls only when PAYPAL_DRAFTS_ENABLED=true (credentials then mandatory).
+  // Real PayPal sandbox calls only when PAYPAL_DRAFTS_ENABLED=true or PAYPAL_SYNC_ENABLED=true
+  // (credentials then mandatory for either). Draft creation additionally needs its own flag;
+  // the read-only sync never enables creation, sending, reminders or refunds.
   ...(config.paypalCredentials
     ? {
         paypal: new PayPalSandboxClient({

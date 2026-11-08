@@ -13,6 +13,7 @@ export const AUDIT_ACTIONS = [
   "invoice.parse",
   "invoice.draft_save",
   "paypal.draft_create",
+  "paypal.draft_sync",
   "followup.schedule",
   "followup.reschedule",
   "followup.complete",

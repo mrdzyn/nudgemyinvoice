@@ -14,6 +14,7 @@ import { registerAuth } from "./plugins/auth.js";
 import { authRoutes, type AuthRouteSeams } from "./routes/auth.js";
 import { invoiceDraftRoutes, type InvoiceDraftSeams } from "./routes/invoice-drafts.js";
 import { followUpRoutes } from "./routes/follow-ups.js";
+import { paypalSyncRoutes } from "./routes/paypal-sync.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { studioLicenceRoutes } from "./routes/studio-licence.js";
 import { nudgeRoutes } from "./routes/nudges.js";
@@ -164,6 +165,13 @@ export function buildApp(config: AppConfig, deps: AppDeps): FastifyInstance {
     seams: deps.invoiceSeams,
   });
   followUpRoutes(app, { db: deps.db, audit, clock: deps.clock });
+  paypalSyncRoutes(app, {
+    config,
+    db: deps.db,
+    audit,
+    ...(deps.paypal ? { paypal: deps.paypal } : {}),
+    ...(deps.clock ? { clock: deps.clock } : {}),
+  });
   analyticsRoutes(app, deps.db);
   studioLicenceRoutes(app, config);
   nudgeRoutes(app, {

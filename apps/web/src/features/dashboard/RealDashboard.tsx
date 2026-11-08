@@ -10,6 +10,7 @@ import { CURRENCY_CODES } from "../../domain/types.js";
 import { buildDashboardDateRange } from "../../domain/dateRange.js";
 import { StudioSlot, StudioSlotPlaceholder } from "../studio/StudioSlot.js";
 import { NudgeSummaryCard } from "../../nudges/NudgeSummaryCard.js";
+import { ImportedDraftsSection } from "./ImportedDrafts.js";
 import { InvoiceGrid } from "./InvoiceGrid.js";
 import {
   hasFilters,
@@ -119,6 +120,7 @@ export function RealDashboardView({
   onRetry,
   onAnalyticsRetry,
   onClearFilters,
+  importsCard,
   onLoadMore,
   onOpen,
   onNew,
@@ -141,6 +143,8 @@ export function RealDashboardView({
   headingRef?: React.Ref<HTMLHeadingElement>;
   /** NMI-P6 AI Nudge Queue summary (approved D1), rendered above the unchanged P5 filters. */
   nudgeCard?: React.ReactNode;
+  /** Manual PayPal Sandbox DRAFT import section, rendered below the invoice rows. */
+  importsCard?: React.ReactNode;
 }) {
   const f = state.filters;
   const filtered = hasFilters(f) || searchText.trim() !== "";
@@ -436,6 +440,7 @@ export function RealDashboardView({
           {analyticsLoading}
           {analyticsCards}
           {listContent}
+          {importsCard ?? null}
         </>
       )}
     </>
@@ -524,6 +529,15 @@ export function RealDashboard({ list, analytics }: { list: ListFn; analytics: An
       onNew={() => appDispatch({ type: "navigate", screen: "composer", resetComposer: true })}
       headingRef={headingRef}
       nudgeCard={session?.nudges ? <NudgeSummaryCard controller={session.nudges} /> : null}
+      importsCard={
+        session?.syncPayPalDrafts && session?.listPayPalImports ? (
+          <ImportedDraftsSection
+            sync={session.syncPayPalDrafts}
+            list={session.listPayPalImports}
+            onExpired={() => session?.sessionExpired?.()}
+          />
+        ) : null
+      }
     />
   );
 }
