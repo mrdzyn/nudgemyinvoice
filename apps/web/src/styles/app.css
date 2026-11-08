@@ -2274,3 +2274,58 @@ dialog .actions {
     min-height: 44px;
   }
 }
+
+/* NMI-JUDGE-BRANDING-01 — owner-supplied JPEG art, served same-origin under CSP. */
+.brand-wordmark {
+  display: block;
+  width: 220px;
+  height: 62px;
+  max-width: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 8px;
+  background: #fff;
+}
+.login-brand-logo {
+  display: block;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 10px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: #fff;
+}
+.nudgey-avatar-frame {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff;
+}
+.nudgey-avatar-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.32);
+}
+.nudgey-panel-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nudgey-panel-avatar {
+  width: 40px;
+  height: 40px;
+  flex-basis: 40px;
+}
+@media (max-width: 767px) {
+  .brand-wordmark {
+    width: 190px;
+    height: 54px;
+  }
+}

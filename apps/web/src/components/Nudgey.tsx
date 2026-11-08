@@ -65,11 +65,16 @@ export function NudgeyPanel({
   return (
     <>
       <div className="nudgey-heading">
-        <div>
-          <h2 id={titleId} className="nudgey-title">
+        <div className="nudgey-panel-brand">
+          <span className="nudgey-avatar-frame nudgey-panel-avatar" aria-hidden="true">
+            <img src="/brand/nudge-logo.jpg" alt="" width={40} height={40} />
+          </span>
+          <div>
+            <h2 id={titleId} className="nudgey-title">
             Nudgey
           </h2>
-          <p className="nudgey-kicker">Your invoice companion</p>
+            <p className="nudgey-kicker">Your invoice companion</p>
+          </div>
         </div>
         <button type="button" className="nudgey-close" aria-label="Close Nudgey" onClick={onClose}>
           <span aria-hidden="true">×</span>
@@ -633,8 +638,8 @@ export function Nudgey() {
         }
         onClick={() => setOpen((value) => !value)}
       >
-        <span aria-hidden="true" className="nudgey-sparkle">
-          ✦
+        <span aria-hidden="true" className="nudgey-avatar-frame">
+          <img src="/brand/nudge-logo.jpg" alt="" width={36} height={36} />
         </span>
         <span>Nudgey</span>
         {due > 0 ? (

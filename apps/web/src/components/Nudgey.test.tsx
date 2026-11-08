@@ -37,6 +37,7 @@ describe("Nudgey quick actions (no provider calls)", () => {
     ])
       expect(html).toContain(text);
     expect(html).not.toMatch(/paypal-draft|createPayPalDraft|href=/);
+    expect(html).toContain('/brand/nudge-logo.jpg');
   });
 
   it("shows Ask Nudgey without losing the status selector or follow-up action", () => {

@@ -149,9 +149,13 @@ export function RealLoginScreen({
       <div className="login-wrap">
         <div className="card login-card">
           <div className="login-head">
-            <div className="brand-mark" aria-hidden="true">
-              N
-            </div>
+            <img
+              className="login-brand-logo"
+              src="/brand/nudge-logo.jpg"
+              alt=""
+              width={84}
+              height={84}
+            />
             <h1 className="screen-title" id="login-title" tabIndex={-1} ref={headingRef}>
               Operator sign in
             </h1>
