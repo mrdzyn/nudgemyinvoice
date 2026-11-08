@@ -3053,4 +3053,37 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 
 Independently review the documentation-only post-merge reconciliation and obtain an explicit owner decision on that documentation PR; do not start Stage 2 or deploy from this handoff.
 
+## Handoff: NMI-OPS-RECON-01
+
+- **Task / phase:** `tasks/NMI-OPS-TEMPLATE-RECON-01.md` — selective master-template M7 and operational state reconciliation.
+- **From:** repository operating-model reconciliation
+- **To:** independent documentation reviewer, then product owner
+- **Branch:** `docs/nmi-ops-template-reconcile`
+- **Implementation head:** `4aea541d358e419f835e1f59811216003ba56305` (`main` before this docs-only branch; branch HEAD verified separately at review time)
+- **PR:** New Draft operational-reconciliation PR (record exact PR URL when created).
+- **State:** Documentation-only proposal; focused validation, independent audit and owner decision pending.
+
+### Completed
+
+- Compared NMI repository with `mrdzyn/ai-native-project-template@c803a7acd30f65c92dc2e1b8bb396bde3d623666`. Preserved NMI's exact-HEAD manual-development and stronger release policies; selectively added M7 context/agent guide. Template M6 script and release-manifest adoption are explicitly deferred, not falsely claimed.
+- Archived the former 39-KB `docs/STATUS.md` verbatim at `docs/history/NMI-STATUS-snapshot-2026-11-08.md`; replaced active STATUS with short source-linked, **LIVE-EXISTING vs MERGED-NOT-LIVE** index.
+- Clarified that Render service is already Live on `766dde37...` (previous read-only evidence and owner confirmation); initial costs/teardown and log-privacy acceptance are owner-reported as addressed for that service, not independently re-certified by this PR. Historical G1/G5 OPEN wording is archived, not a reason to redo completed provisioning. Ongoing security/privacy/cost obligations remain.
+- Kept PR #67 `478b782a...` Draft, under independent review, and original PR #63 unchanged. No feature, provider, deployment, release branch, CI rule or release-policy changes.
+
+### Validation
+
+- Historical STATUS snapshot archival: compare original and archive Git blob SHA before claiming byte identity.
+- Check STATUS required fields/handoff pointer and explicit document matrix; scoped three-phase governance review; diff/secret/whitespace checks.
+- Full exact-HEAD local manual CI: **NOT RUN in GitHub connector environment**. Hosted CI: **NOT RUN**. Any requirement/exception is determined by existing NMI `docs/TESTING.md`.
+
+### Continuation notes
+
+- Template source is a reference, not automatic policy replacement; NMI project-specific gates and owner approvals prevail.
+- Latest GitHub `main@4aea541d...` is **not** the currently deployed Render code. A new deploy and effective Studio license/live chart/browser verification require separate owner authorization.
+- Never claim historical G1/G5 formally audited closed without the corresponding evidence, nor that existing Live deployment is blocked by pre-creation steps that occurred already.
+
+### Next action
+
+Perform focused read-only verification of this documentation-only Draft PR at exact HEAD, including archive byte identity and policy preservation; request an independent documentation audit, then await a separate owner merge decision. Do not touch PR #67 or production.
+
 <!-- HANDOFF_ENTRIES_END -->
