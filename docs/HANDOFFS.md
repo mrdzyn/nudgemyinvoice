@@ -3060,7 +3060,7 @@ Independently review the documentation-only post-merge reconciliation and obtain
 - **To:** independent documentation reviewer, then product owner
 - **Branch:** `docs/nmi-ops-template-reconcile`
 - **Implementation head:** `4aea541d358e419f835e1f59811216003ba56305` (`main` before this docs-only branch; branch HEAD verified separately at review time)
-- **PR:** New Draft operational-reconciliation PR (record exact PR URL when created).
+- **PR:** [Draft PR #68](https://github.com/mrdzyn/nudgemyinvoice/pull/68) (documentation-only; no merge or deployment).
 - **State:** Documentation-only proposal; focused validation, independent audit and owner decision pending.
 
 ### Completed
