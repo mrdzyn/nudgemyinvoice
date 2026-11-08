@@ -214,6 +214,11 @@ export const COMBINED_RELEASE_BRANCH = "release/nmi-combined-judges-2026";
  */
 export const JUDGES_RELEASE_BRANCH = "release/nmi-judges-2026";
 /**
+ * Single approved candidate SHA hard-bound to `JUDGES_RELEASE_BRANCH`. The source gate rejects any
+ * other `--expect` value for this branch, even one that matches the branch tip and is on `main`.
+ */
+export const JUDGES_RELEASE_SHA = "846608abf2e63943fb05646e0c58ca3936f27943";
+/**
  * Strict allowlist: exactly these four branches may be release-checked. Any other name — including
  * ref paths, typos, `main` or an empty value — fails closed. All branches stay independently
  * verifiable; none is a mutable tip alias.
@@ -302,6 +307,11 @@ export function checkReleaseSource(i: SourceInput): Finding[] {
     "src.release-branch-tip-equals-expected",
     i.remoteVerified && SHA.test(i.expectedSha) && i.remoteReleaseTip === i.expectedSha,
     `The CURRENT remote ${branchLabel} tip must equal the approved SHA (a missing branch or a later push must not pass)`,
+  );
+  add(
+    "src.judges-sha-pinned",
+    i.releaseBranch !== JUDGES_RELEASE_BRANCH || i.expectedSha === JUDGES_RELEASE_SHA,
+    `${JUDGES_RELEASE_BRANCH} is hard-bound to the single approved candidate SHA ${JUDGES_RELEASE_SHA}: any other --expect value fails, even when it matches the branch tip`,
   );
   return out;
 }
