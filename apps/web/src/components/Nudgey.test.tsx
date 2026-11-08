@@ -39,7 +39,7 @@ describe("Nudgey quick actions (no provider calls)", () => {
     // No navigation anchors or draft affordances; React 19 image preload
     // <link> hints are not navigation and are explicitly allowed.
     expect(html).not.toMatch(/paypal-draft|createPayPalDraft|<a[\s>]/);
-    expect(html).toContain('/brand/nudge-logo.jpg');
+    expect(html).toContain("/brand/nudge-logo.jpg");
   });
 
   it("shows Ask Nudgey without losing the status selector or follow-up action", () => {

@@ -78,6 +78,7 @@ describe("single-origin static serving", () => {
     writeFileSync(join(dist, "index.html"), "<!doctype html><title>shell</title>");
     writeFileSync(join(dist, "assets", "app-abc123.js"), "console.log(1)");
     writeFileSync(join(dist, "assets", "app-abc123.css"), "a{}");
+    writeFileSync(join(dist, "brand-logo.jpg"), "fake-jpeg-bytes");
     writeFileSync(join(dist, ".secret"), "dotfile");
     writeFileSync(join(dist, "notes.exe"), "unknown type");
     writeFileSync(join(outside, "leak.txt"), "OUTSIDE-SECRET");
@@ -124,6 +125,11 @@ describe("single-origin static serving", () => {
     expect((await get("/assets/app-abc123.css")).headers["content-type"]).toBe(
       "text/css; charset=utf-8",
     );
+    // Owner-supplied brand JPEGs are same-origin static assets, not API responses.
+    const jpg = await get("/brand-logo.jpg");
+    expect(jpg.statusCode).toBe(200);
+    expect(jpg.headers["content-type"]).toBe("image/jpeg");
+    expect(jpg.body).toBe("fake-jpeg-bytes");
   });
   it("/health is JSON, never the SPA shell; /api never falls back to HTML", async () => {
     const h = await get("/health");
