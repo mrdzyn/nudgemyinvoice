@@ -1,0 +1,13 @@
+# NudgeMyInvoice agent orchestration — M7 adaptation
+
+Adapted from `mrdzyn/ai-native-project-template@c803a7a` M7. **NMI `AGENTS.md`, `docs/TESTING.md`, `docs/RELEASE.md`, and product/security tasks remain authoritative.** This guide optimizes workflow, not safety or approvals.
+
+1. **One primary implementation agent / one write owner per task.** Optional specialists only for independently checkable work with bounded paths, inputs, expected evidence and stop conditions. A contributor never independently approves its own changes. Do not ask multiple agents to write overlapping files.
+2. **Minimal verified context.** Startup: `AGENTS.md` → compact `docs/STATUS.md` → `config/project-profile.json` → active task → only active handoff in `docs/HANDOFFS.md` → relevant code/tests. Do not load the historical STATUS archive, full handoff history, project memory or entire repo unless a specific ambiguity requires them. Within a session, reread only when HEAD/task/risk changes.
+3. **Check environment and evidence.** `main` is code, Render is deployment. A LIVE older candidate doesn't mean newer `main` shipped. Owner-attested hosting acceptance is not equivalent to technically verified runtime/production security; neither is a historical OPEN note proof the service was never provisioned.
+4. **Targeted development loop; mandatory final gate.** Prove task objective with the smallest deterministic targeted test set, then complete **all NMI-required exact-HEAD** local CI, security checks and risk-relevant manual QA before review/merge. Never treat mocks as real provider proof. NMI's stronger release-candidate policy controls release; no general M5 release-policy substitution is adopted.
+5. **One consolidated independent review.** Provide current HEAD, touched paths, tests actually run, exact security/release limitations, and one next action. Resolve findings and rerun mandatory checks on any new HEAD. Independent reviewers must not self-approve.
+6. **Keep handoffs short.** Use one meaningful `docs/HANDOFFS.md` entry, with exact SHA and status. Archive long historical state outside operational startup. Token/cost telemetry only if actually known; otherwise `NOT AVAILABLE`. Soft context budgets are not work or safety limits.
+7. **Human gates.** No autonomous merge, deployment, provider/paid resource activation, release-branch movement, public judge URL, or policy/ruleset bypass. Existing approval boundaries remain in force.
+
+**M6 status:** NMI does not yet include the template's `scripts/session_context.py` or `docs/SESSION-CONTINUITY.md`. A separate adoption with tests is needed; do not claim it is installed.
