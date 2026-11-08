@@ -2,6 +2,11 @@
 
 **The AI invoice assistant that helps freelancers get paid — across currencies, with humans in control.**
 
+<img src="docs/showcase/nudgey-mascot.jpg" width="220" alt="Nudgey, the NudgeMyInvoice mascot: a blue character in a cap holding a multi-currency invoice">
+
+*Nudgey — the invoice companion (existing product artwork from
+`apps/web/public/brand/nudge-logo.jpg`).*
+
 ![NudgeMyInvoice hero illustration: branded invoice draft card, Nudgey assistant badge, and PayPal Sandbox only pill](docs/showcase/hero.svg)
 
 > **Hackathon MVP — PayPal sandbox only.** Not a production payment service. No live
@@ -43,13 +48,13 @@ reconciliation; local operator follow-up reminders that are never customer messa
 flowchart TD
     subgraph Browser["Browser — single operator session"]
         UI["React + Vite dashboard"]
-        Nudgey["Nudgey assistant (read-only)"]
+        Nudgey["Nudgey: read-only lookup + local follow-ups"]
         Grid["AG Grid Community table"]
         Studio["Licensed AG Studio charts (view-only)"]
     end
     subgraph Server["Backend — Fastify + TypeScript on Render"]
         API["HTTP API + Zod validation"]
-        Gate["Human approval gate (server-enforced)"]
+        Gate["Explicit confirmation + durable server fencing"]
         PayPalAdapter["PayPal adapter (sandbox allowlist)"]
         Parser["OpenAI parser (guarded, output untrusted)"]
     end
@@ -106,7 +111,7 @@ flowchart LR
     Browser --> API["Fastify API: Origin + CSRF checks, rate limits"]
     API --> Zod["Zod validation at every boundary"]
     Zod --> DB[("PostgreSQL — owner-scoped, audited writes")]
-    API --> Approval{"Human approval? (server-side gate)"}
+    API --> Approval{"Operator confirmed? (auth + fencing)"}
     Approval -- "explicit confirm" --> Draft["Sandbox DRAFT via allowlisted adapter"]
     Approval -- "anything else" --> Deny(["Fail closed — nothing happens"])
     Draft --> Verify["Read-back verify + durable state"]
@@ -121,10 +126,15 @@ flowchart LR
   per invoice with no FX and no mixed-currency totals.
 - **Sandbox enforcement.** A hostname allowlist refuses live PayPal endpoints;
   drafting ships disabled (`PAYPAL_DRAFTS_ENABLED=false`).
-- **Human-controlled PayPal drafts.** AI and background jobs may only propose —
-  `sendInvoice`, `sendReminder`, `refundPayment`, `cancelInvoice`, `markPaid` and
-  friends require an authenticated reviewer, a record-specific authorization, and
-  an immutable payload-bound approval. The backend, not the prompt, enforces it.
+- **Human-controlled PayPal drafts.** AI and background jobs may only propose.
+  A Sandbox draft is created only for an authenticated operator (`requireOperator`
+  with Origin/CSRF checks), after explicit browser confirmation, as a single
+  request per confirmation through a durable fenced server claim with exact
+  read-back verification. Privileged payment actions (`sendInvoice`,
+  `sendReminder`, `refundPayment`, `cancelInvoice`, `markPaid`) and approval
+  grants are **future, not implemented**: no grant issuer exists and no route
+  consumes grants (see `docs/SECURITY.md`). The backend, not the prompt,
+  enforces every gate that does exist.
 
   ![Explicit confirmation dialog before any PayPal Sandbox draft is created](design/evidence/NMI-PROTOTYPE-10D-A4/screenshots/05-confirm-dialog.jpg)
 
@@ -132,8 +142,11 @@ flowchart LR
   closed. Ambiguity means refuse.*
 - **Auditability.** Parameterized queries, redacted structured logs, durable
   operation fencing with exact remote verification, and a corrupt-backup negative
-  control in the release drills. No raw card data anywhere; no secrets or invoice
-  PII in prompts, logs, screenshots, or commits.
+  control in the release drills. No raw card data anywhere. No secrets or invoice
+  PII in repository files, demo screenshots, logs, or commits — but note that
+  when OpenAI parsing is enabled, the operator's submitted invoice text (which
+  may contain customer details) is sent to the model: minimize PII, prefer
+  synthetic demo data, and know it is not persisted in audit logs.
 
 ## How we built it
 
@@ -311,9 +324,12 @@ session does not imply permission to execute API calls.
 3. Optionally create a second invoice in EUR; the dashboard keeps USD and EUR separate.
 4. Explicitly confirm *Create PayPal Sandbox draft…*; observe the validated DRAFT and the refreshed durable state. The customer is not emailed and nothing is sent or paid.
 
-Sending, paying through a buyer flow, verified webhooks and AI-drafted overdue
-nudges are **not implemented**. All company names, invoices, customer details and
-amounts in the demo are fictitious.
+Sending, paying through a buyer flow, verified webhooks and automatic customer
+reminders are **not implemented**. AI nudge drafting exists (queue, review, edit,
+approve-for-manual-use, reject, regenerate, copy) but stays off unless
+`NUDGE_AI_DRAFTING_ENABLED=true` (default **false**); approved text is only ever
+copied for manual use, never dispatched. All company names, invoices, customer
+details and amounts in the demo are fictitious.
 
 ## What is implemented, what is verified, what is not
 
@@ -328,6 +344,7 @@ says otherwise.
 - **Real React invoice composer** with natural-language drafting, a clarification loop and an always-available **manual entry fallback**.
 - **OpenAI Responses parsing integration** (`POST /api/invoice-drafts/parse`): structured output validated with Zod and re-validated against the strict domain schema; totals computed by the server, never by the model. Drafting stays disabled by default; one provisional real-API verification exists (see evidence).
 - **Nudgey assistant:** navigation shortcuts, read-only invoice lookup and local follow-up reminders; it cannot send anything.
+- **AI Nudge Queue:** optional AI-drafted payment nudges with human review, edit, approve-for-manual-use, reject, regenerate and copy-after-approval. Drafting is disabled by default and nothing is ever sent or scheduled automatically.
 - **Human invoice review:** every field editable; nothing is saved until the operator saves.
 - **PostgreSQL persistence:** idempotent, audited save (`POST /api/invoice-drafts`) with exact integer minor-unit money.
 - **Multi-currency invoices:** one currency per invoice; per-currency summaries; no FX and no mixed-currency total.
