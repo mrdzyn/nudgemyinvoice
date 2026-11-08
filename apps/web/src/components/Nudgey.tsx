@@ -71,8 +71,8 @@ export function NudgeyPanel({
           </span>
           <div>
             <h2 id={titleId} className="nudgey-title">
-            Nudgey
-          </h2>
+              Nudgey
+            </h2>
             <p className="nudgey-kicker">Your invoice companion</p>
           </div>
         </div>
