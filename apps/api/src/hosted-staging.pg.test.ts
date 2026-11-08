@@ -26,7 +26,7 @@ import { baseEnv } from "./test-support.js";
  *  - customer search text never appears in any request URL the proxy (= the host's HTTP request
  *    log) sees, nor in Fastify logs, including error and unauthorized cases;
  *  - providers are disabled: zero provider traffic, manual-entry fallback;
- *  - all eight migrations are applied in journal order by the owner and the app never changes schema;
+ *  - all ten migrations are applied in journal order by the owner and the app never changes schema;
  *  - the runtime role can do exactly what the API needs and nothing destructive.
  * Real Fastify + real PostgreSQL + loopback sockets only.
  */
@@ -242,7 +242,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
     ...extra,
   });
 
-  it("applied exactly the nine committed migrations in journal order, before the app started", async () => {
+  it("applied exactly the ten committed migrations in journal order, before the app started", async () => {
     const journal = JSON.parse(
       readFileSync(
         join(
@@ -269,6 +269,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       "0006",
       "0007",
       "0008",
+      "0009",
     ]);
     expect(migrationStatements().length).toBeGreaterThan(9);
     const tables = (
@@ -285,6 +286,7 @@ describe.skipIf(!url)("hosted staging shape (real PostgreSQL, simulated proxy)",
       "invoices",
       "operators",
       "paypal_draft_operations",
+      "paypal_imported_drafts",
       "paypal_webhook_events",
       "sessions",
     ]);

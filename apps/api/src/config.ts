@@ -39,6 +39,9 @@ const envSchema = z.object({
   OPENAI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(64).max(4096).default(1024),
   // Real PayPal sandbox calls are OFF unless explicitly enabled, and then credentials are mandatory.
   PAYPAL_DRAFTS_ENABLED: z.enum(["true", "false"]).default("false"),
+  // Manual read-only PayPal Sandbox DRAFT sync (one-way list import). Default OFF; enabling it
+  // never enables draft creation, sending, reminders, refunds or any money-moving call.
+  PAYPAL_SYNC_ENABLED: z.enum(["true", "false"]).default("false"),
   // NMI-P6 (P6-AUD-02): live AI nudge drafting needs its OWN explicit opt-in. Parser credentials alone never
   // enable it. Default OFF; "true" is valid only together with OPENAI_API_KEY + OPENAI_MODEL.
   NUDGE_AI_DRAFTING_ENABLED: z.enum(["true", "false"]).default("false"),
@@ -92,6 +95,8 @@ export interface AppConfig {
   nudgeDrafting: { apiKey: string; model: string; maxOutputTokens: number } | null;
   /** True only when the owner explicitly enabled real PayPal sandbox draft creation. */
   paypalDraftsEnabled: boolean;
+  /** True only when the owner explicitly enabled the manual read-only DRAFT import sync. */
+  paypalSyncEnabled: boolean;
   /** Server-only. Present only when drafts are enabled. */
   paypalCredentials: { clientId: string; clientSecret: string } | null;
   /** Server-only AG Studio licence (P5). Returned ONLY by the authenticated licence route; never logged. */
@@ -117,11 +122,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const paypal = assertSandboxConfig(e);
   const webOrigin = new URL(e.WEB_ORIGIN).origin;
   const draftsEnabled = e.PAYPAL_DRAFTS_ENABLED === "true";
-  if (draftsEnabled && (!e.PAYPAL_CLIENT_ID || !e.PAYPAL_CLIENT_SECRET)) {
-    // Fail closed: never start in a mode that pretends PayPal drafting works without credentials.
-    throw new Error(
-      "PAYPAL_DRAFTS_ENABLED=true requires PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET",
-    );
+  const syncEnabled = e.PAYPAL_SYNC_ENABLED === "true";
+  if ((draftsEnabled || syncEnabled) && (!e.PAYPAL_CLIENT_ID || !e.PAYPAL_CLIENT_SECRET)) {
+    // Fail closed: never start in a mode that pretends PayPal sandbox calls work without credentials.
+    const which =
+      draftsEnabled && syncEnabled
+        ? "PAYPAL_DRAFTS_ENABLED/PAYPAL_SYNC_ENABLED=true"
+        : draftsEnabled
+          ? "PAYPAL_DRAFTS_ENABLED=true"
+          : "PAYPAL_SYNC_ENABLED=true";
+    throw new Error(`${which} requires PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET`);
   }
   const nudgeDraftingEnabled = e.NUDGE_AI_DRAFTING_ENABLED === "true";
   // Limited mode always enables both visible AI features or fails closed. Historical smoke
@@ -135,7 +145,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         "NMI_JUDGE_AI_MODE=limited requires 4096 output tokens and explicit nudge opt-in",
       );
     }
-    if (draftsEnabled || e.PAYPAL_CLIENT_ID || e.PAYPAL_CLIENT_SECRET) {
+    if (draftsEnabled || syncEnabled || e.PAYPAL_CLIENT_ID || e.PAYPAL_CLIENT_SECRET) {
       throw new Error("NMI_JUDGE_AI_MODE=limited forbids PayPal credentials and draft creation");
     }
   }
@@ -226,8 +236,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
           }
         : null,
     paypalDraftsEnabled: draftsEnabled,
+    paypalSyncEnabled: e.PAYPAL_SYNC_ENABLED === "true",
     paypalCredentials:
-      draftsEnabled && e.PAYPAL_CLIENT_ID && e.PAYPAL_CLIENT_SECRET
+      (draftsEnabled || syncEnabled) && e.PAYPAL_CLIENT_ID && e.PAYPAL_CLIENT_SECRET
         ? { clientId: e.PAYPAL_CLIENT_ID, clientSecret: e.PAYPAL_CLIENT_SECRET }
         : null,
     studioLicenceKey: e.AG_STUDIO_LICENSE_KEY ?? null,

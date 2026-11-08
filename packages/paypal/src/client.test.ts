@@ -96,6 +96,7 @@ describe("construction", () => {
         "fetchToken",
         "findInvoiceIdsByNumber",
         "getInvoice",
+        "listInvoices",
       ].sort(),
     );
     for (const m of methods)
@@ -767,5 +768,90 @@ describe("a draft create is sent AT MOST ONCE per call (FIX-B1)", () => {
     expect(src).not.toMatch(/retryOn401/);
     expect(src).toMatch(/effect: "read" \| "create",/);
     expect(src).toMatch(/effect === "read"/);
+  });
+});
+
+describe("listInvoices (read-only sync list)", () => {
+  const listBody = {
+    total_items: 3,
+    total_pages: 1,
+    items: [
+      {
+        id: "INV2-DRAFT-1",
+        status: "DRAFT",
+        detail: {
+          currency_code: "USD",
+          invoice_number: "0001",
+          payment_term: { due_date: "2026-12-01" },
+        },
+        amount: { currency_code: "USD", value: "5.00" },
+      },
+      {
+        id: "INV2-SENT-2",
+        status: "SENT",
+        detail: { currency_code: "USD", invoice_number: "0002" },
+        amount: { currency_code: "USD", value: "7.00" },
+      },
+      { id: "INV2-BROKEN-3", status: "DRAFT", detail: { currency_code: "USD" } },
+    ],
+  };
+  const listClient = (list: (r: HttpRequest) => HttpResponse | Promise<HttpResponse>) =>
+    client(
+      fake({ "POST /v1/oauth2/token": () => tokenOk, "GET /v2/invoicing/invoices": list })
+        .transport,
+    );
+
+  it("requests the bounded paginated list and keeps valid DRAFT + non-DRAFT remotes, counting malformed", async () => {
+    const seen: string[] = [];
+    const c = listClient((r) => {
+      seen.push(new URL(r.url).search);
+      return ok(listBody);
+    });
+    const page = await c.listInvoices({ page: 1, pageSize: 20 });
+    expect(seen).toEqual(["?page=1&page_size=20&total_required=true"]);
+    expect(page.totalItems).toBe(3);
+    expect(page.invoices.map((i) => i.paypalInvoiceId).sort()).toEqual(
+      ["INV2-DRAFT-1", "INV2-SENT-2"].sort(),
+    );
+    expect(page.skippedMalformed).toBe(1);
+  });
+
+  it("rejects out-of-range pagination before any list I/O", async () => {
+    const seen: string[] = [];
+    const c = listClient((r) => {
+      seen.push(r.url);
+      return ok(listBody);
+    });
+    await expect(c.listInvoices({ page: 0 })).rejects.toBeInstanceOf(ForbiddenPayPalOperation);
+    await expect(c.listInvoices({ page: 1, pageSize: 21 })).rejects.toBeInstanceOf(
+      ForbiddenPayPalOperation,
+    );
+    expect(seen).toEqual([]);
+  });
+
+  it("fails closed on envelope errors and HTTP failures", async () => {
+    for (const list of [
+      () => ok({ total_items: 1 }, 500),
+      () => ok({ nope: true }),
+      () => ({ status: 200, headers: {}, body: "<html>" }),
+    ]) {
+      await expect(listClient(list).listInvoices({ page: 1 })).rejects.toBeInstanceOf(
+        PayPalOutcomeUnknownError,
+      );
+    }
+  });
+
+  it("never calls a money-moving path during a list", async () => {
+    const calls: string[] = [];
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "GET /v2/invoicing/invoices": (r) => {
+        calls.push(`${r.method} ${new URL(r.url).pathname}${new URL(r.url).search}`);
+        return ok({ total_items: 0, total_pages: 0, items: [] });
+      },
+    });
+    await client(f.transport).listInvoices({ page: 2, pageSize: 5 });
+    expect(calls).toEqual(["GET /v2/invoicing/invoices?page=2&page_size=5&total_required=true"]);
+    expect(JSON.stringify(f.calls)).not.toMatch(/send|remind|cancel|refund|payment/i);
   });
 });

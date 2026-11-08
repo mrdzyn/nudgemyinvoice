@@ -14,6 +14,7 @@ import {
 } from "./invoices/api.js";
 import { createParseApi, type ParseApi } from "./parse/api.js";
 import { createFollowUpApi, type FollowUpApi } from "./followups/api.js";
+import { createImportsApi } from "./paypal/importsApi.js";
 import { FollowUpsController } from "./followups/controller.js";
 import { createNudgeApi, type NudgeApi } from "./nudges/api.js";
 import { NudgesController } from "./nudges/controller.js";
@@ -29,6 +30,7 @@ const defaultParseApi = createParseApi();
 const defaultInvoiceApi = createInvoiceApi();
 const defaultFollowUpApi = createFollowUpApi();
 const defaultNudgeApi = createNudgeApi();
+const defaultImportsApi = createImportsApi();
 
 function systemTheme(): Theme {
   return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches
@@ -125,6 +127,15 @@ function Workspace({
     (id: string, signal: AbortSignal) => invoiceApi.createPayPalDraft(id, csrfToken, signal),
     [invoiceApi, csrfToken],
   );
+  const [importsApi] = useState(() => defaultImportsApi);
+  const syncPayPalDrafts = useCallback(
+    (signal: AbortSignal) => importsApi.sync(csrfToken, signal),
+    [importsApi, csrfToken],
+  );
+  const listPayPalImports = useCallback(
+    (signal: AbortSignal) => importsApi.list(signal),
+    [importsApi],
+  );
   const getInvoice = useCallback(
     (id: string, signal: AbortSignal) => invoiceApi.get(id, signal),
     [invoiceApi],
@@ -193,6 +204,8 @@ function Workspace({
         listInvoices,
         analyticsInvoices,
         createPayPalDraft,
+        syncPayPalDrafts,
+        listPayPalImports,
         sessionExpired: expire,
         followUps,
         nudges,

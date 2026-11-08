@@ -33,6 +33,21 @@ export class ForbiddenPayPalOperation extends Error {
 export const PAYPAL_INVOICE_SEARCH_QUERY = "page=1&page_size=20&total_required=true";
 
 /**
+ * Bounded pagination for the read-only invoice list used by draft sync.
+ * Page starts at 1; page size is capped at 20 so one sync step stays small.
+ */
+export const PAYPAL_SYNC_MAX_PAGE_SIZE = 20;
+export const PAYPAL_SYNC_MAX_PAGE = 999;
+
+export function paypalListQuery(page: number, pageSize: number): string {
+  if (!Number.isInteger(page) || page < 1 || page > PAYPAL_SYNC_MAX_PAGE)
+    throw new ForbiddenPayPalOperation("list page out of range");
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > PAYPAL_SYNC_MAX_PAGE_SIZE)
+    throw new ForbiddenPayPalOperation("list page size out of range");
+  return `page=${page}&page_size=${pageSize}&total_required=true`;
+}
+
+/**
  * The ONLY PayPal calls this project may make. Anything else (send, remind, cancel, payments,
  * refunds, update, delete, live hosts, redirects off the sandbox host) is refused before any
  * network I/O, whatever the caller, model text or configuration says.
@@ -41,6 +56,7 @@ const ALLOWED: ReadonlyArray<{ method: "GET" | "POST"; path: RegExp; label: stri
   { method: "POST", path: /^\/v1\/oauth2\/token$/, label: "oauth token" },
   { method: "POST", path: /^\/v2\/invoicing\/invoices$/, label: "create draft invoice" },
   { method: "GET", path: /^\/v2\/invoicing\/invoices\/[A-Za-z0-9-]{1,64}$/, label: "show invoice" },
+  { method: "GET", path: /^\/v2\/invoicing\/invoices$/, label: "list invoices" },
   { method: "POST", path: /^\/v2\/invoicing\/search-invoices$/, label: "search invoices" },
 ];
 
@@ -66,11 +82,27 @@ export function guardRequest(method: string, rawUrl: string): void {
   if (!ok) throw new ForbiddenPayPalOperation(`${method} ${url.pathname}`);
 
   const isSearch = method === "POST" && url.pathname === "/v2/invoicing/search-invoices";
+  const isList = method === "GET" && url.pathname === "/v2/invoicing/invoices";
   if (isSearch) {
     // Exact byte spelling/order avoids duplicate keys, encoding tricks, user-provided filters,
     // malformed values, and ambiguity around pagination. No other operation accepts a query.
     if (url.search !== `?${PAYPAL_INVOICE_SEARCH_QUERY}`) {
       throw new ForbiddenPayPalOperation("search query shape");
+    }
+  } else if (isList) {
+    // Bounded read-only pagination only: page, page_size and total_required, nothing else.
+    // Values are range-checked so a caller cannot request an unbounded export.
+    const m = /^\?page=(\d{1,3})&page_size=(\d{1,2})&total_required=true$/.exec(url.search);
+    if (!m) throw new ForbiddenPayPalOperation("list query shape");
+    const page = Number(m[1]);
+    const pageSize = Number(m[2]);
+    if (
+      page < 1 ||
+      page > PAYPAL_SYNC_MAX_PAGE ||
+      pageSize < 1 ||
+      pageSize > PAYPAL_SYNC_MAX_PAGE_SIZE
+    ) {
+      throw new ForbiddenPayPalOperation("list query range");
     }
   } else if (url.search) {
     throw new ForbiddenPayPalOperation("query not allowed");

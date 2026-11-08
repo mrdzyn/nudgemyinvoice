@@ -45,6 +45,7 @@ export interface FakePayPal {
     create: Array<{ body: PayPalInvoiceRequest; requestId: string }>;
     get: string[];
     find: string[];
+    list: Array<{ page: number; pageSize?: number }>;
   };
   /** Replace behavior per test. */
   on: {
@@ -56,6 +57,12 @@ export interface FakePayPal {
         }) => Promise<{ paypalInvoiceId: string }>);
     get?: (id: string) => Promise<RemoteInvoice | null>;
     find?: (invoiceNumber: string) => Promise<string[]>;
+    list?: (input: { page: number; pageSize?: number }) => Promise<{
+      invoices: RemoteInvoice[];
+      skippedMalformed: number;
+      totalItems: number;
+      totalPages: number | null;
+    }>;
   };
   /** Records a remote invoice exactly as PayPal would for this request, and returns its id. */
   materialize(body: PayPalInvoiceRequest, over?: Partial<RemoteInvoice>): string;
@@ -66,7 +73,7 @@ let globalSeq = 0;
 
 export function fakePayPal(): FakePayPal {
   const remotes = new Map<string, RemoteInvoice>();
-  const log: FakePayPal["log"] = { create: [], get: [], find: [] };
+  const log: FakePayPal["log"] = { create: [], get: [], find: [], list: [] };
   const f: FakePayPal = {
     remotes,
     log,
@@ -102,6 +109,19 @@ export function fakePayPal(): FakePayPal {
         return [...remotes.values()]
           .filter((r) => r.invoiceNumber === n)
           .map((r) => r.paypalInvoiceId);
+      },
+      async listInvoices(input) {
+        log.list.push(input);
+        if (f.on.list) return f.on.list(input);
+        const pageSize = input.pageSize ?? 20;
+        const all = [...remotes.values()];
+        const start = (input.page - 1) * pageSize;
+        return {
+          invoices: all.slice(start, start + pageSize),
+          skippedMalformed: 0,
+          totalItems: all.length,
+          totalPages: Math.max(1, Math.ceil(all.length / pageSize)),
+        };
       },
     },
   };

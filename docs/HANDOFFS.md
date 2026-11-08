@@ -3139,4 +3139,12 @@ Showcase branch `docs/readme-showcase` from `main@516023b`. README rewritten as 
 
 Independent review of the Draft PR (scope, factual accuracy, rendering), then owner merge decision. Do not merge, deploy, enable providers, or share URLs on this branch's authority.
 
+## NMI-PAYPAL-SYNC-01 — PayPal Sandbox DRAFT sync hotfix (Draft PR + audit next)
+
+Hotfix branch `fix/nmi-paypal-draft-sync` from workspace `4984c0b`. Manual one-way import of existing PayPal Sandbox DRAFT invoices: allowlisted bounded list (`GET /v2/invoicing/invoices`), owner-scoped `paypal_imported_drafts` mirror (migration `0009_quiet_nightmare`), read-only verified-id reconciliation, dedicated dashboard section with loading/success/partial-failure/disabled states, created/updated/unchanged/skipped/failed counts, `PAYPAL_SYNC_ENABLED` default-OFF flag. No send/remind/cancel/pay/create/modify path; no real PayPal calls, no production migration, no secrets in logs. Contract, validation evidence, and rollback in `tasks/NMI-PAYPAL-DRAFT-SYNC.md`. Judges exception work, protected branches, and Live deployment untouched.
+
+### Next action
+
+Open Draft hotfix PR, request independent exact-HEAD audit. Then owner merge decision (agents must not merge); no deploy authorized. Required owner actions: audit, merge approval, and (only if ever trialled live) a separately bounded sandbox Request; production migration needs separate approval + verified backup.
+
 <!-- HANDOFF_ENTRIES_END -->

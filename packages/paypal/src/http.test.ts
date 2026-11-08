@@ -8,6 +8,8 @@ describe("PayPal request guard (allowlist)", () => {
     ["POST", "/v1/oauth2/token"],
     ["POST", "/v2/invoicing/invoices"],
     ["GET", "/v2/invoicing/invoices/INV2-ABCD-1234"],
+    ["GET", "/v2/invoicing/invoices?page=1&page_size=20&total_required=true"],
+    ["GET", "/v2/invoicing/invoices?page=3&page_size=5&total_required=true"],
     ["POST", "/v2/invoicing/search-invoices?page=1&page_size=20&total_required=true"],
   ])("allows %s %s", (m, p) => expect(() => guardRequest(m, H + p)).not.toThrow());
 
@@ -64,5 +66,31 @@ describe("PayPal request guard (allowlist)", () => {
     expect(() => guardRequest("POST", `${H}/v2/invoicing/search-invoices${query}`)).toThrow(
       ForbiddenPayPalOperation,
     );
+  });
+
+  it.each([
+    "",
+    "?page=0&page_size=20&total_required=true",
+    "?page=1&page_size=0&total_required=true",
+    "?page=1&page_size=21&total_required=true",
+    "?page=1&page_size=20&total_required=false",
+    "?page=1&page_size=20",
+    "?page_size=20&page=1&total_required=true",
+    "?page=1&page_size=20&total_required=true&invoice_number=x",
+    "?page=1&page_size=20&total_required=true&page=1",
+  ])("refuses noncanonical list query %j", (query) => {
+    expect(() => guardRequest("GET", `${H}/v2/invoicing/invoices${query}`)).toThrow(
+      ForbiddenPayPalOperation,
+    );
+  });
+
+  it("refuses money-moving paths even with a valid list query shape", () => {
+    for (const p of [
+      "/v2/invoicing/invoices/INV2-1/send?page=1&page_size=20&total_required=true",
+      "/v2/invoicing/invoices/INV2-1/payments?page=1&page_size=20&total_required=true",
+    ]) {
+      expect(() => guardRequest("GET", H + p)).toThrow(ForbiddenPayPalOperation);
+      expect(() => guardRequest("POST", H + p)).toThrow(ForbiddenPayPalOperation);
+    }
   });
 });

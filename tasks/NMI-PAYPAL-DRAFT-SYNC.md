@@ -1,0 +1,69 @@
+# NMI PayPal Sandbox DRAFT Sync (HOTFIX)
+
+One-way, manually initiated import of existing PayPal Sandbox DRAFT invoices into PostgreSQL.
+
+## Contract
+
+- Trigger: authenticated operator clicks **Sync PayPal Drafts** on the dashboard. No scheduler,
+  webhook, auto-approve, or production-mode bypass. Ambiguity fails closed.
+- Reads ONLY the allowlisted, bounded, paginated `GET /v2/invoicing/invoices` list (plus the
+  existing `show` detail helper). No send, remind, cancel, pay, capture, refund, update, or
+  delete path exists in the adapter or transport allowlist.
+- Stores ONLY validated DRAFT rows in the new owner-scoped `paypal_imported_drafts` table.
+  Unique key: PayPal environment + remote invoice ID. Money as minor-unit bigint + ISO currency
+  (never floats); remote status, source, and last-synced timestamp preserved.
+- Reconciles by verified remote ID + exact currency/total match into `linked_invoice_id`.
+  NEVER writes to `invoices` or `paypal_draft_operations`; mismatches stay unlinked.
+- Imported rows render in a dedicated dashboard section and are NEVER added to invoice analytics.
+- Response returns `{ created, updated, unchanged, skipped, failed }`; per-row independence
+  preserves earlier rows on partial failure (`partialFailure: true`).
+- Gated by existing operator auth, Origin/CSRF, audit (`paypal.draft_sync`), rate limits
+  (5 syncs / 10 min / operator, single in-flight slot), server-side secrets, and the separate
+  default-OFF `PAYPAL_SYNC_ENABLED` flag (credentials still mandatory when ON).
+
+## What changed (branch `fix/nmi-paypal-draft-sync`)
+
+- `packages/paypal`: allowlisted bounded list operation (`http.ts`, `client.ts`, `index.ts`);
+  fake client `listInvoices` in `apps/api/src/test-paypal.ts`.
+- `packages/db`: `paypal_imported_drafts` table (`schema.ts`), migration `0009_quiet_nightmare`,
+  `PostgresPayPalImportStore`, `findOwnedByPayPalId` lookup, `paypal.draft_sync` audit action,
+  runtime-role grants (`ops/runtime-role.sql`).
+- `apps/api`: `PAYPAL_SYNC_ENABLED` flag (`config.ts`, `server.ts`, `.env.example`),
+  `paypal-sync-service.ts`, `routes/paypal-sync.ts` (`POST /api/paypal/imports/sync`,
+  `GET /api/paypal/imports`), wired in `app.ts`.
+- `apps/web`: `paypal/importsApi.ts` transport, `ImportedDrafts.tsx` dashboard section
+  (loading / success / partial-failure / disabled states), session + `RealDashboard` wiring.
+- Tests: `paypal-sync.pg.test.ts` (7, disposable PostgreSQL 16), paypal unit tests,
+  `importsApi.test.ts` (8), `ImportedDrafts.test.tsx` (4); updated `migration-plan`,
+  `hosted-staging`, and `constraints` expectations for migration 0009.
+
+## Validation (agent-run, disposable resources only)
+
+- PostgreSQL 16.15 (Homebrew, disposable cluster): sync suite 7/7, constraints 37/37,
+  hosted-staging 14/14, ownership 13/13, create-401 9/9, invoice-drafts 53/53,
+  combined-judge 7/7, migration-plan 21/21.
+- PayPal package 152/152; web dashboard/render suites 229/229; new web tests 12/12.
+- `pnpm typecheck` clean; `pnpm lint` 0 errors (1 pre-existing warning);
+  `pnpm format:check` clean except pre-existing `release-preflight.test.ts` drift (untouched).
+- `pnpm db:generate` reports no schema drift; unlicensed + licensed web builds pass;
+  both bundle secret scans clean.
+- NOT RUN: hosted GitHub Actions (`workflow_dispatch`-only during development), real PayPal
+  calls, production database migration, manual QA (screen reader, Safari/Firefox, devices).
+
+## Rollback
+
+- Branch unmerged: `git checkout <base>; git branch -D fix/nmi-paypal-draft-sync` (or close the
+  Draft PR). No production state is touched by the branch itself.
+- If migration 0009 were ever applied to a real database (NOT authorized, NOT done): owner
+  approval + verified backup first, then `DROP TABLE paypal_imported_drafts;` removes only the
+  mirror — `invoices` and `paypal_draft_operations` are never written by the sync and need no
+  repair. No down-migration is committed (repo convention: forward migrations only).
+- Runtime: set `PAYPAL_SYNC_ENABLED=false` (default) to disable the routes (`503 sync_disabled`).
+
+## Owner actions required
+
+1. Independent exact-HEAD audit of the Draft PR (requested, not done).
+2. Explicit merge approval (agents must not merge); no deploy authorized by this task.
+3. If a real sandbox trial is ever wanted: separate Request scoping code + run ID, sandbox
+   credentials only, disposable database first. No live PayPal, no production migration, no
+   backup-free database change.

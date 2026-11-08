@@ -19,6 +19,12 @@ export interface PayPalInvoicingReadDraft {
   }): Promise<{ paypalInvoiceId: string }>;
   getInvoice(paypalInvoiceId: string): Promise<RemoteInvoice | null>;
   findInvoiceIdsByNumber(invoiceNumber: string): Promise<string[]>;
+  listInvoices(input: { page: number; pageSize?: number }): Promise<{
+    invoices: RemoteInvoice[];
+    skippedMalformed: number;
+    totalItems: number;
+    totalPages: number | null;
+  }>;
 }
 
 /**
