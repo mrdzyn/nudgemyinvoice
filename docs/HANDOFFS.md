@@ -3131,4 +3131,12 @@ Policy PR on `docs/nmi-judges-ci-exception` from `main@846608ab`. New `tasks/NMI
 
 Targeted (release-preflight suite) + full exact-HEAD manual CI on the policy HEAD, open Draft policy PR, request independent exact-HEAD audit. After merge: manual evidence on `846608ab`, evidence audit, owner exception acceptance, separate branch-pinning approval, then deploy approvals. Blocking release gates unchanged: owner merge decision, manual-evidence acceptance, G1/G5/G6/G7/G8, Render deploy permission. Do not activate the exception, merge, deploy, enable providers, or move protected branches.
 
+## NMI-README-SHOWCASE-01 — GitHub README showcase (Draft PR next)
+
+Showcase branch `docs/readme-showcase` from `main@516023b`. README rewritten as 7-section PayPal AI Hackathon showcase (hero, product screenshots, Mermaid architecture/security/lifecycle, evidence table, preserved getting-started/PayPal/MIT content); new `docs/showcase/` assets (original `hero.svg`, `flow.gif` + generator + static SVG, resized P5 licensed-Studio capture with synthetic data). Screenshots are genuine evidence captures; hero/GIF are labeled original illustrations. Outdated claims corrected (AG Studio licensed trial, Render Live deployment). No app code, migrations, workflows, secrets, providers, or release-branch changes; candidate `846608ab` and protected branches untouched.
+
+### Next action
+
+Independent review of the Draft PR (scope, factual accuracy, rendering), then owner merge decision. Do not merge, deploy, enable providers, or share URLs on this branch's authority.
+
 <!-- HANDOFF_ENTRIES_END -->
