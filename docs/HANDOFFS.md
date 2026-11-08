@@ -3080,4 +3080,24 @@ Independently review the documentation-only post-merge reconciliation and obtain
 
 Independent exact-HEAD audit of the integration HEAD, then separate explicit owner merge decision. Do not merge, deploy, activate providers, move protected refs, edit PR #63, or begin Stage 2.
 
+## NMI-JUDGES-RC-01 — Judges release candidate (chat-to-composer + judge branding)
+
+Branch `feat/nmi-judges-rc-01` from current `main@4aea541…`; merged PR #67 `478b782a` then PR #69 `80d1bd8`. Clean auto-merge, zero conflicts; RC diff vs main is the exact union (24 files: 9 chat feature files, 8 branding files, docs/task records). Branding markers verified in AppShell/Nudgey/LoginScreen; chat suites present; `git diff --check` clean; no api/packages/workflows changes; no secrets; PR #63 untouched; protected refs pinned.
+
+### Verdicts carried in
+
+- PR #67 audit PASS at `478b782a` (comment 6717442870): merge provenance, 10 files byte-identical to PR #63, targeted 178/178.
+- PR #69 visual gap closed → final PASS at `80d1bd8` (comment 6717444566): 10 published PNGs byte-identical to attested set, all items independently viewed.
+
+### Validation (RC HEAD, Node v22.23.4, disposable PG 16.15)
+
+- Targeted: 16 files / 199 passed (chat + branding + hosting suites).
+- `pnpm validate` exit 0 (lint/format/typecheck/unit/builds/bundle scan); unit 77 files / 1502 passed.
+- `pnpm test:db` 20 files / 374 passed; `db:generate` no changes; `audit --prod` clean.
+- Real-browser 28/28 PASS (headless Chrome, prod bundle + real API + synthetic qa_operator): logos/favicon, Nudgey panel with chat actions, Safe Mode, CSP, dark/mobile/zoom/keyboard. RC shots in `/tmp/nmi-rc-shots/` (not committed).
+
+### Next action
+
+Push branch, open Draft RC PR with this evidence, request independent exact-HEAD audit. Blocking release gates after audit: owner merge decision, hosted `workflow_dispatch` SUCCESS on both workflows, then G1/G5/G6/G7/G8 + Render deploy permission. Do not merge, deploy, activate providers, or move protected refs.
+
 <!-- HANDOFF_ENTRIES_END -->
