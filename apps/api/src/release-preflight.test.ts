@@ -556,7 +556,7 @@ describe("release-preflight CLI against a disposable Git remote", () => {
     cleanup: () => void;
   }
   /** bare remote with main and (optionally) the release branch both at commit `one`; clone at one. */
-  function fixture(withRelease = true): Fixture {
+  function fixture(withRelease = true, releaseName: string = RELEASE_BRANCH): Fixture {
     const base = mkdtempSync(join(tmpdir(), "nmi-p4-remote-"));
     const remote = join(base, "remote.git");
     const seed = join(base, "seed");
@@ -576,7 +576,7 @@ describe("release-preflight CLI against a disposable Git remote", () => {
     const one = git(seed, "rev-parse", "HEAD");
     git(seed, "remote", "add", "origin", remote);
     git(seed, "push", "-q", "origin", "main");
-    if (withRelease) git(seed, "push", "-q", "origin", `main:refs/heads/${RELEASE_BRANCH}`);
+    if (withRelease) git(seed, "push", "-q", "origin", `main:refs/heads/${releaseName}`);
     for (const d of [clone, other]) {
       git(base, "clone", "-q", remote, d);
       git(d, "config", "user.email", "t@example.invalid");
@@ -639,6 +639,48 @@ describe("release-preflight CLI against a disposable Git remote", () => {
       expect(ids(r.stdout, "FAIL")).toContain("src.on-main");
       git(f.clone, "fetch", "-q", "origin");
       expect(run(f.clone, ["source", "--expect", f.one]).stdout).toContain("RESULT: PASS");
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("the judges branch rejects a non-pinned SHA even when it matches the branch tip", () => {
+    const f = fixture(true, JUDGES_RELEASE_BRANCH);
+    try {
+      // f.one is a valid full SHA on main and equals the judges tip here; only the pin may fail.
+      const r = run(f.clone, ["source", "--expect", f.one, "--release-branch", JUDGES_RELEASE_BRANCH]);
+      expect(r.status).toBe(1);
+      expect(r.stdout).not.toContain("RESULT: PASS");
+      expect(ids(r.stdout, "FAIL")).toEqual(["src.judges-sha-pinned"]);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  it("the judges branch fails closed while absent, with pin/allowlist passing", () => {
+    const f = fixture(false);
+    try {
+      // Pinned SHA is used so the pin itself passes; the fixture checkout cannot be at the
+      // unmintable pinned commit, so head-equals-expected also fails here by construction.
+      // The live pre-branch demonstration (real candidate checkout) shows head passing too.
+      const r = run(f.clone, [
+        "source",
+        "--expect",
+        JUDGES_RELEASE_SHA,
+        "--release-branch",
+        JUDGES_RELEASE_BRANCH,
+      ]);
+      expect(r.status).toBe(1);
+      const fails = ids(r.stdout, "FAIL");
+      expect(fails).toEqual(
+        expect.arrayContaining([
+          "src.remote-verified",
+          "src.release-branch-tip-equals-expected",
+          "src.head-equals-expected",
+        ]),
+      );
+      expect(fails).not.toContain("src.judges-sha-pinned");
+      expect(fails).not.toContain("src.release-branch-allowlisted");
     } finally {
       f.cleanup();
     }
