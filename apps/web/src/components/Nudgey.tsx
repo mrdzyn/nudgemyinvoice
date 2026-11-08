@@ -65,11 +65,16 @@ export function NudgeyPanel({
   return (
     <>
       <div className="nudgey-heading">
-        <div>
-          <h2 id={titleId} className="nudgey-title">
-            Nudgey
-          </h2>
-          <p className="nudgey-kicker">Your invoice companion</p>
+        <div className="nudgey-panel-brand">
+          <span className="nudgey-avatar-frame nudgey-panel-avatar" aria-hidden="true">
+            <img src="/brand/nudge-logo.jpg" alt="" width={40} height={40} />
+          </span>
+          <div>
+            <h2 id={titleId} className="nudgey-title">
+              Nudgey
+            </h2>
+            <p className="nudgey-kicker">Your invoice companion</p>
+          </div>
         </div>
         <button type="button" className="nudgey-close" aria-label="Close Nudgey" onClick={onClose}>
           <span aria-hidden="true">×</span>
@@ -494,6 +499,18 @@ export function Nudgey() {
                 busy={chat.busy}
                 at={now}
                 onAsk={(t) => void chat.ask(t)}
+                onOpenComposer={(text) => {
+                  setOpen(false);
+                  // Existing guarded navigation: the RealApp leave/unsaved-work confirm still
+                  // applies, and the composer starts blank except for this in-memory prefill.
+                  // Nothing is parsed, saved or sent until the operator clicks Parse.
+                  dispatch({
+                    type: "navigate",
+                    screen: "composer",
+                    resetComposer: true,
+                    composerText: text,
+                  });
+                }}
                 onBack={() => {
                   chat.clear();
                   setView({ kind: "home" });
@@ -633,8 +650,8 @@ export function Nudgey() {
         }
         onClick={() => setOpen((value) => !value)}
       >
-        <span aria-hidden="true" className="nudgey-sparkle">
-          ✦
+        <span aria-hidden="true" className="nudgey-avatar-frame">
+          <img src="/brand/nudge-logo.jpg" alt="" width={36} height={36} />
         </span>
         <span>Nudgey</span>
         {due > 0 ? (

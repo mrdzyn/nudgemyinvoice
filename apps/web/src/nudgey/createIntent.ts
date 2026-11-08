@@ -1,0 +1,74 @@
+import { MAX_PROMPT_CHARS } from "./intent.js";
+
+/**
+ * Chat-to-composer intent (P0 follow-up to NMI-NDG-02 C1). Recognizes an AFFIRMATIVE request to
+ * CREATE an invoice so the chat can hand the operator's verbatim text to the existing AI composer
+ * for review. This parser never acts: it returns a classification and the caller decides.
+ *
+ * The match is anchored to creation-directed sentence structure: after an optional conversational
+ * opener ("hey nudgey", "can/could/would you", "please"), the utterance must open with a base-form
+ * creation verb governing the invoice as its direct object ("create an invoice ...", "make me an
+ * invoice ...") or an explicit need/want for a (new) invoice ("i need a new invoice ..."). Lookup
+ * phrasing that merely mentions creation participles ("invoices created today", "invoices generated
+ * for Acme"), bare "new invoices" lists, past-tense reports ("i created an invoice"), and creation
+ * of something else about an invoice ("create a follow-up for invoice 123") all fall through as
+ * `not-create` so the existing read-only/nudge/schedule router keeps its exact behavior.
+ */
+export type CreateIntent =
+  | { kind: "create"; text: string }
+  | { kind: "conflict"; action: "send" | "pay" | "capture" | "refund" }
+  | { kind: "not-create" };
+
+/** Financial commands the chat must never perform or promise, even inside creation phrasing. */
+export const CONFLICTS: { action: Extract<CreateIntent, { kind: "conflict" }>; re: RegExp }[] = [
+  {
+    action: { kind: "conflict", action: "send" },
+    re: /\b(send|sends|sent|sending|email|e-mail|mail)\b/,
+  },
+  { action: { kind: "conflict", action: "pay" }, re: /\b(pay|pays|paid|paying|mark\b.*\bpaid)\b/ },
+  {
+    action: { kind: "conflict", action: "capture" },
+    re: /\bcaptures?\b|\bcaptured\b|\bcapturing\b/,
+  },
+  { action: { kind: "conflict", action: "refund" }, re: /\brefunds?\b|\brefunded\b|\brefunding\b/ },
+];
+
+/** Optional conversational opener before the creation head; never a classification by itself. */
+const OPENER =
+  /^(?:(?:hey|hi|hello)(?:\s+nudgey)?[,\s]+)?(?:(?:can|could|would)\s+you\s+)?(?:please\s+)?/;
+/** Base-form creation verbs only: past participles ("created", "generated") are descriptive, not requests. */
+const CREATE_HEAD = /^(?:create|make|draft|generate|add|write|prepare)\b/;
+const NEED_HEAD = /^i(?:\s+(?:need|want|would\s+like)|'d\s+like)\b/;
+/** The verb's direct object must be the invoice itself (optional dative, article, "new"). */
+const INVOICE_OBJECT =
+  /^(?:create|make|draft|generate|add|write|prepare)\s+(?:(?:me|us)\s+)?(?:(?:a|an|the|this|that|my)\s+)?(?:new\s+)?invoices?\b/;
+const NEED_INVOICE =
+  /^i(?:\s+(?:need|want|would\s+like)|'d\s+like)\s+(?:(?:a|an|the|my)\s+)?(?:new\s+)?invoices?\b/;
+
+const INVOICE_NOUN = /\binvoices?\b/;
+
+const hasControl = (s: string): boolean =>
+  // Same boundary as the chat router: any C0 control (including tab/line break) or DEL stays a
+  // rejection handled by the existing path, never silent whitespace.
+  // eslint-disable-next-line no-control-regex
+  /[\x00-\x1f\x7f]/.test(s);
+
+export function parseCreateIntent(input: string): CreateIntent {
+  if (input.length > MAX_PROMPT_CHARS || hasControl(input)) return { kind: "not-create" };
+  const text = input.replace(/\s+/g, " ").trim();
+  if (!text) return { kind: "not-create" };
+  const core = text
+    .toLowerCase()
+    .replace(/[?.!]+$/g, "")
+    .trim()
+    .replace(OPENER, "");
+  const opensAsCreate = CREATE_HEAD.test(core) || NEED_HEAD.test(core);
+  if (!opensAsCreate) return { kind: "not-create" };
+  const lower = text.toLowerCase();
+  // A creation opening bundled with a financial command is refused, never partially performed.
+  // The invoice noun is required so unrelated "create ... and send ..." phrasing stays generic.
+  if (INVOICE_NOUN.test(lower))
+    for (const { action, re } of CONFLICTS) if (re.test(lower)) return action;
+  if (INVOICE_OBJECT.test(core) || NEED_INVOICE.test(core)) return { kind: "create", text };
+  return { kind: "not-create" };
+}

@@ -66,6 +66,8 @@ describe("Safe Mode status disclosure", () => {
     expect(html).not.toContain("sandbox-detail");
     // Header, tabs and sign-out are untouched.
     expect(html).toContain("NudgeMyInvoice");
+    expect(html).toContain("/brand/nudge-horizontal-logo.jpg");
+    expect(html).toContain('alt="NudgeMyInvoice"');
     expect(html).toContain("Invoice drafts");
     expect(html).toContain("New invoice");
     expect(html).toContain("Sign out");

@@ -3053,4 +3053,74 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 
 Independently review the documentation-only post-merge reconciliation and obtain an explicit owner decision on that documentation PR; do not start Stage 2 or deploy from this handoff.
 
+## Handoff: NMI-CHAT-TO-COMPOSER-04
+
+- **Task:** `tasks/NMI-NDG-02-chat-to-composer.md` — reconcile Draft PR #63 onto current `main@4aea541…`; separate integration branch, original PR #63 preserved unchanged.
+- **From:** repository coordination (PRs #65/#66 merged; PR #63 CONFLICTING)
+- **To:** independent exact-HEAD reviewer, then product owner
+- **Branch:** `feat/nmi-63-chat-composer-integration` from `origin/main@4aea541d358e419f835e1f59811216003ba56305`
+- **Source:** `origin/feat/nmi-chat-to-composer@bd6c6983c6d8a5963bf8cf41bb93c4734249949b` (prior exact-HEAD audit PASS; that PASS does not transfer to the integration)
+- **State:** mechanical merge committed; docs-only conflicts resolved; original PR #63 untouched; no merge/deploy/provider/protected-ref action.
+
+### Conflicts identified
+
+- `docs/STATUS.md` (2 hunks) and `docs/HANDOFFS.md` (1 hunk): both sides edited after base `766dde37…` (PR #63's DOC-01/stale-main prose vs PR #65 Stage-1 + PR #66 post-merge reconciliation). Resolved by keeping the current-main side; PR #63's stale `main@766dde37` references not carried forward. Fresh STATUS updates recorded on this branch instead.
+- Functional files (`Nudgey.tsx`, `NudgeyChat.tsx`, `chatSession.ts`, `appState.ts`, plus tests, plus new `createIntent.ts`/`createIntent.test.ts`, plus the PR #63 task file): auto-merged with zero conflicts — current `main` never touched them. All 10 files verified byte-identical to `bd6c698…` via `cmp`.
+
+### Preserved
+
+- Dashboard UX (P1 Stage 1 Safe Mode disclosure, head total, Spotlight dedupe, toolbar/FAB clearance), Sandbox Safe Mode identity and point-of-action confirmations, auth/session/CSRF/ownership, read-only lookup and nudge-draft workflows byte-identical, `nudgeyAction("create")` unchanged, provider boundaries (`off`/`limited`/`combined`), no new endpoint/migration/dependency, no secrets in diff.
+
+### Validation
+
+- Targeted suites green (13 files / 171 tests: `createIntent`, `chatSession`, `NudgeChat`, `appState`, Nudgey panel, lookup/nudge/schedule regressions).
+- Full exact-HEAD manual CI per `docs/TESTING.md` run on the final integration HEAD (Node 22, disposable PG16, both builds, scans, audit, diff check); hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft integration PR.
+
+### Next action
+
+Independent exact-HEAD audit of the integration HEAD, then separate explicit owner merge decision. Do not merge, deploy, activate providers, move protected refs, edit PR #63, or begin Stage 2.
+
+## NMI-JUDGES-RC-01 — Judges release candidate (chat-to-composer + judge branding)
+
+Branch `feat/nmi-judges-rc-01` from current `main@4aea541…`; merged PR #67 `478b782a` then PR #69 `80d1bd8`. Clean auto-merge, zero conflicts; RC diff vs main is the exact union (24 files: 9 chat feature files, 8 branding files, docs/task records). Branding markers verified in AppShell/Nudgey/LoginScreen; chat suites present; `git diff --check` clean; no api/packages/workflows changes; no secrets; PR #63 untouched; protected refs pinned.
+
+### Verdicts carried in
+
+- PR #67 audit PASS at `478b782a` (comment 6717442870): merge provenance, 10 files byte-identical to PR #63, targeted 178/178.
+- PR #69 visual gap closed → final PASS at `80d1bd8` (comment 6717444566): 10 published PNGs byte-identical to attested set, all items independently viewed.
+
+### Validation (RC HEAD, Node v22.23.4, disposable PG 16.15)
+
+- Targeted: 16 files / 199 passed (chat + branding + hosting suites).
+- `pnpm validate` exit 0 (lint/format/typecheck/unit/builds/bundle scan); unit 77 files / 1502 passed.
+- `pnpm test:db` 20 files / 374 passed; `db:generate` no changes; `audit --prod` clean.
+- Real-browser 28/28 PASS (headless Chrome, prod bundle + real API + synthetic qa_operator): logos/favicon, Nudgey panel with chat actions, Safe Mode, CSP, dark/mobile/zoom/keyboard. RC shots in `/tmp/nmi-rc-shots/` (not committed).
+
+### Next action
+
+Push branch, open Draft RC PR with this evidence, request independent exact-HEAD audit. Blocking release gates after audit: owner merge decision, hosted `workflow_dispatch` SUCCESS on both workflows, then G1/G5/G6/G7/G8 + Render deploy permission. Do not merge, deploy, activate providers, or move protected refs.
+
+## NMI-JUDGES-RC-02 — RC review remediation (EUR-chip operability + honest harness)
+
+Addresses review `5816666095` (PR #69) as carried into RC comment `6717561154` on PR #70 at `a54b9d1`. No product code changed: branding, chat-to-composer, Safe Mode, and payment boundaries are byte-identical to the audited RC tree.
+
+### Finding 1: 390px launcher/EUR-chip overlap — operability proven, no CSS change
+
+- Reproduced exactly: EUR chip (x221–277/y727–771) under launcher (x242–378/y712–770); `elementFromPoint` at chip center hit the launcher (`08a-eur-initial-390.png`).
+- After standard scroll-to-target: `overlap:false`, hit-test hits `BUTTON.pill::EUR`.
+- Trusted CDP tap on chip center flipped `aria-pressed` to `true` (only EUR pressed, Clear-filters appeared): `08b-eur-tapped-390.png`.
+- Rationale for no CSS fix: a fixed launcher inherently covers some scroll positions (standard FAB behavior); the existing 140px mobile body clearance lets any content scroll clear, proven end to end. Audited branding/widget CSS preserved byte-for-byte.
+
+### Finding 2: harness assertions corrected (`rc70-qa.mjs`, 30/30 PASS)
+
+- Health asserts observed `200 + status ok + sandbox`; zoom asserts `0px` overflow; focus asserts observed `outline solid/2px`; launcher Tab-reachability observed (23 tabs); sign-in labeled `submit=requestSubmit-after-traversal` (native Enter produced no submit in headless Chrome — hardware Enter remains owner QA). No PASS counts unproven outcomes.
+
+### Evidence
+
+Reviewer-accessible branch `docs/nmi-70-rc-qa-evidence@a5e2fe4`: `design/evidence/NMI-RC70/` (13 PNGs viewed by verifier + corrected runner + README with runbook and honest limitations).
+
+### Next action
+
+Focused regressions + final exact-HEAD manual CI on the new HEAD, post evidence to PR #70, request independent focused re-audit. Blocking release gates unchanged: owner merge decision, hosted `workflow_dispatch` SUCCESS on both workflows, G1/G5/G6/G7/G8 + Render deploy permission. Do not merge, deploy, activate providers, or move protected refs.
+
 <!-- HANDOFF_ENTRIES_END -->

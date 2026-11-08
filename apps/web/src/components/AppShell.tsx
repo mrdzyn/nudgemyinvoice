@@ -134,18 +134,24 @@ export function AppShell({ children }: { children: ReactNode }) {
               if (state.authed) dispatch({ type: "navigate", screen: "dashboard" });
             }}
           >
-            <span className="brand-mark" aria-hidden="true">
-              N
-            </span>
-            <span>NudgeMyInvoice</span>
+            <img
+              className="brand-wordmark"
+              src="/brand/nudge-horizontal-logo.jpg"
+              alt="NudgeMyInvoice"
+              width={220}
+              height={62}
+            />
           </button>
         ) : (
           // Nothing to navigate to before sign-in, so no focusable control.
           <div className="brand">
-            <span className="brand-mark" aria-hidden="true">
-              N
-            </span>
-            <span>NudgeMyInvoice</span>
+            <img
+              className="brand-wordmark"
+              src="/brand/nudge-horizontal-logo.jpg"
+              alt="NudgeMyInvoice"
+              width={220}
+              height={62}
+            />
           </div>
         )}
         <div className="header-controls">

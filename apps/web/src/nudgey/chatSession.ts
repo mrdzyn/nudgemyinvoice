@@ -1,5 +1,6 @@
 import type { FollowUpsController } from "../followups/controller.js";
 import type { ListQuery, ListResult } from "../invoices/api.js";
+import { parseCreateIntent } from "./createIntent.js";
 import { MAX_PROMPT_CHARS, parseIntent } from "./intent.js";
 import { runLookup, summarizeForAnnouncement, type LookupResult } from "./lookup.js";
 import { browserTimeZoneOrNull, parseScheduleIntent } from "./scheduleIntent.js";
@@ -22,6 +23,12 @@ export interface ChatMessage {
   /** A lookup is running for this question. */
   pending?: boolean;
   /**
+   * A recognized invoice-creation request: the operator's verbatim text, held in memory only so
+   * the chat can offer a "Review in Invoice Composer" handoff. Never posted, saved, or sent from
+   * here; the composer still requires an explicit Parse click and review before anything exists.
+   */
+  composerPrefill?: string;
+  /**
    * NMI-P6: a proposed nudge draft (tone + customer term only). The reply renders an explicit invoice choice and
    * a confirmation step; nothing is drafted, and no AI call is made, without the operator's click.
    */
@@ -31,6 +38,13 @@ export interface ChatMessage {
 export const MAX_MESSAGES = 20;
 export const EMPTY_PROMPT_TEXT =
   "Type a question first, for example “What are my pending invoices?”.";
+
+/** Read-only-safe reply: creation happens only in the composer after explicit operator review. */
+export const COMPOSER_READY_TEXT =
+  "I can prepare your invoice in the composer for review — nothing is created, sent or saved until you confirm each step yourself.";
+/** A creation request bundled with a financial command is refused, never partially performed. */
+export const COMPOSER_CONFLICT_TEXT =
+  "I can't send, pay, capture or refund from this chat. Rephrase as a creation request (for example, “Create an invoice for Acme for $75”) and I'll prepare it in the composer for your review — nothing moves without your explicit action.";
 
 const REJECTION_TEXT = {
   empty: EMPTY_PROMPT_TEXT,
@@ -192,6 +206,36 @@ export class ChatSession {
       );
       this.deps.announce(
         "Invoice candidates loaded. Select the exact invoice before reviewing the proposal.",
+      );
+      return;
+    }
+    // Creation requests are recognized BEFORE the generic read-only/help fallback: the old
+    // router maps every `create` to help, which is the reported P0 gap. Conflicts (send/pay/
+    // capture/refund) are refused here; ambiguous input falls through to the existing router.
+    const created = parseCreateIntent(raw);
+    if (created.kind !== "not-create") {
+      this.deps.scheduleCandidates?.supersedeCandidate();
+      const user: ChatMessage = {
+        id: this.nextId++,
+        role: "user",
+        text: raw.slice(0, MAX_PROMPT_CHARS),
+      };
+      const reply: ChatMessage =
+        created.kind === "create"
+          ? {
+              id: this.nextId++,
+              role: "nudgey",
+              text: COMPOSER_READY_TEXT,
+              composerPrefill: created.text,
+            }
+          : { id: this.nextId++, role: "nudgey", text: COMPOSER_CONFLICT_TEXT };
+      this.set([...this.dropReplaceableAttempt(), user, reply]);
+      // No network, no persistence, no PayPal/OpenAI call: classification is local and the
+      // prefill stays in this in-memory conversation until the operator clicks through.
+      this.deps.announce(
+        created.kind === "create"
+          ? "Invoice request ready. Review it in the Invoice Composer."
+          : "That request was refused. No financial action was taken.",
       );
       return;
     }
