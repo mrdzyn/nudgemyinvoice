@@ -3155,4 +3155,12 @@ Same Draft PR #74, rebased `--onto origin/main@26d3f84` (hotfix-only diff; READM
 
 Push to the Draft PR, request independent exact-HEAD re-audit. Then owner merge decision; no deploy authorized. Live sandbox trial needs a separately bounded Request; production migration needs separate approval + verified backup.
 
+## NMI-PAYPAL-SYNC-03 — PP-LIST-01 remediation (re-audit next)
+
+Same Draft PR #74, still based on `main@26d3f84` (no rebase needed; main unchanged). List query requests documented `fields=amount` under the tightened allowlist; amount-less rows enrich read-only via detail before being dropped. All five prior remediations preserved. Contract and evidence in `tasks/NMI-PAYPAL-DRAFT-SYNC.md`. No merge, deploy, production migration, provider activation, or protected-branch changes.
+
+### Next action
+
+Push to the Draft PR, request independent exact-HEAD re-audit. Then owner merge decision; no deploy authorized. Live sandbox trial needs a separately bounded Request; production migration needs separate approval + verified backup.
+
 <!-- HANDOFF_ENTRIES_END -->

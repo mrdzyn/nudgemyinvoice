@@ -801,14 +801,20 @@ describe("listInvoices (read-only sync list)", () => {
         .transport,
     );
 
-  it("requests the bounded paginated list and keeps valid DRAFT + non-DRAFT remotes, counting malformed", async () => {
+  it("requests the bounded paginated list with fields=amount and keeps valid DRAFT + non-DRAFT remotes, counting malformed", async () => {
     const seen: string[] = [];
-    const c = listClient((r) => {
-      seen.push(new URL(r.url).search);
-      return ok(listBody);
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "GET /v2/invoicing/invoices": (r) => {
+        seen.push(new URL(r.url).search);
+        return ok(listBody);
+      },
+      // The amount-less row is enriched read-only; a 404 detail is a skip, not a failure.
+      "GET /v2/invoicing/invoices/INV2-BROKEN-3": () => ok({ id: "INV2-BROKEN-3" }, 404),
     });
-    const page = await c.listInvoices({ page: 1, pageSize: 20 });
-    expect(seen).toEqual(["?page=1&page_size=20&total_required=true"]);
+    const page = await client(f.transport).listInvoices({ page: 1, pageSize: 20 });
+    expect(seen).toEqual(["?page=1&page_size=20&total_required=true&fields=amount"]);
+    expect(f.calls.some((r) => r.url === `${BASE}/v2/invoicing/invoices/INV2-BROKEN-3`)).toBe(true);
     expect(page.totalItems).toBe(3);
     expect(page.invoices.map((i) => i.paypalInvoiceId).sort()).toEqual(
       ["INV2-DRAFT-1", "INV2-SENT-2"].sort(),
@@ -854,7 +860,112 @@ describe("listInvoices (read-only sync list)", () => {
       },
     });
     await client(f.transport).listInvoices({ page: 2, pageSize: 5 });
-    expect(calls).toEqual(["GET /v2/invoicing/invoices?page=2&page_size=5&total_required=true"]);
+    expect(calls).toEqual([
+      "GET /v2/invoicing/invoices?page=2&page_size=5&total_required=true&fields=amount",
+    ]);
     expect(JSON.stringify(f.calls)).not.toMatch(/send|remind|cancel|refund|payment/i);
+  });
+
+  it("enriches amount-less rows via read-only detail instead of silently skipping valid DRAFTs", async () => {
+    const calls: string[] = [];
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "GET /v2/invoicing/invoices": (r) => {
+        calls.push(new URL(r.url).search);
+        return ok({
+          total_items: 2,
+          total_pages: 1,
+          items: [
+            {
+              id: "INV2-FULL-1",
+              status: "DRAFT",
+              detail: { currency_code: "USD", invoice_number: "f1" },
+              amount: { currency_code: "USD", value: "5.00" },
+            },
+            // Minimal representation: no amount despite fields=amount.
+            {
+              id: "INV2-MIN-2",
+              status: "DRAFT",
+              detail: { currency_code: "USD", invoice_number: "m2" },
+            },
+          ],
+        });
+      },
+      "GET /v2/invoicing/invoices/INV2-MIN-2": (r) => {
+        calls.push(new URL(r.url).pathname);
+        return ok({
+          id: "INV2-MIN-2",
+          status: "DRAFT",
+          detail: { currency_code: "USD", invoice_number: "m2" },
+          amount: { currency_code: "USD", value: "7.50" },
+        });
+      },
+    });
+    const page = await client(f.transport).listInvoices({ page: 1, pageSize: 20 });
+    expect(page.invoices.map((i) => i.paypalInvoiceId).sort()).toEqual([
+      "INV2-FULL-1",
+      "INV2-MIN-2",
+    ]);
+    expect(page.invoices.find((i) => i.paypalInvoiceId === "INV2-MIN-2")).toMatchObject({
+      status: "DRAFT",
+      currency: "USD",
+      total: "7.50",
+    });
+    expect(page.skippedMalformed).toBe(0);
+    expect(page.rawCount).toBe(2);
+    expect(calls).toEqual([
+      "?page=1&page_size=20&total_required=true&fields=amount",
+      "/v2/invoicing/invoices/INV2-MIN-2",
+    ]);
+  });
+
+  it("drops rows whose detail also lacks an amount, without failing the page", async () => {
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "GET /v2/invoicing/invoices": () =>
+        ok({
+          total_items: 2,
+          total_pages: 1,
+          items: [
+            {
+              id: "INV2-FULL-1",
+              status: "DRAFT",
+              detail: { currency_code: "USD", invoice_number: "f1" },
+              amount: { currency_code: "USD", value: "5.00" },
+            },
+            { id: "INV2-NOAMT-2", status: "DRAFT", detail: { currency_code: "USD" } },
+          ],
+        }),
+      "GET /v2/invoicing/invoices/INV2-NOAMT-2": () =>
+        ok({ id: "INV2-NOAMT-2", status: "DRAFT", detail: { currency_code: "USD" } }),
+    });
+    const page = await client(f.transport).listInvoices({ page: 1, pageSize: 20 });
+    expect(page.invoices.map((i) => i.paypalInvoiceId)).toEqual(["INV2-FULL-1"]);
+    expect(page.skippedMalformed).toBe(1);
+    expect(page.rawCount).toBe(2);
+  });
+
+  it("degrades a detail outage to a row skip while the rest of the page imports", async () => {
+    const f = fake({
+      "POST /v1/oauth2/token": () => tokenOk,
+      "GET /v2/invoicing/invoices": () =>
+        ok({
+          total_items: 2,
+          total_pages: 1,
+          items: [
+            {
+              id: "INV2-FULL-1",
+              status: "DRAFT",
+              detail: { currency_code: "USD", invoice_number: "f1" },
+              amount: { currency_code: "USD", value: "5.00" },
+            },
+            { id: "INV2-DOWN-2", status: "DRAFT", detail: { currency_code: "USD" } },
+          ],
+        }),
+      "GET /v2/invoicing/invoices/INV2-DOWN-2": () => ok({ name: "SERVER_ERROR" }, 500),
+    });
+    const page = await client(f.transport).listInvoices({ page: 1, pageSize: 20 });
+    expect(page.invoices.map((i) => i.paypalInvoiceId)).toEqual(["INV2-FULL-1"]);
+    expect(page.skippedMalformed).toBe(1);
   });
 });

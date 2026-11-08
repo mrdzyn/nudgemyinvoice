@@ -283,6 +283,12 @@ export class PayPalSandboxClient {
    * sync service so one malformed record never fails the whole page. Envelope errors throw
    * PayPalOutcomeUnknownError. There is deliberately no send/remind/cancel/pay/refund/update
    * path here or in the transport allowlist.
+   *
+   * Amount coverage: the list query requests the documented `fields=amount`, but a minimally
+   * represented row may still omit it. Such rows are enriched read-only through the already
+   * allowlisted detail endpoint (`getInvoice`) before being dropped: a valid DRAFT is imported
+   * rather than silently skipped. A missing/failed detail degrades to a skip for that row
+   * only; the page always survives.
    */
   async listInvoices(input: { page: number; pageSize?: number }): Promise<{
     invoices: RemoteInvoice[];
@@ -310,7 +316,7 @@ export class PayPalSandboxClient {
     if (!parsed.success) throw new PayPalOutcomeUnknownError("response_unparseable");
     const invoices: RemoteInvoice[] = [];
     for (const item of parsed.data.items) {
-      const remote = toRemote(
+      const listed = toRemote(
         JSON.stringify({
           id: item.id,
           status: item.status,
@@ -318,7 +324,18 @@ export class PayPalSandboxClient {
           amount: item.amount,
         }),
       );
-      if (remote) invoices.push(remote);
+      if (listed) {
+        invoices.push(listed);
+        continue;
+      }
+      // Minimal list representation: enrich read-only via detail before dropping the row.
+      // Sequential and bounded (at most one detail call per listed row).
+      try {
+        const detailed = await this.getInvoice(item.id);
+        if (detailed) invoices.push(detailed);
+      } catch {
+        // Detail outage for one row is a skip for that row, never a page failure.
+      }
     }
     return {
       invoices,

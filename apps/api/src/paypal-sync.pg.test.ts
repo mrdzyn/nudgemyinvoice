@@ -371,6 +371,10 @@ describe.skipIf(!url)("PayPal DRAFT sync (real PostgreSQL)", () => {
         };
       }
       seen.push(`${req.method} ${url.pathname}${url.search}`);
+      if (url.pathname !== "/v2/invoicing/invoices") {
+        // Read-only detail enrichment for the amount-less row: unknown here (404).
+        return { status: 404, headers: {}, body: JSON.stringify({ id: "INV2-R-BAD" }) };
+      }
       const page = Number(url.searchParams.get("page"));
       const items = page === 1 ? page1 : page === 2 ? page2 : [];
       return {
@@ -399,8 +403,106 @@ describe.skipIf(!url)("PayPal DRAFT sync (real PostgreSQL)", () => {
     });
     expect(res.json().partialFailure).toBe(false);
     expect(res.json().truncated).toBe(false);
-    expect(seen.filter((s) => s.startsWith("GET /v2/invoicing/invoices"))).toHaveLength(2);
+    // Both list pages are consumed; the amount-less row triggers exactly one read-only
+    // detail enrichment (404 here), which degrades to its single skip.
+    expect(seen).toEqual([
+      "GET /v2/invoicing/invoices?page=1&page_size=20&total_required=true&fields=amount",
+      "GET /v2/invoicing/invoices/INV2-R-BAD",
+      "GET /v2/invoicing/invoices?page=2&page_size=20&total_required=true&fields=amount",
+    ]);
     expect(((await op.list()).json() as { items: unknown[] }).items).toHaveLength(24);
+  });
+
+  it("imports minimally represented DRAFTs via read-only detail (real HTTP path)", async () => {
+    // PayPal omits amounts from the list despite fields=amount: the client must enrich each
+    // amount-less row through the read-only detail endpoint and import the validated DRAFT
+    // instead of reporting a clean sync with zero imports.
+    const seen: string[] = [];
+    const token = () => ({
+      status: 200,
+      headers: {},
+      body: JSON.stringify({
+        access_token: "t".repeat(32),
+        token_type: "Bearer",
+        expires_in: 3600,
+      }),
+    });
+    const full = (id: string, n: string, value: string) => ({
+      status: 200,
+      headers: {},
+      body: JSON.stringify({
+        id,
+        status: "DRAFT",
+        detail: { currency_code: "USD", invoice_number: n },
+        amount: { currency_code: "USD", value },
+      }),
+    });
+    const transport = async (req: HttpRequest): Promise<HttpResponse> => {
+      const url = new URL(req.url);
+      if (url.pathname === "/v1/oauth2/token") return token();
+      seen.push(`${req.method} ${url.pathname}${url.search}`);
+      if (url.pathname === "/v2/invoicing/invoices/INV2-MIN-1")
+        return full("INV2-MIN-1", "m1", "10.00");
+      if (url.pathname === "/v2/invoicing/invoices/INV2-MIN-2")
+        return full("INV2-MIN-2", "m2", "3.25");
+      if (url.pathname === "/v2/invoicing/invoices") {
+        return {
+          status: 200,
+          headers: {},
+          body: JSON.stringify({
+            total_items: 2,
+            total_pages: 1,
+            items: [
+              {
+                id: "INV2-MIN-1",
+                status: "DRAFT",
+                detail: { currency_code: "USD", invoice_number: "m1" },
+              },
+              {
+                id: "INV2-MIN-2",
+                status: "DRAFT",
+                detail: { currency_code: "USD", invoice_number: "m2" },
+              },
+            ],
+          }),
+        };
+      }
+      throw new Error(`unexpected request ${req.method} ${url.pathname}`);
+    };
+    const client = new PayPalSandboxClient({
+      baseUrl: "https://api-m.sandbox.paypal.com",
+      clientId: "cid",
+      clientSecret: "csecret",
+      transport,
+    });
+    const app = makeApp(null, {}, client);
+    const op = await newOperator(app, "sync-minimal");
+
+    const res = await op.sync();
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().counts).toEqual({
+      created: 2,
+      updated: 0,
+      unchanged: 0,
+      skipped: 0,
+      failed: 0,
+    });
+    expect(res.json().partialFailure).toBe(false);
+    expect(res.json().truncated).toBe(false);
+    // Exact outgoing contract: fields=amount on the list, read-only detail per minimal row,
+    // and nothing else (no money-moving path).
+    expect(seen).toEqual([
+      "GET /v2/invoicing/invoices?page=1&page_size=20&total_required=true&fields=amount",
+      "GET /v2/invoicing/invoices/INV2-MIN-1",
+      "GET /v2/invoicing/invoices/INV2-MIN-2",
+    ]);
+    const items = (
+      (await op.list()).json() as { items: Array<{ remoteInvoiceId: string; total: string }> }
+    ).items;
+    expect(items.map((i) => [i.remoteInvoiceId, i.total]).sort()).toEqual([
+      ["INV2-MIN-1", "10.00"],
+      ["INV2-MIN-2", "3.25"],
+    ]);
   });
 
   it("reports truncation when the bounded page cap is reached", async () => {

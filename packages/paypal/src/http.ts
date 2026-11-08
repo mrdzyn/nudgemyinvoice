@@ -44,7 +44,9 @@ export function paypalListQuery(page: number, pageSize: number): string {
     throw new ForbiddenPayPalOperation("list page out of range");
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > PAYPAL_SYNC_MAX_PAGE_SIZE)
     throw new ForbiddenPayPalOperation("list page size out of range");
-  return `page=${page}&page_size=${pageSize}&total_required=true`;
+  // `fields=amount` is the documented v2 list extra: without it PayPal may omit invoice
+  // amounts and valid DRAFTs would be unimportable. The value is fixed, never caller input.
+  return `page=${page}&page_size=${pageSize}&total_required=true&fields=amount`;
 }
 
 /**
@@ -90,9 +92,12 @@ export function guardRequest(method: string, rawUrl: string): void {
       throw new ForbiddenPayPalOperation("search query shape");
     }
   } else if (isList) {
-    // Bounded read-only pagination only: page, page_size and total_required, nothing else.
+    // Bounded read-only pagination only: page, page_size, total_required and the fixed
+    // fields=amount extra — exact byte spelling, nothing else, no caller-controlled fields.
     // Values are range-checked so a caller cannot request an unbounded export.
-    const m = /^\?page=(\d{1,3})&page_size=(\d{1,2})&total_required=true$/.exec(url.search);
+    const m = /^\?page=(\d{1,3})&page_size=(\d{1,2})&total_required=true&fields=amount$/.exec(
+      url.search,
+    );
     if (!m) throw new ForbiddenPayPalOperation("list query shape");
     const page = Number(m[1]);
     const pageSize = Number(m[2]);

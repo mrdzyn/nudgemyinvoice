@@ -8,8 +8,8 @@ describe("PayPal request guard (allowlist)", () => {
     ["POST", "/v1/oauth2/token"],
     ["POST", "/v2/invoicing/invoices"],
     ["GET", "/v2/invoicing/invoices/INV2-ABCD-1234"],
-    ["GET", "/v2/invoicing/invoices?page=1&page_size=20&total_required=true"],
-    ["GET", "/v2/invoicing/invoices?page=3&page_size=5&total_required=true"],
+    ["GET", "/v2/invoicing/invoices?page=1&page_size=20&total_required=true&fields=amount"],
+    ["GET", "/v2/invoicing/invoices?page=3&page_size=5&total_required=true&fields=amount"],
     ["POST", "/v2/invoicing/search-invoices?page=1&page_size=20&total_required=true"],
   ])("allows %s %s", (m, p) => expect(() => guardRequest(m, H + p)).not.toThrow());
 
@@ -70,14 +70,23 @@ describe("PayPal request guard (allowlist)", () => {
 
   it.each([
     "",
-    "?page=0&page_size=20&total_required=true",
-    "?page=1&page_size=0&total_required=true",
-    "?page=1&page_size=21&total_required=true",
-    "?page=1&page_size=20&total_required=false",
+    "?page=0&page_size=20&total_required=true&fields=amount",
+    "?page=1&page_size=0&total_required=true&fields=amount",
+    "?page=1&page_size=21&total_required=true&fields=amount",
+    "?page=1&page_size=20&total_required=false&fields=amount",
     "?page=1&page_size=20",
-    "?page_size=20&page=1&total_required=true",
+    "?page_size=20&page=1&total_required=true&fields=amount",
     "?page=1&page_size=20&total_required=true&invoice_number=x",
     "?page=1&page_size=20&total_required=true&page=1",
+    // The amount extra is mandatory and fixed: the legacy shape without it, a missing value,
+    // a caller-chosen field set, and a reordered spelling are all refused.
+    "?page=1&page_size=20&total_required=true",
+    "?page=1&page_size=20&total_required=true&fields=",
+    "?page=1&page_size=20&total_required=true&fields=status",
+    "?page=1&page_size=20&total_required=true&fields=amount,status",
+    "?page=1&page_size=20&total_required=true&fields=amount&fields=amount",
+    "?fields=amount&page=1&page_size=20&total_required=true",
+    "?page=1&page_size=20&total_required=true&fields=amount ",
   ])("refuses noncanonical list query %j", (query) => {
     expect(() => guardRequest("GET", `${H}/v2/invoicing/invoices${query}`)).toThrow(
       ForbiddenPayPalOperation,

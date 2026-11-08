@@ -78,6 +78,21 @@ One-way, manually initiated import of existing PayPal Sandbox DRAFT invoices int
   pre-existing warning); `pnpm format:check` fails ONLY on pre-existing untouched
   `release-preflight.test.ts` drift; `pnpm db:generate` no drift.
 
+## Remediation of independent review 5818531939 (PP-LIST-01, same Draft PR)
+
+- List query now requests the documented `fields=amount` via a fixed, allowlisted, bounded
+  GET query; the transport guard accepts only that exact spelling (`fields` value fixed,
+  no caller-controlled fields; legacy shape without it refused).
+- Amount-less rows are enriched read-only through the already allowlisted detail endpoint
+  before being dropped: a valid DRAFT imports instead of silently skipping. A missing/failed
+  detail degrades to a single-row skip; the page always survives.
+- Fake-HTTP regressions: exact outgoing query inspection, minimal list responses enriched
+  via detail (unit + end-to-end through the HTTP route asserting `created: 2, skipped: 0`),
+  detail-missing and detail-outage cases asserting skip-without-page-failure.
+- Validation: PayPal package 162/162, sync suite 11/11 (PG); `pnpm typecheck` 0 errors;
+  `pnpm lint` 0 errors (1 pre-existing warning); `pnpm format:check` fails ONLY on pre-existing
+  untouched `release-preflight.test.ts` drift. No schema change; no real PayPal calls.
+
 ## Rollback
 
 - Branch unmerged: `git checkout <base>; git branch -D fix/nmi-paypal-draft-sync` (or close the
