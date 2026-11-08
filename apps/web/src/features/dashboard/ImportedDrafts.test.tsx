@@ -65,6 +65,36 @@ describe("ImportedDraftsView", () => {
     expect(partial).toContain("Try again");
   });
 
+  it("surfaces truncation as incomplete without offering a no-progress retry", () => {
+    const truncated = html({
+      ...initialImportsView,
+      phase: "ready",
+      items: [item("INV2-DRAFT-1")],
+      counts: { created: 20, updated: 0, unchanged: 0, skipped: 0, failed: 0 },
+      partialFailure: true,
+      truncated: true,
+      notice: "truncated",
+    });
+    expect(truncated).toContain("INV2-DRAFT-1");
+    expect(truncated).toContain("incomplete");
+    expect(truncated).toContain("page cap");
+    expect(truncated).not.toContain("Try again");
+  });
+
+  it("surfaces an audit failure with its kept rows and a retry", () => {
+    const failed = html({
+      ...initialImportsView,
+      phase: "sync-error",
+      items: [item("INV2-DRAFT-1")],
+      counts: { created: 1, updated: 0, unchanged: 0, skipped: 0, failed: 0 },
+      partialFailure: true,
+      notice: "audit-failed",
+    });
+    expect(failed).toContain("INV2-DRAFT-1");
+    expect(failed).toContain("audit trail");
+    expect(failed).toContain("Try again");
+  });
+
   it("disables the button while syncing and shows the active status", () => {
     const syncing = html({ ...initialImportsView, phase: "syncing", items: [item("INV2-X")] });
     expect(syncing).toContain("Syncing");

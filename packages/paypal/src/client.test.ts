@@ -814,6 +814,9 @@ describe("listInvoices (read-only sync list)", () => {
       ["INV2-DRAFT-1", "INV2-SENT-2"].sort(),
     );
     expect(page.skippedMalformed).toBe(1);
+    // The raw page held 3 rows even though only 2 survived filtering: pagination must use
+    // rawCount (with total_items/total_pages), never the filtered invoices length.
+    expect(page.rawCount).toBe(3);
   });
 
   it("rejects out-of-range pagination before any list I/O", async () => {

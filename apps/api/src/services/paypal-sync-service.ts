@@ -47,13 +47,14 @@ const DUE_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export async function syncPaypalDrafts(
   deps: PayPalSyncDeps,
   input: { operatorId: string; requestId: string },
-): Promise<{ counts: PayPalSyncCounts; syncedAt: Date }> {
+): Promise<{ counts: PayPalSyncCounts; syncedAt: Date; truncated: boolean; auditOk: boolean }> {
   const pageSize = Math.min(
     Math.max(Math.trunc(deps.pageSize ?? PAYPAL_SYNC_MAX_PAGE_SIZE), 1),
     PAYPAL_SYNC_MAX_PAGE_SIZE,
   );
   const maxPages = Math.min(Math.max(Math.trunc(deps.maxPages ?? DEFAULT_MAX_PAGES), 1), 25);
   const counts: PayPalSyncCounts = { created: 0, updated: 0, unchanged: 0, skipped: 0, failed: 0 };
+  let truncated = false;
 
   for (let page = 1; page <= maxPages; page++) {
     let list;
@@ -68,29 +69,43 @@ export async function syncPaypalDrafts(
     for (const remote of list.invoices) {
       await importOne(deps, input.operatorId, remote, counts);
     }
+    // Pagination is driven by the RAW page size and PayPal's authoritative totals, never by
+    // the filtered valid-invoice count: malformed rows make `invoices` shorter than the page
+    // PayPal actually returned, and stopping on it would silently drop later pages.
     const seen = page * pageSize;
     if (
-      list.invoices.length < pageSize ||
+      list.rawCount < pageSize ||
       seen >= list.totalItems ||
       (list.totalPages !== null && page >= list.totalPages)
     ) {
       break;
     }
+    if (page === maxPages) {
+      // Bounded cap reached while PayPal reports more pages: report incomplete, never success.
+      truncated = true;
+    }
   }
 
   const syncedAt = deps.clock ? deps.clock() : new Date();
   // Audit keeps only closed-token detail (no PII, no amounts); the exact counts travel in the
-  // authenticated API response, never in logs.
-  await deps.audit
-    .record({
+  // authenticated API response, never in logs. An audit outage is reported explicitly: already
+  // committed rows are preserved AND the caller is told the trail is missing (auditOk: false).
+  let auditOk = true;
+  try {
+    await deps.audit.record({
       requestId: input.requestId,
       actor: input.operatorId,
       action: "paypal.draft_sync",
       outcome: counts.failed > 0 ? "error" : "success",
-      detail: { state: counts.failed > 0 ? "partial_failure" : "complete" },
-    })
-    .catch(() => undefined);
-  return { counts, syncedAt };
+      detail: {
+        state:
+          counts.failed > 0 ? "partial_failure" : truncated ? "incomplete" : ("complete" as const),
+      },
+    });
+  } catch {
+    auditOk = false;
+  }
+  return { counts, syncedAt, truncated, auditOk };
 }
 
 async function importOne(

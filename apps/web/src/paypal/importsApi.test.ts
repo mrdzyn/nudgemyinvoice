@@ -27,27 +27,60 @@ const item = {
 };
 
 describe("parseSyncResponse", () => {
-  it("accepts exact counts with a consistent partial flag", () => {
+  it("accepts exact counts with consistent partial and truncated flags", () => {
     expect(
-      parseSyncResponse({ counts, syncedAt: "2026-11-08T12:00:00.000Z", partialFailure: false }),
-    ).toEqual({ counts, partialFailure: false });
+      parseSyncResponse({
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        partialFailure: false,
+        truncated: false,
+      }),
+    ).toEqual({ counts, partialFailure: false, truncated: false });
+    expect(
+      parseSyncResponse({
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        partialFailure: true,
+        truncated: true,
+      }),
+    ).toEqual({ counts, partialFailure: true, truncated: true });
   });
-  it("rejects an inconsistent partial flag, extra keys and negative counts", () => {
+  it("rejects inconsistent flags, extra keys and negative counts", () => {
     expect(
-      parseSyncResponse({ counts, syncedAt: "2026-11-08T12:00:00.000Z", partialFailure: true }),
+      parseSyncResponse({
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        partialFailure: true,
+        truncated: false,
+      }),
+    ).toBeNull();
+    // Truncation without the partial flag is a silent incomplete import.
+    expect(
+      parseSyncResponse({
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        partialFailure: false,
+        truncated: true,
+      }),
     ).toBeNull();
     expect(
       parseSyncResponse({
         counts: { ...counts, failed: 2 },
         syncedAt: "2026-11-08T12:00:00.000Z",
         partialFailure: false,
+        truncated: false,
       }),
+    ).toBeNull();
+    // The old three-key envelope is no longer exact: truncation must be explicit.
+    expect(
+      parseSyncResponse({ counts, syncedAt: "2026-11-08T12:00:00.000Z", partialFailure: false }),
     ).toBeNull();
     expect(
       parseSyncResponse({
         counts: { ...counts, extra: 1 },
         syncedAt: "2026-11-08T12:00:00.000Z",
         partialFailure: false,
+        truncated: false,
       }),
     ).toBeNull();
     expect(
@@ -55,6 +88,7 @@ describe("parseSyncResponse", () => {
         counts: { ...counts, created: -1 },
         syncedAt: "2026-11-08T12:00:00.000Z",
         partialFailure: false,
+        truncated: false,
       }),
     ).toBeNull();
   });
@@ -92,13 +126,55 @@ describe("parseImportsResponse", () => {
 describe("imports transport", () => {
   it("sync posts with CSRF and parses an exact ok answer", async () => {
     const { api, calls } = fake(() =>
-      json(200, { counts, syncedAt: "2026-11-08T12:00:00.000Z", partialFailure: false }),
+      json(200, {
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        partialFailure: false,
+        truncated: false,
+      }),
     );
     const r = await api.sync(CSRF, sig());
-    expect(r).toEqual({ kind: "ok", counts, partialFailure: false });
+    expect(r).toEqual({ kind: "ok", counts, partialFailure: false, truncated: false });
     expect(calls[0]?.url).toBe("/api/paypal/imports/sync");
     expect(calls[0]?.init.method).toBe("POST");
     expect((calls[0]?.init.headers as Record<string, string>)["x-csrf-token"]).toBe(CSRF);
+  });
+
+  it("parses a truncated ok answer without treating it as clean", async () => {
+    const { api } = fake(() =>
+      json(200, {
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        partialFailure: true,
+        truncated: true,
+      }),
+    );
+    expect(await api.sync(CSRF, sig())).toEqual({
+      kind: "ok",
+      counts,
+      partialFailure: true,
+      truncated: true,
+    });
+  });
+
+  it("maps audit_failed explicitly with its counts", async () => {
+    const { api } = fake(() =>
+      json(500, {
+        error: "audit_failed",
+        counts,
+        syncedAt: "2026-11-08T12:00:00.000Z",
+        truncated: false,
+        partialFailure: true,
+      }),
+    );
+    expect(await api.sync(CSRF, sig())).toEqual({ kind: "audit-failed", counts });
+    const badCounts = fake(() =>
+      json(500, { error: "audit_failed", counts: { ...counts, created: "many" } }),
+    );
+    expect(await badCounts.api.sync(CSRF, sig())).toEqual({
+      kind: "uncertain",
+      cause: "malformed",
+    });
   });
 
   it("maps disabled, rate-limited, busy and uncertain answers", async () => {
@@ -110,7 +186,9 @@ describe("imports transport", () => {
     expect(await busy.api.sync(CSRF, sig())).toEqual({ kind: "busy" });
     const broken = fake(() => json(500, { error: "x" }));
     expect(await broken.api.sync(CSRF, sig())).toEqual({ kind: "uncertain", cause: "server" });
-    const malformed = fake(() => json(200, { counts, partialFailure: true }));
+    const malformed = fake(() =>
+      json(200, { counts, syncedAt: "2026-11-08T12:00:00.000Z", partialFailure: true }),
+    );
     expect(await malformed.api.sync(CSRF, sig())).toEqual({
       kind: "uncertain",
       cause: "malformed",

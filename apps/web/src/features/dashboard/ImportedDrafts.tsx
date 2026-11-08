@@ -20,6 +20,7 @@ export interface ImportsViewState {
   items: ImportedDraftItem[];
   counts: SyncCounts | null;
   partialFailure: boolean;
+  truncated: boolean;
   notice: string | null;
   syncDisabled: boolean;
 }
@@ -29,6 +30,7 @@ export const initialImportsView: ImportsViewState = {
   items: [],
   counts: null,
   partialFailure: false,
+  truncated: false,
   notice: null,
   syncDisabled: false,
 };
@@ -40,20 +42,39 @@ const FAILURE: Record<string, string> = {
   busy: "Another sync is already running. Wait for it to finish, then try again.",
   uncertain:
     "The connection broke during the import. The list below was refreshed: some rows may have been stored.",
+  truncated:
+    "The import stopped at the page cap with more PayPal pages remaining. The rows below are kept; narrow the PayPal account or contact the owner for the rest.",
+  "audit-failed":
+    "The import stored rows but the audit trail write failed. The rows below are kept; report this to the owner before relying on this sync, then sync again.",
   forbidden: "The server did not accept this request. Reload the page and try again.",
   unavailable: "The import service is not available right now. Try again later.",
   "bad-request": "The server refused this request. Reload the page and try again.",
 };
 
-function CountsLine({ counts, partialFailure }: { counts: SyncCounts; partialFailure: boolean }) {
+function CountsLine({
+  counts,
+  partialFailure,
+  truncated,
+}: {
+  counts: SyncCounts;
+  partialFailure: boolean;
+  truncated: boolean;
+}) {
   return (
     <p className="hint" data-testid="imports-counts">
       Created {counts.created} · Updated {counts.updated} · Unchanged {counts.unchanged} · Skipped{" "}
       {counts.skipped} · Failed {counts.failed}
-      {partialFailure ? (
+      {partialFailure && !truncated ? (
         <span>
           {" "}
           — <strong>partial failure:</strong> earlier rows were kept; fix the cause and sync again.
+        </span>
+      ) : null}
+      {truncated ? (
+        <span>
+          {" "}
+          — <strong>incomplete:</strong> the page cap stopped this sync with more PayPal pages
+          remaining.
         </span>
       ) : null}
     </p>
@@ -102,7 +123,11 @@ export function ImportedDraftsView({
         </Notice>
       ) : null}
       {view.counts && view.phase !== "loading" ? (
-        <CountsLine counts={view.counts} partialFailure={view.partialFailure} />
+        <CountsLine
+          counts={view.counts}
+          partialFailure={view.partialFailure}
+          truncated={view.truncated}
+        />
       ) : null}
       {view.notice ? (
         <Notice
@@ -245,11 +270,28 @@ export function ImportedDraftsSection({
     if (ac.signal.aborted || !mounted.current) return;
     switch (r.kind) {
       case "ok":
-        setView((v) => ({ ...v, counts: r.counts, partialFailure: r.partialFailure }));
+        setView((v) => ({
+          ...v,
+          counts: r.counts,
+          partialFailure: r.partialFailure,
+          truncated: r.truncated,
+        }));
         await refresh(ac.signal);
         if (!mounted.current) return;
-        // A partial failure keeps its counts visible alongside the refreshed list.
-        if (r.partialFailure) setView((v) => ({ ...v, phase: "sync-error", notice: "sync-error" }));
+        // Counts stay visible alongside the refreshed list. A failed run offers a retry; a
+        // truncated run does not (re-syncing re-fetches the same first pages), so it stays
+        // on the ready list with an explanatory notice instead.
+        if (r.truncated) setView((v) => ({ ...v, notice: "truncated" }));
+        else if (r.partialFailure)
+          setView((v) => ({ ...v, phase: "sync-error", notice: "sync-error" }));
+        return;
+      case "audit-failed":
+        // Rows are kept server-side: refresh the list, keep the counts, and say the audit
+        // trail is missing. A retry is idempotent and completes the trail.
+        setView((v) => ({ ...v, counts: r.counts, partialFailure: true, truncated: false }));
+        await refresh(ac.signal);
+        if (!mounted.current) return;
+        setView((v) => ({ ...v, phase: "sync-error", notice: "audit-failed" }));
         return;
       case "unauthorized":
         expired.current();

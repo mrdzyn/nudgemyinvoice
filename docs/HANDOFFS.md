@@ -3147,4 +3147,12 @@ Hotfix branch `fix/nmi-paypal-draft-sync` from workspace `4984c0b`. Manual one-w
 
 Open Draft hotfix PR, request independent exact-HEAD audit. Then owner merge decision (agents must not merge); no deploy authorized. Required owner actions: audit, merge approval, and (only if ever trialled live) a separately bounded sandbox Request; production migration needs separate approval + verified backup.
 
+## NMI-PAYPAL-SYNC-02 — Remediation of review 5818469160 (re-audit next)
+
+Same Draft PR #74, rebased `--onto origin/main@26d3f84` (hotfix-only diff; README/showcase bytes identical to main). All five findings fixed narrowly: INT-01 reconcile; SYNC-01 raw-count pagination + real-parsing-path regression; SYNC-02 `truncated` + `incomplete` audit state; AUD-01 explicit `500 audit_failed` with counts, rows preserved, idempotent retry; CON-01 atomic owner-predicated upsert + store concurrency/ownership tests. Contract and evidence in `tasks/NMI-PAYPAL-DRAFT-SYNC.md`. No merge, deploy, production migration, provider activation, or protected-branch changes.
+
+### Next action
+
+Push to the Draft PR, request independent exact-HEAD re-audit. Then owner merge decision; no deploy authorized. Live sandbox trial needs a separately bounded Request; production migration needs separate approval + verified backup.
+
 <!-- HANDOFF_ENTRIES_END -->

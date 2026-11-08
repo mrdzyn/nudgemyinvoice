@@ -22,6 +22,7 @@ export interface PayPalInvoicingReadDraft {
   listInvoices(input: { page: number; pageSize?: number }): Promise<{
     invoices: RemoteInvoice[];
     skippedMalformed: number;
+    rawCount: number;
     totalItems: number;
     totalPages: number | null;
   }>;

@@ -20,11 +20,13 @@ export interface SyncCounts {
 }
 
 export type PayPalSyncResult =
-  | { kind: "ok"; counts: SyncCounts; partialFailure: boolean } // 200
+  | { kind: "ok"; counts: SyncCounts; partialFailure: boolean; truncated: boolean } // 200
   | { kind: "disabled" } // 503 sync_disabled: the read-sync flag is off
   | { kind: "unavailable" } // 503 sync_unavailable: no server PayPal client
   | { kind: "rate-limited" } // 429 too_many_requests
   | { kind: "busy" } // 429 busy: another sync holds the single slot
+  /** Rows were stored but the audit trail write failed: report before relying on the sync. */
+  | { kind: "audit-failed"; counts: SyncCounts } // 500 audit_failed
   | { kind: "unauthorized" } // 401
   | { kind: "forbidden" } // 403
   | { kind: "bad-request" } // 400 (or any other 4xx)
@@ -135,16 +137,19 @@ function parseItem(v: unknown): ImportedDraftItem | null {
 export function parseSyncResponse(body: unknown): {
   counts: SyncCounts;
   partialFailure: boolean;
+  truncated: boolean;
 } | null {
-  if (!isRecord(body) || !exactKeys(body, ["counts", "syncedAt", "partialFailure"])) return null;
+  if (!isRecord(body) || !exactKeys(body, ["counts", "syncedAt", "partialFailure", "truncated"]))
+    return null;
   const counts = parseCounts(body["counts"]);
   if (!counts) return null;
   if (typeof body["syncedAt"] !== "string" || !Number.isFinite(Date.parse(body["syncedAt"])))
     return null;
   if (typeof body["partialFailure"] !== "boolean") return null;
-  // The flag must agree with the counts: a partial failure means at least one failed row or page.
-  if (body["partialFailure"] !== counts.failed > 0) return null;
-  return { counts, partialFailure: body["partialFailure"] };
+  if (typeof body["truncated"] !== "boolean") return null;
+  // The flags must agree with the counts: partial failure means a failed row/page or truncation.
+  if (body["partialFailure"] !== (counts.failed > 0 || body["truncated"])) return null;
+  return { counts, partialFailure: body["partialFailure"], truncated: body["truncated"] };
 }
 
 export function parseImportsResponse(body: unknown): ImportedDraftItem[] | null {
@@ -209,7 +214,12 @@ export function createImportsApi(
                 ? { kind: "aborted" }
                 : { kind: "uncertain", cause: "malformed" };
             if (signal.aborted) return { kind: "aborted" };
-            return { kind: "ok", counts: parsed.counts, partialFailure: parsed.partialFailure };
+            return {
+              kind: "ok",
+              counts: parsed.counts,
+              partialFailure: parsed.partialFailure,
+              truncated: parsed.truncated,
+            };
           }
           case 400:
             return { kind: "bad-request" };
@@ -225,7 +235,21 @@ export function createImportsApi(
             if (error === "sync_unavailable") return { kind: "unavailable" };
             return signal.aborted ? { kind: "aborted" } : { kind: "uncertain", cause: "server" };
           default:
-            // POST may have stored rows before a 5xx: uncertain. Other 4xx stored nothing.
+            // A 500 with audit_failed means rows were stored but the trail is missing: say so
+            // explicitly with the counts (a retry is idempotent). Any other 5xx after a POST
+            // may have stored rows: uncertain. Other 4xx stored nothing.
+            if (res.status === 500 && error === "audit_failed") {
+              if (!readable)
+                return signal.aborted
+                  ? { kind: "aborted" }
+                  : { kind: "uncertain", cause: "malformed" };
+              const counts = isRecord(body) ? parseCounts(body["counts"]) : null;
+              if (!counts)
+                return signal.aborted
+                  ? { kind: "aborted" }
+                  : { kind: "uncertain", cause: "malformed" };
+              return signal.aborted ? { kind: "aborted" } : { kind: "audit-failed", counts };
+            }
             return signal.aborted
               ? { kind: "aborted" }
               : res.status >= 500

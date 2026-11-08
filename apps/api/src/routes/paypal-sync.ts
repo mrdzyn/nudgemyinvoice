@@ -81,14 +81,26 @@ export function paypalSyncRoutes(app: FastifyInstance, deps: PayPalSyncRouteDeps
     if (!slot) return reply.code(429).header("retry-after", "2").send({ error: "busy" });
 
     try {
-      const { counts, syncedAt } = await syncPaypalDrafts(
+      const result = await syncPaypalDrafts(
         { drafts, imports, paypal: deps.paypal, audit, clock: () => clock(req) },
         { operatorId: actor, requestId: req.id },
       );
+      if (!result.auditOk) {
+        // The import wrote rows but the audit trail is missing: fail closed and say so.
+        // Already committed rows are preserved (a retry is idempotent, never a duplicate).
+        return reply.code(500).send({
+          error: "audit_failed",
+          counts: result.counts,
+          syncedAt: result.syncedAt.toISOString(),
+          truncated: result.truncated,
+          partialFailure: true,
+        });
+      }
       return reply.send({
-        counts,
-        syncedAt: syncedAt.toISOString(),
-        partialFailure: counts.failed > 0,
+        counts: result.counts,
+        syncedAt: result.syncedAt.toISOString(),
+        truncated: result.truncated,
+        partialFailure: result.counts.failed > 0 || result.truncated,
       });
     } finally {
       slot.release();

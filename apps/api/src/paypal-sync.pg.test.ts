@@ -1,10 +1,16 @@
 import { randomBytes } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PostgresAuthStore, createAuditSink, createDb } from "@nmi/db";
+import { PostgresAuthStore, createAuditSink, createDb, type AuditSink } from "@nmi/db";
 import { createScratchDatabase, testDatabaseUrl, type ScratchDatabase } from "@nmi/db/testing";
 import type { InvoiceDraft } from "@nmi/shared";
-import type { RemoteInvoice } from "@nmi/paypal";
+import {
+  PayPalSandboxClient,
+  type HttpRequest,
+  type HttpResponse,
+  type PayPalInvoicingReadDraft,
+  type RemoteInvoice,
+} from "@nmi/paypal";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { baseEnv, fakePayPalCredentials } from "./test-support.js";
@@ -17,8 +23,10 @@ import { fakePayPal, type FakePayPal } from "./test-paypal.js";
  * and a disposable PostgreSQL 16 database (the real PayPal is never reached).
  *
  * Covered: bounded pagination, duplicate sync idempotency, malformed-money skip, operator
- * ownership isolation, partial-failure recovery, verified-id reconciliation linking, and the
- * default-OFF flag. No production database is touched.
+ * ownership isolation, partial-failure recovery, verified-id reconciliation linking, the
+ * default-OFF flag, raw-page pagination through the real list-response parsing path,
+ * page-cap truncation reporting, and fail-closed audit-failure behavior with idempotent
+ * recovery. No production database is touched.
  */
 const url = testDatabaseUrl();
 const weak = { N: 1024, r: 8, p: 1 };
@@ -51,7 +59,12 @@ describe.skipIf(!url)("PayPal DRAFT sync (real PostgreSQL)", () => {
   const sql = async (q: string, p: unknown[] = []) => (await scratch.pool.query(q, p)).rows;
   let n = 0;
 
-  const makeApp = (pp: FakePayPal | null, env: Record<string, string | undefined> = {}) => {
+  const makeApp = (
+    pp: FakePayPal | null,
+    env: Record<string, string | undefined> = {},
+    client?: PayPalInvoicingReadDraft,
+  ) => {
+    const paypal = client ?? pp?.client;
     const app = buildApp(
       loadConfig({
         ...baseEnv,
@@ -60,7 +73,11 @@ describe.skipIf(!url)("PayPal DRAFT sync (real PostgreSQL)", () => {
         ...fakePayPalCredentials,
         ...env,
       }),
-      { db: createDb(scratch.pool), passwordParams: weak, ...(pp ? { paypal: pp.client } : {}) },
+      {
+        db: createDb(scratch.pool),
+        passwordParams: weak,
+        ...(paypal ? { paypal } : {}),
+      },
     );
     apps.push(app);
     return app;
@@ -238,9 +255,11 @@ describe.skipIf(!url)("PayPal DRAFT sync (real PostgreSQL)", () => {
       if (input.page >= 2) throw new Error("boom-page-2");
       const all = [...pp.remotes.values()];
       const size = input.pageSize ?? 20;
+      const slice = all.slice(0, size);
       return {
-        invoices: all.slice(0, size),
+        invoices: slice,
         skippedMalformed: 0,
+        rawCount: slice.length,
         totalItems: all.length,
         totalPages: 2,
       };
@@ -310,6 +329,146 @@ describe.skipIf(!url)("PayPal DRAFT sync (real PostgreSQL)", () => {
       ["50000", "INV2-LINK-1"],
       ["50000", "INV2-LINK-2"],
     ]);
+  });
+
+  it("does not let malformed rows hide later pages (real list-response parsing path)", async () => {
+    // Raw PayPal v2 list bodies through the REAL client, OAuth and guard included: page 1 holds
+    // 20 rows with 1 malformed (19 valid), page 2 holds 5 valid. Filtering-based pagination
+    // would stop after page 1 (19 < 20) and silently drop the 5 valid drafts.
+    const rawItem = (id: string, n: string) => ({
+      id,
+      status: "DRAFT",
+      detail: {
+        currency_code: "USD",
+        invoice_number: n,
+        payment_term: { due_date: "2026-12-01" },
+      },
+      amount: { currency_code: "USD", value: "10.00" },
+    });
+    const page1: unknown[] = Array.from({ length: 19 }, (_, i) =>
+      rawItem(`INV2-R-${i + 1}`, `r${i + 1}`),
+    );
+    page1.push({
+      id: "INV2-R-BAD",
+      status: "DRAFT",
+      detail: { currency_code: "USD", invoice_number: "bad" },
+    });
+    const page2: unknown[] = Array.from({ length: 5 }, (_, i) =>
+      rawItem(`INV2-R-${20 + i}`, `r${20 + i}`),
+    );
+    const seen: string[] = [];
+    const transport = async (req: HttpRequest): Promise<HttpResponse> => {
+      const url = new URL(req.url);
+      if (url.pathname === "/v1/oauth2/token") {
+        return {
+          status: 200,
+          headers: {},
+          body: JSON.stringify({
+            access_token: "t".repeat(32),
+            token_type: "Bearer",
+            expires_in: 3600,
+          }),
+        };
+      }
+      seen.push(`${req.method} ${url.pathname}${url.search}`);
+      const page = Number(url.searchParams.get("page"));
+      const items = page === 1 ? page1 : page === 2 ? page2 : [];
+      return {
+        status: 200,
+        headers: {},
+        body: JSON.stringify({ total_items: 25, total_pages: 2, items }),
+      };
+    };
+    const client = new PayPalSandboxClient({
+      baseUrl: "https://api-m.sandbox.paypal.com",
+      clientId: "cid",
+      clientSecret: "csecret",
+      transport,
+    });
+    const app = makeApp(null, {}, client);
+    const op = await newOperator(app, "sync-rawpage");
+
+    const res = await op.sync();
+    expect(res.statusCode, res.body).toBe(200);
+    expect(res.json().counts).toEqual({
+      created: 24,
+      updated: 0,
+      unchanged: 0,
+      skipped: 1,
+      failed: 0,
+    });
+    expect(res.json().partialFailure).toBe(false);
+    expect(res.json().truncated).toBe(false);
+    expect(seen.filter((s) => s.startsWith("GET /v2/invoicing/invoices"))).toHaveLength(2);
+    expect(((await op.list()).json() as { items: unknown[] }).items).toHaveLength(24);
+  });
+
+  it("reports truncation when the bounded page cap is reached", async () => {
+    const pp = fakePayPal();
+    for (let i = 1; i <= 501; i++) pp.remotes.set(`INV2-TRUNC-${i}`, remote(`INV2-TRUNC-${i}`));
+    const app = makeApp(pp);
+    const op = await newOperator(app, "sync-trunc");
+
+    const res = await op.sync();
+    expect(res.statusCode, res.body).toBe(200);
+    // 25 pages x 20 rows: the 501st row is left out and the run is marked incomplete.
+    expect(res.json().counts).toEqual({
+      created: 500,
+      updated: 0,
+      unchanged: 0,
+      skipped: 0,
+      failed: 0,
+    });
+    expect(res.json().truncated).toBe(true);
+    expect(res.json().partialFailure).toBe(true);
+    expect(pp.log.list).toHaveLength(25);
+    const rows = await sql(
+      `SELECT detail FROM audit_log WHERE action = 'paypal.draft_sync' ORDER BY at DESC LIMIT 1`,
+    );
+    expect((rows[0] as { detail: { state: string } }).detail).toEqual({ state: "incomplete" });
+  });
+
+  it("fails closed with counts when the audit write fails, and recovers idempotently", async () => {
+    const pp = fakePayPal();
+    pp.remotes.set("INV2-AUDITFAIL-1", remote("INV2-AUDITFAIL-1"));
+    let failAudit = true;
+    const flaky: AuditSink = {
+      record: async (e) => {
+        if (failAudit && e.action === "paypal.draft_sync") throw new Error("audit down");
+        await createAuditSink(createDb(scratch.pool)).record(e);
+      },
+    };
+    const app = buildApp(
+      loadConfig({
+        ...baseEnv,
+        DATABASE_URL: url,
+        PAYPAL_SYNC_ENABLED: "true",
+        ...fakePayPalCredentials,
+      }),
+      { db: createDb(scratch.pool), passwordParams: weak, paypal: pp.client, audit: flaky },
+    );
+    apps.push(app);
+    const op = await newOperator(app, "sync-auditfail");
+
+    const res = await op.sync();
+    expect(res.statusCode).toBe(500);
+    expect(res.json().error).toBe("audit_failed");
+    expect(res.json().counts.created).toBe(1);
+    expect(res.json().partialFailure).toBe(true);
+    // Rows are preserved despite the audit outage: no silent loss, no duplicate on retry.
+    expect(((await op.list()).json() as { items: unknown[] }).items).toHaveLength(1);
+
+    failAudit = false;
+    const retry = await op.sync();
+    expect(retry.statusCode, retry.body).toBe(200);
+    expect(retry.json().counts).toEqual({
+      created: 0,
+      updated: 0,
+      unchanged: 1,
+      skipped: 0,
+      failed: 0,
+    });
+    expect(retry.json().partialFailure).toBe(false);
   });
 
   it("rejects an invalid list limit and records an audit row per sync", async () => {

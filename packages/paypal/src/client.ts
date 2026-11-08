@@ -288,6 +288,12 @@ export class PayPalSandboxClient {
     invoices: RemoteInvoice[];
     /** Structurally valid envelope items dropped for missing/unsupported amount or currency. */
     skippedMalformed: number;
+    /**
+     * Raw structurally valid item count on this page, BEFORE per-record filtering.
+     * Pagination MUST use this (with total_items/total_pages), never `invoices.length`:
+     * malformed rows make the filtered list shorter than the actual returned page.
+     */
+    rawCount: number;
     totalItems: number;
     totalPages: number | null;
   }> {
@@ -317,6 +323,7 @@ export class PayPalSandboxClient {
     return {
       invoices,
       skippedMalformed: parsed.data.items.length - invoices.length,
+      rawCount: parsed.data.items.length,
       totalItems: parsed.data.total_items,
       totalPages: parsed.data.total_pages ?? null,
     };

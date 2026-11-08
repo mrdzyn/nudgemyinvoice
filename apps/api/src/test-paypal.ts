@@ -60,6 +60,7 @@ export interface FakePayPal {
     list?: (input: { page: number; pageSize?: number }) => Promise<{
       invoices: RemoteInvoice[];
       skippedMalformed: number;
+      rawCount: number;
       totalItems: number;
       totalPages: number | null;
     }>;
@@ -116,9 +117,11 @@ export function fakePayPal(): FakePayPal {
         const pageSize = input.pageSize ?? 20;
         const all = [...remotes.values()];
         const start = (input.page - 1) * pageSize;
+        const slice = all.slice(start, start + pageSize);
         return {
-          invoices: all.slice(start, start + pageSize),
+          invoices: slice,
           skippedMalformed: 0,
+          rawCount: slice.length,
           totalItems: all.length,
           totalPages: Math.max(1, Math.ceil(all.length / pageSize)),
         };

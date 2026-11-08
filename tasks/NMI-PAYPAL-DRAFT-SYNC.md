@@ -50,6 +50,34 @@ One-way, manually initiated import of existing PayPal Sandbox DRAFT invoices int
 - NOT RUN: hosted GitHub Actions (`workflow_dispatch`-only during development), real PayPal
   calls, production database migration, manual QA (screen reader, Safari/Firefox, devices).
 
+## Remediation of independent review 5818469160 (same Draft PR, rebased onto `main@26d3f84`)
+
+- **INT-01:** branch rebased `--onto origin/main`; PR diff is hotfix-only (README/showcase bytes
+  byte-identical to main; only required STATUS/HANDOFFS pointers differ besides hotfix files).
+- **SYNC-01:** pagination now uses raw page count + `total_items`/`total_pages`, never the
+  filtered valid-invoice length (`rawCount` surfaced from `listInvoices`). Regression test drives
+  the REAL client parsing path (raw HTTP list bodies, 19 valid + 1 malformed on page 1, 5 on
+  page 2) through the HTTP route and asserts both pages are consumed.
+- **SYNC-02:** reaching the 25-page cap with more pages reported returns `truncated: true` with
+  `partialFailure: true` and audit state `incomplete` (never a clean success). Tested with 501
+  fake invoices; dashboard shows an explicit incomplete notice with no no-progress retry.
+- **AUD-01:** audit failure no longer swallowed: the service returns `auditOk: false`, the route
+  answers `500 audit_failed` WITH the counts, rows stay committed, and a retry is idempotent
+  (`unchanged`, audit completes). Injection test uses a selectively throwing audit sink. Dashboard
+  maps `audit-failed` to an explicit notice with retry.
+- **CON-01:** upsert rewritten as atomic single statements (INSERT ... ON CONFLICT DO NOTHING,
+  owner-predicated UPDATE ... IS DISTINCT FROM, owner-predicated timestamp touch) plus a
+  classification-only SELECT. No SELECT-then-act race; concurrent duplicates converge to one
+  `created` + rest `unchanged`; cross-owner writes impossible. Store-level tests: 4-way duplicate
+  race, update/unchanged, NULL transitions, owner conflict with values intact.
+- Remediation validation (all agent-run, disposable PostgreSQL 16 where marked PG): sync
+  suite 10/10 (PG, incl. real-parsing pagination, 501-row truncation, audit-failure injection),
+  import-store suite 4/4 (PG), constraints 37/37 (PG), migration-plan 21/21, hosted-staging 14/14
+  (PG), ownership/create-401/drafts/combined/config 105/105 (PG where applicable), PayPal package
+  + web paypal/dashboard suites 218/218; `pnpm typecheck` 0 errors; `pnpm lint` 0 errors (1
+  pre-existing warning); `pnpm format:check` fails ONLY on pre-existing untouched
+  `release-preflight.test.ts` drift; `pnpm db:generate` no drift.
+
 ## Rollback
 
 - Branch unmerged: `git checkout <base>; git branch -D fix/nmi-paypal-draft-sync` (or close the
