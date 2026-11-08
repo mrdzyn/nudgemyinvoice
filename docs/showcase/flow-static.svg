@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-label="Static diagram of the five-step flow: Describe, AI Draft, Human Review, Save, PayPal Sandbox Draft">
+  <rect width="1200" height="240" fill="#0A1A3A"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="24" y="60" width="200" height="120" rx="12" fill="#173778" stroke="#22D3EE" stroke-width="3"/>
+    <text x="44" y="106" font-size="20" fill="#22D3EE">1 &#183; DESCRIBE</text>
+    <text x="44" y="134" font-size="15" fill="#E2E8F0">Operator writes</text>
+    <text x="44" y="156" font-size="15" fill="#E2E8F0">what to bill</text>
+    <text x="228" y="126" font-size="22" fill="#64748B">&#8594;</text>
+    <rect x="258" y="60" width="200" height="120" rx="12" fill="#173778" stroke="#64748B" stroke-width="3"/>
+    <text x="278" y="106" font-size="20" fill="#E2E8F0">2 &#183; AI DRAFT</text>
+    <text x="278" y="134" font-size="15" fill="#E2E8F0">Parser proposes;</text>
+    <text x="278" y="156" font-size="15" fill="#E2E8F0">server totals</text>
+    <text x="462" y="126" font-size="22" fill="#64748B">&#8594;</text>
+    <rect x="492" y="60" width="200" height="120" rx="12" fill="#173778" stroke="#FACC15" stroke-width="3"/>
+    <text x="512" y="106" font-size="20" fill="#FACC15">3 &#183; HUMAN REVIEW</text>
+    <text x="512" y="134" font-size="15" fill="#E2E8F0">Operator edits all;</text>
+    <text x="512" y="156" font-size="15" fill="#E2E8F0">nothing moves yet</text>
+    <text x="696" y="126" font-size="22" fill="#64748B">&#8594;</text>
+    <rect x="726" y="60" width="200" height="120" rx="12" fill="#173778" stroke="#64748B" stroke-width="3"/>
+    <text x="746" y="106" font-size="20" fill="#E2E8F0">4 &#183; SAVE</text>
+    <text x="746" y="134" font-size="15" fill="#E2E8F0">Explicit save to</text>
+    <text x="746" y="156" font-size="15" fill="#E2E8F0">PostgreSQL only</text>
+    <text x="930" y="126" font-size="22" fill="#64748B">&#8594;</text>
+    <rect x="960" y="60" width="216" height="120" rx="12" fill="#143D28" stroke="#16A34A" stroke-width="3"/>
+    <text x="980" y="106" font-size="20" fill="#4ADE80">5 &#183; SANDBOX DRAFT</text>
+    <text x="980" y="134" font-size="15" fill="#E2E8F0">Confirmed PayPal</text>
+    <text x="980" y="156" font-size="15" fill="#E2E8F0">DRAFT; never sent</text>
+    <text x="24" y="216" font-size="15" fill="#7DD3FC">Human approval required at every PayPal step. No autonomous sending.</text>
+  </g>
+</svg>
