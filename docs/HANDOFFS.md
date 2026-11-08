@@ -3100,4 +3100,27 @@ Branch `feat/nmi-judges-rc-01` from current `main@4aea541…`; merged PR #67 `47
 
 Push branch, open Draft RC PR with this evidence, request independent exact-HEAD audit. Blocking release gates after audit: owner merge decision, hosted `workflow_dispatch` SUCCESS on both workflows, then G1/G5/G6/G7/G8 + Render deploy permission. Do not merge, deploy, activate providers, or move protected refs.
 
+## NMI-JUDGES-RC-02 — RC review remediation (EUR-chip operability + honest harness)
+
+Addresses review `5816666095` (PR #69) as carried into RC comment `6717561154` on PR #70 at `a54b9d1`. No product code changed: branding, chat-to-composer, Safe Mode, and payment boundaries are byte-identical to the audited RC tree.
+
+### Finding 1: 390px launcher/EUR-chip overlap — operability proven, no CSS change
+
+- Reproduced exactly: EUR chip (x221–277/y727–771) under launcher (x242–378/y712–770); `elementFromPoint` at chip center hit the launcher (`08a-eur-initial-390.png`).
+- After standard scroll-to-target: `overlap:false`, hit-test hits `BUTTON.pill::EUR`.
+- Trusted CDP tap on chip center flipped `aria-pressed` to `true` (only EUR pressed, Clear-filters appeared): `08b-eur-tapped-390.png`.
+- Rationale for no CSS fix: a fixed launcher inherently covers some scroll positions (standard FAB behavior); the existing 140px mobile body clearance lets any content scroll clear, proven end to end. Audited branding/widget CSS preserved byte-for-byte.
+
+### Finding 2: harness assertions corrected (`rc70-qa.mjs`, 30/30 PASS)
+
+- Health asserts observed `200 + status ok + sandbox`; zoom asserts `0px` overflow; focus asserts observed `outline solid/2px`; launcher Tab-reachability observed (23 tabs); sign-in labeled `submit=requestSubmit-after-traversal` (native Enter produced no submit in headless Chrome — hardware Enter remains owner QA). No PASS counts unproven outcomes.
+
+### Evidence
+
+Reviewer-accessible branch `docs/nmi-70-rc-qa-evidence@a5e2fe4`: `design/evidence/NMI-RC70/` (13 PNGs viewed by verifier + corrected runner + README with runbook and honest limitations).
+
+### Next action
+
+Focused regressions + final exact-HEAD manual CI on the new HEAD, post evidence to PR #70, request independent focused re-audit. Blocking release gates unchanged: owner merge decision, hosted `workflow_dispatch` SUCCESS on both workflows, G1/G5/G6/G7/G8 + Render deploy permission. Do not merge, deploy, activate providers, or move protected refs.
+
 <!-- HANDOFF_ENTRIES_END -->
