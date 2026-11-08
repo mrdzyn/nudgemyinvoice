@@ -244,6 +244,10 @@ When responsibility passes to another agent, tool, conversation, or reviewer, fo
 
 Do not duplicate the full task contract, logs, or durable project decisions in the handoff. If no meaningful transfer of responsibility occurs, a normal concise completion summary is sufficient.
 
+## Agent orchestration and token efficiency (selective M7 adoption)
+
+Follow [`docs/AGENT-ORCHESTRATION.md`](docs/AGENT-ORCHESTRATION.md) for one primary agent, minimal verified context, bounded specialist handoffs and targeted test loops. This operating guidance **does not** modify NudgeMyInvoice's `docs/TESTING.md` exact-HEAD manual CI, release-candidate gates in `docs/RELEASE.md`, human approvals, payment restrictions, or project-specific security requirements. The template M6 session script is **not installed** here; use the canonical active STATUS/handoff without inventing recovery tooling. Do not reopen initial Render provisioning solely because older archived gate language says OPEN: distinguish existing Live service from new candidate promotion and validate changed risks when relevant.
+
 ## NudgeMyInvoice product-specific operating contract (NMI-P0)
 
 This section extends, and never weakens, the inherited human-gated operating model.
