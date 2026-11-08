@@ -8,6 +8,7 @@ import type { ListItem } from "../domain/serverList.js";
 import type { FollowUpView } from "../followups/api.js";
 import { ChatView, DRAFT_STATE_NOTE, ResultView, ScheduleCandidateView } from "./NudgeyChat.js";
 import type { ScheduleProposal } from "./scheduleIntent.js";
+import { COMPOSER_CONFLICT_TEXT, COMPOSER_READY_TEXT } from "./chatSession.js";
 import type { ChatMessage } from "./chatSession.js";
 import { GROUPS, type LookupResult } from "./lookup.js";
 
@@ -542,5 +543,92 @@ describe("result cards (server data only, honest labels)", () => {
     );
     expect(f).not.toContain("<img");
     expect(f).not.toContain("<b>x");
+  });
+});
+
+describe("chat-to-composer handoff (Review in Invoice Composer)", () => {
+  const PREFILL = "Create an invoice for Acme for $75 due Friday.";
+  const handoff = (over: Partial<ChatMessage> = {}): ChatMessage => ({
+    id: 7,
+    role: "nudgey",
+    text: COMPOSER_READY_TEXT,
+    composerPrefill: PREFILL,
+    ...over,
+  });
+  const base = {
+    busy: false,
+    at,
+    onAsk: noop,
+    onBack: noop,
+    onOpenInvoice: noop,
+    onOpenDashboard: noop,
+    onSchedule: noop,
+    onSelectSchedule: noop,
+    onReviewSchedule: noop,
+    onRetrySchedule: noop,
+    onDraftChange: noop,
+  };
+
+  it("renders an explicitly labelled action only when a prefill and a handler are both present", () => {
+    const withBoth = clean(
+      renderToString(<ChatView {...base} messages={[handoff()]} onOpenComposer={noop} />),
+    );
+    expect(withBoth).toContain("Review in Invoice Composer");
+    expect(withBoth).toContain("nothing is created, sent or saved until you confirm");
+    expect(clean(renderToString(<ChatView {...base} messages={[handoff()]} />))).not.toContain(
+      "Review in Invoice Composer",
+    );
+    expect(
+      clean(
+        renderToString(
+          <ChatView
+            {...base}
+            messages={[{ id: 8, role: "nudgey", text: COMPOSER_READY_TEXT }]}
+            onOpenComposer={noop}
+          />,
+        ),
+      ),
+    ).not.toContain("Review in Invoice Composer");
+  });
+
+  it("reuses the shared wrapping button styles, so the action keeps a 44px touch target on narrow screens", () => {
+    const html = clean(
+      renderToString(<ChatView {...base} messages={[handoff()]} onOpenComposer={noop} />),
+    );
+    expect(html).toContain("followup-btn followup-btn-primary");
+    expect(html).not.toMatch(/style=|position:\s*fixed/);
+  });
+
+  it("refusal replies carry no composer action", () => {
+    const html = clean(
+      renderToString(
+        <ChatView
+          {...base}
+          messages={[{ id: 9, role: "nudgey", text: COMPOSER_CONFLICT_TEXT }]}
+          onOpenComposer={noop}
+        />,
+      ),
+    );
+    expect(html).toContain("can't send, pay, capture or refund");
+    expect(html).not.toContain("Review in Invoice Composer");
+  });
+
+  it("clicking the native button hands the verbatim in-memory text to the handler", async () => {
+    const onOpenComposer = vi.fn();
+    testContainer = document.createElement("div");
+    document.body.append(testContainer);
+    testRoot = createRoot(testContainer);
+    await act(async () => {
+      testRoot!.render(
+        <ChatView {...base} messages={[handoff()]} onOpenComposer={onOpenComposer} />,
+      );
+      await Promise.resolve();
+    });
+    const button = testContainer!.querySelector('button[aria-label="Review in Invoice Composer"]');
+    expect(button?.tagName).toBe("BUTTON");
+    expect(button?.getAttribute("type")).toBe("button");
+    act(() => button!.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    expect(onOpenComposer).toHaveBeenCalledTimes(1);
+    expect(onOpenComposer).toHaveBeenCalledWith(PREFILL);
   });
 });

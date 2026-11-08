@@ -3053,4 +3053,31 @@ Independent exact-HEAD audit of this docs-only policy PR. Then obtain owner's se
 
 Independently review the documentation-only post-merge reconciliation and obtain an explicit owner decision on that documentation PR; do not start Stage 2 or deploy from this handoff.
 
+## Handoff: NMI-CHAT-TO-COMPOSER-04
+
+- **Task:** `tasks/NMI-NDG-02-chat-to-composer.md` — reconcile Draft PR #63 onto current `main@4aea541…`; separate integration branch, original PR #63 preserved unchanged.
+- **From:** repository coordination (PRs #65/#66 merged; PR #63 CONFLICTING)
+- **To:** independent exact-HEAD reviewer, then product owner
+- **Branch:** `feat/nmi-63-chat-composer-integration` from `origin/main@4aea541d358e419f835e1f59811216003ba56305`
+- **Source:** `origin/feat/nmi-chat-to-composer@bd6c6983c6d8a5963bf8cf41bb93c4734249949b` (prior exact-HEAD audit PASS; that PASS does not transfer to the integration)
+- **State:** mechanical merge committed; docs-only conflicts resolved; original PR #63 untouched; no merge/deploy/provider/protected-ref action.
+
+### Conflicts identified
+
+- `docs/STATUS.md` (2 hunks) and `docs/HANDOFFS.md` (1 hunk): both sides edited after base `766dde37…` (PR #63's DOC-01/stale-main prose vs PR #65 Stage-1 + PR #66 post-merge reconciliation). Resolved by keeping the current-main side; PR #63's stale `main@766dde37` references not carried forward. Fresh STATUS updates recorded on this branch instead.
+- Functional files (`Nudgey.tsx`, `NudgeyChat.tsx`, `chatSession.ts`, `appState.ts`, plus tests, plus new `createIntent.ts`/`createIntent.test.ts`, plus the PR #63 task file): auto-merged with zero conflicts — current `main` never touched them. All 10 files verified byte-identical to `bd6c698…` via `cmp`.
+
+### Preserved
+
+- Dashboard UX (P1 Stage 1 Safe Mode disclosure, head total, Spotlight dedupe, toolbar/FAB clearance), Sandbox Safe Mode identity and point-of-action confirmations, auth/session/CSRF/ownership, read-only lookup and nudge-draft workflows byte-identical, `nudgeyAction("create")` unchanged, provider boundaries (`off`/`limited`/`combined`), no new endpoint/migration/dependency, no secrets in diff.
+
+### Validation
+
+- Targeted suites green (13 files / 171 tests: `createIntent`, `chatSession`, `NudgeChat`, `appState`, Nudgey panel, lookup/nudge/schedule regressions).
+- Full exact-HEAD manual CI per `docs/TESTING.md` run on the final integration HEAD (Node 22, disposable PG16, both builds, scans, audit, diff check); hosted CI NOT RUN. Zero provider env vars; no OpenAI/PayPal network calls. Evidence posted on the new Draft integration PR.
+
+### Next action
+
+Independent exact-HEAD audit of the integration HEAD, then separate explicit owner merge decision. Do not merge, deploy, activate providers, move protected refs, edit PR #63, or begin Stage 2.
+
 <!-- HANDOFF_ENTRIES_END -->

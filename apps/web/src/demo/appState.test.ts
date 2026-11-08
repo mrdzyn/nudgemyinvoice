@@ -98,6 +98,47 @@ describe("flow transitions", () => {
     s = reducer(s, { type: "navigate", screen: "composer", resetComposer: true });
     expect(s.composer.text).toBe("");
   });
+
+  it("chat-to-composer handoff prefills in-memory text and never parses or saves", () => {
+    const prefill = "Create an invoice for Acme for $75 due Friday.";
+    const s = reducer(start(), {
+      type: "navigate",
+      screen: "composer",
+      resetComposer: true,
+      composerText: prefill,
+    });
+    expect(s.screen).toBe("composer");
+    expect(s.composer.text).toBe(prefill);
+    expect(s.composer.tab).toBe("ai");
+    expect(s.composer.parse).toEqual({ status: "idle" });
+    expect(s.seedKey).toBe(1);
+    expect(s.review).toBeNull();
+  });
+
+  it("composerText without reset or off the composer screen leaves the composer untouched", () => {
+    const seeded = reducer(start(), { type: "scenario", id: "ai-clarification" });
+    const kept = reducer(seeded, {
+      type: "navigate",
+      screen: "composer",
+      composerText: "Create an invoice for Acme",
+    });
+    expect(kept.composer.text).toBe(seeded.composer.text);
+    const elsewhere = reducer(start(), {
+      type: "navigate",
+      screen: "dashboard",
+      resetComposer: true,
+      composerText: "Create an invoice for Acme",
+    });
+    expect(elsewhere.composer.text).toBe("");
+    // Over-long prefill is clamped to the composer's own limit instead of rejected.
+    const long = reducer(start(), {
+      type: "navigate",
+      screen: "composer",
+      resetComposer: true,
+      composerText: "x".repeat(MAX_PARSE_CHARS + 50),
+    });
+    expect(long.composer.text).toHaveLength(MAX_PARSE_CHARS);
+  });
 });
 
 describe("URL hash carries no invoice content", () => {
