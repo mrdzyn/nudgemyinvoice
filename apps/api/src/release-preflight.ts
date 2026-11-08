@@ -208,7 +208,13 @@ export const OPENAI_RELEASE_BRANCH = "release/nmi-openai-judges-2026";
  */
 export const COMBINED_RELEASE_BRANCH = "release/nmi-combined-judges-2026";
 /**
- * Strict allowlist: exactly these three branches may be release-checked. Any other name — including
+ * Fourth protected release branch for the independently audited judges candidate `846608ab`
+ * (one-time manual-CI exception `tasks/NMI-JUDGES-RC-MANUAL-CI-EXCEPTION.md`). Nothing may create,
+ * move or protect it until the owner approves the exact candidate SHA under that policy.
+ */
+export const JUDGES_RELEASE_BRANCH = "release/nmi-judges-2026";
+/**
+ * Strict allowlist: exactly these four branches may be release-checked. Any other name — including
  * ref paths, typos, `main` or an empty value — fails closed. All branches stay independently
  * verifiable; none is a mutable tip alias.
  */
@@ -216,10 +222,16 @@ export const RELEASE_BRANCHES = [
   RELEASE_BRANCH,
   OPENAI_RELEASE_BRANCH,
   COMBINED_RELEASE_BRANCH,
+  JUDGES_RELEASE_BRANCH,
 ] as const;
 export type ReleaseBranch = (typeof RELEASE_BRANCHES)[number];
 export function isReleaseBranch(v: string | undefined): v is ReleaseBranch {
-  return v === RELEASE_BRANCH || v === OPENAI_RELEASE_BRANCH || v === COMBINED_RELEASE_BRANCH;
+  return (
+    v === RELEASE_BRANCH ||
+    v === OPENAI_RELEASE_BRANCH ||
+    v === COMBINED_RELEASE_BRANCH ||
+    v === JUDGES_RELEASE_BRANCH
+  );
 }
 
 export interface SourceInput {
@@ -254,7 +266,7 @@ export function checkReleaseSource(i: SourceInput): Finding[] {
   add(
     "src.release-branch-allowlisted",
     isReleaseBranch(i.releaseBranch),
-    `The release branch must be exactly one of the three reviewed branches: ${RELEASE_BRANCHES.join(", ")} (never a tip alias, arbitrary name or empty value)`,
+    `The release branch must be exactly one of the four reviewed branches: ${RELEASE_BRANCHES.join(", ")} (never a tip alias, arbitrary name or empty value)`,
   );
   add(
     "src.expected-is-full-sha",

@@ -3123,4 +3123,12 @@ Reviewer-accessible branch `docs/nmi-70-rc-qa-evidence@a5e2fe4`: `design/evidenc
 
 Focused regressions + final exact-HEAD manual CI on the new HEAD, post evidence to PR #70, request independent focused re-audit. Blocking release gates unchanged: owner merge decision, hosted `workflow_dispatch` SUCCESS on both workflows, G1/G5/G6/G7/G8 + Render deploy permission. Do not merge, deploy, activate providers, or move protected refs.
 
+## NMI-JUDGES-CI-EXC-01 — One-time manual release-CI exception (candidate 846608ab)
+
+Policy PR on `docs/nmi-judges-ci-exception` from `main@846608ab`. New `tasks/NMI-JUDGES-RC-MANUAL-CI-EXCEPTION.md` proposes the single-candidate manual substitute for the owner-merged judges candidate `846608ab` (PR #70), future branch `release/nmi-judges-2026` (NOT created here). Narrow allowlist addition (`JUDGES_RELEASE_BRANCH` + exact-equality test rows) in `release-preflight.ts`/`release-preflight.test.ts` plus CLI usage comment; single-candidate paragraphs in `docs/TESTING.md` and `docs/RELEASE.md`; STATUS updated. Prior exceptions (PR #55, OpenAI RC-01), all protected branches, and the Live `766dde37` deployment untouched. No branch creation, deploy, provider action, or URL sharing in this change.
+
+### Next action
+
+Targeted (release-preflight suite) + full exact-HEAD manual CI on the policy HEAD, open Draft policy PR, request independent exact-HEAD audit. After merge: manual evidence on `846608ab`, evidence audit, owner exception acceptance, separate branch-pinning approval, then deploy approvals. Blocking release gates unchanged: owner merge decision, manual-evidence acceptance, G1/G5/G6/G7/G8, Render deploy permission. Do not activate the exception, merge, deploy, enable providers, or move protected branches.
+
 <!-- HANDOFF_ENTRIES_END -->

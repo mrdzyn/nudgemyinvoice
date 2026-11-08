@@ -12,6 +12,7 @@ import {
   COMBINED_RELEASE_BRANCH,
   isPublicHttpsOrigin,
   isReleaseBranch,
+  JUDGES_RELEASE_BRANCH,
   OPENAI_RELEASE_BRANCH,
   RELEASE_BRANCH,
   RELEASE_BRANCHES,
@@ -423,17 +424,20 @@ describe("release source controls (pure)", () => {
     expect(allOk(checkReleaseSource(rest as unknown as SourceInput))).toBe(false);
   });
 
-  it("allowlist holds exactly the three reviewed branches, nothing else", () => {
+  it("allowlist holds exactly the four reviewed branches, nothing else", () => {
     expect(RELEASE_BRANCHES).toEqual([
       "release/nmi-render-judges-2026",
       "release/nmi-openai-judges-2026",
       "release/nmi-combined-judges-2026",
+      "release/nmi-judges-2026",
     ]);
     expect(isReleaseBranch(RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch(OPENAI_RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch(COMBINED_RELEASE_BRANCH)).toBe(true);
+    expect(isReleaseBranch(JUDGES_RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch("release/nmi-combined-judges")).toBe(false);
     expect(isReleaseBranch("release/nmi-render-judges")).toBe(false);
+    expect(isReleaseBranch("release/nmi-judges")).toBe(false);
   });
 
   it("verifies the allowlisted OpenAI candidate branch independently of the original", () => {
