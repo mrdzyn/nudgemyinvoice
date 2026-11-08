@@ -12,6 +12,8 @@ import {
   COMBINED_RELEASE_BRANCH,
   isPublicHttpsOrigin,
   isReleaseBranch,
+  JUDGES_RELEASE_BRANCH,
+  JUDGES_RELEASE_SHA,
   OPENAI_RELEASE_BRANCH,
   RELEASE_BRANCH,
   RELEASE_BRANCHES,
@@ -423,17 +425,20 @@ describe("release source controls (pure)", () => {
     expect(allOk(checkReleaseSource(rest as unknown as SourceInput))).toBe(false);
   });
 
-  it("allowlist holds exactly the three reviewed branches, nothing else", () => {
+  it("allowlist holds exactly the four reviewed branches, nothing else", () => {
     expect(RELEASE_BRANCHES).toEqual([
       "release/nmi-render-judges-2026",
       "release/nmi-openai-judges-2026",
       "release/nmi-combined-judges-2026",
+      "release/nmi-judges-2026",
     ]);
     expect(isReleaseBranch(RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch(OPENAI_RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch(COMBINED_RELEASE_BRANCH)).toBe(true);
+    expect(isReleaseBranch(JUDGES_RELEASE_BRANCH)).toBe(true);
     expect(isReleaseBranch("release/nmi-combined-judges")).toBe(false);
     expect(isReleaseBranch("release/nmi-render-judges")).toBe(false);
+    expect(isReleaseBranch("release/nmi-judges")).toBe(false);
   });
 
   it("verifies the allowlisted OpenAI candidate branch independently of the original", () => {
@@ -449,6 +454,45 @@ describe("release source controls (pure)", () => {
       .filter((f) => !f.ok)
       .map((f) => f.id);
     expect(moved).toEqual(["src.release-branch-tip-equals-expected"]);
+  });
+
+  it("hard-binds the judges branch to the single approved candidate SHA", () => {
+    const judgesOk: SourceInput = {
+      ...okSrc,
+      releaseBranch: JUDGES_RELEASE_BRANCH,
+      expectedSha: JUDGES_RELEASE_SHA,
+      headSha: JUDGES_RELEASE_SHA,
+      remoteMainTip: JUDGES_RELEASE_SHA,
+      remoteReleaseTip: JUDGES_RELEASE_SHA,
+    };
+    expect(allOk(checkReleaseSource(judgesOk))).toBe(true);
+    // An alternative valid SHA fails even when the operator's --expect matches the branch tip
+    // and every other control (clean tree, lockfile, verified remote, main ancestry) passes.
+    const other = "b".repeat(40);
+    const altMismatch = checkReleaseSource({
+      ...okSrc,
+      releaseBranch: JUDGES_RELEASE_BRANCH,
+      expectedSha: other,
+      headSha: other,
+      remoteMainTip: other,
+      remoteReleaseTip: other,
+    })
+      .filter((f) => !f.ok)
+      .map((f) => f.id);
+    expect(altMismatch).toEqual(["src.judges-sha-pinned"]);
+    // The pin is scoped: the same alternative SHA still passes on an unpinned branch.
+    expect(
+      allOk(
+        checkReleaseSource({
+          ...okSrc,
+          releaseBranch: OPENAI_RELEASE_BRANCH,
+          expectedSha: other,
+          headSha: other,
+          remoteMainTip: other,
+          remoteReleaseTip: other,
+        }),
+      ),
+    ).toBe(true);
   });
 
   it("verifies the proposed combined branch independently of the other two", () => {

@@ -14,7 +14,9 @@ import {
  *   pnpm --filter @nmi/api release-preflight env
  *   pnpm --filter @nmi/api release-preflight source --expect <40-hex sha> [--remote origin] [--release-branch <name>]
  * `source` always requires an allowlisted release branch (default: the original judges branch;
- * `--release-branch release/nmi-openai-judges-2026` checks the proposed OpenAI candidate instead);
+ * `--release-branch release/nmi-openai-judges-2026` checks the proposed OpenAI candidate instead;
+ * `--release-branch release/nmi-judges-2026` checks the audited `846608ab` judges candidate
+ * under the one-time manual-CI exception, once that branch exists);
  * local remote-tracking refs are never trusted. The candidate branch must already exist on the remote —
  * this command never creates, moves or protects it.
  */
