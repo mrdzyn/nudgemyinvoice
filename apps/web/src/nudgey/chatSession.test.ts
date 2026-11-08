@@ -249,3 +249,104 @@ describe("Nudgey chat session (in memory only)", () => {
     expect(s.getSnapshot().some((m) => m.text?.includes("under 200 characters"))).toBe(true);
   });
 });
+
+describe("chat-to-composer handoff (P0: create recognized before the help fallback)", () => {
+  const CREATE =
+    "Create an invoice for Bold Vision Enterprise for 1 month of Website Maintenance for $75, due in 15 days from today.";
+
+  it("answers a creation request in memory with the verbatim prefill and makes zero network calls", async () => {
+    const listInvoices = vi.fn(async () => ok([]));
+    const { s, announced, expired } = make({ listInvoices });
+    await s.ask(CREATE);
+    expect(listInvoices).not.toHaveBeenCalled();
+    expect(expired).not.toHaveBeenCalled();
+    const snap = s.getSnapshot();
+    expect(snap.map((m) => m.role)).toEqual(["user", "nudgey"]);
+    const reply = snap[1]!;
+    expect(reply.pending).toBeUndefined();
+    expect(reply.result).toBeUndefined();
+    expect(reply.nudge).toBeUndefined();
+    expect(reply.schedule).toBeUndefined();
+    expect(reply.composerPrefill).toBe(CREATE);
+    expect(reply.text).toContain("prepare your invoice in the composer for review");
+    expect(announced).toEqual(["Invoice request ready. Review it in the Invoice Composer."]);
+  });
+
+  it("refuses conflicting financial commands without a prefill and without network calls", async () => {
+    const listInvoices = vi.fn(async () => ok([]));
+    for (const q of [
+      "Create and send an invoice to Acme for $75",
+      "Make an invoice for Acme and mark it paid",
+      "Create an invoice and capture the payment",
+      "Create an invoice for Acme then refund it",
+    ]) {
+      const { s, announced } = make({ listInvoices });
+      await s.ask(q);
+      const reply = s.getSnapshot().at(-1)!;
+      expect(reply.composerPrefill, q).toBeUndefined();
+      expect(reply.text, q).toContain("can't send, pay, capture or refund");
+      expect(announced).toEqual(["That request was refused. No financial action was taken."]);
+    }
+    expect(listInvoices).not.toHaveBeenCalled();
+  });
+
+  it("leaves ambiguous creation phrasing to the existing read-only router", async () => {
+    const listInvoices = vi.fn(async () => ok([]));
+    const { s } = make({ listInvoices });
+    await s.ask("create");
+    const reply = s.getSnapshot().at(-1)!;
+    expect(reply.composerPrefill).toBeUndefined();
+    expect(listInvoices).not.toHaveBeenCalled();
+    // The legacy router still maps a bare `create` to the read-only help message.
+    expect(reply.result).toMatchObject({
+      kind: "message",
+      text: expect.stringContaining("read-only"),
+    });
+  });
+
+  it("does not hijack read-only lookups that mention creation participles (UX-01)", async () => {
+    const listInvoices = vi.fn(async () => ok([item(1)]));
+    const { s } = make({ listInvoices });
+    // "generated" is descriptive: the legacy router treats this as a customer search listing.
+    await s.ask("Find invoices generated for Acme");
+    const search = s.getSnapshot().at(-1)!;
+    expect(search.composerPrefill).toBeUndefined();
+    expect(search.result).toMatchObject({ kind: "invoices" });
+    expect(listInvoices).toHaveBeenCalledTimes(1);
+    // "created today" stays the legacy read-only list path, never the composer.
+    await s.ask("Show my invoices created today");
+    const prior = s.getSnapshot().at(-1)!;
+    expect(prior.composerPrefill).toBeUndefined();
+    expect(prior.result).toMatchObject({ kind: "invoices" });
+    expect(listInvoices).toHaveBeenCalledTimes(2);
+    // A bare "new invoices" list stays a list.
+    await s.ask("Show new invoices");
+    const list = s.getSnapshot().at(-1)!;
+    expect(list.composerPrefill).toBeUndefined();
+    expect(list.result).toMatchObject({ kind: "invoices" });
+    expect(listInvoices).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not redirect follow-up creation about an invoice to invoice creation (UX-01)", async () => {
+    const listInvoices = vi.fn(async () => ok([]));
+    const { s, announced } = make({ listInvoices });
+    await s.ask("Create a follow-up for invoice 123");
+    const reply = s.getSnapshot().at(-1)!;
+    expect(reply.composerPrefill).toBeUndefined();
+    expect(reply.text ?? "").not.toContain("prepare your invoice in the composer");
+    expect(announced.join(" ")).not.toContain("Invoice Composer");
+  });
+
+  it("a creation request replaces a lookup in flight and the late answer is never rendered", async () => {
+    const { s, gates } = make();
+    const first = s.ask("Show my invoices");
+    await s.ask(CREATE);
+    expect(gates[0]?.signal.aborted).toBe(true);
+    gates[0]?.resolve(ok([item(9)]));
+    await first;
+    const snap = s.getSnapshot();
+    expect(snap.map((m) => m.role)).toEqual(["user", "nudgey"]);
+    expect(snap[1]?.composerPrefill).toBe(CREATE);
+    expect(JSON.stringify(snap)).not.toContain("Customer 9");
+  });
+});
