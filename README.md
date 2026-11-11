@@ -317,6 +317,30 @@ create a duplicate app, inspect or reveal secrets, run live provider operations,
 enable draft writes, merge, deploy or release. An authenticated PayPal browser
 session does not imply permission to execute API calls.
 
+## AI parsing limits during the hosted judge demo
+
+In judge AI modes (`NMI_JUDGE_AI_MODE=limited` or `combined`), **Invoice
+Composer → Parse** allows **3 requests per operator in a rolling 600-second
+(10-minute) window**. There is **no fixed cooldown between individual parses**
+while an allowance remains. After the third admitted request, the next one is
+available when the oldest request ages out of that 600-second window.
+
+- Every admitted parse attempt uses an allowance, even if the AI response is
+  unavailable, invalid, or needs clarification. Requests rejected for exceeding
+  the limit do not use another allowance.
+- When exhausted, the API returns **HTTP 429** (`too_many_requests`) with
+  `Retry-After` specifying the remaining **seconds** (for example, `239`).
+  This is the **application's per-operator limiter**, not proof of missing
+  OpenAI credits. Retrying before the countdown expires does not help.
+- Judge mode permits one in-flight parse at a time; a simultaneous request
+  may get a separate `busy` response. Finish the current parse before starting
+  another. Manual invoice entry remains available without AI parsing.
+- These judge limits are intentional safeguards. Other run modes can have
+  different limits; they do not change OpenAI project billing or provider quotas.
+
+Source: `JUDGE_AI_REQUESTS_PER_WINDOW` / `JUDGE_AI_WINDOW_MS` in
+`apps/api/src/config.ts`, enforced by `apps/api/src/routes/invoice-drafts.ts`
+and `apps/api/src/auth/window-budget.ts`.
 ## Safe demo script
 
 1. Sign in, then enter: `Invoice Acme Design for 2 logo concepts at 250 USD each, 8% tax, due 2030-01-15` (SIMULATED parser in evaluation mode; your own OpenAI key otherwise).
